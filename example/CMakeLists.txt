@@ -1,0 +1,2 @@
+add_subdirectory(example_module)
+add_subdirectory(example_decode)
