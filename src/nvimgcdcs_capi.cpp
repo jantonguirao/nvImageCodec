@@ -16,6 +16,7 @@
 #include "plugin_framework.h"
 
 #include <iostream>
+#include <stdexcept>
 
 using namespace nvimgcdcs;
 
@@ -56,37 +57,41 @@ __inline__ nvimgcdcsStatus_t getCAPICode(StatusNVIMGCDCS status)
 #ifdef NDEBUG
 /*TEMP!!!*/ #define VERBOSE_ERRORS
 #else
-#define VERBOSE_ERRORS
+    #define VERBOSE_ERRORS
 #endif
 
 #define NVIMGCDCSAPI_TRY try
 
 #ifndef VERBOSE_ERRORS
-#define NVIMGCDCSAPI_CATCH(a)                                  \
-    catch (const ExceptionNVIMGCDCS& e)                        \
-    {                                                          \
-        a = getCAPICode(e.status());                           \
-    }                                                          \
-    catch (...)                                                \
-    {                                                          \
-        std::cerr << "Unknown NVIMGCODECS error" << std::endl; \
-        a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                   \
-    }
+    #define NVIMGCDCSAPI_CATCH(a)                                  \
+        catch (const ExceptionNVIMGCDCS& e)                        \
+        {                                                          \
+            a = getCAPICode(e.status());                           \
+        }                                                          \
+        catch (...)                                                \
+        {                                                          \
+            std::cerr << "Unknown NVIMGCODECS error" << std::endl; \
+            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                   \
+        }
 #else
-#define NVIMGCDCSAPI_CATCH(a)                                     \
-    catch (const ExceptionNVIMGCDCS& e)                           \
-    {                                                             \
-        std::cerr << "Error status: " << e.status() << std::endl; \
-        std::cerr << "Where: " << e.where() << std::endl;         \
-        std::cerr << "Message: " << e.message() << std::endl;     \
-        std::cerr << "What: " << e.what() << std::endl;           \
-        a = getCAPICode(e.status());                              \
-    }                                                             \
-    catch (...)                                                   \
-    {                                                             \
-        std::cerr << "Unknown NVIMGCODECS error" << std::endl;    \
-        a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                      \
-    }
+    #define NVIMGCDCSAPI_CATCH(a)                                     \
+        catch (const ExceptionNVIMGCDCS& e)                           \
+        {                                                             \
+            std::cerr << "Error status: " << e.status() << std::endl; \
+            std::cerr << "Where: " << e.where() << std::endl;         \
+            std::cerr << "Message: " << e.message() << std::endl;     \
+            std::cerr << "What: " << e.what() << std::endl;           \
+            a = getCAPICode(e.status());                              \
+        }                                                             \
+        catch (const std::runtime_error& e)                           \
+        {                                                             \
+            std::cerr << "Error: " << e.what() << std::endl;          \
+        }                                                             \
+        catch (...)                                                   \
+        {                                                             \
+            std::cerr << "Unknown NVIMGCODECS error" << std::endl;    \
+            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                      \
+        }
 #endif
 
     struct nvimgcdcsHandle
@@ -111,7 +116,7 @@ __inline__ nvimgcdcsStatus_t getCAPICode(StatusNVIMGCDCS status)
 nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
     nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t createInfo)
 {
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    nvimgcdcsStatus_t ret         = NVIMGCDCS_STATUS_SUCCESS;
     nvimgcdcsInstance_t nvimgcdcs = nullptr;
     NVIMGCDCSAPI_TRY
     {
@@ -156,12 +161,12 @@ struct nvimgcdcsCodeStream
 static nvimgcdcsStatus_t nvimgcdcsStreamCreate(
     nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle)
 {
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    nvimgcdcsStatus_t ret        = NVIMGCDCS_STATUS_SUCCESS;
     nvimgcdcsCodeStream_t stream = nullptr;
     NVIMGCDCSAPI_TRY
     {
         CHECK_NULL(stream_handle);
-        stream = new nvimgcdcsCodeStream(&instance->codec_registry_);
+        stream         = new nvimgcdcsCodeStream(&instance->codec_registry_);
         *stream_handle = stream;
     }
     NVIMGCDCSAPI_CATCH(ret)
@@ -204,7 +209,6 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(nvimgcdcsInstance_t insta
     return ret;
 }
 
-
 nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t stream_handle)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
@@ -217,3 +221,16 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t stream_handle
     return ret;
 }
 
+nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(
+    nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+    {
+        CHECK_NULL(stream_handle)
+        CHECK_NULL(image_info)
+        stream_handle->code_stream_.getImageInfo(image_info);
+    }
+    NVIMGCDCSAPI_CATCH(ret) 
+    return ret;
+}

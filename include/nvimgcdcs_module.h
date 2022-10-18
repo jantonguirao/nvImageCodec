@@ -117,7 +117,7 @@ extern "C"
         const char* id; // named identifier e.g. nvJpeg2000
         uint32_t version;
         const char* codec; // e.g. jpeg2000
-        const char* (*get_name)(void* instance);
+
         nvimgcdcsEncoderStatus_t (*create)(
             void* instance, nvimgcdcsData_t* params, nvimgcdcsEncoder_t* encoder);
         void (*destroy)(void* instance, nvimgcdcsEncoder_t* encoder);
@@ -150,7 +150,7 @@ extern "C"
         const char* id; // named identifier e.g. nvJpeg2000
         uint32_t version;
         const char* codec; // e.g. jpeg2000
-        const char* (*get_name)(void* instance);
+
         nvimgcdcsDecoderStatus_t (*create)(
             void* instance, nvimgcdcsData_t* params, nvimgcdcsDecoder_t* decoder);
         void (*destroy)(nvimgcdcsDecoder_t* decoder);
@@ -197,7 +197,6 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        const char* (*getName)(void* instance);
         //nvimgcdcsParserStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
         //void (*destroy)(nvimgcdcsParser_t parser);
         nvimgcdcsParserStatus_t (*canParse)(bool* result, nvimgcdcsInputStreamDesc_t input_stream);

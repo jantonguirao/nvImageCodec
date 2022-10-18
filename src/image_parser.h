@@ -18,12 +18,14 @@ class CodeStream;
 class ImageParser
 {
   public:
-    ImageParser(const struct nvimgcdcsParserDesc *desc);
+    ImageParser(const struct nvimgcdcsParserDesc* desc);
+    const std::string getParserId() const;
     const std::string getCodecName() const;
-    bool canParse(CodeStream *code_stream);
+    bool canParse(CodeStream* code_stream);
+    void getImageInfo(CodeStream* code_stream, nvimgcdcsImageInfo_t* image_info);
 
   private:
-    const struct nvimgcdcsParserDesc *parser_desc_;
+    const struct nvimgcdcsParserDesc* parser_desc_;
 };
 
 } // namespace nvimgcdcs

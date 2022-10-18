@@ -1,0 +1,9 @@
+*~
+build/*
+.idea
+.vscode
+.vimrc
+.DS_Store
+.*.swp
+.dockerignore
+nvimgcdcs_version.h

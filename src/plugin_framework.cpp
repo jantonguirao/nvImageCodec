@@ -29,7 +29,7 @@ constexpr std::string_view defaultModuleDir = "C:/Program Files (x86)/nvimgcodec
 
 PluginFramework::PluginFramework(CodecRegistry* codec_registry)
     : framework_desc_{"nvImageCodecs", 0x000100, (void*)this, &static_register_encoder,
-          &static_register_decoder}
+          &static_register_decoder, &static_register_parser}
     , codec_registry_(codec_registry)
 {
 }
@@ -97,7 +97,6 @@ nvimgcdcsFrameworkStatus_t PluginFramework::registerEncoder(const struct nvimgcd
     std::cout << "Framework side register_encoder" << std::endl;
     std::cout << " - id:" << desc->id << std::endl;
     std::cout << " - codec:" << desc->codec << std::endl;
-    std::cout << " - name:" << desc->get_name(NULL) << std::endl;
     Codec* codec = codec_registry_->getCodecByName(desc->codec);
     if (codec == nullptr) {
         std::cout << "Codec " << desc->codec << " not found, creating new one" << std::endl;
@@ -119,7 +118,6 @@ nvimgcdcsFrameworkStatus_t PluginFramework::registerDecoder(const struct nvimgcd
     std::cout << "Framework side register_decoder" << std::endl;
     std::cout << " - id:" << desc->id << std::endl;
     std::cout << " - codec:" << desc->codec << std::endl;
-    std::cout << " - name:" << desc->get_name(NULL) << std::endl;
     Codec* codec = codec_registry_->getCodecByName(desc->codec);
     if (codec == nullptr) {
         std::cout << "Codec " << desc->codec << " not found, creating new one" << std::endl;
@@ -141,7 +139,6 @@ nvimgcdcsFrameworkStatus_t PluginFramework::registerParser(const struct nvimgcdc
     std::cout << "Framework side register parser" << std::endl;
     std::cout << " - id:" << desc->id << std::endl;
     std::cout << " - codec:" << desc->codec << std::endl;
-    std::cout << " - name:" << desc->getName(NULL) << std::endl;
     Codec* codec = codec_registry_->getCodecByName(desc->codec);
     if (codec == nullptr) {
         std::cout << "Codec " << desc->codec << " not found, creating new one" << std::endl;

@@ -19,6 +19,7 @@
 namespace nvimgcdcs {
 class CodecRegistry;
 class Codec;
+class ImageParser;
 class CodeStream
 {
   public:
@@ -42,7 +43,8 @@ class CodeStream
     static nvimgcdcsParserStatus_t size_static(void* instance, size_t* size);
 
     CodecRegistry* codec_registry_;
-    const Codec* codec_;
+    Codec* codec_;
+    ImageParser* parser_;
     std::unique_ptr<InputStream> input_stream_;
     nvimgcdcsInputStreamDesc input_stream_desc_;
 };

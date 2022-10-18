@@ -14,7 +14,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
-
+#include <iostream>
 #include "std_file_input_stream.h"
 
 namespace nvimgcdcs {
@@ -23,7 +23,7 @@ StdFileInputStream::StdFileInputStream(const std::string& path)
     : FileInputStream(path)
 {
     fp_ = std::fopen(path.c_str(), "rb");
-    if(fp_ != nullptr) throw std::runtime_error("Could not open file " + path + ": " + std::strerror(errno));
+    if(fp_ == nullptr) throw std::runtime_error("Could not open file " + path + ": " + std::strerror(errno));
 }
 
 void StdFileInputStream::close()
@@ -36,7 +36,7 @@ void StdFileInputStream::close()
 
 void StdFileInputStream::seek(ptrdiff_t pos, int whence)
 {
-    if (!std::fseek(fp_, pos, whence))
+    if (std::fseek(fp_, pos, whence))
         throw std::runtime_error(std::string("Seek operation failed: ") + std::strerror(errno));
 }
 

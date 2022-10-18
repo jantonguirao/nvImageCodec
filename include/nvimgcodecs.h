@@ -164,27 +164,30 @@ typedef enum
 
 typedef enum
 {
-    NVIMGCDCS_UINT8 = 0,
-    NVIMGCDCS_UINT16 = 1,
-    NVIMGCDCS_FLOAT32 = 2
+    NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOW = 0,
+    NVIMGCDCS_SAMPLE_DATA_TYPE__UINT8,
+    NVIMGCDCS_SAMPLE_DATA_TYPE__UINT16,
+    NVIMGCDCS_SAMPLE_DATA_TYPE__FLOAT32
 } nvimgcdcsSampleDataType_t;
 
 typedef enum
 {
-    NVIMGCDCS_SAMPLING_444 = 0,
-    NVIMGCDCS_SAMPLING_422 = 1,
-    NVIMGCDCS_SAMPLING_420 = 2,
-    NVIMGCDCS_SAMPLING_440 = 3,
-    NVIMGCDCS_SAMPLING_411 = 4,
-    NVIMGCDCS_SAMPLING_410 = 5,
-    NVIMGCDCS_SAMPLING_GRAY = 6,
-    NVIMGCDCS_SAMPLING_410V = 7,
-    NVIMGCDCS_SAMPLING_UNKNOWN = -1
+    NVIMGCDCS_SAMPLING_UNKNOWN = 0,
+    NVIMGCDCS_SAMPLING_444,
+    NVIMGCDCS_SAMPLING_4221,
+    NVIMGCDCS_SAMPLING_420,
+    NVIMGCDCS_SAMPLING_440,
+    NVIMGCDCS_SAMPLING_411,
+    NVIMGCDCS_SAMPLING_410,
+    NVIMGCDCS_SAMPLING_GRAY,
+    NVIMGCDCS_SAMPLING_410V,
+
 } nvimgcdcsSampling_t;
 
 typedef enum
 {
     NVIMGCDCS_SAMPLEFORMAT_NOT_SUPPORTED = -1,
+    NVIMGCDCS_SAMPLEFORMAT_UNKNOWN       = 0,
     NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED,     //unchanged planar 
     NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED,     //unchanged interleave
     NVIMGCDCS_SAMPLEFORMAT_P_RGB,           //planar RGB
@@ -479,7 +482,7 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(nvimgcdcsIns
     nvimgcdcsCodeStream_t* stream_handle, const unsigned char* data, size_t length);
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t stream_handle);
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamRetrieveBitstream(nvimgcdcsCodeStream_t stream_handle, unsigned char *compressed_data, size_t *length);
+//NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamRetrieveBitstream(nvimgcdcsCodeStream_t stream_handle, unsigned char *compressed_data, size_t *length);
 
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCopyExtMetaData(nvimgcdcsEncodeState_t encodeState, nvimgcdcsCodeStream_t dst_stream_handle, nvimgcdcsCodeStream_t src_stream_handle);
 
@@ -501,6 +504,7 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreateSimple(nvimgcdcsEncoder_t *encoder);
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(nvimgcdcsEncoder_t encoder, nvimgcdcsCapability_t* decoder_capabilites, size_t* size);
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeParams_t encode_params, nvimgcdcsCodeStream_t stream,  nvimgcdcsImage_t input_image);
 
 //EncodeState
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t *encode_state);
@@ -545,13 +549,6 @@ nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcsDecodeTile(nvimgcdcsInstance_t handle,
         cudaStream_t stream);
 #endif
 
-#if 0
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcsEncode(nvimgcdcsEncoder_t enc_handle,
-        nvimgcdcsEncodeState_t encode_state,
-        const nvimgcdcsEncodeParams_t encode_params,
-        const nvimgcdcsImage_t *input_image,
-        cudaStream_t stream);
-#endif
 
 
 #if defined(__cplusplus)

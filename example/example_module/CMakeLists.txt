@@ -4,6 +4,7 @@ set(EXAMPLE_NVIMGCDCS_SRC
       example_module.cpp
       example_encoder.cpp
       example_decoder.cpp
+      example_parser.cpp
 )
 include_directories(
   ../../include

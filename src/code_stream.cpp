@@ -13,34 +13,49 @@
 #include "codec_registry.h"
 #include "file_input_stream.h"
 #include "mem_input_stream.h"
+#include "image_parser.h"
 #include <string>
+#include <iostream>
 namespace nvimgcdcs {
 
 CodeStream::CodeStream(CodecRegistry* codec_registry)
     : codec_registry_(codec_registry)
+    , input_stream_desc_{this, read_static, skip_static, seek_static, tell_static, size_static}
+    , codec_(nullptr)
+    , parser_(nullptr)
 {
 }
 
 void CodeStream::parseFromFile(const std::string& file_name)
 {
     input_stream_ = FileInputStream::open(file_name, false, false);
-    codec_     = codec_registry_->getCodec(this);
+    auto [codec, parser] = codec_registry_->getCodecAndParser(this);
+    if (codec == nullptr || parser == nullptr)
+        throw std::runtime_error("Could not match parser");
+    codec_  = codec;
+    parser_ = parser;
 }
 
 void CodeStream::parseFromMem(const unsigned char* data, size_t size)
 {
     input_stream_ = std::make_unique<MemInputStream>(data, size);
-    codec_ = codec_registry_->getCodec(this);
+    auto [codec, parser] = codec_registry_->getCodecAndParser(this);
+
+    if (codec == nullptr || parser == nullptr)
+        throw std::runtime_error("Could not match parser");
+    codec_ = codec;
+    parser_ = parser;
 }
 
 void CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
 {
-
+    assert(parser_);
+    assert(image_info);
+    parser_->getImageInfo(this, image_info);
 }
 
 nvimgcdcsInputStreamDesc* CodeStream::getInputStreamDesc()
 {
-    assert(input_stream_desc_);
     return &input_stream_desc_;
 }
 

@@ -10,8 +10,10 @@
 
 #include "codec_registry.h"
 #include "codec.h"
+#include "image_parser.h"
 
 #include <stdexcept>
+#include <iostream>
 
 namespace nvimgcdcs {
 
@@ -23,19 +25,21 @@ void CodecRegistry::registerCodec(std::unique_ptr<Codec> codec)
 {
     if (by_name_.find(codec->name()) != by_name_.end())
         throw std::invalid_argument("A different codec with the same name already registered.");
-    by_name_.insert(std::make_pair(codec->name(), std::move(codec)));
 
     codec_ptrs_.push_back(codec.get());
+    by_name_.insert(std::make_pair(codec->name(), std::move(codec)));
 }
 
-const Codec* CodecRegistry::getCodec(CodeStream* code_stream) const
+const std::pair<Codec*, ImageParser*> CodecRegistry::getCodecAndParser(CodeStream* code_stream) const
 {
-    for (auto& codec : codec_ptrs_) {
-        if (codec->matches(code_stream)) {
-            return codec;
+    std::cout << "CodecRegistry::getCodecAndParser" << std::endl;
+    for (auto codec : codec_ptrs_) {
+        ImageParser* parser = codec->matches(code_stream);
+        if (parser != nullptr) {
+            return std::make_pair(codec, parser);
         }
     }
-    return nullptr;
+    return std::make_pair(nullptr, nullptr);
 }
 
 Codec* CodecRegistry::getCodecByName(const char* name)

@@ -20,14 +20,16 @@ Codec::Codec(const char* name)
 {
 }
 
-bool Codec::matches(CodeStream* code_stream) const
+ImageParser* Codec::matches(CodeStream* code_stream) const
 {
+    std::cout << "Codec::matches " << name_ << std::endl;
     for (const auto& entry : parsers_) {
+        std::cout << "- probing parser:" << entry.second->getParserId() << std::endl;
         if (entry.second->canParse(code_stream))
-            return true;
+            return entry.second.get();
     }
 
-    return false;
+    return nullptr;
 }
 
 const std::string& Codec::name() const
@@ -50,9 +52,10 @@ std::span<ImageDecoderFactory* const> Codec::decoders() const
     return {decoder_ptrs_.data(), decoder_ptrs_.size()};
 }
 
-void Codec::registerParser(std::unique_ptr<ImageParser> parserFactory, float priority)
+void Codec::registerParser(std::unique_ptr<ImageParser> parser, float priority)
 {
-    auto it = parsers_.emplace(priority, std::move(parserFactory));
+    std::cout << "Codec::registerParser" << std::endl;
+    auto it = parsers_.emplace(priority, std::move(parser));
     if (std::next(it) == parsers_.end()) {
         parser_ptrs_.push_back(it->second.get());
     } else {

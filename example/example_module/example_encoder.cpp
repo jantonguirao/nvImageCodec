@@ -1,13 +1,6 @@
 
 #include <nvimgcdcs_module.h>
 
-
-
-static const char* example_encoder_get_name(void* instance)
-{
-    return "example_encoder";
-}
-
 static nvimgcdcsEncoderStatus_t example_encoder_create(
     void* instance, nvimgcdcsData_t* params, nvimgcdcsEncoder_t* encoder)
 {
@@ -35,10 +28,16 @@ static nvimgcdcsEncoderStatus_t example_encoder_encode(
     return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
 }
 
+// clang-format off
 nvimgcdcsEncoderDesc example_encoder = {
-    /* instance     */ NULL,
-    /* id           */ "example_encoder",
-    /* version       */ 0x00000100,
-    /* codec_type   */ "raw", example_encoder_get_name, example_encoder_create,
-    example_encoder_destroy, example_create_encode_state, example_destroy_encde_state,
-    example_encoder_encode};
+    NULL,               // instance    
+    "example_encoder",  //id
+     0x00000100,        // version
+    "raw",              //  codec_type 
+    example_encoder_create,
+    example_encoder_destroy, 
+    example_create_encode_state, 
+    example_destroy_encde_state,
+    example_encoder_encode
+};
+// clang-format on    

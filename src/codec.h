@@ -31,7 +31,7 @@ class Codec
   public:
     explicit Codec(const char* name);
 
-    bool matches(CodeStream* code_stream) const;
+    ImageParser* matches(CodeStream* code_stream) const;
 
     const std::string& name() const;
 
@@ -39,7 +39,7 @@ class Codec
     std::span<ImageEncoderFactory* const> encoders() const;
     std::span<ImageDecoderFactory* const> decoders() const;
 
-    void registerParser(std::unique_ptr<ImageParser> factory, float priority);
+    void registerParser(std::unique_ptr<ImageParser> parser, float priority);
     void registerEncoder(std::unique_ptr<ImageEncoderFactory> factory, float priority);
     void registerDecoder(std::unique_ptr<ImageDecoderFactory> factory, float priority);
 
