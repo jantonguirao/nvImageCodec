@@ -17,7 +17,7 @@
 #include <vector>
 #include "codec.h"
 namespace nvimgcdcs {
-class CodeStream;
+
 class ImageParser;
 class CodecRegistry
 {
@@ -25,7 +25,8 @@ class CodecRegistry
     CodecRegistry();
     ~CodecRegistry() = default;
     void registerCodec(std::unique_ptr<Codec> codec);
-    const std::pair<Codec*, ImageParser*> getCodecAndParser(CodeStream* stream) const;
+    const std::pair<Codec*, std::unique_ptr<ImageParser>> getCodecAndParser(
+        nvimgcdcsCodeStreamDesc_t code_stream) const;
     Codec* getCodecByName(const char* name);
     std::span<Codec* const> codecs() const;
 

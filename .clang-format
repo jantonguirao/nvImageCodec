@@ -3,6 +3,7 @@ BasedOnStyle: LLVM
 ColumnLimit: 100
 IndentWidth: 4
 IndentPPDirectives: BeforeHash
+IndentExternBlock : NoIndent
 TabWidth: 4
 Language: Cpp
 Standard: c++17
@@ -38,18 +39,22 @@ BreakBeforeBinaryOperators: None
 BreakConstructorInitializers: BeforeComma
 DerivePointerAlignment: False
 PointerAlignment: Left
+AlignTrailingComments: true
 AlignEscapedNewlines: Left
 AlignOperands:   Align
-AlignTrailingComments: true
 AlignAfterOpenBracket: DontAlign
 AlignConsecutiveAssignments: true
 AlignConsecutiveMacros: false
 AlignConsecutiveBitFields: true
 AlignConsecutiveDeclarations: false
-AlignTrailingComments: true
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-
+ReflowComments: false
+FixNamespaceComments: true
+# SpacesBeforeTrailingComments: true
+MacroBlockBegin: "^NVIMGCDCSAPI_TRY"
+MacroBlockEnd: "^NVIMGCDCSAPI_CATCH.*$"
+TypenameMacros: ['CHECK_NULL']
 ...
 
 

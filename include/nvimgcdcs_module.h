@@ -48,13 +48,14 @@ extern "C"
 
     struct nvimgcdcsEncodeState;
     typedef struct nvimgcdcsEncodeState* nvimgcdcsEncodeState_t;
-     
+   
     typedef enum
     {
         NVIMGCDCS_FRAMEWORK_STATUS_SUCCESS                      = 0,
         NVIMGCDCS_FRAMEWORK_STATUS_INTERNAL_ERROR               = 8,
         NVIMGCDCS_FRAMEWORK_STATUS_IMPLEMENTATION_NOT_SUPPORTED = 9,
     } nvimgcdcsFrameworkStatus_t;
+
 
     struct nvimgcdcsFrameworkDesc
     {
@@ -99,6 +100,71 @@ extern "C"
 
     typedef enum
     {
+        NVIMGCDCS_PARSER_STATUS_SUCCESS                      = 0,
+        NVIMGCDCS_PARSER_STATUS_NOT_INITIALIZED              = 1,
+        NVIMGCDCS_PARSER_STATUS_INVALID_PARAMETER            = 2,
+        NVIMGCDCS_PARSER_STATUS_BAD_BITSTREAM                = 3,
+        NVIMGCDCS_PARSER_STATUS_NOT_SUPPORTED                = 4,
+        NVIMGCDCS_PARSER_STATUS_ALLOCATOR_FAILURE            = 5,
+        NVIMGCDCS_PARSER_STATUS_EXECUTION_FAILED             = 6,
+        NVIMGCDCS_PARSER_STATUS_ARCH_MISMATCH                = 7,
+        NVIMGCDCS_PARSER_STATUS_INTERNAL_ERROR               = 8,
+        NVIMGCDCS_PARSER_STATUS_IMPLEMENTATION_NOT_SUPPORTED = 9,
+    } nvimgcdcsParserStatus_t;
+
+    struct nvimgcdcsInputStreamDesc
+    {
+        void* instance;
+
+        nvimgcdcsParserStatus_t (*read)(
+            void* instance, size_t* output_size, void* buf, size_t bytes);
+        nvimgcdcsParserStatus_t (*skip)(void* instance, size_t count);
+        nvimgcdcsParserStatus_t (*seek)(void* instance, size_t offset, int whence);
+        nvimgcdcsParserStatus_t (*tell)(void* instance, size_t* offset);
+        nvimgcdcsParserStatus_t (*size)(void* instance, size_t* size);
+    };
+    typedef struct nvimgcdcsInputStreamDesc* nvimgcdcsInputStreamDesc_t;
+
+    typedef enum
+    {
+        NVIMGCDCS_CODE_STREAM_STATUS_SUCCESS                      = 0,
+        NVIMGCDCS_CODE_STREAM_STATUS_NOT_INITIALIZED              = 1,
+        NVIMGCDCS_CODE_STREAM_STATUS_INVALID_PARAMETER            = 2,
+        NVIMGCDCS_CODE_STREAM_STATUS_BAD_BITSTREAM                = 3,
+        NVIMGCDCS_CODE_STREAM_STATUS_NOT_SUPPORTED                = 4,
+        NVIMGCDCS_CODE_STREAM_STATUS_ALLOCATOR_FAILURE            = 5,
+        NVIMGCDCS_CODE_STREAM_STATUS_EXECUTION_FAILED             = 6,
+        NVIMGCDCS_CODE_STREAM_STATUS_ARCH_MISMATCH                = 7,
+        NVIMGCDCS_CODE_STREAM_STATUS_INTERNAL_ERROR               = 8,
+        NVIMGCDCS_CODE_STREAM_STATUS_IMPLEMENTATION_NOT_SUPPORTED = 9,
+    } nvimgcdcsCodeStreamStatus_t;
+
+    struct nvimgcdcsCodeStreamDesc
+    {
+        void* instance;
+        const char* codec;
+        nvimgcdcsInputStreamDesc_t input_stream;
+    };
+    typedef struct nvimgcdcsCodeStreamDesc* nvimgcdcsCodeStreamDesc_t;
+   
+    struct nvimgcdcsParserDesc
+    {
+        void* instance; // plugin instance pointer which will be passed back in functions
+        const char* id; // named identifier e.g. nvJpeg2000
+        uint32_t version;
+        const char* codec; // e.g. jpeg2000
+
+        nvimgcdcsParserStatus_t (*canParse)(
+            void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream);
+        nvimgcdcsParserStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
+        nvimgcdcsParserStatus_t (*destroy)(nvimgcdcsParser_t parser);
+        nvimgcdcsParserStatus_t (*getImageInfo)(
+            nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result,
+            nvimgcdcsCodeStreamDesc_t code_stream);
+    };
+
+    typedef enum
+    {
         NVIMGCDCS_ENCODER_STATUS_SUCCESS                      = 0,
         NVIMGCDCS_ENCODER_STATUS_NOT_INITIALIZED              = 1,
         NVIMGCDCS_ENCODER_STATUS_INVALID_PARAMETER            = 2,
@@ -120,7 +186,7 @@ extern "C"
 
         nvimgcdcsEncoderStatus_t (*create)(
             void* instance, nvimgcdcsData_t* params, nvimgcdcsEncoder_t* encoder);
-        void (*destroy)(void* instance, nvimgcdcsEncoder_t* encoder);
+        nvimgcdcsEncoderStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
         nvimgcdcsEncoderStatus_t (*creatEncodeState)(
             nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
@@ -151,58 +217,21 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
+        nvimgcdcsDecoderStatus_t (*canDecode)(void* instance, bool* result,
+            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params);
+
         nvimgcdcsDecoderStatus_t (*create)(
-            void* instance, nvimgcdcsData_t* params, nvimgcdcsDecoder_t* decoder);
-        void (*destroy)(nvimgcdcsDecoder_t* decoder);
+            void* instance, nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsDecoderStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
         nvimgcdcsDecoderStatus_t (*createDecodeState)(
             nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
-        nvimgcdcsDecoderStatus_t (*decodeStateDestroy)(nvimgcdcsDecodeState_t decode_state);
+        nvimgcdcsDecoderStatus_t (*destroyDecodeState)(nvimgcdcsDecodeState_t decode_state);
 
         nvimgcdcsDecoderStatus_t (*decode)(
             nvimgcdcsDecodeState_t decoder_state, char* input_buffer, char* output_image);
     };
 
-    typedef enum
-    {
-        NVIMGCDCS_PARSER_STATUS_SUCCESS                      = 0,
-        NVIMGCDCS_PARSER_STATUS_NOT_INITIALIZED              = 1,
-        NVIMGCDCS_PARSER_STATUS_INVALID_PARAMETER            = 2,
-        NVIMGCDCS_PARSER_STATUS_BAD_BITSTREAM                = 3,
-        NVIMGCDCS_PARSER_STATUS_NOT_SUPPORTED                = 4,
-        NVIMGCDCS_PARSER_STATUS_ALLOCATOR_FAILURE            = 5,
-        NVIMGCDCS_PARSER_STATUS_EXECUTION_FAILED             = 6,
-        NVIMGCDCS_PARSER_STATUS_ARCH_MISMATCH                = 7,
-        NVIMGCDCS_PARSER_STATUS_INTERNAL_ERROR               = 8,
-        NVIMGCDCS_PARSER_STATUS_IMPLEMENTATION_NOT_SUPPORTED = 9,
-    } nvimgcdcsParserStatus_t;
-
-    struct nvimgcdcsInputStreamDesc
-    {
-        void* instance;
-
-        nvimgcdcsParserStatus_t (*read)(void* instance, size_t* output_size, void* buf, size_t bytes);
-        nvimgcdcsParserStatus_t (*skip)(void* instance, size_t count);
-        nvimgcdcsParserStatus_t (*seek)(void* instance, size_t offset, int whence);
-        nvimgcdcsParserStatus_t (*tell)(void* instance, size_t* offset);
-        nvimgcdcsParserStatus_t (*size)(void* instance, size_t* size);
-    } ;
-   
-    typedef struct nvimgcdcsInputStreamDesc* nvimgcdcsInputStreamDesc_t;
-   
-    struct nvimgcdcsParserDesc
-    {
-        void* instance; // plugin instance pointer which will be passed back in functions
-        const char* id; // named identifier e.g. nvJpeg2000
-        uint32_t version;
-        const char* codec; // e.g. jpeg2000
-
-        //nvimgcdcsParserStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
-        //void (*destroy)(nvimgcdcsParser_t parser);
-        nvimgcdcsParserStatus_t (*canParse)(bool* result, nvimgcdcsInputStreamDesc_t input_stream);
-        nvimgcdcsParserStatus_t (*getImageInfo)(
-            nvimgcdcsImageInfo_t* result, nvimgcdcsInputStreamDesc_t input_stream);
-    };
 
 
 #if defined(__cplusplus)

@@ -12,8 +12,8 @@
 #include "codec.h"
 #include "image_parser.h"
 
-#include <stdexcept>
 #include <iostream>
+#include <stdexcept>
 
 namespace nvimgcdcs {
 
@@ -30,13 +30,14 @@ void CodecRegistry::registerCodec(std::unique_ptr<Codec> codec)
     by_name_.insert(std::make_pair(codec->name(), std::move(codec)));
 }
 
-const std::pair<Codec*, ImageParser*> CodecRegistry::getCodecAndParser(CodeStream* code_stream) const
+const std::pair<Codec*, std::unique_ptr<ImageParser>> CodecRegistry::getCodecAndParser(
+    nvimgcdcsCodeStreamDesc_t code_stream) const
 {
     std::cout << "CodecRegistry::getCodecAndParser" << std::endl;
     for (auto codec : codec_ptrs_) {
-        ImageParser* parser = codec->matches(code_stream);
-        if (parser != nullptr) {
-            return std::make_pair(codec, parser);
+        std::unique_ptr<ImageParser> parser = codec->createParser(code_stream);
+        if (parser) {
+            return std::make_pair(codec, std::move(parser));
         }
     }
     return std::make_pair(nullptr, nullptr);

@@ -7,8 +7,9 @@ static nvimgcdcsEncoderStatus_t example_encoder_create(
     return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
 }
 
-static void example_encoder_destroy(void* instance, nvimgcdcsEncoder_t* encoder)
+static nvimgcdcsEncoderStatus_t example_encoder_destroy(nvimgcdcsEncoder_t encoder)
 {
+    return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
 }
 
 static nvimgcdcsEncoderStatus_t example_create_encode_state(

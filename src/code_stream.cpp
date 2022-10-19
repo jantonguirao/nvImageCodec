@@ -21,42 +21,58 @@ namespace nvimgcdcs {
 CodeStream::CodeStream(CodecRegistry* codec_registry)
     : codec_registry_(codec_registry)
     , input_stream_desc_{this, read_static, skip_static, seek_static, tell_static, size_static}
+    , code_stream_desc_{this, "", &input_stream_desc_}
     , codec_(nullptr)
     , parser_(nullptr)
 {
 }
 
+void CodeStream::parse()
+{
+    auto [codec, parser] = codec_registry_->getCodecAndParser(&code_stream_desc_);
+    if (codec == nullptr || !parser)
+        throw std::runtime_error("Could not match parser");
+    codec_  = codec;
+    code_stream_desc_.codec = codec->name().c_str();
+    parser_ = std::move(parser);
+}
+
 void CodeStream::parseFromFile(const std::string& file_name)
 {
     input_stream_ = FileInputStream::open(file_name, false, false);
-    auto [codec, parser] = codec_registry_->getCodecAndParser(this);
-    if (codec == nullptr || parser == nullptr)
-        throw std::runtime_error("Could not match parser");
-    codec_  = codec;
-    parser_ = parser;
+    parse();
 }
 
 void CodeStream::parseFromMem(const unsigned char* data, size_t size)
 {
     input_stream_ = std::make_unique<MemInputStream>(data, size);
-    auto [codec, parser] = codec_registry_->getCodecAndParser(this);
-
-    if (codec == nullptr || parser == nullptr)
-        throw std::runtime_error("Could not match parser");
-    codec_ = codec;
-    parser_ = parser;
+    parse();
 }
 
 void CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
 {
     assert(parser_);
     assert(image_info);
-    parser_->getImageInfo(this, image_info);
+    if (!image_info_) {
+        image_info_ = std::make_unique<nvimgcdcsImageInfo_t>();
+        parser_->getImageInfo(&code_stream_desc_, image_info_.get());
+    }
+    *image_info = *image_info_.get();
+}
+
+Codec* CodeStream::getCodec() const
+{
+    return codec_;
 }
 
 nvimgcdcsInputStreamDesc* CodeStream::getInputStreamDesc()
 {
     return &input_stream_desc_;
+}
+
+nvimgcdcsCodeStreamDesc* CodeStream::getCodeStreamDesc()
+{
+    return &code_stream_desc_;
 }
 
 nvimgcdcsParserStatus_t CodeStream::read(size_t* output_size, void* buf, size_t bytes)

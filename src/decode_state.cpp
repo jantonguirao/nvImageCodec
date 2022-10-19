@@ -7,16 +7,20 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
-#include "image_encoder.h"
+#include "decode_state.h"
 
 namespace nvimgcdcs {
 
-ImageEncoderFactory::ImageEncoderFactory(const struct nvimgcdcsEncoderDesc *desc)
-    : 
-    encoder_desc_(desc)
+DecodeState::DecodeState(
+    const struct nvimgcdcsDecoderDesc* decoder_desc, nvimgcdcsDecoder_t decoder)
+    : decoder_desc_(decoder_desc)
+    , decoder_(decoder)
 {
+    decoder_desc_->createDecodeState(decoder_, &decode_state_);
 }
 
-const std::string ImageEncoderFactory::getCodecName() const { return encoder_desc_->codec; }
-
+DecodeState::~DecodeState()
+{
+    decoder_desc_->destroyDecodeState(decode_state_);
+}
 } // namespace nvimgcdcs

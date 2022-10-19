@@ -11,14 +11,34 @@
 #pragma once
 
 #include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
+#include <string>
+#include <memory>
 
 namespace nvimgcdcs {
+class DecodeState;
+
+class ImageDecoder
+{
+  public:
+    ImageDecoder(const struct nvimgcdcsDecoderDesc* desc, nvimgcdcsDecodeParams_t* params);
+    ~ImageDecoder();
+    std::unique_ptr<DecodeState> createDecodeState() const;
+
+  private:
+    const struct nvimgcdcsDecoderDesc* decoder_desc_;
+    nvimgcdcsDecoder_t decoder_;
+};
+
 class ImageDecoderFactory
 {
   public:
-    ImageDecoderFactory(const struct nvimgcdcsDecoderDesc *desc);
-
+    ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc);
+    std::string getDecoderId() const;
+    std::string getCodecName() const;
+    bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params);
+    std::unique_ptr<ImageDecoder> createDecoder(nvimgcdcsDecodeParams_t* params) const;
   private:
-    const struct nvimgcdcsDecoderDesc *decoder_desc_;
+    const struct nvimgcdcsDecoderDesc* decoder_desc_;
 };
 } // namespace nvimgcdcs

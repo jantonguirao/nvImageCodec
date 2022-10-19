@@ -27,9 +27,12 @@ class CodeStream
     void parseFromFile(const std::string& file_name);
     void parseFromMem(const unsigned char* data, size_t size);
     void getImageInfo(nvimgcdcsImageInfo_t* image_info);
+    Codec* getCodec() const;
     nvimgcdcsInputStreamDesc* getInputStreamDesc();
+    nvimgcdcsCodeStreamDesc* getCodeStreamDesc();
 
   private:
+    void parse();
     nvimgcdcsParserStatus_t read(size_t* output_size, void* buf, size_t bytes);
     nvimgcdcsParserStatus_t skip(size_t count);
     nvimgcdcsParserStatus_t seek(size_t offset, int whence);
@@ -44,8 +47,10 @@ class CodeStream
 
     CodecRegistry* codec_registry_;
     Codec* codec_;
-    ImageParser* parser_;
+    std::unique_ptr<ImageParser> parser_;
     std::unique_ptr<InputStream> input_stream_;
     nvimgcdcsInputStreamDesc input_stream_desc_;
+    nvimgcdcsCodeStreamDesc code_stream_desc_;
+    std::unique_ptr<nvimgcdcsImageInfo_t> image_info_;
 };
 } // namespace nvimgcdcs

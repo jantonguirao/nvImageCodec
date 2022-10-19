@@ -24,6 +24,18 @@ int main(int argc, const char* argv[])
     std::cout << "\t - width:" << image_info.image_width << std::endl;
     std::cout << "\t - height:" << image_info.image_height << std::endl;
     std::cout << "\t - components:" << image_info.num_components << std::endl;
+
+    nvimgcdcsDecodeParams_t decode_params;
+    decode_params.backend.useGPU = true;
+   
+    nvimgcdcsDecoder_t decoder;
+    nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);
+
+    nvimgcdcsDecodeState_t decode_state;
+    nvimgcdcsDecodeStateCreate(decoder, &decode_state);
+
+    nvimgcdcsDecodeStateDestroy(decode_state);
+    nvimgcdcsDecoderDestroy(decoder);
     nvimgcdcsCodeStreamDestroy(code_stream);
     nvimgcdcsInstanceDestroy(instance);
 

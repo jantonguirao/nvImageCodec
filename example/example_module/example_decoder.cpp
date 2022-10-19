@@ -1,13 +1,20 @@
 #include <nvimgcdcs_module.h>
 
-static nvimgcdcsDecoderStatus_t example_decoder_create(
-    void* instance, nvimgcdcsData_t* params, nvimgcdcsDecoder_t* decoder)
+static nvimgcdcsDecoderStatus_t example_can_decode(void* instance, bool* result,
+    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params)
 {
     return NVIMGCDCS_DECODER_STATUS_SUCCESS;
 }
 
-static void example_decoder_destroy(nvimgcdcsDecoder_t* decoder)
+static nvimgcdcsDecoderStatus_t example_decoder_create(void* instance,
+    nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params)
 {
+    return NVIMGCDCS_DECODER_STATUS_SUCCESS;
+}
+
+static nvimgcdcsDecoderStatus_t example_decoder_destroy(nvimgcdcsDecoder_t decoder)
+{
+    return NVIMGCDCS_DECODER_STATUS_SUCCESS;
 }
 
 static nvimgcdcsDecoderStatus_t example_create_decode_state(
@@ -26,12 +33,15 @@ static nvimgcdcsDecoderStatus_t example_decoder_decode(
 {
     return NVIMGCDCS_DECODER_STATUS_SUCCESS;
 }
+
+
 // clang-format off
 nvimgcdcsDecoderDesc_t example_decoder = {
     NULL,               // instance    
     "example_decoder",  //id
     0x00000100,         // version
     "raw",              //  codec_type 
+    example_can_decode,
     example_decoder_create,
     example_decoder_destroy, 
     example_create_decode_state, 

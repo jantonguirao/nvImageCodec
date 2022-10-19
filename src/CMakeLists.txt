@@ -13,6 +13,7 @@ set (NVIMGCDCS_SRCS
     code_stream.cpp
     file_input_stream.cpp
     std_file_input_stream.cpp
+    decode_state.cpp
 )
 
 include_directories(../include)  

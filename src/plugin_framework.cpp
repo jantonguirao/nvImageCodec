@@ -31,6 +31,7 @@ PluginFramework::PluginFramework(CodecRegistry* codec_registry)
     : framework_desc_{"nvImageCodecs", 0x000100, (void*)this, &static_register_encoder,
           &static_register_decoder, &static_register_parser}
     , codec_registry_(codec_registry)
+    , plugin_dirs_{defaultModuleDir}
 {
 }
 
@@ -62,10 +63,11 @@ nvimgcdcsFrameworkStatus_t PluginFramework::static_register_parser(
 
 void PluginFramework::discoverAndLoadExtModules()
 {
-    for (const auto& entry : fs::directory_iterator(defaultModuleDir)) {
-        const std::string modulePath(entry.path().string());
-        loadExtModule(modulePath);
-    }
+    for (const auto& dir : plugin_dirs_)
+        for (const auto& entry : fs::directory_iterator(dir)) {
+            const std::string modulePath(entry.path().string());
+            loadExtModule(modulePath);
+        }
 }
 
 void PluginFramework::loadExtModule(const std::string& modulePath)
@@ -149,7 +151,7 @@ nvimgcdcsFrameworkStatus_t PluginFramework::registerParser(const struct nvimgcdc
         std::cout << "Codec " << desc->codec << " found" << std::endl;
     }
     std::cout << "Creating new parser factory " << std::endl;
-    std::unique_ptr<ImageParser> parser_factory = std::make_unique<ImageParser>(desc);
+    std::unique_ptr<ImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
     codec->registerParser(std::move(parser_factory), 1);
     return NVIMGCDCS_FRAMEWORK_STATUS_SUCCESS;
 }
