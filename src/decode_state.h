@@ -18,6 +18,8 @@ class DecodeState
     DecodeState(
         const struct nvimgcdcsDecoderDesc* decoder_desc, nvimgcdcsDecoder_t decoder);
     ~DecodeState();
+    nvimgcdcsDecodeState_t getInternalDecodeState();
+
   private:
     const struct nvimgcdcsDecoderDesc* decoder_desc_;
     nvimgcdcsDecoder_t decoder_;

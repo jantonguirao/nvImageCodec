@@ -14,10 +14,11 @@ set (NVIMGCDCS_SRCS
     file_input_stream.cpp
     std_file_input_stream.cpp
     decode_state.cpp
+    image.cpp
+    parse_state.cpp
 )
 
 include_directories(../include)  
-include_directories(../external/culibos/include)
 
 # Build the library
 message(STATUS "props ProductVersionFiles ${ProductVersionFiles}")  

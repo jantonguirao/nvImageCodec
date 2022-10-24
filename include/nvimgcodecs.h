@@ -16,6 +16,7 @@
 #include "cuda_runtime_api.h"
 //#include "library_types.h"
 #include "nvimgcdcs_version.h"
+#include "nvimgcdcs_data.h"
 
 #ifndef NVIMGCDCSAPI
     #ifdef _WIN32
@@ -30,67 +31,6 @@
 #if defined(__cplusplus)
 extern "C"
 {
-#endif
-
-    // Data
-    struct nvimgcdcsDataDict;
-    struct nvimgcdcsDataList;
-
-    typedef struct nvimgcdcsDataDict* nvimgcdcsDataDict_t;
-    typedef struct nvimgcdcsDataList* nvimgcdcsDataList_t;
-
-    typedef enum
-    {
-        NVIMGCDCS_DATA_NULL,
-        NVIMGCDCS_DATA_BOOLEAN,
-        NVIMGCDCS_DATA_INT,
-        NVIMGCDCS_DATA_DOUBLE,
-        NVIMGCDCS_DATA_STRING,
-        NVIMGCDCS_DATA_LIST,
-        NVIMGCDCS_DATA_DICT
-    } nvimgcdcsDataType_t;
-#if 0
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_create(nvimgcdcsDataDict_t* data);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_destroy(nvimgcdcsDataDict_t data);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_clear(nvimgcdcsDataDict_t data);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_erase(nvimgcdcsDataDict_t data, const char *name);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_count(nvimgcdcsDataList_t list, size_t size);
-
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_set_string(nvimgcdcsDataDict_t data, const char *name, const char *val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_set_int(nvimgcdcsDataDict_t data, const char *name, long long val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_set_double(nvimgcdcsDataDict_t data, const char *name, double val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_set_bool(nvimgcdcsDataDict_t data, const char *name, bool val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_set_dict(nvimgcdcsDataDict_t data, const char *name, nvimgcdcsDataDict_t val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_set_list(nvimgcdcsDataDict_t data, const char *name, nvimgcdcsDataList_t val);
-
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_get_item_type(nvimgcdcsDataDict_t *data, const char *name, nvimgcdcsDataType_t* type);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_get_string(nvimgcdcsDataDict_t *data, const char *name, const char* s);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_get_int(nvimgcdcsDataDict_t *data, const char *name, long long* i);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_get_double(nvimgcdcsDataDict_t *data, const char *name, double* d);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_get_bool(nvimgcdcsDataDict_t *data, const char *name, bool* b);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_get_dict(nvimgcdcsDataDict_t *data, const char *name, nvimgcdcsDataDict_t dict);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_dict_get_list(nvimgcdcsDataDict_t *data, const char *name, nvimgcdcsDataList_t list);
-
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_create(nvimgcdcsDataList_t * list);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_destroy(nvimgcdcsDataList_t list);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_clear(nvimgcdcsDataDict_t data);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_erase(nvimgcdcsDataList_t list, size_t idx);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_count(nvimgcdcsDataList_t list, size_t size);
-
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_push_back_string(nvimgcdcsDataList_t data, const char val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_push_back_int(nvimgcdcsDataList_t data, long long val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_push_back_double(nvimgcdcsDataList_t data, double val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_push_back_bool(nvimgcdcsDataList_t data, bool val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_push_back_dict(nvimgcdcsDataList_t list, nvimgcdcsDataDict_t val);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_push_back_list(nvimgcdcsDataList_t list, nvimgcdcsDataList_t val);
-
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_item_type(nvimgcdcsDataList_t *data, size_t idx, nvimgcdcsDataType_t* type);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_string(nvimgcdcsDataList_t *data, const char *name, const char* s);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_int(nvimgcdcsDataList_t *data, const char *name, long long* i);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_double(nvimgcdcsDataList_t *data, const char *name, double* d);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_bool(nvimgcdcsDataList_t *data, const char *name, bool* b);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_dict(nvimgcdcsDataList_t list, size_t idx, nvimgcdcsDataDict_t dict);
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_list(nvimgcdcsDataList_t list, size_t idx, nvimgcdcsDataList_t out_array);
 #endif
 
     typedef enum
@@ -164,9 +104,9 @@ nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_list(nvimgcdcsDataList_t 
     typedef enum
     {
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOW = 0,
-        NVIMGCDCS_SAMPLE_DATA_TYPE__UINT8,
-        NVIMGCDCS_SAMPLE_DATA_TYPE__UINT16,
-        NVIMGCDCS_SAMPLE_DATA_TYPE__FLOAT32
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32
     } nvimgcdcsSampleDataType_t;
 
     typedef enum
@@ -195,7 +135,7 @@ nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_list(nvimgcdcsDataList_t 
         NVIMGCDCS_SAMPLEFORMAT_I_BGR,       //interleaved BGR
         NVIMGCDCS_SAMPLEFORMAT_P_Y,         //Y component only
         NVIMGCDCS_SAMPLEFORMAT_P_YUV,       //YUV planar format
-    } nvimgcdcsSampleFormat;
+    } nvimgcdcsSampleFormat_t;
 
     typedef enum
     {
@@ -240,8 +180,11 @@ nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_list(nvimgcdcsDataList_t 
         uint32_t num_tiles_x; // no of tiles in horizontal direction
         uint32_t num_tiles_y; // no of tiles in vertical direction
         uint32_t num_components;
+        size_t pitch_in_bytes;
 
         nvimgcdcsColorSpace_t color_space;
+        nvimgcdcsSampleFormat_t sample_format;
+        nvimgcdcsSampling_t sampling;
         nvimgcdcsSampleDataType_t sample_type;
     } nvimgcdcsImageInfo_t;
 
@@ -462,7 +405,7 @@ nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_list(nvimgcdcsDataList_t 
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
-        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, nvimgcdcsImageInfo_t image_info);
+        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetHostBuffer(
         nvimgcdcsImage_t image, void* buffer, size_t size);
@@ -482,14 +425,13 @@ nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_list(nvimgcdcsDataList_t 
         nvimgcdcsImage_t image, nvimgcdcsEncodeStatus_t* decode_status);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageAttachEncodeState(
         nvimgcdcsImage_t image, nvimgcdcsEncodeState_t encode_state);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetAttachedEncodeState(
-        nvimgcdcsImage_t image, nvimgcdcsEncodeState_t* encode_state);
+    //REMOVE? NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetAttachedEncodeState(nvimgcdcsImage_t image, nvimgcdcsEncodeState_t* encode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDetachEncodeState(nvimgcdcsImage_t image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageAttachDecodeState(
         nvimgcdcsImage_t image, nvimgcdcsDecodeState_t decode_state);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetAttachedDecodeState(
-        nvimgcdcsImage_t image, nvimgcdcsDecodeState_t* decode_state);
+    //REMOVE? NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetAttachedDecodeState(nvimgcdcsImage_t image, nvimgcdcsDecodeState_t* decode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDetachDecodeState(nvimgcdcsImage_t image);
+
 
     // CodeStream
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
@@ -511,7 +453,7 @@ nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcs_data_list_get_list(nvimgcdcsDataList_t 
         nvimgcdcsDecoder_t* decoder, nvimgcdcsCodeStream_t stream, nvimgcdcsDecodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder,
-        nvimgcdcsDecodeParams_t* params, nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image);
+        nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image, nvimgcdcsDecodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder,
         nvimgcdcsDecodeParams_t* params, nvimgcdcsContainer_t container, int batchSize,
         nvimgcdcsImage_t* image);

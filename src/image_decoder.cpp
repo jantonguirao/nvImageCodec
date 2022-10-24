@@ -10,6 +10,8 @@
 #include "image_decoder.h"
 #include <cassert>
 #include "decode_state.h"
+#include "image.h"
+#include "code_stream.h"
 
 namespace nvimgcdcs {
 
@@ -27,6 +29,18 @@ ImageDecoder::~ImageDecoder()
 std::unique_ptr<DecodeState> ImageDecoder::createDecodeState() const
 {
     return std::make_unique<DecodeState>(decoder_desc_, decoder_);
+}
+
+void ImageDecoder::decode(CodeStream* code_stream, Image* image, nvimgcdcsDecodeParams_t* params)
+{
+    DecodeState* decode_state                    = image->getAttachedDecodeState();
+    nvimgcdcsDecodeState_t internal_decode_state = decode_state->getInternalDecodeState();
+    nvimgcdcsImageDesc* image_desc               = image->getImageDesc();
+
+    nvimgcdcsCodeStreamDesc* code_stream_desc = code_stream->getCodeStreamDesc();
+
+    decoder_desc_->decode(decoder_, internal_decode_state, code_stream_desc,
+        image_desc, params);
 }
 
 ImageDecoderFactory::ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc)

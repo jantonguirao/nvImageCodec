@@ -6,8 +6,8 @@ static nvimgcdcsDecoderStatus_t example_can_decode(void* instance, bool* result,
     return NVIMGCDCS_DECODER_STATUS_SUCCESS;
 }
 
-static nvimgcdcsDecoderStatus_t example_decoder_create(void* instance,
-    nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsDecoderStatus_t example_decoder_create(
+    void* instance, nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params)
 {
     return NVIMGCDCS_DECODER_STATUS_SUCCESS;
 }
@@ -28,12 +28,12 @@ nvimgcdcsDecoderStatus_t example_destroy_decode_state(nvimgcdcsDecodeState_t dec
     return NVIMGCDCS_DECODER_STATUS_SUCCESS;
 }
 
-static nvimgcdcsDecoderStatus_t example_decoder_decode(
-    nvimgcdcsDecodeState_t decoder_state, char* input_buffer, char* output_image)
+static nvimgcdcsDecoderStatus_t example_decoder_decode(nvimgcdcsDecoder_t decoder,
+    nvimgcdcsDecodeState_t decode_state, nvimgcdcsCodeStreamDesc_t code_stream,
+    nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params)
 {
     return NVIMGCDCS_DECODER_STATUS_SUCCESS;
 }
-
 
 // clang-format off
 nvimgcdcsDecoderDesc_t example_decoder = {

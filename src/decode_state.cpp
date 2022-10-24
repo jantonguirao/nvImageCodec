@@ -23,4 +23,9 @@ DecodeState::~DecodeState()
 {
     decoder_desc_->destroyDecodeState(decode_state_);
 }
+
+nvimgcdcsDecodeState_t DecodeState::getInternalDecodeState()
+{
+    return decode_state_;
+}
 } // namespace nvimgcdcs

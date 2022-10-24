@@ -7,5 +7,15 @@ include_directories(
   ../../include
 )   
 
+find_library(CUDART_SHARED 
+    NAMES cudart
+    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
+    )
+
+
 add_executable(${EXAMPLE_NVIMGCDCS_DECODE_NAME} ${EXAMPLE_NVIMGCDCS_DECODE_SRC})
-target_link_libraries(${EXAMPLE_NVIMGCDCS_DECODE_NAME} PUBLIC nvimgcodecs)
+
+set_property(TARGET ${EXAMPLE_NVIMGCDCS_DECODE_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+target_link_libraries(${EXAMPLE_NVIMGCDCS_DECODE_NAME} PUBLIC nvimgcodecs ${CUDART_SHARED})
+
+

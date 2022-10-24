@@ -9,13 +9,26 @@ static nvimgcdcsParserStatus_t example_parser_can_parse(
     return NVIMGCDCS_PARSER_STATUS_SUCCESS;
 }
 
-nvimgcdcsParserStatus_t example_parser_create(void* instance, nvimgcdcsParser_t* parser)
+static nvimgcdcsParserStatus_t example_parser_create(void* instance, nvimgcdcsParser_t* parser)
 {
     return NVIMGCDCS_PARSER_STATUS_SUCCESS;
 }
 
-nvimgcdcsParserStatus_t example_parser_destroy(nvimgcdcsParser_t parser)
+static nvimgcdcsParserStatus_t example_parser_destroy(nvimgcdcsParser_t parser)
 {
+    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+}
+
+static nvimgcdcsParserStatus_t example_create_parse_state(
+    nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
+{
+    std::cout << "example_create_parse_state" << std::endl;
+    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+}
+
+static nvimgcdcsParserStatus_t example_destroy_parse_state(nvimgcdcsParseState_t parse_state)
+{
+    std::cout << "example_destroy_parse_state" << std::endl;
     return NVIMGCDCS_PARSER_STATUS_SUCCESS;
 }
 
@@ -36,6 +49,8 @@ nvimgcdcsParserDesc example_parser = {
     example_parser_can_parse,
     example_parser_create,
     example_parser_destroy,
+    example_create_parse_state,
+    example_destroy_parse_state,
     example_parser_get_image_info
 };
 // clang-format on   

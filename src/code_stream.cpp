@@ -14,6 +14,7 @@
 #include "file_input_stream.h"
 #include "mem_input_stream.h"
 #include "image_parser.h"
+#include "parse_state.h"
 #include <string>
 #include <iostream>
 namespace nvimgcdcs {
@@ -35,6 +36,8 @@ void CodeStream::parse()
     codec_  = codec;
     code_stream_desc_.codec = codec->name().c_str();
     parser_ = std::move(parser);
+    parse_state_ = parser_->createParseState();
+    code_stream_desc_.parse_state = parse_state_->getInternalParseState();
 }
 
 void CodeStream::parseFromFile(const std::string& file_name)

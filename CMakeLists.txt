@@ -13,7 +13,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 
-option(BUILD_LIBRARY "Built library" ON)
+option(BUILD_LIBRARY "Build library" ON)
 option(BUILD_TEST "Build tests" ON)
 option(BUILD_EXAMPLE "Build example" ON)
 option(BUILD_DOCS "Build documentation" OFF)

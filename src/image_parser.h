@@ -13,7 +13,7 @@
 #include <nvimgcdcs_module.h>
 #include <string>
 #include <memory>
-
+#include "parse_state.h"
 namespace nvimgcdcs {
 
 class ImageParser
@@ -22,6 +22,7 @@ class ImageParser
     ImageParser(const struct nvimgcdcsParserDesc* desc);
     ~ImageParser();
     void getImageInfo(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info);
+    std::unique_ptr<ParseState> createParseState();
 
   private:
     const struct nvimgcdcsParserDesc* parser_desc_;
@@ -36,6 +37,9 @@ class ImageParserFactory
     std::string getCodecName() const;
     bool canParse(nvimgcdcsCodeStreamDesc_t code_stream);
     std::unique_ptr<ImageParser> createParser() const;
+    
+
+
   private:
     const struct nvimgcdcsParserDesc* parser_desc_;
 };

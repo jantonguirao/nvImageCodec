@@ -15,6 +15,7 @@
 #include <string>
 #include <memory>
 #include "input_stream.h"
+#include "parse_state.h"
 
 namespace nvimgcdcs {
 class CodecRegistry;
@@ -52,5 +53,6 @@ class CodeStream
     nvimgcdcsInputStreamDesc input_stream_desc_;
     nvimgcdcsCodeStreamDesc code_stream_desc_;
     std::unique_ptr<nvimgcdcsImageInfo_t> image_info_;
+    std::unique_ptr<ParseState> parse_state_;
 };
 } // namespace nvimgcdcs

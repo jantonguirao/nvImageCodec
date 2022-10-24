@@ -33,6 +33,11 @@ void ImageParser::getImageInfo(
     parser_desc_->getImageInfo(parser_, image_info, code_stream);
 }
 
+std::unique_ptr<ParseState> ImageParser::createParseState()
+{
+    return std::make_unique<ParseState>(parser_desc_, parser_);
+}
+
 ImageParserFactory::ImageParserFactory(const struct nvimgcdcsParserDesc* desc)
     : parser_desc_(desc)
 {
