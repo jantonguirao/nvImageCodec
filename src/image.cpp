@@ -67,6 +67,19 @@ DecodeState* Image::getAttachedDecodeState()
     return decode_state_;
 }
 
+void Image::attachEncodeState(EncodeState* encode_state)
+{
+    encode_state_ = encode_state;
+}
+void Image::detachEncodeState()
+{
+    encode_state_ = nullptr;
+}
+EncodeState* Image::getAttachedEncodeState()
+{
+    return encode_state_;
+}
+
 nvimgcdcsImageDesc* Image::getImageDesc()
 {
     return &image_desc_;

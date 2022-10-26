@@ -44,7 +44,7 @@ nvimgcdcsParserDesc example_parser = {
     NULL,               // instance    
     "example_parser",   // id
      0x00000100,        // version
-    "raw",              // codec_type 
+    "bmp",              // codec_type 
 
     example_parser_can_parse,
     example_parser_create,

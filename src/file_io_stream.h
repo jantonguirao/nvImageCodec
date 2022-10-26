@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include "input_stream.h"
+#include "io_stream.h"
 
 namespace nvimgcdcs {
 
-class FileInputStream : public InputStream
+class FileIoStream : public IoStream
 {
   public:
     class MappingReserver
@@ -23,7 +23,7 @@ class FileInputStream : public InputStream
         explicit MappingReserver(unsigned int num)
             : reserved(0)
         {
-            if (FileInputStream::reserveFileMappings(num)) {
+            if (FileIoStream::reserveFileMappings(num)) {
                 reserved = num;
             }
         }
@@ -61,7 +61,7 @@ class FileInputStream : public InputStream
         ~MappingReserver()
         {
             if (reserved) {
-                FileInputStream::freeFileMappings(reserved);
+                FileIoStream::freeFileMappings(reserved);
             }
         }
 
@@ -69,16 +69,17 @@ class FileInputStream : public InputStream
         unsigned int reserved;
     };
 
-    static std::unique_ptr<FileInputStream> open(const std::string& uri, bool read_ahead, bool use_mmap);
+    static std::unique_ptr<FileIoStream> open(
+        const std::string& uri, bool read_ahead, bool use_mmap, bool to_write);
 
     virtual void close()                         = 0;
     virtual std::shared_ptr<void> get(size_t n_bytes) = 0;
-    virtual ~FileInputStream()                   = default;
+    virtual ~FileIoStream()                   = default;
 
   protected:
     static bool reserveFileMappings(unsigned int num);
     static void freeFileMappings(unsigned int num);
-    explicit FileInputStream(const std::string& path)
+    explicit FileIoStream(const std::string& path)
         : path_(path)
     {
     }

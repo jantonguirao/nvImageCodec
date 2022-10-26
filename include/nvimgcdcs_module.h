@@ -114,12 +114,15 @@ extern "C"
 
         nvimgcdcsParserStatus_t (*read)(
             void* instance, size_t* output_size, void* buf, size_t bytes);
+        nvimgcdcsParserStatus_t (*write)(
+            void* instance, size_t* output_size, void* buf, size_t bytes);
+        nvimgcdcsParserStatus_t (*putc)(void* instance, size_t* output_size, unsigned char ch);
         nvimgcdcsParserStatus_t (*skip)(void* instance, size_t count);
         nvimgcdcsParserStatus_t (*seek)(void* instance, size_t offset, int whence);
         nvimgcdcsParserStatus_t (*tell)(void* instance, size_t* offset);
         nvimgcdcsParserStatus_t (*size)(void* instance, size_t* size);
     };
-    typedef struct nvimgcdcsInputStreamDesc* nvimgcdcsInputStreamDesc_t;
+    typedef struct nvimgcdcsInputStreamDesc* nvimgcdcsIoStreamDesc_t;
 
     typedef enum
     {
@@ -139,7 +142,7 @@ extern "C"
     {
         void* instance;
         const char* codec;
-        nvimgcdcsInputStreamDesc_t input_stream;
+        nvimgcdcsIoStreamDesc_t io_stream;
         nvimgcdcsParseState_t parse_state;
     };
     typedef struct nvimgcdcsCodeStreamDesc* nvimgcdcsCodeStreamDesc_t;
@@ -207,16 +210,20 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
+        nvimgcdcsEncoderStatus_t (*canEncode)(void* instance, bool* result,
+            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params);
+
         nvimgcdcsEncoderStatus_t (*create)(
-            void* instance, nvimgcdcsData_t* params, nvimgcdcsEncoder_t* encoder);
+            void* instance, nvimgcdcsEncoder_t* encoder, nvimgcdcsEncodeParams_t* params);
         nvimgcdcsEncoderStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
-        nvimgcdcsEncoderStatus_t (*creatEncodeState)(
+        nvimgcdcsEncoderStatus_t (*createEncodeState)(
             nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
-        nvimgcdcsEncoderStatus_t (*encodeStateDestroy)(nvimgcdcsEncodeState_t encode_state);
+        nvimgcdcsEncoderStatus_t (*destroyEncodeState)(nvimgcdcsEncodeState_t encode_state);
 
-        nvimgcdcsEncoderStatus_t (*encode)(
-            nvimgcdcsEncodeState_t encode_state, char* input_image, char* output_buffer);
+        nvimgcdcsEncoderStatus_t (*encode)(nvimgcdcsEncoder_t encoder,
+            nvimgcdcsEncodeState_t encode_state, nvimgcdcsCodeStreamDesc_t code_stream,
+            nvimgcdcsImageDesc_t image, nvimgcdcsEncodeParams_t* params);
     };
 
     typedef enum

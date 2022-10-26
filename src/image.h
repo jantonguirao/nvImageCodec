@@ -15,6 +15,8 @@
 
 namespace nvimgcdcs {
 class DecodeState;
+class EncodeState;
+
 class Image
 {
   public:
@@ -29,6 +31,9 @@ class Image
     void attachDecodeState(DecodeState* decode_state);
     DecodeState* getAttachedDecodeState();
     void detachDecodeState();
+    void attachEncodeState(EncodeState* encode_state);
+    EncodeState* getAttachedEncodeState();
+    void detachEncodeState();
     nvimgcdcsImageDesc* getImageDesc();
 
   private:
@@ -40,6 +45,7 @@ class Image
     void* device_buffer_;
     size_t device_buffer_size_;
     DecodeState* decode_state_;
+    EncodeState* encode_state_;
     nvimgcdcsImageDesc image_desc_;
 };
 } // namespace nvimgcdcs

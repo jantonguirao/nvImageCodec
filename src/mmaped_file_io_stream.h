@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include "file_input_stream.h"
+#include "file_io_stream.h"
 
 namespace nvimgcdcs {
 
-class MmapedFileInputStream : public FileInputStream
+class MmapedFileIoStream : public FileIoStream
 {
   public:
-    explicit MmapedFileInputStream(const std::string& path, bool read_ahead);
+    explicit MmapedFileIoStream(const std::string& path, bool read_ahead);
     void close() override;
     std::shared_ptr<void> get(size_t n_bytes) override;
     static bool reserveFileMappings(unsigned int num);
@@ -27,7 +27,7 @@ class MmapedFileInputStream : public FileInputStream
     int64_t tell() const override;
     std::size_t size() const override;
 
-    ~MmapedFileInputStream() override { close(); }
+    ~MmapedFileIoStream() override { close(); }
 
   private:
     std::shared_ptr<void> p_;

@@ -10,22 +10,24 @@
 
 #pragma once
 
-#include "file_input_stream.h"
+#include "file_io_stream.h"
 
 namespace nvimgcdcs {
 
-class StdFileInputStream : public FileInputStream
+class StdFileIoStream : public FileIoStream
 {
   public:
-    explicit StdFileInputStream(const std::string& path);
+    explicit StdFileIoStream(const std::string& path, bool to_write);
     void close() override;
     std::shared_ptr<void> get(size_t n_bytes) override;
     size_t read(void* buffer, size_t n_bytes) override;
+    std::size_t write(void* buffer, size_t n_bytes) override;
+    std::size_t putc(unsigned char ch) override;
     void seek(ptrdiff_t pos, int whence = SEEK_SET) override;
     int64_t tell() const override;
     size_t size() const override;
 
-    ~StdFileInputStream() override { close(); }
+    ~StdFileIoStream() override { close(); }
 
   private:
     FILE* fp_;

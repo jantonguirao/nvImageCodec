@@ -7,12 +7,15 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
-#include "input_stream.h"
-//#include "mmaped_file_input_stream.h"
-#include "std_file_input_stream.h"
+#include "std_file_io_stream.h"
+
+//#include "mmaped_file_io_stream.h"
+#include <cassert>
+
 namespace nvimgcdcs {
 
-std::unique_ptr<FileInputStream> FileInputStream::open(const std::string& uri, bool read_ahead, bool use_mmap)
+std::unique_ptr<FileIoStream> FileIoStream::open(
+    const std::string& uri, bool read_ahead, bool use_mmap, bool to_write)
 {
     std::string processed_uri;
 
@@ -23,24 +26,24 @@ std::unique_ptr<FileInputStream> FileInputStream::open(const std::string& uri, b
     }
 
     if (use_mmap) {
-        //TODO
-        return std::unique_ptr<FileInputStream>(new StdFileInputStream(processed_uri));
-        // return std::unique_ptr<FileInputStream>(new MmapedFileInputStream(processed_uri,
+        assert(!"TODO");
+        return std::unique_ptr<FileIoStream>(new StdFileIoStream(processed_uri, to_write));
+        // return std::unique_ptr<FileIoStream>(new MmapedFileIoStream(processed_uri,
         // read_ahead));
     } else {
-        return std::unique_ptr<FileInputStream>(new StdFileInputStream(processed_uri));
+        return std::unique_ptr<FileIoStream>(new StdFileIoStream(processed_uri, to_write));
     }
 }
 
-bool FileInputStream::reserveFileMappings(unsigned int num)
+bool FileIoStream::reserveFileMappings(unsigned int num)
 {
     return false;
-    //MmapedFileInputStream::reserveFileMappings(num);
+    //MmapedFileIoStream::reserveFileMappings(num);
 }
 
-void FileInputStream::freeFileMappings(unsigned int num)
+void FileIoStream::freeFileMappings(unsigned int num)
 {
-    //MmapedFileInputStream::freeFileMappings(num);
+    //MmapedFileIoStream::freeFileMappings(num);
 }
 
 } // namespace nvimgcdcs

@@ -40,7 +40,7 @@ nvimgcdcsDecoderDesc_t example_decoder = {
     NULL,               // instance    
     "example_decoder",  //id
     0x00000100,         // version
-    "raw",              //  codec_type 
+    "bmp",              //  codec_type 
     example_can_decode,
     example_decoder_create,
     example_decoder_destroy, 

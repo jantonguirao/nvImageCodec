@@ -9,4 +9,11 @@ set(EXAMPLE_NVIMGCDCS_SRC
 include_directories(
   ../../include
 )     
+
+find_library(CUDART_SHARED 
+    NAMES cudart
+    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
+    )
+    
 add_library(${EXAMPLE_NVIMGCDCS_LIBRARY_NAME} MODULE ${EXAMPLE_NVIMGCDCS_SRC})
+target_link_libraries(${EXAMPLE_NVIMGCDCS_LIBRARY_NAME} PUBLIC ${CUDART_SHARED})

@@ -36,11 +36,24 @@ std::unique_ptr <ImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code
 std::unique_ptr<ImageDecoder> Codec::createDecoder(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) const
 {
-    std::cout << "Codec::getDecoder " << name_ << std::endl;
+    std::cout << "Codec::createDecoder " << name_ << std::endl;
     for (const auto& entry : decoders_) {
         std::cout << "- probing decoder:" << entry.second->getDecoderId() << std::endl;
         if (entry.second->canDecode(code_stream , params)) {
           return entry.second->createDecoder(params);
+        }
+    }
+    return nullptr;
+}
+
+std::unique_ptr<ImageEncoder> Codec::createEncoder(
+    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) const
+{
+    std::cout << "Codec::createEncoder " << name_ << std::endl;
+    for (const auto& entry : encoders_) {
+        std::cout << "- probing encoder:" << entry.second->getEncoderId() << std::endl;
+        if (entry.second->canEncode(code_stream, params)) {
+            return entry.second->createEncoder(params);
         }
     }
     return nullptr;

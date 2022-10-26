@@ -21,10 +21,10 @@ namespace nvimgcdcs {
 /**
  * @brief An abstract file-like interface for reading data.
  */
-class InputStream
+class IoStream
 {
   public:
-    virtual ~InputStream() = default;
+    virtual ~IoStream() = default;
 
     /**
      * @brief Reads all requested data from the stream; if not all of the data can be read,
@@ -112,6 +112,9 @@ class InputStream
      *                  0 in case of end-of-stream condition
      */
     virtual std::size_t read(void* buf, std::size_t bytes) = 0;
+
+    virtual std::size_t write(void* buf, std::size_t bytes) = 0;
+    virtual std::size_t putc(unsigned char buf) = 0;
 
     /**
      * @brief Moves the read pointer in the stream.

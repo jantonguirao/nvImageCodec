@@ -15,8 +15,8 @@
 #include <stdlib.h>
 #include "cuda_runtime_api.h"
 //#include "library_types.h"
-#include "nvimgcdcs_version.h"
 #include "nvimgcdcs_data.h"
+#include "nvimgcdcs_version.h"
 
 #ifndef NVIMGCDCSAPI
     #ifdef _WIN32
@@ -103,9 +103,11 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOW = 0,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN = 0,
         NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8,
         NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16,
         NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32
     } nvimgcdcsSampleDataType_t;
 
@@ -113,7 +115,7 @@ extern "C"
     {
         NVIMGCDCS_SAMPLING_UNKNOWN = 0,
         NVIMGCDCS_SAMPLING_444,
-        NVIMGCDCS_SAMPLING_4221,
+        NVIMGCDCS_SAMPLING_422,
         NVIMGCDCS_SAMPLING_420,
         NVIMGCDCS_SAMPLING_440,
         NVIMGCDCS_SAMPLING_411,
@@ -167,10 +169,11 @@ extern "C"
     {
         uint32_t component_width;
         uint32_t component_height;
-        uint8_t precision;
-        uint8_t sgn;
+        size_t pitch_in_bytes;
+        nvimgcdcsSampleDataType_t sample_type;
     } nvimgcdcsImageComponentInfo_t;
 
+    #define NVIMGCDCS_MAX_NUM_COMPONENTS 32
     typedef struct
     {
         uint32_t image_width;
@@ -180,8 +183,7 @@ extern "C"
         uint32_t num_tiles_x; // no of tiles in horizontal direction
         uint32_t num_tiles_y; // no of tiles in vertical direction
         uint32_t num_components;
-        size_t pitch_in_bytes;
-
+        nvimgcdcsImageComponentInfo_t component_info[NVIMGCDCS_MAX_NUM_COMPONENTS];
         nvimgcdcsColorSpace_t color_space;
         nvimgcdcsSampleFormat_t sample_format;
         nvimgcdcsSampling_t sampling;
@@ -263,6 +265,7 @@ extern "C"
         const void* next;
         double qstep;
         double target_psnr;
+        const char* codec;
         nvimgcdcsBackend_t backend;
         nvimgcdcsDataDict_t config;
     } nvimgcdcsEncodeParams_t;
@@ -275,15 +278,6 @@ extern "C"
     typedef nvimgcdcsContainer* nvimgcdcsContainer_t;
 
 #define NVIMGCDCS_MAX_CAPABILITY_NAME_SIZE 256
-
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        const void* next;
-        char name[NVIMGCDCS_MAX_CAPABILITY_NAME_SIZE];
-        uint32_t version;
-    } nvimgcdcsCapability_t;
-
 #define NVIMGCDCS_DECODER_SCALING_CAPABILITY_NAME "NVIMGCDCS_DECODER_scaling"
 #define NVIMGCDCS_DECODER_ROTATION_CAPABILITY_NAME "NVIMGCDCS_DECODER_rotation"
 #define NVIMGCDCS_DECODER_PARTIAL_DECODING_CAPABILITY_NAME "NVIMGCDCS_DECODER_partial_decoding"
@@ -293,6 +287,16 @@ extern "C"
 #define NVIMGCDCS_ENCODER_PARTIAL_ENCODING_CAPABILITY_NAME "NVIMGCDCS_ENCODER_partial_encoding"
 #define NVIMGCDCS_ENCODER_ROI_CAPABILITY_NAME "NVIMGCDCS_ENCODER_roi"
 #define NVIMGCDCS_ENCODER_BATCH_CAPABILITY_NAME "NVIMGCDCS_ENCODER_batch"
+
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+        char name[NVIMGCDCS_MAX_CAPABILITY_NAME_SIZE];
+        uint32_t version;
+    } nvimgcdcsCapability_t;
+
+
 
     struct nvimgcdcsHandle;
     typedef struct nvimgcdcsHandle* nvimgcdcsInstance_t;
@@ -317,8 +321,8 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         const void* next;
-        nvimgcdcsDeviceAllocator_t* device_allocator;
-        nvimgcdcsPinnedAllocator_t* pinned_allocator;
+        nvimgcdcsDeviceAllocator_t* device_allocator; //TODO
+        nvimgcdcsPinnedAllocator_t* pinned_allocator; //TODO
     } nvimgcdcsInstanceCreateInfo_t;
 
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
@@ -331,26 +335,26 @@ extern "C"
     // IN        instance: handle to instance
     // IN         padding: padding size
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceSetDeviceMemoryPadding(
-        nvimgcdcsInstance_t instance, size_t padding);
+        nvimgcdcsInstance_t instance, size_t padding); //TODO
 
     // Retrieves padding for device memory allocations
     // IN        instance: handle to instance
     // IN/OUT     padding: padding size currently used in instance
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceGetDeviceMemoryPadding(
-        nvimgcdcsInstance_t instance, size_t* padding);
+        nvimgcdcsInstance_t instance, size_t* padding); //TODO
 
     // Sets padding for pinned host memory allocations. After success on this call any pinned host memory allocation
     // would be padded to the multiple of specified number of bytes
     // IN         instance: handle to instance
     // IN         padding: padding size
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceSetPinnedMemoryPadding(
-        nvimgcdcsInstance_t instance, size_t padding);
+        nvimgcdcsInstance_t instance, size_t padding); //TODO
 
     // Retrieves padding for pinned host memory allocations
     // IN        instance: handle to instance
     // IN/OUT     padding: padding size currently used in instance
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceGetPinnedMemoryPadding(
-        nvimgcdcsInstance_t instance, size_t* padding);
+        nvimgcdcsInstance_t instance, size_t* padding); //TODO
 
     struct nvimgcdcsDebugMessage;
     typedef nvimgcdcsDebugMessage* nvimgcdcsDebugMessage_t;
@@ -399,9 +403,10 @@ extern "C"
     } nvimgcdcsDebugMessengerCreateInfo_t;
 
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessangerCreate(nvimgcdcsInstance_t instance,
-        nvimgcdcsDebugMessage_t* dbgMessenger, nvimgcdcsDebugMessengerCreateInfo_t createInfo);
+        nvimgcdcsDebugMessage_t* dbgMessenger,
+        nvimgcdcsDebugMessengerCreateInfo_t createInfo); //TODO
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessangerDestroy(
-        nvimgcdcsDebugMessage_t* dbgMessenger);
+        nvimgcdcsDebugMessage_t* dbgMessenger); //TODO
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
@@ -420,33 +425,35 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(
         nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetDecodeStatus(
-        nvimgcdcsImage_t image, nvimgcdcsDecodeStatus_t* decode_status);
+        nvimgcdcsImage_t image, nvimgcdcsDecodeStatus_t* decode_status); //TODO
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetEncodeStatus(
-        nvimgcdcsImage_t image, nvimgcdcsEncodeStatus_t* decode_status);
+        nvimgcdcsImage_t image, nvimgcdcsEncodeStatus_t* decode_status); //TODO
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageAttachEncodeState(
         nvimgcdcsImage_t image, nvimgcdcsEncodeState_t encode_state);
-    //REMOVE? NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetAttachedEncodeState(nvimgcdcsImage_t image, nvimgcdcsEncodeState_t* encode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDetachEncodeState(nvimgcdcsImage_t image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageAttachDecodeState(
         nvimgcdcsImage_t image, nvimgcdcsDecodeState_t decode_state);
-    //REMOVE? NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetAttachedDecodeState(nvimgcdcsImage_t image, nvimgcdcsDecodeState_t* decode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDetachDecodeState(nvimgcdcsImage_t image);
-
 
     // CodeStream
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const char* file_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle,
-        const unsigned char* data, size_t length);
+        unsigned char* data, size_t length);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance,
+        nvimgcdcsCodeStream_t* stream_handle, const char* file_name, const char* codec_name);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance,
+        nvimgcdcsCodeStream_t* stream_handle, unsigned char* output_buffer, size_t length,
+        const char* codec_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t stream_handle);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(
         nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
-    //NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamRetrieveBitstream(nvimgcdcsCodeStream_t stream_handle, unsigned char *compressed_data, size_t *length);
-
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(
+        nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCopyExtMetaData(
         nvimgcdcsEncodeState_t encodeState, nvimgcdcsCodeStream_t dst_stream_handle,
-        nvimgcdcsCodeStream_t src_stream_handle);
+        nvimgcdcsCodeStream_t src_stream_handle); //TODO
 
     //Decoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance,
@@ -458,11 +465,11 @@ extern "C"
         nvimgcdcsDecodeParams_t* params, nvimgcdcsContainer_t container, int batchSize,
         nvimgcdcsImage_t* image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetDecodedImage(nvimgcdcsDecoder_t decoder,
-        bool blocking, nvimgcdcsImage_t* image, nvimgcdcsDecodeStatus_t* decode_status);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(
-        nvimgcdcsDecoder_t decoder, nvimgcdcsCapability_t* decoder_capabilites, size_t* size);
+        bool blocking, nvimgcdcsImage_t* image, nvimgcdcsDecodeStatus_t* decode_status); //TODO
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(nvimgcdcsDecoder_t decoder,
+        nvimgcdcsCapability_t* decoder_capabilites, size_t* size); //TODO
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(
-        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decodeState, bool* canUse);
+        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decodeState, bool* canUse); //TODO
 
     //DecodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
@@ -470,13 +477,21 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_state);
 
     //Encoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreateSimple(nvimgcdcsEncoder_t* encoder);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance,
+        nvimgcdcsEncoder_t* encoder, nvimgcdcsCodeStream_t stream, nvimgcdcsEncodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(
-        nvimgcdcsEncoder_t encoder, nvimgcdcsCapability_t* decoder_capabilites, size_t* size);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder,
-        nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsCodeStream_t stream,
-        nvimgcdcsImage_t input_image);
+        nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t input_image,
+        nvimgcdcsEncodeParams_t* encode_params);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder,
+        nvimgcdcsDecodeParams_t* params, nvimgcdcsContainer_t container, int batchSize,
+        nvimgcdcsImage_t* image); //TODO
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetEncodedImage(nvimgcdcsEncoder_t encoder,
+        bool blocking, nvimgcdcsImage_t* image, nvimgcdcsEncodeStatus_t* encode_status); //TODO
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(nvimgcdcsEncoder_t encoder,
+        nvimgcdcsCapability_t* decoder_capabilites, size_t* size); //TODO
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanUseEncodeState(
+        nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encodeState, bool* canUse); //TODO
 
     //EncodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(

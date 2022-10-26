@@ -11,11 +11,12 @@ set (NVIMGCDCS_SRCS
     image_encoder.cpp
     image_parser.cpp
     code_stream.cpp
-    file_input_stream.cpp
-    std_file_input_stream.cpp
+    file_io_stream.cpp
+    std_file_io_stream.cpp
     decode_state.cpp
     image.cpp
     parse_state.cpp
+    encode_state.cpp
 )
 
 include_directories(../include)  

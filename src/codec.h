@@ -21,11 +21,6 @@
 #include "image_parser.h"
 
 namespace nvimgcdcs {
-class ImageParserFactory;
-class ImageDecoderFactory;
-class ImageEncoderFactory;
-class ImageParser;
-class ImageDecoder;
 
 class Codec
 {
@@ -35,6 +30,8 @@ class Codec
     std::unique_ptr<ImageParser> createParser(nvimgcdcsCodeStreamDesc_t code_stream) const;
     std::unique_ptr<ImageDecoder> createDecoder(
         nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) const;
+    std::unique_ptr<ImageEncoder> createEncoder(
+        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) const;
 
     const std::string& name() const;
 
