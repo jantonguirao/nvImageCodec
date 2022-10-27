@@ -23,6 +23,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 using namespace nvimgcdcs;
 
@@ -316,6 +317,21 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(
             CHECK_NULL(stream_handle)
             CHECK_NULL(image_info)
             stream_handle->code_stream_.setImageInfo(image_info);
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+
+nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(
+    nvimgcdcsCodeStream_t stream_handle, char* codec_name)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(stream_handle)
+            CHECK_NULL(codec_name)
+            std::string codec_name_ = stream_handle->code_stream_.getCodecName();
+            strcpy_s(codec_name, NVIMGCDCS_MAX_CODEC_NAME_SIZE, codec_name_.c_str());
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;

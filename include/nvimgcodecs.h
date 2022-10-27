@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include "cuda_runtime_api.h"
+#include <cuda_runtime_api.h>
 //#include "library_types.h"
 #include "nvimgcdcs_data.h"
 #include "nvimgcdcs_version.h"
@@ -278,6 +278,7 @@ extern "C"
     typedef nvimgcdcsContainer* nvimgcdcsContainer_t;
 
 #define NVIMGCDCS_MAX_CAPABILITY_NAME_SIZE 256
+#define NVIMGCDCS_MAX_CODEC_NAME_SIZE 256
 #define NVIMGCDCS_DECODER_SCALING_CAPABILITY_NAME "NVIMGCDCS_DECODER_scaling"
 #define NVIMGCDCS_DECODER_ROTATION_CAPABILITY_NAME "NVIMGCDCS_DECODER_rotation"
 #define NVIMGCDCS_DECODER_PARTIAL_DECODING_CAPABILITY_NAME "NVIMGCDCS_DECODER_partial_decoding"
@@ -451,6 +452,8 @@ extern "C"
         nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(
         nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(
+        nvimgcdcsCodeStream_t stream_handle, char* codec_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCopyExtMetaData(
         nvimgcdcsEncodeState_t encodeState, nvimgcdcsCodeStream_t dst_stream_handle,
         nvimgcdcsCodeStream_t src_stream_handle); //TODO

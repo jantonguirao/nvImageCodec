@@ -23,3 +23,12 @@
             return EXIT_FAILURE;                                                        \
         }                                                                               \
     }
+#define CHECK_CUDA_EX(call, err)                                                                \
+    {                                                                                   \
+        cudaError_t _e = (call);                                                        \
+        if (_e != cudaSuccess) {                                                        \
+            std::cout << "CUDA Runtime failure: '#" << _e << "' at " << __FILE__ << ":" \
+                      << __LINE__ << std::endl;                                         \
+            return err;                                                        \
+        }                                                                               \
+    }

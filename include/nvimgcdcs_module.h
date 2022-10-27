@@ -166,6 +166,7 @@ extern "C"
         void* instance;
         nvimgcdcsImageStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
         nvimgcdcsImageStatus_t (*getDeviceBuffer)(void* instance, void** buffer, size_t* size);
+        nvimgcdcsImageStatus_t (*getHostBuffer)(void* instance, void** buffer, size_t* size);
     };
     typedef struct nvimgcdcsImageDesc* nvimgcdcsImageDesc_t;
 

@@ -31,6 +31,7 @@ class CodeStream
     void setOutputToHostMem(unsigned char* output_buffer, size_t size, const char* codec_name);
     void getImageInfo(nvimgcdcsImageInfo_t* image_info);
     void setImageInfo(nvimgcdcsImageInfo_t* image_info);
+    std::string getCodecName() const;
     Codec* getCodec() const;
     nvimgcdcsInputStreamDesc* getInputStreamDesc();
     nvimgcdcsCodeStreamDesc* getCodeStreamDesc();

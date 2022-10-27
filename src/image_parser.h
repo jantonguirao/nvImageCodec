@@ -21,6 +21,8 @@ class ImageParser
   public:
     ImageParser(const struct nvimgcdcsParserDesc* desc);
     ~ImageParser();
+    std::string getParserId() const;
+    std::string getCodecName() const;
     void getImageInfo(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info);
     std::unique_ptr<ParseState> createParseState();
 

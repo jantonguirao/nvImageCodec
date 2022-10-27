@@ -83,7 +83,10 @@ void CodeStream::setImageInfo(nvimgcdcsImageInfo_t* image_info)
     }
     *image_info_.get() = *image_info;
 }
-
+std::string CodeStream::getCodecName() const
+{
+    return parser_->getCodecName();
+}
 Codec* CodeStream::getCodec() const
 {
     return codec_;

@@ -23,6 +23,15 @@ ImageParser::~ImageParser()
 {
     parser_desc_->destroy(parser_);
 }
+std::string ImageParser::getParserId() const
+{
+    return parser_desc_->id;
+}
+
+std::string ImageParser::getCodecName() const
+{
+    return parser_desc_->codec;
+}
 
 void ImageParser::getImageInfo(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info)
