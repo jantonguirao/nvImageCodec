@@ -34,7 +34,7 @@ const char *getErrorString(StatusNVIMGCDCS);
 class ExceptionNVIMGCDCS : public std::exception
 {
   public:
-    ExceptionNVIMGCDCS(StatusNVIMGCDCS eStatus, const std::string &rMessage = "",
+    explicit ExceptionNVIMGCDCS(StatusNVIMGCDCS eStatus, const std::string &rMessage = "",
                        const std::string &rLoc = "");
 
     inline virtual ~ExceptionNVIMGCDCS() throw() { ; }

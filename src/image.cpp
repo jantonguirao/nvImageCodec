@@ -18,6 +18,8 @@ Image::Image(nvimgcdcsImageInfo_t* image_info)
     , host_buffer_size_(0)
     , device_buffer_(nullptr)
     , device_buffer_size_(0)
+    , encode_state_(nullptr)
+    , decode_state_(nullptr)
     , image_desc_{this, Image::getImageInfo, Image::getDeviceBuffer, Image::getHostBuffer}
 {
 }
@@ -45,7 +47,7 @@ void Image::getDeviceBuffer(void** buffer, size_t* size)
     *buffer = device_buffer_;
     *size   = device_buffer_size_;
 }
-void Image::setImageInfo(nvimgcdcsImageInfo_t* image_info)
+void Image::setImageInfo(const nvimgcdcsImageInfo_t* image_info)
 {
     image_info_ = *image_info;
 }

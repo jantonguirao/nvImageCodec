@@ -67,17 +67,17 @@ const std::string& Codec::name() const
 void Codec::registerParser(std::unique_ptr<ImageParserFactory> parserFactory, float priority)
 {
     std::cout << "Codec::registerParser" << std::endl;
-    auto it = parsers_.emplace(priority, std::move(parserFactory));
+    parsers_.emplace(priority, std::move(parserFactory));
 }
 
 void Codec::registerEncoder(std::unique_ptr<ImageEncoderFactory> encoderFactory, float priority)
 {
-    auto it = encoders_.emplace(priority, std::move(encoderFactory));
+    encoders_.emplace(priority, std::move(encoderFactory));
 }
 
 void Codec::registerDecoder(std::unique_ptr<ImageDecoderFactory> decoderFactory, float priority)
 {
-    auto it = decoders_.emplace(priority, std::move(decoderFactory));
+    decoders_.emplace(priority, std::move(decoderFactory));
 }
 
 } // namespace nvimgcdcs

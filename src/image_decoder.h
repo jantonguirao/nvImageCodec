@@ -36,7 +36,7 @@ class ImageDecoder
 class ImageDecoderFactory
 {
   public:
-    ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc);
+    explicit ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc);
     std::string getDecoderId() const;
     std::string getCodecName() const;
     bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params);

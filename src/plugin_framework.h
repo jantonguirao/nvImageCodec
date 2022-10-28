@@ -21,7 +21,7 @@ class CodecRegistry;
 class PluginFramework
 {
   public:
-    PluginFramework(CodecRegistry *codec_registry);
+    explicit PluginFramework(CodecRegistry *codec_registry);
     ~PluginFramework();
     void discoverAndLoadExtModules();
     void loadExtModule(const std::string &modulePath);

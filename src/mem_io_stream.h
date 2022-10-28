@@ -11,6 +11,7 @@
 #pragma once
 
 #include "io_stream.h"
+#include <cstring>
 
 namespace nvimgcdcs {
 

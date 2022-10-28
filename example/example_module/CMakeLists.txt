@@ -8,6 +8,7 @@ set(EXAMPLE_NVIMGCDCS_SRC
 )
 include_directories(
   ../../include
+  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )     
 
 find_library(CUDART_SHARED 

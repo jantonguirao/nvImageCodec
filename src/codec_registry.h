@@ -12,7 +12,6 @@
 
 #include <map>
 #include <memory>
-#include <span>
 #include <string>
 #include <vector>
 #include "codec.h"
@@ -28,8 +27,6 @@ class CodecRegistry
     const std::pair<Codec*, std::unique_ptr<ImageParser>> getCodecAndParser(
         nvimgcdcsCodeStreamDesc_t code_stream) const;
     Codec* getCodecByName(const char* name);
-    std::span<Codec* const> codecs() const;
-
   private:
     std::vector<Codec*> codec_ptrs_;
     std::map<std::string, std::unique_ptr<Codec>> by_name_;

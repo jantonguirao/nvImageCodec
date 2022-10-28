@@ -501,6 +501,11 @@ extern "C"
         nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_state);
 
+    //High-level API
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImgRead(
+        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImgWrite(
+        nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params);
 #if 0
 nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcsCodeStreamGetImageComponentInfo(nvimgcdcsCodeStream_t stream_handle,
         nvimgcdcsImageComponentInfo_t* component_info,

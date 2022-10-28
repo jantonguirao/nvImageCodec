@@ -19,7 +19,7 @@ namespace nvimgcdcs {
 class ImageParser
 {
   public:
-    ImageParser(const struct nvimgcdcsParserDesc* desc);
+    explicit ImageParser(const struct nvimgcdcsParserDesc* desc);
     ~ImageParser();
     std::string getParserId() const;
     std::string getCodecName() const;
@@ -34,7 +34,7 @@ class ImageParser
 class ImageParserFactory
 {
   public:
-    ImageParserFactory(const struct nvimgcdcsParserDesc* desc);
+    explicit ImageParserFactory(const struct nvimgcdcsParserDesc* desc);
     std::string getParserId() const;
     std::string getCodecName() const;
     bool canParse(nvimgcdcsCodeStreamDesc_t code_stream);

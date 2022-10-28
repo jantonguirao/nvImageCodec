@@ -25,8 +25,6 @@ void CodecRegistry::registerCodec(std::unique_ptr<Codec> codec)
 {
     if (by_name_.find(codec->name()) != by_name_.end())
         throw std::invalid_argument("A different codec with the same name already registered.");
-
-    codec_ptrs_.push_back(codec.get());
     by_name_.insert(std::make_pair(codec->name(), std::move(codec)));
 }
 
@@ -34,12 +32,13 @@ const std::pair<Codec*, std::unique_ptr<ImageParser>> CodecRegistry::getCodecAnd
     nvimgcdcsCodeStreamDesc_t code_stream) const
 {
     std::cout << "CodecRegistry::getCodecAndParser" << std::endl;
-    for (auto codec : codec_ptrs_) {
-        std::unique_ptr<ImageParser> parser = codec->createParser(code_stream);
+    for (const auto& entry : by_name_) {
+        std::unique_ptr<ImageParser> parser = entry.second->createParser(code_stream);
         if (parser) {
-            return std::make_pair(codec, std::move(parser));
+            return std::make_pair(entry.second.get(), std::move(parser));
         }
     }
+
     return std::make_pair(nullptr, nullptr);
 }
 
@@ -50,11 +49,6 @@ Codec* CodecRegistry::getCodecByName(const char* name)
         return it->second.get();
     else
         return nullptr;
-}
-
-std::span<Codec* const> CodecRegistry::codecs() const
-{
-    return {codec_ptrs_.data(), codec_ptrs_.size()};
 }
 
 } // namespace nvimgcdcs

@@ -37,7 +37,7 @@ class ImageEncoder
 class ImageEncoderFactory
 {
   public:
-    ImageEncoderFactory(const struct nvimgcdcsEncoderDesc* desc);
+    explicit ImageEncoderFactory(const struct nvimgcdcsEncoderDesc* desc);
     std::string getEncoderId() const;
     std::string getCodecName() const;
     bool canEncode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params);

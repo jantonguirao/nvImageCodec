@@ -76,7 +76,7 @@ void CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     *image_info = *image_info_.get();
 }
 
-void CodeStream::setImageInfo(nvimgcdcsImageInfo_t* image_info)
+void CodeStream::setImageInfo(const nvimgcdcsImageInfo_t* image_info)
 {
     if (!image_info_) {
         image_info_ = std::make_unique<nvimgcdcsImageInfo_t>();

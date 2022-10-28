@@ -20,13 +20,13 @@ class EncodeState;
 class Image
 {
   public:
-    Image(nvimgcdcsImageInfo_t* image_info);
+    explicit Image(nvimgcdcsImageInfo_t* image_info);
     ~Image();
     void setHostBuffer(void* buffer, size_t size);
     void getHostBuffer(void** buffer, size_t* size);
     void setDeviceBuffer(void* buffer, size_t size);
     void getDeviceBuffer(void** buffer, size_t* size);
-    void setImageInfo(nvimgcdcsImageInfo_t* image_info);
+    void setImageInfo(const nvimgcdcsImageInfo_t* image_info);
     void getImageInfo(nvimgcdcsImageInfo_t* image_info);
     void attachDecodeState(DecodeState* decode_state);
     DecodeState* getAttachedDecodeState();

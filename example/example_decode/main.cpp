@@ -2,6 +2,9 @@
 #include <nvimgcodecs.h>
 #include <filesystem>
 #include <iostream>
+#include <vector>
+#include <cstring>
+
 #define CHECK_CUDA(call)                                                                \
     {                                                                                   \
         cudaError_t _e = (call);                                                        \

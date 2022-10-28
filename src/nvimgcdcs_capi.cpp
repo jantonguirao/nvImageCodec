@@ -20,6 +20,7 @@
 #include "image_decoder.h"
 #include "image_encoder.h"
 #include "plugin_framework.h"
+#include <cstring>
 
 #include <iostream>
 #include <stdexcept>
@@ -143,12 +144,23 @@ struct nvimgcdcsEncodeState
 struct nvimgcdcsImage
 {
 
-    nvimgcdcsImage(nvimgcdcsImageInfo_t* image_info)
+    explicit nvimgcdcsImage(nvimgcdcsImageInfo_t* image_info)
         : image_(image_info)
+        , dev_image_buffer_(nullptr)
+        , dev_image_buffer_size_(0)
     {
+    }
+
+    ~nvimgcdcsImage()
+    {
+        if (dev_image_buffer_) {
+            CHECK_CUDA(cudaFree(dev_image_buffer_));
+        }
     }
     nvimgcdcsInstance_t nvimgcdcs_instance_;
     Image image_;
+    unsigned char* dev_image_buffer_;
+    size_t dev_image_buffer_size_;
 };
 
 nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
@@ -190,7 +202,7 @@ nvimgcdcsStatus_t nvimgcdcsInstanceDestroy(nvimgcdcsInstance_t instance)
 
 struct nvimgcdcsCodeStream
 {
-    nvimgcdcsCodeStream(CodecRegistry* codec_registry)
+    explicit nvimgcdcsCodeStream(CodecRegistry* codec_registry)
         : code_stream_(codec_registry)
     {
     }
@@ -331,7 +343,11 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(
             CHECK_NULL(stream_handle)
             CHECK_NULL(codec_name)
             std::string codec_name_ = stream_handle->code_stream_.getCodecName();
+            #ifdef WIN32
             strcpy_s(codec_name, NVIMGCDCS_MAX_CODEC_NAME_SIZE, codec_name_.c_str());
+            #else 
+            strcpy(codec_name,codec_name_.c_str());
+            #endif
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -718,3 +734,93 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_stat
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
+
+nvimgcdcsStatus_t nvimgcdcsImgRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+    {
+        CHECK_NULL(instance)
+        CHECK_NULL(image) 
+        CHECK_NULL(file_name)
+
+        nvimgcdcsCodeStream_t code_stream;
+        nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, file_name);
+        nvimgcdcsImageInfo_t image_info;
+        nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
+        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
+        nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
+        int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+        image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+        nvimgcdcsDecodeParams_t decode_params;
+        decode_params.backend.useGPU = true;
+
+        nvimgcdcsDecoder_t decoder;
+        nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);
+
+        nvimgcdcsDecodeState_t decode_state;
+        nvimgcdcsDecodeStateCreate(decoder, &decode_state);
+
+        unsigned char* image_buffer;
+        CHECK_CUDA(
+            cudaMallocPitch((void**)&image_buffer, &image_info.component_info[0].pitch_in_bytes,
+                image_info.image_width * bytes_per_element,
+                image_info.image_height * image_info.num_components));
+        image_info.component_info[1].pitch_in_bytes = image_info.component_info[0].pitch_in_bytes;
+        image_info.component_info[2].pitch_in_bytes = image_info.component_info[0].pitch_in_bytes;
+        size_t image_buffer_size                    = image_info.component_info[0].pitch_in_bytes *
+                                   image_info.image_height * image_info.num_components;
+
+        nvimgcdcsImageCreate(instance, image, &image_info);
+        (*image)->dev_image_buffer_ = image_buffer;
+        (*image)->dev_image_buffer_size_ = image_buffer_size;
+        nvimgcdcsImageSetDeviceBuffer(*image, image_buffer, image_buffer_size);
+        nvimgcdcsImageAttachDecodeState(*image, decode_state);
+        nvimgcdcsDecoderDecode(decoder, code_stream, *image, &decode_params);
+        cudaDeviceSynchronize();
+        nvimgcdcsImageDetachDecodeState(*image);
+        nvimgcdcsDecodeStateDestroy(decode_state);
+        nvimgcdcsDecoderDestroy(decoder);
+        nvimgcdcsCodeStreamDestroy(code_stream);
+    } NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+
+nvimgcdcsStatus_t nvimgcdcsImgWrite(
+    nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(instance)
+            CHECK_NULL(image)
+            CHECK_NULL(file_name)
+
+            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageGetImageInfo(image, &image_info);
+
+            nvimgcdcsCodeStream_t bmp_code_stream;
+            nvimgcdcsCodeStreamCreateToFile(instance, &bmp_code_stream, file_name, "bmp" /*TODO*/);
+            nvimgcdcsCodeStreamSetImageInfo(bmp_code_stream, &image_info);
+
+            nvimgcdcsEncodeParams_t encode_params;
+            encode_params.backend.useCPU = true;
+            encode_params.target_psnr    = 50; //TODO
+            encode_params.codec          = "bmp" /*TODO*/;
+
+            nvimgcdcsEncoder_t encoder;
+            nvimgcdcsEncoderCreate(instance, &encoder, bmp_code_stream, &encode_params);
+            nvimgcdcsEncodeState_t encode_state;
+            nvimgcdcsEncodeStateCreate(encoder, &encode_state);
+            nvimgcdcsImageAttachEncodeState(image, encode_state);
+            nvimgcdcsEncoderEncode(encoder, bmp_code_stream, image, &encode_params);
+            cudaDeviceSynchronize();
+            nvimgcdcsImageDetachEncodeState(image);
+            nvimgcdcsEncodeStateDestroy(encode_state);
+            nvimgcdcsEncoderDestroy(encoder);
+            nvimgcdcsCodeStreamDestroy(bmp_code_stream);
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+

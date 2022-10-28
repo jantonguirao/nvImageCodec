@@ -27,7 +27,7 @@ class MmapedFileIoStream : public FileIoStream
     int64_t tell() const override;
     std::size_t size() const override;
 
-    ~MmapedFileIoStream() override { close(); }
+    ~MmapedFileIoStream() override { MmapedFileIoStream::close(); }
 
   private:
     std::shared_ptr<void> p_;

@@ -27,7 +27,7 @@ class StdFileIoStream : public FileIoStream
     int64_t tell() const override;
     size_t size() const override;
 
-    ~StdFileIoStream() override { close(); }
+    ~StdFileIoStream() override { StdFileIoStream::close(); }
 
   private:
     FILE* fp_;
