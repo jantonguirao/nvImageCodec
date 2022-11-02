@@ -31,6 +31,14 @@ include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 message(STATUS "props ProductVersionFiles ${ProductVersionFiles}")  
 
 add_library(${NVIMGCDCS_LIBRARY_NAME} SHARED ${NVIMGCDCS_SRCS} ${ProductVersionFiles})
+add_library(${NVIMGCDCS_LIBRARY_NAME}_static STATIC   ${NVIMGCDCS_SRCS} ${ProductVersionFiles})
+
+find_library(CUDART_SHARED 
+    NAMES cudart
+    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
+    )
+target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PUBLIC ${CUDART_SHARED})
+
 if(UNIX)
     target_link_libraries (${NVIMGCDCS_LIBRARY_NAME} PRIVATE dl)
 endif()
@@ -42,8 +50,3 @@ configure_library_version(NVIMGCDCS_LIBRARY_NAME
     "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcdcs_version.h"
 )
 
-find_library(CUDART_SHARED 
-    NAMES cudart
-    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
-    )
-target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PUBLIC ${CUDART_SHARED})

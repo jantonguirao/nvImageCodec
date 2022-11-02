@@ -18,6 +18,7 @@ option(BUILD_TEST "Build tests" ON)
 option(BUILD_EXAMPLE "Build example" ON)
 option(BUILD_DOCS "Build documentation" OFF)
 option(BUILD_EXTENSIONS "Build extensions modules" ON)
+option(BUILD_PYTHON "Build Python binding" ON)
 
 
 
@@ -90,6 +91,10 @@ endif()
 
 if(BUILD_EXAMPLE)
 add_subdirectory(example)
+endif()
+
+if(BUILD_PYTHON)
+add_subdirectory(python)
 endif()
 
 #if(BUILD_DOCS)
