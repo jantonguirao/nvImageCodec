@@ -22,9 +22,12 @@
 #include "plugin_framework.h"
 #include <cstring>
 
+#include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+
+namespace fs = std::filesystem;
 
 using namespace nvimgcdcs;
 
@@ -735,7 +738,7 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_stat
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsImgRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name)
+nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
@@ -785,8 +788,9 @@ nvimgcdcsStatus_t nvimgcdcsImgRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_
     } NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
+static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}};
 
-nvimgcdcsStatus_t nvimgcdcsImgWrite(
+nvimgcdcsStatus_t nvimgcdcsImWrite(
     nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
@@ -798,15 +802,25 @@ nvimgcdcsStatus_t nvimgcdcsImgWrite(
 
             nvimgcdcsImageInfo_t image_info;
             nvimgcdcsImageGetImageInfo(image, &image_info);
+            fs::path file_path(file_name);
 
+       
+            std::string codec_name = "bmp";
+            if (file_path.has_extension()) {
+                std::string extension = file_path.extension().string();
+                auto it = ext2codec.find(extension);
+                if (it != ext2codec.end()) {
+                    codec_name = it->second;
+                }
+            }
             nvimgcdcsCodeStream_t bmp_code_stream;
-            nvimgcdcsCodeStreamCreateToFile(instance, &bmp_code_stream, file_name, "bmp" /*TODO*/);
+            nvimgcdcsCodeStreamCreateToFile(instance, &bmp_code_stream, file_name, codec_name.c_str());
             nvimgcdcsCodeStreamSetImageInfo(bmp_code_stream, &image_info);
 
             nvimgcdcsEncodeParams_t encode_params;
             encode_params.backend.useCPU = true;
             encode_params.target_psnr    = 50; //TODO
-            encode_params.codec          = "bmp" /*TODO*/;
+            encode_params.codec          = codec_name.c_str();
 
             nvimgcdcsEncoder_t encoder;
             nvimgcdcsEncoderCreate(instance, &encoder, bmp_code_stream, &encode_params);

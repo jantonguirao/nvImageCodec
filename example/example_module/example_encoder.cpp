@@ -4,7 +4,7 @@
 #include <vector>
 #include "exceptions.h"
 
-template <typename D>
+template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
 int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR, const D* d_chanG,
     size_t pitchG, const D* d_chanB, size_t pitchB, int width, int height, uint8_t precision,
     bool verbose)
@@ -18,22 +18,30 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR,
     int y;
     int n;
     int red, green, blue;
-
     std::vector<D> vchanR(height * width);
     std::vector<D> vchanG(height * width);
     std::vector<D> vchanB(height * width);
     D* chanR = vchanR.data();
     D* chanG = vchanG.data();
     D* chanB = vchanB.data();
-    CHECK_CUDA(cudaMemcpy2D(chanR, (size_t)width * sizeof(D), d_chanR, pitchR, width * sizeof(D),
-        height, cudaMemcpyDeviceToHost));
 
-    CHECK_CUDA(cudaMemcpy2D(chanG, (size_t)width * sizeof(D), d_chanG, pitchG, width * sizeof(D),
-        height, cudaMemcpyDeviceToHost));
+    if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
 
-    CHECK_CUDA(cudaMemcpy2D(chanB, (size_t)width * sizeof(D), d_chanB, pitchB, width * sizeof(D),
-        height, cudaMemcpyDeviceToHost));
+        CHECK_CUDA(cudaMemcpy2D(chanR, (size_t)width * sizeof(D), d_chanR, pitchR,
+            width * sizeof(D), height, cudaMemcpyDeviceToHost));
 
+        CHECK_CUDA(cudaMemcpy2D(chanG, (size_t)width * sizeof(D), d_chanG, pitchG,
+            width * sizeof(D), height, cudaMemcpyDeviceToHost));
+
+        CHECK_CUDA(cudaMemcpy2D(chanB, (size_t)width * sizeof(D), d_chanB, pitchB,
+            width * sizeof(D), height, cudaMemcpyDeviceToHost));
+    } else if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
+        vchanR.resize(height * width * 3);
+        chanR = vchanR.data();
+
+        CHECK_CUDA(cudaMemcpy(
+            chanR, d_chanR, (size_t)width * height * 3 * sizeof(D), cudaMemcpyDeviceToHost));
+    }
     extrabytes = 4 - ((width * 3) % 4); // How many bytes of padding to add to each
     // horizontal line - the size of which must
     // be a multiple of 4 bytes.
@@ -58,7 +66,7 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR,
 
     size_t written_size;
     std::string bm("BM");
-    io_stream->write(io_stream->instance, &written_size, static_cast<void*>(bm.data()),2);
+    io_stream->write(io_stream->instance, &written_size, static_cast<void*>(bm.data()), 2);
 
     for (n = 0; n <= 5; n++) {
         io_stream->putc(io_stream->instance, &written_size, headers[n] & 0x000000FF);
@@ -74,12 +82,12 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR,
     io_stream->putc(io_stream->instance, &written_size, 24);
     io_stream->putc(io_stream->instance, &written_size, 0);
 
-
     for (n = 7; n <= 12; n++) {
         io_stream->putc(io_stream->instance, &written_size, headers[n] & 0x000000FF);
         io_stream->putc(io_stream->instance, &written_size, (headers[n] & 0x0000FF00) >> 8);
         io_stream->putc(io_stream->instance, &written_size, (headers[n] & 0x00FF0000) >> 16);
-        io_stream->putc(io_stream->instance, &written_size, (headers[n] & (unsigned int)0xFF000000) >> 24);
+        io_stream->putc(
+            io_stream->instance, &written_size, (headers[n] & (unsigned int)0xFF000000) >> 24);
     }
 
     if (verbose && precision > 8) {
@@ -93,10 +101,16 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR,
     for (y = height - 1; y >= 0; y--) // BMP image format is written from bottom to top...
     {
         for (x = 0; x <= width - 1; x++) {
-            red   = chanR[y * width + x];
-            green = chanG[y * width + x];
-            blue  = chanB[y * width + x];
 
+            if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
+                red   = chanR[y * width + x];
+                green = chanG[y * width + x];
+                blue  = chanB[y * width + x];
+            } else if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
+                red   = chanR[3 * (y * width + x)];
+                green = chanR[3 * (y * width + x) + 1];
+                blue  = chanR[3 * (y * width + x) + 2];
+            }
             int scale = precision - 8;
             if (scale > 0) {
                 red   = ((red >> scale) + ((red >> (scale - 1)) % 2));
@@ -135,7 +149,7 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR,
 static nvimgcdcsEncoderStatus_t example_encoder_can_encode(void* instance, bool* result,
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params)
 {
-    *result = std::string(params->codec) == "bmp";
+    *result = std::string(params->codec) == "bmp" /*&& (NVIMGCDCS_SAMPLEFORMAT_P_RGB)*/;
 
     return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
 }
@@ -171,18 +185,22 @@ static nvimgcdcsEncoderStatus_t example_encoder_encode(nvimgcdcsEncoder_t encode
     unsigned char* dev_image_buffer;
     size_t size;
     image->getDeviceBuffer(image->instance, reinterpret_cast<void**>(&dev_image_buffer), &size);
-
-    writeBMP<unsigned char>(code_stream->io_stream, (unsigned char*)dev_image_buffer,
-        image_info.component_info[0].pitch_in_bytes,
-        (unsigned char*)dev_image_buffer +
-            image_info.component_info[0].pitch_in_bytes * image_info.image_height,
-        image_info.component_info[1].pitch_in_bytes,
-        (unsigned char*)dev_image_buffer +
-            +image_info.component_info[0].pitch_in_bytes * image_info.image_height +
-            image_info.component_info[1].pitch_in_bytes * image_info.image_height,
-        image_info.component_info[2].pitch_in_bytes, image_info.image_width,
-        image_info.image_height, 8, true);
-
+    if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
+        writeBMP<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream,
+            (unsigned char*)dev_image_buffer, image_info.component_info[0].pitch_in_bytes, NULL, 0,
+            NULL, 0, image_info.image_width, image_info.image_height, 8, true);
+    } else {
+        writeBMP<unsigned char>(code_stream->io_stream, (unsigned char*)dev_image_buffer,
+            image_info.component_info[0].pitch_in_bytes,
+            (unsigned char*)dev_image_buffer +
+                image_info.component_info[0].pitch_in_bytes * image_info.image_height,
+            image_info.component_info[1].pitch_in_bytes,
+            (unsigned char*)dev_image_buffer +
+                +image_info.component_info[0].pitch_in_bytes * image_info.image_height +
+                image_info.component_info[1].pitch_in_bytes * image_info.image_height,
+            image_info.component_info[2].pitch_in_bytes, image_info.image_width,
+            image_info.image_height, 8, true);
+    }
     return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
 }
 

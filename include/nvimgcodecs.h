@@ -502,44 +502,10 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_state);
 
     //High-level API
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImgRead(
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImgWrite(
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params);
-#if 0
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcsCodeStreamGetImageComponentInfo(nvimgcdcsCodeStream_t stream_handle,
-        nvimgcdcsImageComponentInfo_t* component_info,
-        uint32_t component_id);
-
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcsCodeStreamGetResolutionsInTile(nvimgcdcsCodeStream_t stream_handle, 
-        uint32_t tile_id,
-        uint32_t* num_res);
-
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcsCodeStreamGetTileComponentDim(nvimgcdcsCodeStream_t stream_handle, 
-        uint32_t component_id,
-        uint32_t tile_id, 
-        uint32_t* tile_width, 
-        uint32_t* tile_height);
-
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcsCodeStreamGetResolutionComponentDim(nvimgcdcsCodeStream_t stream_handle, 
-        uint32_t component_id,
-        uint32_t tile_id,
-        uint32_t res_level,
-        uint32_t* res_width,
-        uint32_t* res_height );
-#endif
-
-#if 0
-nvimgcdcsStatus_t NVIMGCDCSAPI nvimgcdcsDecodeTile(nvimgcdcsInstance_t handle, 
-        nvimgcdcsDecodeState_t decode_state, 
-        nvimgcdcsCodeStream_t jpeg2k_stream, 
-        nvimgcdcsDecodeParams_t decode_params,
-        uint32_t tile_id,
-        uint32_t num_res_levels,
-        nvimgcdcsImage_t* decode_output,
-        cudaStream_t stream);
-#endif
-
 #if defined(__cplusplus)
 }
 #endif

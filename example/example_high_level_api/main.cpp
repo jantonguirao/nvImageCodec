@@ -96,10 +96,10 @@ int main(int argc, const char* argv[])
     
     nvimgcdcsImage_t image;
     std::cout << "Loading " << input_file.string() << " file" << std::endl;
-    nvimgcdcsImgRead(instance, &image, input_file.string().c_str());
+    nvimgcdcsImRead(instance, &image, input_file.string().c_str());
 
     std::cout << "Saving to " << output_file.string() << " file" << std::endl;
-    nvimgcdcsImgWrite(instance, image, output_file.string().c_str(), NULL);
+    nvimgcdcsImWrite(instance, image, output_file.string().c_str(), NULL);
 
     nvimgcdcsImageDestroy(image);
     nvimgcdcsInstanceDestroy(instance);
