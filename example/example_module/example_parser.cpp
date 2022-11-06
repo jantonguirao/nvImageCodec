@@ -4,7 +4,7 @@
 #include <cassert>
 #include "example_parser.h"
 
-static nvimgcdcsParserStatus_t example_parser_can_parse(
+static nvimgcdcsStatus_t example_parser_can_parse(
     void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     std::cout << "example_parser_can_parse" << std::endl;
@@ -17,43 +17,43 @@ static nvimgcdcsParserStatus_t example_parser_can_parse(
     io_stream->size(io_stream->instance, &length);
     if (length < 18u) {
         *result = false;
-        return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+        return NVIMGCDCS_STATUS_SUCCESS;
     }
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
     io_stream->read(io_stream->instance, &output_size, &signature_buffer[0], signature_size);
     if (output_size != signature_size) {
         *result = false;
-        return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+        return NVIMGCDCS_STATUS_SUCCESS;
     }
 
     *result = signature_buffer[0] == 'B' && signature_buffer[1] == 'M';
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsParserStatus_t example_parser_create(void* instance, nvimgcdcsParser_t* parser)
+static nvimgcdcsStatus_t example_parser_create(void* instance, nvimgcdcsParser_t* parser)
 {
 
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsParserStatus_t example_parser_destroy(nvimgcdcsParser_t parser)
+static nvimgcdcsStatus_t example_parser_destroy(nvimgcdcsParser_t parser)
 {
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsParserStatus_t example_create_parse_state(
+static nvimgcdcsStatus_t example_create_parse_state(
     nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
     std::cout << "example_create_parse_state" << std::endl;
     *parse_state = new nvimgcdcsParseState();
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsParserStatus_t example_destroy_parse_state(nvimgcdcsParseState_t parse_state)
+static nvimgcdcsStatus_t example_destroy_parse_state(nvimgcdcsParseState_t parse_state)
 {
     std::cout << "example_destroy_parse_state" << std::endl;
     delete parse_state;
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 enum BmpCompressionType
@@ -120,7 +120,7 @@ static int number_of_channels(nvimgcdcsIoStreamDesc_t io_stream, int bpp, int co
     //    " compression_type:", compression_type, "ncolors:", ncolors));
 }
 
-static nvimgcdcsParserStatus_t example_parser_get_image_info(
+static nvimgcdcsStatus_t example_parser_get_image_info(
     nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     std::cout << "example_parser_get_image_info" << std::endl;
@@ -129,7 +129,7 @@ static nvimgcdcsParserStatus_t example_parser_get_image_info(
     size_t length;
     io_stream->size(io_stream->instance, &length);
     if (length < 18u) {
-        return NVIMGCDCS_PARSER_STATUS_BAD_BITSTREAM;
+        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
 
     static constexpr int kHeaderStart = 14;
@@ -192,7 +192,7 @@ static nvimgcdcsParserStatus_t example_parser_get_image_info(
         image_info->component_info[i].sample_type      = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;// TODO
     }
     image_info->sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 // clang-format off

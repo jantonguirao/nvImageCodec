@@ -102,57 +102,57 @@ nvimgcdcsCodeStreamDesc* CodeStream::getCodeStreamDesc()
     return &code_stream_desc_;
 }
 
-nvimgcdcsParserStatus_t CodeStream::read(size_t* output_size, void* buf, size_t bytes)
+nvimgcdcsStatus_t CodeStream::read(size_t* output_size, void* buf, size_t bytes)
 {
     assert(io_stream_);
     *output_size = io_stream_->read(buf, bytes);
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsParserStatus_t CodeStream::write(size_t* output_size, void* buf, size_t bytes)
+nvimgcdcsStatus_t CodeStream::write(size_t* output_size, void* buf, size_t bytes)
 {
     assert(io_stream_);
     *output_size = io_stream_->write(buf, bytes);
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
-nvimgcdcsParserStatus_t CodeStream::putc(size_t* output_size, unsigned char ch)
+nvimgcdcsStatus_t CodeStream::putc(size_t* output_size, unsigned char ch)
 {
     assert(io_stream_);
     *output_size = io_stream_->putc(ch);
 
-    return *output_size == 1 ? NVIMGCDCS_PARSER_STATUS_SUCCESS
-                             : NVIMGCDCS_PARSER_STATUS_BAD_BITSTREAM;
+    return *output_size == 1 ? NVIMGCDCS_STATUS_SUCCESS
+                             : NVIMGCDCS_STATUS_BAD_CODESTREAM;
 }
 
-nvimgcdcsParserStatus_t CodeStream::skip(size_t count)
+nvimgcdcsStatus_t CodeStream::skip(size_t count)
 {
     assert(io_stream_);
     io_stream_->skip(count);
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsParserStatus_t CodeStream::seek(size_t offset, int whence)
+nvimgcdcsStatus_t CodeStream::seek(size_t offset, int whence)
 {
     assert(io_stream_);
     io_stream_->seek(offset, whence);
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsParserStatus_t CodeStream::tell(size_t* offset)
+nvimgcdcsStatus_t CodeStream::tell(size_t* offset)
 {
     assert(io_stream_);
     *offset = io_stream_->tell();
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsParserStatus_t CodeStream::size(size_t* size)
+nvimgcdcsStatus_t CodeStream::size(size_t* size)
 {
     assert(io_stream_);
     *size = io_stream_->size();
-    return NVIMGCDCS_PARSER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsParserStatus_t CodeStream::read_static(
+nvimgcdcsStatus_t CodeStream::read_static(
     void* instance, size_t* output_size, void* buf, size_t bytes)
 {
     assert(instance);
@@ -160,7 +160,7 @@ nvimgcdcsParserStatus_t CodeStream::read_static(
     return handle->read(output_size, buf, bytes);
 }
 
-nvimgcdcsParserStatus_t CodeStream::write_static(
+nvimgcdcsStatus_t CodeStream::write_static(
     void* instance, size_t* output_size, void* buf, size_t bytes)
 {
     assert(instance);
@@ -168,7 +168,7 @@ nvimgcdcsParserStatus_t CodeStream::write_static(
     return handle->write(output_size, buf, bytes);
 }
 
-nvimgcdcsParserStatus_t CodeStream::putc_static(
+nvimgcdcsStatus_t CodeStream::putc_static(
     void* instance, size_t* output_size, unsigned char ch)
 {
     assert(instance);
@@ -176,25 +176,25 @@ nvimgcdcsParserStatus_t CodeStream::putc_static(
     return handle->putc(output_size, ch);
 }
 
-nvimgcdcsParserStatus_t CodeStream::skip_static(void* instance, size_t count)
+nvimgcdcsStatus_t CodeStream::skip_static(void* instance, size_t count)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->skip(count);
 }
-nvimgcdcsParserStatus_t CodeStream::seek_static(void* instance, size_t offset, int whence)
+nvimgcdcsStatus_t CodeStream::seek_static(void* instance, size_t offset, int whence)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->seek(offset, whence);
 }
-nvimgcdcsParserStatus_t CodeStream::tell_static(void* instance, size_t* offset)
+nvimgcdcsStatus_t CodeStream::tell_static(void* instance, size_t* offset)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->tell(offset);
 }
-nvimgcdcsParserStatus_t CodeStream::size_static(void* instance, size_t* size)
+nvimgcdcsStatus_t CodeStream::size_static(void* instance, size_t* size)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);

@@ -26,16 +26,16 @@ class PluginFramework
     void discoverAndLoadExtModules();
     void loadExtModule(const std::string &modulePath);
     void unloadAllExtModules();
-    nvimgcdcsFrameworkStatus_t registerEncoder(const struct nvimgcdcsEncoderDesc *desc);
-    nvimgcdcsFrameworkStatus_t registerDecoder(const struct nvimgcdcsDecoderDesc *desc);
-    nvimgcdcsFrameworkStatus_t registerParser(const struct nvimgcdcsParserDesc *desc);
+    nvimgcdcsStatus_t registerEncoder(const struct nvimgcdcsEncoderDesc *desc);
+    nvimgcdcsStatus_t registerDecoder(const struct nvimgcdcsDecoderDesc *desc);
+    nvimgcdcsStatus_t registerParser(const struct nvimgcdcsParserDesc *desc);
 
   private:
-    static nvimgcdcsFrameworkStatus_t
+    static nvimgcdcsStatus_t
     static_register_encoder(void *instance, const struct nvimgcdcsEncoderDesc *desc);
-    static nvimgcdcsFrameworkStatus_t
+    static nvimgcdcsStatus_t
     static_register_decoder(void *instance, const struct nvimgcdcsDecoderDesc *desc);
-    static nvimgcdcsFrameworkStatus_t
+    static nvimgcdcsStatus_t
     static_register_parser(void *instance, const struct nvimgcdcsParserDesc *desc);
 
     std::vector<std::string_view> plugin_dirs_;

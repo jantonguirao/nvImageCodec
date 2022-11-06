@@ -38,22 +38,22 @@ class CodeStream
 
   private:
     void parse();
-    nvimgcdcsParserStatus_t read(size_t* output_size, void* buf, size_t bytes);
-    nvimgcdcsParserStatus_t write(size_t* output_size, void* buf, size_t bytes);
-    nvimgcdcsParserStatus_t putc(size_t* output_size, unsigned char ch);
-    nvimgcdcsParserStatus_t skip(size_t count);
-    nvimgcdcsParserStatus_t seek(size_t offset, int whence);
-    nvimgcdcsParserStatus_t tell(size_t* offset);
-    nvimgcdcsParserStatus_t size(size_t* size);
+    nvimgcdcsStatus_t read(size_t* output_size, void* buf, size_t bytes);
+    nvimgcdcsStatus_t write(size_t* output_size, void* buf, size_t bytes);
+    nvimgcdcsStatus_t putc(size_t* output_size, unsigned char ch);
+    nvimgcdcsStatus_t skip(size_t count);
+    nvimgcdcsStatus_t seek(size_t offset, int whence);
+    nvimgcdcsStatus_t tell(size_t* offset);
+    nvimgcdcsStatus_t size(size_t* size);
 
-    static nvimgcdcsParserStatus_t read_static(void* instance, size_t* output_size, void* buf, size_t bytes);
-    static nvimgcdcsParserStatus_t write_static(
+    static nvimgcdcsStatus_t read_static(void* instance, size_t* output_size, void* buf, size_t bytes);
+    static nvimgcdcsStatus_t write_static(
         void* instance, size_t* output_size, void* buf, size_t bytes);
-    static nvimgcdcsParserStatus_t putc_static(void* instance, size_t* output_size, unsigned char ch);
-    static nvimgcdcsParserStatus_t skip_static(void* instance, size_t count);
-    static nvimgcdcsParserStatus_t seek_static(void* instance, size_t offset, int whence);
-    static nvimgcdcsParserStatus_t tell_static(void* instance, size_t* offset);
-    static nvimgcdcsParserStatus_t size_static(void* instance, size_t* size);
+    static nvimgcdcsStatus_t putc_static(void* instance, size_t* output_size, unsigned char ch);
+    static nvimgcdcsStatus_t skip_static(void* instance, size_t count);
+    static nvimgcdcsStatus_t seek_static(void* instance, size_t offset, int whence);
+    static nvimgcdcsStatus_t tell_static(void* instance, size_t* offset);
+    static nvimgcdcsStatus_t size_static(void* instance, size_t* size);
 
     CodecRegistry* codec_registry_;
     Codec* codec_;

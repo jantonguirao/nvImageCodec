@@ -87,28 +87,28 @@ nvimgcdcsImageDesc* Image::getImageDesc()
     return &image_desc_;
 }
 
-nvimgcdcsImageStatus_t Image::getImageInfo(void* instance, nvimgcdcsImageInfo_t* result)
+nvimgcdcsStatus_t Image::getImageInfo(void* instance, nvimgcdcsImageInfo_t* result)
 {
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
     handle->getImageInfo(result);
-    return NVIMGCDCS_IMAGE_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsImageStatus_t Image::getDeviceBuffer(void* instance, void** buffer, size_t* size)
+nvimgcdcsStatus_t Image::getDeviceBuffer(void* instance, void** buffer, size_t* size)
 {
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
     handle->getDeviceBuffer(buffer, size);
-    return NVIMGCDCS_IMAGE_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsImageStatus_t Image::getHostBuffer(void* instance, void** buffer, size_t* size)
+nvimgcdcsStatus_t Image::getHostBuffer(void* instance, void** buffer, size_t* size)
 {
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
     handle->getHostBuffer(buffer, size);
-    return NVIMGCDCS_IMAGE_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 } // namespace nvimgcdcs

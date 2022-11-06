@@ -40,21 +40,21 @@ PluginFramework::~PluginFramework()
     unloadAllExtModules();
 }
 
-nvimgcdcsFrameworkStatus_t PluginFramework::static_register_encoder(
+nvimgcdcsStatus_t PluginFramework::static_register_encoder(
     void* instance, const struct nvimgcdcsEncoderDesc* desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerEncoder(desc);
 }
 
-nvimgcdcsFrameworkStatus_t PluginFramework::static_register_decoder(
+nvimgcdcsStatus_t PluginFramework::static_register_decoder(
     void* instance, const struct nvimgcdcsDecoderDesc* desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerDecoder(desc);
 }
 
-nvimgcdcsFrameworkStatus_t PluginFramework::static_register_parser(
+nvimgcdcsStatus_t PluginFramework::static_register_parser(
     void* instance, const struct nvimgcdcsParserDesc* desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
@@ -94,7 +94,7 @@ void PluginFramework::unloadAllExtModules()
     modules_.clear();
 }
 
-nvimgcdcsFrameworkStatus_t PluginFramework::registerEncoder(const struct nvimgcdcsEncoderDesc* desc)
+nvimgcdcsStatus_t PluginFramework::registerEncoder(const struct nvimgcdcsEncoderDesc* desc)
 {
     std::cout << "Framework side register_encoder" << std::endl;
     std::cout << " - id:" << desc->id << std::endl;
@@ -112,10 +112,10 @@ nvimgcdcsFrameworkStatus_t PluginFramework::registerEncoder(const struct nvimgcd
     std::unique_ptr<ImageEncoderFactory> encoder_factory =
         std::make_unique<ImageEncoderFactory>(desc);
     codec->registerEncoder(std::move(encoder_factory), 1);
-    return NVIMGCDCS_FRAMEWORK_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsFrameworkStatus_t PluginFramework::registerDecoder(const struct nvimgcdcsDecoderDesc* desc)
+nvimgcdcsStatus_t PluginFramework::registerDecoder(const struct nvimgcdcsDecoderDesc* desc)
 {
     std::cout << "Framework side register_decoder" << std::endl;
     std::cout << " - id:" << desc->id << std::endl;
@@ -133,10 +133,10 @@ nvimgcdcsFrameworkStatus_t PluginFramework::registerDecoder(const struct nvimgcd
     std::unique_ptr<ImageDecoderFactory> decoder_factory =
         std::make_unique<ImageDecoderFactory>(desc);
     codec->registerDecoder(std::move(decoder_factory), 1);
-    return NVIMGCDCS_FRAMEWORK_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsFrameworkStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDesc* desc)
+nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDesc* desc)
 {
     std::cout << "Framework side register parser" << std::endl;
     std::cout << " - id:" << desc->id << std::endl;
@@ -153,6 +153,6 @@ nvimgcdcsFrameworkStatus_t PluginFramework::registerParser(const struct nvimgcdc
     std::cout << "Creating new parser factory " << std::endl;
     std::unique_ptr<ImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
     codec->registerParser(std::move(parser_factory), 1);
-    return NVIMGCDCS_FRAMEWORK_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 } // namespace nvimgcdcs

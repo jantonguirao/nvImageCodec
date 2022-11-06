@@ -146,37 +146,37 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR,
     return 0;
 }
 
-static nvimgcdcsEncoderStatus_t example_encoder_can_encode(void* instance, bool* result,
+static nvimgcdcsStatus_t example_encoder_can_encode(void* instance, bool* result,
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params)
 {
     *result = std::string(params->codec) == "bmp" /*&& (NVIMGCDCS_SAMPLEFORMAT_P_RGB)*/;
 
-    return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsEncoderStatus_t example_encoder_create(
+static nvimgcdcsStatus_t example_encoder_create(
     void* instance, nvimgcdcsEncoder_t* encoder, nvimgcdcsEncodeParams_t* params)
 {
-    return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsEncoderStatus_t example_encoder_destroy(nvimgcdcsEncoder_t encoder)
+static nvimgcdcsStatus_t example_encoder_destroy(nvimgcdcsEncoder_t encoder)
 {
-    return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsEncoderStatus_t example_create_encode_state(
+static nvimgcdcsStatus_t example_create_encode_state(
     nvimgcdcsEncoder_t decoder, nvimgcdcsEncodeState_t* encode_state)
 {
-    return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsEncoderStatus_t example_destroy_encde_state(nvimgcdcsEncodeState_t encode_state)
+nvimgcdcsStatus_t example_destroy_encde_state(nvimgcdcsEncodeState_t encode_state)
 {
-    return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsEncoderStatus_t example_encoder_encode(nvimgcdcsEncoder_t encoder,
+static nvimgcdcsStatus_t example_encoder_encode(nvimgcdcsEncoder_t encoder,
     nvimgcdcsEncodeState_t encode_state, nvimgcdcsCodeStreamDesc_t code_stream,
     nvimgcdcsImageDesc_t image, nvimgcdcsEncodeParams_t* params)
 {
@@ -201,7 +201,7 @@ static nvimgcdcsEncoderStatus_t example_encoder_encode(nvimgcdcsEncoder_t encode
             image_info.component_info[2].pitch_in_bytes, image_info.image_width,
             image_info.image_height, 8, true);
     }
-    return NVIMGCDCS_ENCODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 // clang-format off

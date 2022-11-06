@@ -9,40 +9,40 @@ struct nvimgcdcsDecoder
 struct nvimgcdcsDecodeState
 {};
 
-static nvimgcdcsDecoderStatus_t example_can_decode(void* instance, bool* result,
+static nvimgcdcsStatus_t example_can_decode(void* instance, bool* result,
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params)
 {
     *result = true;
-    return NVIMGCDCS_DECODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsDecoderStatus_t example_decoder_create(
+static nvimgcdcsStatus_t example_decoder_create(
     void* instance, nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params)
 {
     *decoder = new nvimgcdcsDecoder();
-    return NVIMGCDCS_DECODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsDecoderStatus_t example_decoder_destroy(nvimgcdcsDecoder_t decoder)
+static nvimgcdcsStatus_t example_decoder_destroy(nvimgcdcsDecoder_t decoder)
 {
     delete decoder;
-    return NVIMGCDCS_DECODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsDecoderStatus_t example_create_decode_state(
+static nvimgcdcsStatus_t example_create_decode_state(
     nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
 {
     *decode_state = new nvimgcdcsDecodeState();
-    return NVIMGCDCS_DECODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsDecoderStatus_t example_destroy_decode_state(nvimgcdcsDecodeState_t decode_state)
+nvimgcdcsStatus_t example_destroy_decode_state(nvimgcdcsDecodeState_t decode_state)
 {
     delete decode_state;
-    return NVIMGCDCS_DECODER_STATUS_SUCCESS;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsDecoderStatus_t example_decoder_decode(nvimgcdcsDecoder_t decoder,
+static nvimgcdcsStatus_t example_decoder_decode(nvimgcdcsDecoder_t decoder,
     nvimgcdcsDecodeState_t decode_state, nvimgcdcsCodeStreamDesc_t code_stream,
     nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params)
 {
@@ -56,7 +56,7 @@ static nvimgcdcsDecoderStatus_t example_decoder_decode(nvimgcdcsDecoder_t decode
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
     io_stream->read(io_stream->instance, &output_size, &code_stream->parse_state->buffer[0], size);
     if (output_size != size) {
-        return NVIMGCDCS_DECODER_STATUS_BAD_BITSTREAM;
+        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
     static constexpr int kHeaderStart = 14;
     unsigned char* host_buffer;
@@ -83,8 +83,8 @@ static nvimgcdcsDecoderStatus_t example_decoder_decode(nvimgcdcsDecoder_t decode
     CHECK_CUDA_EX(cudaMemcpy2D(device_buffer, (size_t)image_info.component_info[0].pitch_in_bytes,
                       host_buffer, image_info.image_width, image_info.image_width,
                       image_info.image_height * image_info.num_components, cudaMemcpyHostToDevice),
-        NVIMGCDCS_DECODER_STATUS_INVALID_PARAMETER);
-    return NVIMGCDCS_DECODER_STATUS_SUCCESS;
+        NVIMGCDCS_STATUS_INVALID_PARAMETER);
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 // clang-format off

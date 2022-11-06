@@ -11,9 +11,9 @@
 #ifndef NVIMGCDCS_HEADER
 #define NVIMGCDCS_HEADER
 
+#include <cuda_runtime_api.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <cuda_runtime_api.h>
 //#include "library_types.h"
 #include "nvimgcdcs_data.h"
 #include "nvimgcdcs_version.h"
@@ -99,16 +99,19 @@ extern "C"
         NVIMGCDCS_STATUS_ARCH_MISMATCH                = 7,
         NVIMGCDCS_STATUS_INTERNAL_ERROR               = 8,
         NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED = 9,
+        NVIMGCDCS_STATUS_MISSED_DEPENDENCIES          = 10,
+        NVIMGCDCS_STATUS_ENUM_FORCE_INT               = 0xFFFFFFFF
     } nvimgcdcsStatus_t;
 
     typedef enum
     {
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN = 0,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8   = 1,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16  = 2,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8   = 3,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16  = 4,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 5,
+        NVIMGCDCS_SAMPLE_ENUM_FORCE_INT    = 0xFFFFFFFF
     } nvimgcdcsSampleDataType_t;
 
     typedef enum
@@ -122,30 +125,32 @@ extern "C"
         NVIMGCDCS_SAMPLING_410,
         NVIMGCDCS_SAMPLING_GRAY,
         NVIMGCDCS_SAMPLING_410V,
-
+        NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampling_t;
 
     typedef enum
     {
-        NVIMGCDCS_SAMPLEFORMAT_NOT_SUPPORTED = -1,
-        NVIMGCDCS_SAMPLEFORMAT_UNKNOWN       = 0,
-        NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED, //unchanged planar
-        NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED, //unchanged interleave
-        NVIMGCDCS_SAMPLEFORMAT_P_RGB,       //planar RGB
-        NVIMGCDCS_SAMPLEFORMAT_P_BGR,       //planar BGR
-        NVIMGCDCS_SAMPLEFORMAT_I_RGB,       //interleaved RGB
-        NVIMGCDCS_SAMPLEFORMAT_I_BGR,       //interleaved BGR
-        NVIMGCDCS_SAMPLEFORMAT_P_Y,         //Y component only
-        NVIMGCDCS_SAMPLEFORMAT_P_YUV,       //YUV planar format
+        NVIMGCDCS_SAMPLEFORMAT_NOT_SUPPORTED  = -1,
+        NVIMGCDCS_SAMPLEFORMAT_UNKNOWN        = 0,
+        NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED    = 1, //unchanged planar
+        NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED    = 2, //unchanged interleave
+        NVIMGCDCS_SAMPLEFORMAT_P_RGB          = 3, //planar RGB
+        NVIMGCDCS_SAMPLEFORMAT_P_BGR          = 4, //planar BGR
+        NVIMGCDCS_SAMPLEFORMAT_I_RGB          = 5, //interleaved RGB
+        NVIMGCDCS_SAMPLEFORMAT_I_BGR          = 6, //interleaved BGR
+        NVIMGCDCS_SAMPLEFORMAT_P_Y            = 7, //Y component only
+        NVIMGCDCS_SAMPLEFORMAT_P_YUV          = 8, //YUV planar format
+        NVIMGCDCS_SAMPLEFORMAT_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampleFormat_t;
 
     typedef enum
     {
-        NVIMGCDCS_COLORSPACE_NOT_SUPPORTED = -1,
-        NVIMGCDCS_COLORSPACE_UNKNOWN       = 0,
-        NVIMGCDCS_COLORSPACE_SRGB          = 1,
-        NVIMGCDCS_COLORSPACE_GRAY          = 2,
-        NVIMGCDCS_COLORSPACE_SYCC          = 3
+        NVIMGCDCS_COLORSPACE_NOT_SUPPORTED  = -1,
+        NVIMGCDCS_COLORSPACE_UNKNOWN        = 0,
+        NVIMGCDCS_COLORSPACE_SRGB           = 1,
+        NVIMGCDCS_COLORSPACE_GRAY           = 2,
+        NVIMGCDCS_COLORSPACE_SYCC           = 3,
+        NVIMGCDCS_COLORSPACE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsColorSpace_t;
 
     typedef enum
@@ -154,6 +159,7 @@ extern "C"
         NVIMGCDCS_SCALE_1_BY_2 = 1, // decoded output width and height is scaled by a factor of 1/2
         NVIMGCDCS_SCALE_1_BY_4 = 2, // decoded output width and height is scaled by a factor of 1/4
         NVIMGCDCS_SCALE_1_BY_8 = 3, // decoded output width and height is scaled by a factor of 1/8
+        NVIMGCDCS_SCALE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsScaleFactor_t;
 
     typedef struct
@@ -173,7 +179,7 @@ extern "C"
         nvimgcdcsSampleDataType_t sample_type;
     } nvimgcdcsImageComponentInfo_t;
 
-    #define NVIMGCDCS_MAX_NUM_COMPONENTS 32
+#define NVIMGCDCS_MAX_NUM_COMPONENTS 32
     typedef struct
     {
         uint32_t image_width;
@@ -213,6 +219,7 @@ extern "C"
         NVIMGCDCS_DECODE_STATUS_SAMPLE_TYPE_NOT_SUPPORTED = 5,
         NVIMGCDCS_DECODE_STATUS_SCALING_NOT_SUPPORTED     = 6,
         //...
+        NVIMGCDCS_DECODE_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDecodeStatus_t;
 
     typedef enum
@@ -225,6 +232,7 @@ extern "C"
         NVIMGCDCS_ENCODE_STATUS_SAMPLE_TYPE_NOT_SUPPORTED = 5,
         NVIMGCDCS_ENCODE_STATUS_SCALING_NOT_SUPPORTED     = 6,
         //...
+        NVIMGCDCS_ENCODE_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsEncodeStatus_t;
 
     typedef enum
@@ -233,6 +241,7 @@ extern "C"
         NVIMGCDCS_DECODE_PHASE_HOST   = 1,
         NVIMGCDCS_DECODE_PHASE_MIXED  = 2,
         NVIMGCDCS_DECODE_PHASE_DEVICE = 3,
+        NVIMGCDCS_DECODE_PHASE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDecodePhase_t;
 
     typedef enum
@@ -244,6 +253,7 @@ extern "C"
         NVIMGCDCS_DECODE_STEP_PRE_ENTROPY      = 4,
         NVIMGCDCS_DECODE_STEP_ENTROPY          = 5,
         NVIMGCDCS_DECODE_STEP_PACKAGING        = 6,
+        NVIMGCDCS_DECODE_STEP_ENUM_FORCE_INT   = 0xFFFFFFFF
     } nvimgcdcsDecodeStep_t;
 
     typedef struct
@@ -296,8 +306,6 @@ extern "C"
         char name[NVIMGCDCS_MAX_CAPABILITY_NAME_SIZE];
         uint32_t version;
     } nvimgcdcsCapability_t;
-
-
 
     struct nvimgcdcsHandle;
     typedef struct nvimgcdcsHandle* nvimgcdcsInstance_t;
@@ -368,7 +376,8 @@ extern "C"
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING_BIT =
             0x00000004, // Message about behavior that is not necessarily an error, but very likely a bug in your application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR_BIT =
-            0x00000008 // Message about behavior that is invalid and may cause crashes
+            0x00000008, // Message about behavior that is invalid and may cause crashes
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDebugMessageSeverity_t;
 
     typedef enum
@@ -377,7 +386,8 @@ extern "C"
             0x00000001, // Some event has happened that is unrelated to the specification or performance
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION_BIT =
             0x00000002, // Something has happened that indicates a possible mistake
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE_BIT = 0x00000004 // Potential non-optimal use
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE_BIT = 0x00000004, // Potential non-optimal use
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE__ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDebugMessageType_t;
 
     typedef struct
@@ -440,8 +450,8 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const char* file_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
-        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle,
-        unsigned char* data, size_t length);
+        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, unsigned char* data,
+        size_t length);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance,
         nvimgcdcsCodeStream_t* stream_handle, const char* file_name, const char* codec_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance,
@@ -504,8 +514,8 @@ extern "C"
     //High-level API
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(
-        nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance,
+        nvimgcdcsImage_t image, const char* file_name, const int* params);
 #if defined(__cplusplus)
 }
 #endif

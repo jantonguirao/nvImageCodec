@@ -37,9 +37,9 @@ class Image
     nvimgcdcsImageDesc* getImageDesc();
 
   private:
-    static nvimgcdcsImageStatus_t getImageInfo(void* instance, nvimgcdcsImageInfo_t* result);
-    static nvimgcdcsImageStatus_t getDeviceBuffer(void* instance, void** buffer, size_t* size);
-    static nvimgcdcsImageStatus_t getHostBuffer(void* instance, void** buffer, size_t* size);
+    static nvimgcdcsStatus_t getImageInfo(void* instance, nvimgcdcsImageInfo_t* result);
+    static nvimgcdcsStatus_t getDeviceBuffer(void* instance, void** buffer, size_t* size);
+    static nvimgcdcsStatus_t getHostBuffer(void* instance, void** buffer, size_t* size);
     nvimgcdcsImageInfo_t image_info_;
     void* host_buffer_;
     size_t host_buffer_size_;
