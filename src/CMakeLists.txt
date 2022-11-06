@@ -40,6 +40,8 @@ find_library(CUDART_SHARED
 target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PUBLIC ${CUDART_SHARED})
 
 if(UNIX)
+    # CXX flags
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
     target_link_libraries (${NVIMGCDCS_LIBRARY_NAME} PRIVATE dl)
 endif()
 
