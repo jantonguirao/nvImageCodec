@@ -21,8 +21,7 @@ class EncodeState;
 class Image
 {
   public:
-    explicit Image(
-        nvimgcdcsImageInfo_t* image_info, ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue);
+    explicit Image(ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue);
     ~Image();
     void setHostBuffer(void* buffer, size_t size);
     void getHostBuffer(void** buffer, size_t* size);

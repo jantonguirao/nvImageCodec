@@ -138,7 +138,8 @@ int main(int argc, const char* argv[])
     size_t image_buffer_size                    = image_info.component_info[0].pitch_in_bytes *
                                image_info.image_height * image_info.num_components;
     nvimgcdcsImage_t image;
-    nvimgcdcsImageCreate(instance, &image, &image_info);
+    nvimgcdcsImageCreate(instance, &image);
+    nvimgcdcsImageSetImageInfo(image, &image_info);
     nvimgcdcsImageSetDeviceBuffer(image, image_buffer, image_buffer_size);
 
     std::vector<unsigned char> host_buffer;

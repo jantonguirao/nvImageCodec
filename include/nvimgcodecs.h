@@ -364,7 +364,7 @@ extern "C"
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION_BIT =
             0x00000002, // Something has happened that indicates a possible mistake
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE_BIT = 0x00000004, // Potential non-optimal use
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE__ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDebugMessageType_t;
 
     typedef struct
@@ -398,7 +398,7 @@ extern "C"
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
-        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, nvimgcdcsImageInfo_t* image_info);
+        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetHostBuffer(
         nvimgcdcsImage_t image, void* buffer, size_t size);

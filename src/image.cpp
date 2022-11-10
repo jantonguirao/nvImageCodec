@@ -13,9 +13,8 @@
 
 namespace nvimgcdcs {
 
-Image::Image(
-    nvimgcdcsImageInfo_t* image_info, ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue)
-    : image_info_(*image_info)
+Image::Image(ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue)
+    : image_info_()
     , ready_images_queue_(ready_images_queue)
     , host_buffer_(nullptr)
     , host_buffer_size_(0)
@@ -27,6 +26,7 @@ Image::Image(
           Image::static_get_host_buffer, Image::static_image_ready}
     , processing_status_(NVIMGCDCS_PROCESSING_STATUS_UNKNOWN)
 {
+    memset(&image_info_, 0, sizeof(image_info_));
 }
 
 Image::~Image()

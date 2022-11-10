@@ -184,9 +184,8 @@ struct nvimgcdcsEncodeState
 struct nvimgcdcsImage
 {
 
-    explicit nvimgcdcsImage(
-        nvimgcdcsImageInfo_t* image_info, ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue)
-        : image_(image_info, ready_images_queue)
+    explicit nvimgcdcsImage(ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue)
+        : image_(ready_images_queue)
         , dev_image_buffer_(nullptr)
         , dev_image_buffer_size_(0)
     {
@@ -536,7 +535,7 @@ nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_stat
 }
 
 nvimgcdcsStatus_t nvimgcdcsImageCreate(
-    nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, nvimgcdcsImageInfo_t* image_info)
+    nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -545,7 +544,7 @@ nvimgcdcsStatus_t nvimgcdcsImageCreate(
             CHECK_NULL(image)
             CHECK_NULL(instance)
 
-            *image = new nvimgcdcsImage(image_info, &instance->ready_images_queue_);
+            *image = new nvimgcdcsImage(&instance->ready_images_queue_);
             (*image)->nvimgcdcs_instance_ = instance;
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -835,9 +834,10 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                                        image_info.image_height * image_info.num_components;
 
 
-            nvimgcdcsImageCreate(instance, image, &image_info);
+            nvimgcdcsImageCreate(instance, image);
             (*image)->dev_image_buffer_      = image_buffer;
             (*image)->dev_image_buffer_size_ = image_buffer_size;
+            nvimgcdcsImageSetImageInfo(*image, &image_info);
             nvimgcdcsImageSetDeviceBuffer(*image, image_buffer, image_buffer_size);
 
 

@@ -85,6 +85,7 @@ static std::string format_str_from_type(nvimgcdcsSampleDataType_t type)
     default:
         break;
     }
+    return "";
 }
 
 static nvimgcdcsSampleDataType_t type_from_format_str(const std::string& typestr)
@@ -252,7 +253,8 @@ class Image
                 }
 
                 nvimgcdcsImage_t image;
-                nvimgcdcsImageCreate(instance, &image, &image_info);
+                nvimgcdcsImageCreate(instance, &image);
+                nvimgcdcsImageSetImageInfo(image, &image_info);
                 nvimgcdcsImageSetDeviceBuffer(image, buffer, buffer_size);
                 return new Image(image);
             } else {
