@@ -38,10 +38,11 @@ void ImageDecoder::decode(CodeStream* code_stream, Image* image, nvimgcdcsDecode
     nvimgcdcsImageDesc* image_desc               = image->getImageDesc();
 
     nvimgcdcsCodeStreamDesc* code_stream_desc = code_stream->getCodeStreamDesc();
+    image->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
 
-    decoder_desc_->decode(decoder_, internal_decode_state, code_stream_desc,
-        image_desc, params);
+    decoder_desc_->decode(decoder_, internal_decode_state, code_stream_desc, image_desc, params);
 }
+
 
 ImageDecoderFactory::ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc)
     : decoder_desc_(desc)

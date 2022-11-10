@@ -24,7 +24,7 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR,
     D* chanR = vchanR.data();
     D* chanG = vchanG.data();
     D* chanB = vchanB.data();
-
+    //TODO move memory transfers (and conversions) somewhere else (leave it to user?)
     if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
 
         CHECK_CUDA(cudaMemcpy2D(chanR, (size_t)width * sizeof(D), d_chanR, pitchR,
@@ -201,6 +201,7 @@ static nvimgcdcsStatus_t example_encoder_encode(nvimgcdcsEncoder_t encoder,
             image_info.component_info[2].pitch_in_bytes, image_info.image_width,
             image_info.image_height, 8, true);
     }
+    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

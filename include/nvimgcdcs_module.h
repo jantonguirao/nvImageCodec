@@ -25,7 +25,9 @@
 extern "C"
 {
 #endif
-
+    struct nvimgcdcsModule;
+    typedef struct nvimgcdcsModule* nvimgcdcsModule_t;
+   
     struct nvimgcdcsParser;
     typedef struct nvimgcdcsParser* nvimgcdcsParser_t;
 
@@ -63,6 +65,8 @@ extern "C"
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
         nvimgcdcsStatus_t (*getDeviceBuffer)(void* instance, void** buffer, size_t* size);
         nvimgcdcsStatus_t (*getHostBuffer)(void* instance, void** buffer, size_t* size);
+        nvimgcdcsStatus_t (*imageReady)(
+            void* instance, nvimgcdcsProcessingStatus_t processing_status);
     };
     typedef struct nvimgcdcsImageDesc* nvimgcdcsImageDesc_t;
 
@@ -160,8 +164,9 @@ extern "C"
         return NVIMGCDCS_VER;         \
     }
 
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsModuleLoad(nvimgcdcsFrameworkDesc_t* framework);
-    NVIMGCDCSAPI void nvimgcdcsModuleUnload(void);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsModuleLoad(nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t* module);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsModuleUnload(
+        nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t module);
 
 #if defined(__cplusplus)
 }

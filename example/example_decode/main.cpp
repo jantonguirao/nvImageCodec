@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <cassert>
 
 #define CHECK_CUDA(call)                                                                \
     {                                                                                   \
@@ -118,7 +119,9 @@ int main(int argc, const char* argv[])
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
 
     nvimgcdcsDecodeParams_t decode_params;
+    memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
     decode_params.backend.useGPU = true;
+
 
     nvimgcdcsDecoder_t decoder;
     nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);
@@ -139,7 +142,7 @@ int main(int argc, const char* argv[])
     nvimgcdcsImageSetDeviceBuffer(image, image_buffer, image_buffer_size);
 
     std::vector<unsigned char> host_buffer;
-    if (std::string_view(codec_name) == "bmp") {
+    if (std::string_view(codec_name) == "bmp") { //TODO based on codec capability not on codec itself
         host_buffer.resize(
             image_info.image_width * image_info.image_height * image_info.num_components);
         nvimgcdcsImageSetHostBuffer(image, host_buffer.data(), host_buffer.size());
@@ -148,16 +151,25 @@ int main(int argc, const char* argv[])
     nvimgcdcsImageAttachDecodeState(image, decode_state);
 
     nvimgcdcsDecoderDecode(decoder, code_stream, image, &decode_params);
-    cudaDeviceSynchronize();
+    
+    nvimgcdcsImage_t ready_image;
+    nvimgcdcsProcessingStatus_t decode_status;
+    nvimgcdcsInstanceGetReadyImage(instance, &ready_image, &decode_status, true);
+    if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+        std::cout << "Something went wrong with decoding"  << std::endl;
+    }
+
+    assert(ready_image == image); //we sent only one image to decoder
 
     nvimgcdcsCodeStream_t bmp_code_stream;
     fs::path output_file = fs::absolute(exe_path).parent_path() / fs::path(params.output);
     std::cout << "Saving to " << output_file.string() << " file" << std::endl;
-    nvimgcdcsCodeStreamCreateToFile(instance, &bmp_code_stream, output_file.string().c_str(),
-        params.output_codec.data());
+    nvimgcdcsCodeStreamCreateToFile(
+        instance, &bmp_code_stream, output_file.string().c_str(), params.output_codec.data());
     nvimgcdcsCodeStreamSetImageInfo(bmp_code_stream, &image_info);
 
     nvimgcdcsEncodeParams_t encode_params;
+    memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
     encode_params.backend.useCPU = true;
     encode_params.target_psnr    = 50;
     encode_params.codec          = params.output_codec.data();
@@ -183,4 +195,4 @@ int main(int argc, const char* argv[])
     nvimgcdcsInstanceDestroy(instance);
 
     return EXIT_SUCCESS;
-}
+    }

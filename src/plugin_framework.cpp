@@ -10,12 +10,12 @@
 
 #include "plugin_framework.h"
 
+#include <filesystem>
+#include <iostream>
 #include "codec.h"
 #include "codec_registry.h"
 #include "image_encoder.h"
-
-#include <filesystem>
-#include <iostream>
+#include "thread_safe_queue.h"
 
 namespace fs = std::filesystem;
 
@@ -155,4 +155,6 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDe
     codec->registerParser(std::move(parser_factory), 1);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
+
+
 } // namespace nvimgcdcs

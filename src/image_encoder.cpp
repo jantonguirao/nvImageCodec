@@ -38,7 +38,7 @@ void ImageEncoder::encode(CodeStream* code_stream, Image* image, nvimgcdcsEncode
     nvimgcdcsImageDesc* image_desc               = image->getImageDesc();
 
     nvimgcdcsCodeStreamDesc* code_stream_desc = code_stream->getCodeStreamDesc();
-
+    image->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_ENCODING);
     encoder_desc_->encode(encoder_, internal_encode_state, code_stream_desc, image_desc, params);
 }
 

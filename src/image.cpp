@@ -9,18 +9,23 @@
  */
 #include "image.h"
 #include <cassert>
+#include <iostream>
 
 namespace nvimgcdcs {
 
-Image::Image(nvimgcdcsImageInfo_t* image_info)
+Image::Image(
+    nvimgcdcsImageInfo_t* image_info, ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue)
     : image_info_(*image_info)
+    , ready_images_queue_(ready_images_queue)
     , host_buffer_(nullptr)
     , host_buffer_size_(0)
     , device_buffer_(nullptr)
     , device_buffer_size_(0)
     , encode_state_(nullptr)
     , decode_state_(nullptr)
-    , image_desc_{this, Image::getImageInfo, Image::getDeviceBuffer, Image::getHostBuffer}
+    , image_desc_{this, Image::static_get_image_info, Image::static_get_device_buffer,
+          Image::static_get_host_buffer, Image::static_image_ready}
+    , processing_status_(NVIMGCDCS_PROCESSING_STATUS_UNKNOWN)
 {
 }
 
@@ -82,12 +87,29 @@ EncodeState* Image::getAttachedEncodeState()
     return encode_state_;
 }
 
-nvimgcdcsImageDesc* Image::getImageDesc()
+nvimgcdcsImageDesc_t Image::getImageDesc()
 {
     return &image_desc_;
 }
 
-nvimgcdcsStatus_t Image::getImageInfo(void* instance, nvimgcdcsImageInfo_t* result)
+void Image::setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status)
+{
+    processing_status_ = processing_status;
+}
+
+nvimgcdcsProcessingStatus_t Image::getProcessingStatus() const
+{
+    return processing_status_;
+}
+
+nvimgcdcsStatus_t Image::imageReady(nvimgcdcsProcessingStatus_t processing_status)
+{
+    setProcessingStatus(processing_status);
+    ready_images_queue_->push(&image_desc_);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t Image::static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result)
 {
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
@@ -95,7 +117,7 @@ nvimgcdcsStatus_t Image::getImageInfo(void* instance, nvimgcdcsImageInfo_t* resu
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t Image::getDeviceBuffer(void* instance, void** buffer, size_t* size)
+nvimgcdcsStatus_t Image::static_get_device_buffer(void* instance, void** buffer, size_t* size)
 {
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
@@ -103,11 +125,20 @@ nvimgcdcsStatus_t Image::getDeviceBuffer(void* instance, void** buffer, size_t* 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t Image::getHostBuffer(void* instance, void** buffer, size_t* size)
+nvimgcdcsStatus_t Image::static_get_host_buffer(void* instance, void** buffer, size_t* size)
 {
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
     handle->getHostBuffer(buffer, size);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t Image::static_image_ready(
+    void* instance, nvimgcdcsProcessingStatus_t processing_status)
+{
+    assert(instance);
+    Image* handle = reinterpret_cast<Image*>(instance);
+    handle->imageReady(processing_status);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

@@ -10,8 +10,9 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
 #include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
+#include "thread_safe_queue.h"
 
 namespace nvimgcdcs {
 class DecodeState;
@@ -20,7 +21,8 @@ class EncodeState;
 class Image
 {
   public:
-    explicit Image(nvimgcdcsImageInfo_t* image_info);
+    explicit Image(
+        nvimgcdcsImageInfo_t* image_info, ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue);
     ~Image();
     void setHostBuffer(void* buffer, size_t size);
     void getHostBuffer(void** buffer, size_t* size);
@@ -34,12 +36,19 @@ class Image
     void attachEncodeState(EncodeState* encode_state);
     EncodeState* getAttachedEncodeState();
     void detachEncodeState();
-    nvimgcdcsImageDesc* getImageDesc();
+    nvimgcdcsImageDesc_t getImageDesc();
+    void setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status);
+    nvimgcdcsProcessingStatus_t getProcessingStatus() const;
 
   private:
-    static nvimgcdcsStatus_t getImageInfo(void* instance, nvimgcdcsImageInfo_t* result);
-    static nvimgcdcsStatus_t getDeviceBuffer(void* instance, void** buffer, size_t* size);
-    static nvimgcdcsStatus_t getHostBuffer(void* instance, void** buffer, size_t* size);
+    nvimgcdcsStatus_t imageReady(nvimgcdcsProcessingStatus_t processing_status);
+
+    static nvimgcdcsStatus_t static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result);
+    static nvimgcdcsStatus_t static_get_device_buffer(void* instance, void** buffer, size_t* size);
+    static nvimgcdcsStatus_t static_get_host_buffer(void* instance, void** buffer, size_t* size);
+    static nvimgcdcsStatus_t static_image_ready(
+        void* instance, nvimgcdcsProcessingStatus_t processing_status);
+
     nvimgcdcsImageInfo_t image_info_;
     void* host_buffer_;
     size_t host_buffer_size_;
@@ -48,5 +57,7 @@ class Image
     DecodeState* decode_state_;
     EncodeState* encode_state_;
     nvimgcdcsImageDesc image_desc_;
+    ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue_;
+    nvimgcdcsProcessingStatus_t processing_status_;
 };
 } // namespace nvimgcdcs
