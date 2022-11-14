@@ -33,12 +33,16 @@ extern "C"
 {
 #endif
 
+#define NVIMGCDCS_MAX_CODEC_NAME_SIZE 256
+
     typedef enum
     {
         NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION,
+        NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
     // Prototype for device memory allocation, modelled after cudaMalloc()
@@ -53,12 +57,16 @@ extern "C"
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         nvimgcdcsDeviceMalloc_t device_malloc;
         nvimgcdcsDeviceFree_t device_free;
     } nvimgcdcsDeviceAllocator_t;
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         nvimgcdcsPinnedMalloc_t pinned_malloc;
         nvimgcdcsPinnedFree_t pinned_free;
     } nvimgcdcsPinnedAllocator_t;
@@ -75,6 +83,8 @@ extern "C"
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         nvimgcdcsDeviceMallocV2_t dev_malloc;
         nvimgcdcsDeviceFreeV2_t dev_free;
         void* dev_ctx;
@@ -82,6 +92,8 @@ extern "C"
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         nvimgcdcsPinnedMallocV2_t pinned_malloc;
         nvimgcdcsPinnedFreeV2_t pinned_free;
         void* pinned_ctx;
@@ -176,15 +188,20 @@ extern "C"
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         uint32_t component_width;
         uint32_t component_height;
-        size_t pitch_in_bytes;
+        size_t host_pitch_in_bytes;
+        size_t device_pitch_in_bytes;
         nvimgcdcsSampleDataType_t sample_type;
     } nvimgcdcsImageComponentInfo_t;
 
 #define NVIMGCDCS_MAX_NUM_COMPONENTS 32
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         uint32_t image_width;
         uint32_t image_height;
         uint32_t tile_width;
@@ -204,6 +221,8 @@ extern "C"
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         bool useCPU;
         bool useGPU;
         bool useHwEng;
@@ -279,30 +298,44 @@ extern "C"
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         int stream_count;
 
     } nvimgcdcsContainer;
     typedef nvimgcdcsContainer* nvimgcdcsContainer_t;
 
-#define NVIMGCDCS_MAX_CAPABILITY_NAME_SIZE 256
-#define NVIMGCDCS_MAX_CODEC_NAME_SIZE 256
-#define NVIMGCDCS_DECODER_SCALING_CAPABILITY_NAME "NVIMGCDCS_DECODER_scaling"
-#define NVIMGCDCS_DECODER_ROTATION_CAPABILITY_NAME "NVIMGCDCS_DECODER_rotation"
-#define NVIMGCDCS_DECODER_PARTIAL_DECODING_CAPABILITY_NAME "NVIMGCDCS_DECODER_partial_decoding"
-#define NVIMGCDCS_DECODER_ROI_CAPABILITY_NAME "NVIMGCDCS_DECODER_roi"
-#define NVIMGCDCS_DECODER_BATCH_CAPABILITY_NAME "NVIMGCDCS_DECODER_batch"
+    typedef enum
+    {
+        NVIMGCDCS_CAPABILITY_UNKNOWN        = -1,
+        NVIMGCDCS_CAPABILITY_SCALING        = 1,
+        NVIMGCDCS_CAPABILITY_ORIENTATION    = 2,
+        NVIMGCDCS_CAPABILITY_PARTIAL        = 3,
+        NVIMGCDCS_CAPABILITY_ROI            = 4,
+        NVIMGCDCS_CAPABILITY_BATCH          = 5,
+        NVIMGCDCS_CAPABILITY_HOST_INPUT     = 6,
+        NVIMGCDCS_CAPABILITY_HOST_OUTPUT    = 7,
+        NVIMGCDCS_CAPABILITY_DEVICE_INPUT   = 8,
+        NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT  = 9,
+        NVIMGCDCS_CAPABILITY_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsCapability_t;
 
-#define NVIMGCDCS_ENCODER_PARTIAL_ENCODING_CAPABILITY_NAME "NVIMGCDCS_ENCODER_partial_encoding"
-#define NVIMGCDCS_ENCODER_ROI_CAPABILITY_NAME "NVIMGCDCS_ENCODER_roi"
-#define NVIMGCDCS_ENCODER_BATCH_CAPABILITY_NAME "NVIMGCDCS_ENCODER_batch"
-
-    typedef struct
+    struct nvimgcdcsIOStreamDesc
     {
         nvimgcdcsStructureType_t type;
         const void* next;
-        char name[NVIMGCDCS_MAX_CAPABILITY_NAME_SIZE];
-        uint32_t version;
-    } nvimgcdcsCapability_t;
+
+        void* instance;
+
+        nvimgcdcsStatus_t (*read)(void* instance, size_t* output_size, void* buf, size_t bytes);
+        nvimgcdcsStatus_t (*write)(void* instance, size_t* output_size, void* buf, size_t bytes);
+        nvimgcdcsStatus_t (*putc)(void* instance, size_t* output_size, unsigned char ch);
+        nvimgcdcsStatus_t (*skip)(void* instance, size_t count);
+        nvimgcdcsStatus_t (*seek)(void* instance, size_t offset, int whence);
+        nvimgcdcsStatus_t (*tell)(void* instance, size_t* offset);
+        nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
+    };
+    typedef struct nvimgcdcsIOStreamDesc* nvimgcdcsIoStreamDesc_t;
 
     struct nvimgcdcsHandle;
     typedef struct nvimgcdcsHandle* nvimgcdcsInstance_t;
@@ -347,28 +380,30 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_VERBOSE_BIT = 0x00000001, // Diagnostic message
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_VERBOSE_BIT = 1, // Diagnostic message
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO_BIT =
-            0x00000002, // Informational message like the creation of a resource
+            2, // Informational message like the creation of a resource
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING_BIT =
-            0x00000004, // Message about behavior that is not necessarily an error, but very likely a bug in your application
+            4, // Message about behavior that is not necessarily an error, but very likely a bug in your application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR_BIT =
-            0x00000008, // Message about behavior that is invalid and may cause crashes
+            8, // Message about behavior that is invalid and may cause crashes
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDebugMessageSeverity_t;
 
     typedef enum
     {
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL_BIT =
-            0x00000001, // Some event has happened that is unrelated to the specification or performance
+            1, // Some event has happened that is unrelated to the specification or performance
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION_BIT =
-            0x00000002, // Something has happened that indicates a possible mistake
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE_BIT = 0x00000004, // Potential non-optimal use
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
+            2, // Something has happened that indicates a possible mistake
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE_BIT = 4, // Potential non-optimal use
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT  = 0xFFFFFFFF
     } nvimgcdcsDebugMessageType_t;
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         const char* message;       //null-terminated string detailing the trigger conditions
         uint32_t internalStatusId; //it is internal codec status id
         const char* codec; //codec name if codec is rising message or NULL otherwise (e.g framework)
@@ -384,6 +419,8 @@ extern "C"
 
     typedef struct
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
         nvimgcdcsDebugMessageSeverity_t messageSeverity;
         nvimgcdcsDebugMessageType_t messageType;
         nvimgcdcsDebugCallback_t userCallback;
@@ -413,7 +450,7 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(
         nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetProcessingStatus(
-        nvimgcdcsImage_t image, nvimgcdcsProcessingStatus_t* processing_status); 
+        nvimgcdcsImage_t image, nvimgcdcsProcessingStatus_t* processing_status);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageAttachEncodeState(
         nvimgcdcsImage_t image, nvimgcdcsEncodeState_t encode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDetachEncodeState(nvimgcdcsImage_t image);
@@ -427,6 +464,9 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, unsigned char* data,
         size_t length);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromIOStream(
+        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle,
+        nvimgcdcsIoStreamDesc_t io_stream); //TODO
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance,
         nvimgcdcsCodeStream_t* stream_handle, const char* file_name, const char* codec_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance,
@@ -453,7 +493,7 @@ extern "C"
         nvimgcdcsDecodeParams_t* params, nvimgcdcsContainer_t container, int batchSize,
         nvimgcdcsImage_t* image); //TODO
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(nvimgcdcsDecoder_t decoder,
-        nvimgcdcsCapability_t* decoder_capabilites, size_t* size); //TODO
+        const nvimgcdcsCapability_t** capabilities, size_t* size); 
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(
         nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decodeState, bool* canUse); //TODO
 
@@ -473,7 +513,7 @@ extern "C"
         nvimgcdcsDecodeParams_t* params, nvimgcdcsContainer_t container, int batchSize,
         nvimgcdcsImage_t* image); //TODO
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(nvimgcdcsEncoder_t encoder,
-        nvimgcdcsCapability_t* decoder_capabilites, size_t* size); //TODO
+        const nvimgcdcsCapability_t** capabilities, size_t* size); 
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanUseEncodeState(
         nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encodeState, bool* canUse); //TODO
 

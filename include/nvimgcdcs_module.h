@@ -27,28 +27,12 @@ extern "C"
 #endif
     struct nvimgcdcsModule;
     typedef struct nvimgcdcsModule* nvimgcdcsModule_t;
-   
+
     struct nvimgcdcsParser;
     typedef struct nvimgcdcsParser* nvimgcdcsParser_t;
 
     struct nvimgcdcsParseState;
     typedef struct nvimgcdcsParseState* nvimgcdcsParseState_t;
-  
-    struct nvimgcdcsInputStreamDesc
-    {
-        void* instance;
-
-        nvimgcdcsStatus_t (*read)(
-            void* instance, size_t* output_size, void* buf, size_t bytes);
-        nvimgcdcsStatus_t (*write)(
-            void* instance, size_t* output_size, void* buf, size_t bytes);
-        nvimgcdcsStatus_t (*putc)(void* instance, size_t* output_size, unsigned char ch);
-        nvimgcdcsStatus_t (*skip)(void* instance, size_t count);
-        nvimgcdcsStatus_t (*seek)(void* instance, size_t offset, int whence);
-        nvimgcdcsStatus_t (*tell)(void* instance, size_t* offset);
-        nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
-    };
-    typedef struct nvimgcdcsInputStreamDesc* nvimgcdcsIoStreamDesc_t;
 
     struct nvimgcdcsCodeStreamDesc
     {
@@ -86,8 +70,11 @@ extern "C"
             nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state);
         nvimgcdcsStatus_t (*destroyParseState)(nvimgcdcsParseState_t parse_state);
 
-        nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser,
-            nvimgcdcsImageInfo_t* result, nvimgcdcsCodeStreamDesc_t code_stream);
+        nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result,
+            nvimgcdcsCodeStreamDesc_t code_stream);
+
+        nvimgcdcsStatus_t (*getCapabilities)(
+            nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size);
     };
 
     struct nvimgcdcsEncoderDesc
@@ -108,9 +95,12 @@ extern "C"
             nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
         nvimgcdcsStatus_t (*destroyEncodeState)(nvimgcdcsEncodeState_t encode_state);
 
-        nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder,
-            nvimgcdcsEncodeState_t encode_state, nvimgcdcsCodeStreamDesc_t code_stream,
-            nvimgcdcsImageDesc_t image, nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t (*getCapabilities)(
+            nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
+        nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state,
+            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+            nvimgcdcsEncodeParams_t* params);
     };
 
     typedef struct nvimgcdcsEncoderDesc nvimgcdcsEncoderDesc_t;
@@ -133,11 +123,14 @@ extern "C"
             nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
         nvimgcdcsStatus_t (*destroyDecodeState)(nvimgcdcsDecodeState_t decode_state);
 
-        nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder,
-            nvimgcdcsDecodeState_t decode_state, nvimgcdcsCodeStreamDesc_t code_stream,
-            nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t (*getCapabilities)(
+            nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
+        nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state,
+            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+            nvimgcdcsDecodeParams_t* params);
     };
-    
+
     typedef struct nvimgcdcsDecoderDesc nvimgcdcsDecoderDesc_t;
 
     struct nvimgcdcsFrameworkDesc
@@ -164,7 +157,8 @@ extern "C"
         return NVIMGCDCS_VER;         \
     }
 
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsModuleLoad(nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t* module);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsModuleLoad(
+        nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t* module);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsModuleUnload(
         nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t module);
 

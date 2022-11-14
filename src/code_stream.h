@@ -33,7 +33,7 @@ class CodeStream
     void setImageInfo(const nvimgcdcsImageInfo_t* image_info);
     std::string getCodecName() const;
     Codec* getCodec() const;
-    nvimgcdcsInputStreamDesc* getInputStreamDesc();
+    nvimgcdcsIOStreamDesc* getInputStreamDesc();
     nvimgcdcsCodeStreamDesc* getCodeStreamDesc();
 
   private:
@@ -59,7 +59,7 @@ class CodeStream
     Codec* codec_;
     std::unique_ptr<ImageParser> parser_;
     std::unique_ptr<IoStream> io_stream_;
-    nvimgcdcsInputStreamDesc io_stream_desc_;
+    nvimgcdcsIOStreamDesc io_stream_desc_;
     nvimgcdcsCodeStreamDesc code_stream_desc_;
     std::unique_ptr<nvimgcdcsImageInfo_t> image_info_;
     std::unique_ptr<ParseState> parse_state_;

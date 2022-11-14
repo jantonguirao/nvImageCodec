@@ -5,6 +5,8 @@
 #include <vector>
 #include <cstring>
 #include <cassert>
+#include <span>
+#include <algorithm>
 
 #define CHECK_CUDA(call)                                                                \
     {                                                                                   \
@@ -122,73 +124,131 @@ int main(int argc, const char* argv[])
     memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
     decode_params.backend.useGPU = true;
 
-
     nvimgcdcsDecoder_t decoder;
     nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);
 
     nvimgcdcsDecodeState_t decode_state;
     nvimgcdcsDecodeStateCreate(decoder, &decode_state);
 
-    unsigned char* image_buffer;
-    CHECK_CUDA(cudaMallocPitch((void**)&image_buffer, &image_info.component_info[0].pitch_in_bytes,
-        image_info.image_width * bytes_per_element,
-        image_info.image_height * image_info.num_components));
-    image_info.component_info[1].pitch_in_bytes = image_info.component_info[0].pitch_in_bytes;
-    image_info.component_info[2].pitch_in_bytes = image_info.component_info[0].pitch_in_bytes;
-    size_t image_buffer_size                    = image_info.component_info[0].pitch_in_bytes *
-                               image_info.image_height * image_info.num_components;
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image);
-    nvimgcdcsImageSetImageInfo(image, &image_info);
-    nvimgcdcsImageSetDeviceBuffer(image, image_buffer, image_buffer_size);
 
+    size_t capabilities_size;
+    nvimgcdcsDecoderGetCapabilities(decoder, nullptr, &capabilities_size);
+    const nvimgcdcsCapability_t* capabilities_ptr;
+    nvimgcdcsDecoderGetCapabilities(decoder, &capabilities_ptr, &capabilities_size);
+    std::span<const nvimgcdcsCapability_t> decoder_capabilties{capabilities_ptr, capabilities_size};
+
+    unsigned char* device_buffer = nullptr;
     std::vector<unsigned char> host_buffer;
-    if (std::string_view(codec_name) == "bmp") { //TODO based on codec capability not on codec itself
-        host_buffer.resize(
-            image_info.image_width * image_info.image_height * image_info.num_components);
-        nvimgcdcsImageSetHostBuffer(image, host_buffer.data(), host_buffer.size());
-    }
+    bool is_host_output = std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
+                              NVIMGCDCS_CAPABILITY_HOST_OUTPUT) != decoder_capabilties.end();
+    bool is_device_output = std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
+                                NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != decoder_capabilties.end();
 
-    nvimgcdcsImageAttachDecodeState(image, decode_state);
-
-    nvimgcdcsDecoderDecode(decoder, code_stream, image, &decode_params);
-    
-    nvimgcdcsImage_t ready_image;
-    nvimgcdcsProcessingStatus_t decode_status;
-    nvimgcdcsInstanceGetReadyImage(instance, &ready_image, &decode_status, true);
-    if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
-        std::cout << "Something went wrong with decoding"  << std::endl;
-    }
-
-    assert(ready_image == image); //we sent only one image to decoder
-
-    nvimgcdcsCodeStream_t bmp_code_stream;
+    nvimgcdcsCodeStream_t output_code_stream;
     fs::path output_file = fs::absolute(exe_path).parent_path() / fs::path(params.output);
     std::cout << "Saving to " << output_file.string() << " file" << std::endl;
     nvimgcdcsCodeStreamCreateToFile(
-        instance, &bmp_code_stream, output_file.string().c_str(), params.output_codec.data());
-    nvimgcdcsCodeStreamSetImageInfo(bmp_code_stream, &image_info);
+        instance, &output_code_stream, output_file.string().c_str(), params.output_codec.data());
+    nvimgcdcsCodeStreamSetImageInfo(output_code_stream, &image_info);
 
     nvimgcdcsEncodeParams_t encode_params;
     memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
+    //TODO
     encode_params.backend.useCPU = true;
     encode_params.target_psnr    = 50;
     encode_params.codec          = params.output_codec.data();
 
     nvimgcdcsEncoder_t encoder;
-    nvimgcdcsEncoderCreate(instance, &encoder, bmp_code_stream, &encode_params);
+    nvimgcdcsEncoderCreate(instance, &encoder, output_code_stream, &encode_params);
+
+    nvimgcdcsEncoderGetCapabilities(encoder, nullptr, &capabilities_size);
+    nvimgcdcsEncoderGetCapabilities(encoder, &capabilities_ptr, &capabilities_size);
+    std::span<const nvimgcdcsCapability_t> encoder_capabilties{capabilities_ptr, capabilities_size};
+
+    bool is_host_input   = std::find(encoder_capabilties.begin(), encoder_capabilties.end(),
+                               NVIMGCDCS_CAPABILITY_HOST_INPUT) != encoder_capabilties.end();
+    bool is_device_input = std::find(encoder_capabilties.begin(), encoder_capabilties.end(),
+                               NVIMGCDCS_CAPABILITY_DEVICE_INPUT) != encoder_capabilties.end();
+                               
+
+    if (is_host_output || is_host_input) {
+        host_buffer.resize(
+            image_info.image_width * image_info.image_height * image_info.num_components);
+
+        image_info.component_info[0].host_pitch_in_bytes = image_info.image_width;
+        image_info.component_info[1].host_pitch_in_bytes = image_info.image_width;
+        image_info.component_info[2].host_pitch_in_bytes = image_info.image_width;
+
+        nvimgcdcsImageSetHostBuffer(image, host_buffer.data(), host_buffer.size());
+    } 
+    if (is_device_output || is_device_input) {
+        size_t device_pitch_in_bytes = 0;
+        CHECK_CUDA(cudaMallocPitch((void**)&device_buffer, &device_pitch_in_bytes,
+            image_info.image_width * bytes_per_element,
+            image_info.image_height * image_info.num_components));
+        image_info.component_info[0].device_pitch_in_bytes = device_pitch_in_bytes;
+        image_info.component_info[1].device_pitch_in_bytes = device_pitch_in_bytes;
+        image_info.component_info[2].device_pitch_in_bytes = device_pitch_in_bytes;
+        size_t image_buffer_size =
+            device_pitch_in_bytes * image_info.image_height * image_info.num_components;
+        nvimgcdcsImageSetDeviceBuffer(image, device_buffer, image_buffer_size);
+    }
+
+
+    nvimgcdcsImageSetImageInfo(image, &image_info);
+    nvimgcdcsImageAttachDecodeState(image, decode_state);
+
+    nvimgcdcsDecoderDecode(decoder, code_stream, image, &decode_params);
+    
+    nvimgcdcsImage_t ready_decoded_image;
+    nvimgcdcsProcessingStatus_t decode_status;
+    nvimgcdcsInstanceGetReadyImage(instance, &ready_decoded_image, &decode_status, true);
+    if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+        std::cout << "Error:Something went wrong with decoding"  << std::endl;
+    }
+
+    assert(ready_decoded_image == image); //we sent only one image to decoder
+
+    if (is_host_output && is_device_input) {
+        CHECK_CUDA(cudaMemcpy2D(device_buffer,
+            (size_t)image_info.component_info[0].device_pitch_in_bytes, host_buffer.data(),
+            (size_t)image_info.component_info[0].host_pitch_in_bytes,
+            image_info.image_width, image_info.image_height * image_info.num_components,
+            cudaMemcpyHostToDevice));
+    } else if (is_device_output && is_host_input) {
+        CHECK_CUDA(cudaMemcpy2D(host_buffer.data(),
+            (size_t)image_info.component_info[0].host_pitch_in_bytes, device_buffer,
+            (size_t)image_info.component_info[0].device_pitch_in_bytes, image_info.image_width,
+            image_info.image_height * image_info.num_components, cudaMemcpyDeviceToHost));
+        nvimgcdcsImageSetImageInfo(image, &image_info);
+    }
+
     nvimgcdcsEncodeState_t encode_state;
     nvimgcdcsEncodeStateCreate(encoder, &encode_state);
     nvimgcdcsImageAttachEncodeState(image, encode_state);
-    nvimgcdcsEncoderEncode(encoder, bmp_code_stream, image, &encode_params);
+    nvimgcdcsEncoderEncode(encoder, output_code_stream, image, &encode_params);
+
+    nvimgcdcsImage_t ready_encoded_image;
+    nvimgcdcsProcessingStatus_t encode_status;
+    nvimgcdcsInstanceGetReadyImage(instance, &ready_encoded_image, &encode_status, true);
+    if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+        std::cout << "Error:Something went wrong with encoding" << std::endl;
+    }
+    assert(ready_encoded_image == image);
+
 
     nvimgcdcsImageDetachEncodeState(image);
+    nvimgcdcsImageDetachDecodeState(image);
+
     nvimgcdcsEncodeStateDestroy(encode_state);
     nvimgcdcsEncoderDestroy(encoder);
-    nvimgcdcsCodeStreamDestroy(bmp_code_stream);
+    nvimgcdcsCodeStreamDestroy(output_code_stream);
 
-    nvimgcdcsImageDetachDecodeState(image);
-    CHECK_CUDA(cudaFree(image_buffer));
+    if (device_buffer) {
+        CHECK_CUDA(cudaFree(device_buffer));
+    }
     nvimgcdcsImageDestroy(image);
     nvimgcdcsDecodeStateDestroy(decode_state);
     nvimgcdcsDecoderDestroy(decoder);

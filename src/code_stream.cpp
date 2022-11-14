@@ -21,8 +21,8 @@ namespace nvimgcdcs {
 
 CodeStream::CodeStream(CodecRegistry* codec_registry)
     : codec_registry_(codec_registry)
-    , io_stream_desc_{this, read_static, write_static, putc_static, skip_static, seek_static,
-          tell_static, size_static}
+    , io_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static, write_static,
+          putc_static, skip_static, seek_static, tell_static, size_static}
     , code_stream_desc_{this, "", &io_stream_desc_}
     , codec_(nullptr)
     , parser_(nullptr)
@@ -92,7 +92,7 @@ Codec* CodeStream::getCodec() const
     return codec_;
 }
 
-nvimgcdcsInputStreamDesc* CodeStream::getInputStreamDesc()
+nvimgcdcsIOStreamDesc* CodeStream::getInputStreamDesc()
 {
     return &io_stream_desc_;
 }

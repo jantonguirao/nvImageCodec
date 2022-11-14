@@ -31,6 +31,11 @@ std::unique_ptr<DecodeState> ImageDecoder::createDecodeState() const
     return std::make_unique<DecodeState>(decoder_desc_, decoder_);
 }
 
+void ImageDecoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
+{
+    decoder_desc_->getCapabilities(decoder_, capabilities, size);
+}
+
 void ImageDecoder::decode(CodeStream* code_stream, Image* image, nvimgcdcsDecodeParams_t* params)
 {
     DecodeState* decode_state                    = image->getAttachedDecodeState();

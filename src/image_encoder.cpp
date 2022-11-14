@@ -31,6 +31,11 @@ std::unique_ptr<EncodeState> ImageEncoder::createEncodeState() const
     return std::make_unique<EncodeState>(encoder_desc_, encoder_);
 }
 
+void ImageEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
+{
+    encoder_desc_->getCapabilities(encoder_, capabilities, size);
+}
+
 void ImageEncoder::encode(CodeStream* code_stream, Image* image, nvimgcdcsEncodeParams_t* params)
 {
     EncodeState* encode_state                    = image->getAttachedEncodeState();

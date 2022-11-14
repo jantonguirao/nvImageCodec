@@ -132,12 +132,12 @@ class Image
         std::vector<ssize_t> shape{
             image_info.image_height, image_info.image_width, image_info.num_components};
         std::vector<ssize_t> strides{
-            static_cast<ssize_t>(image_info.component_info[0].pitch_in_bytes),
+            static_cast<ssize_t>(image_info.component_info[0].device_pitch_in_bytes),
             static_cast<ssize_t>(1),
             static_cast<ssize_t>(
-                image_info.component_info[0].pitch_in_bytes * image_info.image_height)};
-        py::tuple strides_tuple = py::make_tuple(image_info.component_info[0].pitch_in_bytes, 1,
-            image_info.component_info[0].pitch_in_bytes * image_info.image_height);
+                image_info.component_info[0].device_pitch_in_bytes * image_info.image_height)};
+        py::tuple strides_tuple = py::make_tuple(image_info.component_info[0].device_pitch_in_bytes, 1,
+            image_info.component_info[0].device_pitch_in_bytes * image_info.image_height);
 
         buf_info_ = py::buffer_info(buffer, itemsize, format, ndim, shape, strides, false);
         try {
@@ -246,10 +246,10 @@ class Image
                 for (size_t c = 0; c < image_info.num_components; c++) {
                     image_info.component_info[c].component_width  = image_info.image_width;
                     image_info.component_info[c].component_height = image_info.image_height;
-                    image_info.component_info[c].pitch_in_bytes   = pitch_in_bytes;
+                    image_info.component_info[c].device_pitch_in_bytes   = pitch_in_bytes;
                     image_info.component_info[c].sample_type      = image_info.sample_type;
                     buffer_size +=
-                        image_info.component_info[c].pitch_in_bytes * image_info.image_height;
+                        image_info.component_info[c].device_pitch_in_bytes * image_info.image_height;
                 }
 
                 nvimgcdcsImage_t image;

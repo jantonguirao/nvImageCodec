@@ -4,6 +4,12 @@
 #include <cassert>
 #include "example_parser.h"
 
+struct nvimgcdcsParser
+{
+    std::vector<nvimgcdcsCapability_t> capabilities_ = {NVIMGCDCS_CAPABILITY_HOST_INPUT};
+};
+
+
 static nvimgcdcsStatus_t example_parser_can_parse(
     void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
@@ -32,12 +38,13 @@ static nvimgcdcsStatus_t example_parser_can_parse(
 
 static nvimgcdcsStatus_t example_parser_create(void* instance, nvimgcdcsParser_t* parser)
 {
-
+    *parser = new nvimgcdcsParser();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 static nvimgcdcsStatus_t example_parser_destroy(nvimgcdcsParser_t parser)
 {
+    delete parser;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -82,7 +89,7 @@ struct BitmapInfoHeader
 };
 static_assert(sizeof(BitmapInfoHeader) == 40);
 
-static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, int ncolors, int palette_entry_size)
+static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, int palette_entry_size)
 {
     std::vector<uint8_t> entry;
     entry.resize(palette_entry_size);
@@ -98,10 +105,10 @@ static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, int ncolors, int
 }
 
 static int number_of_channels(nvimgcdcsIoStreamDesc_t io_stream, int bpp, int compression_type,
-    int ncolors = 0, int palette_entry_size = 0)
+    size_t ncolors = 0, int palette_entry_size = 0)
 {
     if (compression_type == BMP_COMPRESSION_RGB || compression_type == BMP_COMPRESSION_RLE8) {
-        if (bpp <= 8 && ncolors <= (1u << bpp)) {
+        if (bpp <= 8 && ncolors <= static_cast<unsigned int>(1u << bpp)) {
             return is_color_palette(io_stream, ncolors, palette_entry_size) ? 3 : 1;
         } else if (bpp == 24) {
             return 3;
@@ -118,6 +125,7 @@ static int number_of_channels(nvimgcdcsIoStreamDesc_t io_stream, int bpp, int co
 
     //throw std::runtime_error(make_string("configuration not supported. bpp: ", bpp,
     //    " compression_type:", compression_type, "ncolors:", ncolors));
+    return 0;
 }
 
 static nvimgcdcsStatus_t example_parser_get_image_info(
@@ -195,6 +203,24 @@ static nvimgcdcsStatus_t example_parser_get_image_info(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
+static nvimgcdcsStatus_t example_get_capabilities(
+    nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size)
+{
+    if (parser == 0)
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+
+    if (capabilities) {
+        *capabilities = parser->capabilities_.data();
+    }
+
+    if (size) {
+        *size = parser->capabilities_.size();
+    } else {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
 // clang-format off
 nvimgcdcsParserDesc example_parser = {
     NULL,               // instance    
@@ -207,6 +233,7 @@ nvimgcdcsParserDesc example_parser = {
     example_parser_destroy,
     example_create_parse_state,
     example_destroy_parse_state,
-    example_parser_get_image_info
+    example_parser_get_image_info,
+    example_get_capabilities
 };
 // clang-format on   

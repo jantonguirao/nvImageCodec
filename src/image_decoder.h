@@ -26,6 +26,7 @@ class ImageDecoder
     ImageDecoder(const struct nvimgcdcsDecoderDesc* desc, nvimgcdcsDecodeParams_t* params);
     ~ImageDecoder();
     std::unique_ptr<DecodeState> createDecodeState() const;
+    void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
     void decode(CodeStream* code_stream, Image* image, nvimgcdcsDecodeParams_t* params);
   private:
     const struct nvimgcdcsDecoderDesc* decoder_desc_;

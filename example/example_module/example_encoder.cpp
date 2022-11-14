@@ -4,9 +4,17 @@
 #include <vector>
 #include "exceptions.h"
 
+struct nvimgcdcsEncoder
+{
+    std::vector<nvimgcdcsCapability_t> capabilities_ = {NVIMGCDCS_CAPABILITY_HOST_INPUT};
+};
+
+struct nvimgcdcsEncodeState
+{};
+
 template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
-int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR, const D* d_chanG,
-    size_t pitchG, const D* d_chanB, size_t pitchB, int width, int height, uint8_t precision,
+int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG,
+    size_t pitchG, const D* chanB, size_t pitchB, int width, int height, uint8_t precision,
     bool verbose)
 {
 
@@ -18,30 +26,7 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* d_chanR, size_t pitchR,
     int y;
     int n;
     int red, green, blue;
-    std::vector<D> vchanR(height * width);
-    std::vector<D> vchanG(height * width);
-    std::vector<D> vchanB(height * width);
-    D* chanR = vchanR.data();
-    D* chanG = vchanG.data();
-    D* chanB = vchanB.data();
-    //TODO move memory transfers (and conversions) somewhere else (leave it to user?)
-    if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
 
-        CHECK_CUDA(cudaMemcpy2D(chanR, (size_t)width * sizeof(D), d_chanR, pitchR,
-            width * sizeof(D), height, cudaMemcpyDeviceToHost));
-
-        CHECK_CUDA(cudaMemcpy2D(chanG, (size_t)width * sizeof(D), d_chanG, pitchG,
-            width * sizeof(D), height, cudaMemcpyDeviceToHost));
-
-        CHECK_CUDA(cudaMemcpy2D(chanB, (size_t)width * sizeof(D), d_chanB, pitchB,
-            width * sizeof(D), height, cudaMemcpyDeviceToHost));
-    } else if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
-        vchanR.resize(height * width * 3);
-        chanR = vchanR.data();
-
-        CHECK_CUDA(cudaMemcpy(
-            chanR, d_chanR, (size_t)width * height * 3 * sizeof(D), cudaMemcpyDeviceToHost));
-    }
     extrabytes = 4 - ((width * 3) % 4); // How many bytes of padding to add to each
     // horizontal line - the size of which must
     // be a multiple of 4 bytes.
@@ -157,24 +142,46 @@ static nvimgcdcsStatus_t example_encoder_can_encode(void* instance, bool* result
 static nvimgcdcsStatus_t example_encoder_create(
     void* instance, nvimgcdcsEncoder_t* encoder, nvimgcdcsEncodeParams_t* params)
 {
+    *encoder = new nvimgcdcsEncoder();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 static nvimgcdcsStatus_t example_encoder_destroy(nvimgcdcsEncoder_t encoder)
 {
+    delete encoder;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 static nvimgcdcsStatus_t example_create_encode_state(
     nvimgcdcsEncoder_t decoder, nvimgcdcsEncodeState_t* encode_state)
 {
+    *encode_state = new nvimgcdcsEncodeState();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t example_destroy_encde_state(nvimgcdcsEncodeState_t encode_state)
+nvimgcdcsStatus_t example_destroy_encode_state(nvimgcdcsEncodeState_t encode_state)
 {
+    delete encode_state;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
+
+nvimgcdcsStatus_t example_get_capabilities(
+    nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
+{
+    if (encoder == 0)
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+
+    if (capabilities) {
+        *capabilities = encoder->capabilities_.data();
+    }
+
+    if (size) {
+        *size = encoder->capabilities_.size();
+    } else {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}   
 
 static nvimgcdcsStatus_t example_encoder_encode(nvimgcdcsEncoder_t encoder,
     nvimgcdcsEncodeState_t encode_state, nvimgcdcsCodeStreamDesc_t code_stream,
@@ -182,23 +189,24 @@ static nvimgcdcsStatus_t example_encoder_encode(nvimgcdcsEncoder_t encoder,
 {
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
-    unsigned char* dev_image_buffer;
+    unsigned char* host_image_buffer;
     size_t size;
-    image->getDeviceBuffer(image->instance, reinterpret_cast<void**>(&dev_image_buffer), &size);
+    image->getHostBuffer(image->instance, reinterpret_cast<void**>(&host_image_buffer), &size);
+
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
         writeBMP<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream,
-            (unsigned char*)dev_image_buffer, image_info.component_info[0].pitch_in_bytes, NULL, 0,
+            (unsigned char*)host_image_buffer, image_info.component_info[0].host_pitch_in_bytes, NULL, 0,
             NULL, 0, image_info.image_width, image_info.image_height, 8, true);
     } else {
-        writeBMP<unsigned char>(code_stream->io_stream, (unsigned char*)dev_image_buffer,
-            image_info.component_info[0].pitch_in_bytes,
-            (unsigned char*)dev_image_buffer +
-                image_info.component_info[0].pitch_in_bytes * image_info.image_height,
-            image_info.component_info[1].pitch_in_bytes,
-            (unsigned char*)dev_image_buffer +
-                +image_info.component_info[0].pitch_in_bytes * image_info.image_height +
-                image_info.component_info[1].pitch_in_bytes * image_info.image_height,
-            image_info.component_info[2].pitch_in_bytes, image_info.image_width,
+        writeBMP<unsigned char>(code_stream->io_stream, (unsigned char*)host_image_buffer,
+            image_info.component_info[0].host_pitch_in_bytes,
+            (unsigned char*)host_image_buffer +
+                image_info.component_info[0].host_pitch_in_bytes * image_info.image_height,
+            image_info.component_info[1].host_pitch_in_bytes,
+            (unsigned char*)host_image_buffer +
+                +image_info.component_info[0].host_pitch_in_bytes * image_info.image_height +
+                image_info.component_info[1].host_pitch_in_bytes * image_info.image_height,
+            image_info.component_info[2].host_pitch_in_bytes, image_info.image_width,
             image_info.image_height, 8, true);
     }
     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
@@ -215,7 +223,8 @@ nvimgcdcsEncoderDesc example_encoder = {
     example_encoder_create,
     example_encoder_destroy, 
     example_create_encode_state, 
-    example_destroy_encde_state,
+    example_destroy_encode_state,
+    example_get_capabilities,
     example_encoder_encode
 };
 // clang-format on    
