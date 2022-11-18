@@ -19,7 +19,6 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
 {
 
     unsigned int headers[13];
-    FILE* outfile;
     int extrabytes;
     int paddedsize;
     int x;
@@ -88,13 +87,13 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
         for (x = 0; x <= width - 1; x++) {
 
             if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
-                red   = chanR[y * width + x];
-                green = chanG[y * width + x];
-                blue  = chanB[y * width + x];
+                red   = chanR[y * pitchR + x];
+                green = chanG[y * pitchG + x];
+                blue  = chanB[y * pitchB + x];
             } else if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
-                red   = chanR[3 * (y * width + x)];
-                green = chanR[3 * (y * width + x) + 1];
-                blue  = chanR[3 * (y * width + x) + 2];
+                red   = chanR[(y * pitchR + 3 * x)];
+                green = chanR[(y * pitchR + 3 * x) + 1];
+                blue  = chanR[(y * pitchR + 3 * x) + 2];
             }
             int scale = precision - 8;
             if (scale > 0) {

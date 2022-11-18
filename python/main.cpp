@@ -47,10 +47,7 @@ class Module
 
         nvimgcdcsInstanceCreate(&instance_, instance_create_info);
     }
-    ~Module()
-    {
-        nvimgcdcsInstanceDestroy(instance_);
-    }
+    ~Module() { nvimgcdcsInstanceDestroy(instance_); }
 
     nvimgcdcsInstance_t instance_;
 };
@@ -131,13 +128,14 @@ class Image
         ssize_t ndim       = 3; //TODO
         std::vector<ssize_t> shape{
             image_info.image_height, image_info.image_width, image_info.num_components};
+        bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
         std::vector<ssize_t> strides{
             static_cast<ssize_t>(image_info.component_info[0].device_pitch_in_bytes),
             static_cast<ssize_t>(1),
-            static_cast<ssize_t>(
-                image_info.component_info[0].device_pitch_in_bytes * image_info.image_height)};
-        py::tuple strides_tuple = py::make_tuple(image_info.component_info[0].device_pitch_in_bytes, 1,
-            image_info.component_info[0].device_pitch_in_bytes * image_info.image_height);
+            static_cast<ssize_t>(is_interleaved?1:image_info.component_info[0].device_pitch_in_bytes *
+                                 image_info.image_height)};
+        py::tuple strides_tuple = py::make_tuple(image_info.component_info[0].device_pitch_in_bytes,
+            is_interleaved?3:1,is_interleaved?1: image_info.component_info[0].device_pitch_in_bytes * image_info.image_height);
 
         buf_info_ = py::buffer_info(buffer, itemsize, format, ndim, shape, strides, false);
         try {
@@ -145,14 +143,26 @@ class Image
                 image_info.image_height, image_info.image_width, image_info.num_components);
 
             // clang-format off
-            cudaarrayinterface_ = py::dict
-            {
-                "shape"_a = shape_tuple,
-                "strides"_a = strides_tuple,
-                "typestr"_a = buf_info_.format,
-                "data"_a = py::make_tuple(py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(buffer)), buf_info_.readonly),
-                "version"_a = 2 
-            };
+            //  if (is_interleaved) {
+            //     cudaarrayinterface_ = py::dict
+            //     {
+            //         "shape"_a = shape_tuple,
+            //         "strides"_a = py::none(),  
+            //         "typestr"_a = buf_info_.format,
+            //         "data"_a = py::make_tuple(py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(buffer)), buf_info_.readonly),
+            //         "version"_a = 2 
+            //     };
+            //  } else {
+                cudaarrayinterface_ = py::dict
+                {
+                    "shape"_a = shape_tuple,
+                    "strides"_a = strides_tuple,  
+                    "typestr"_a = buf_info_.format,
+                    "data"_a = py::make_tuple(py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(buffer)), buf_info_.readonly),
+                    "version"_a = 2 
+                };
+            // }
+
             // clang-format on
         } catch (...) {
             throw;
@@ -239,17 +249,17 @@ class Image
                 std::string typestr       = iface["typestr"].cast<std::string>();
                 image_info.sample_type    = type_from_format_str(typestr);
                 size_t buffer_size        = 0;
-                image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
+                image_info.sample_format  = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
                 int pitch_in_bytes        = vstrides.size() > 0
                                                 ? vstrides[0]
                                                 : image_info.image_width * image_info.num_components;
                 for (size_t c = 0; c < image_info.num_components; c++) {
-                    image_info.component_info[c].component_width  = image_info.image_width;
-                    image_info.component_info[c].component_height = image_info.image_height;
-                    image_info.component_info[c].device_pitch_in_bytes   = pitch_in_bytes;
-                    image_info.component_info[c].sample_type      = image_info.sample_type;
-                    buffer_size +=
-                        image_info.component_info[c].device_pitch_in_bytes * image_info.image_height;
+                    image_info.component_info[c].component_width       = image_info.image_width;
+                    image_info.component_info[c].component_height      = image_info.image_height;
+                    image_info.component_info[c].device_pitch_in_bytes = pitch_in_bytes;
+                    image_info.component_info[c].sample_type           = image_info.sample_type;
+                    buffer_size += image_info.component_info[c].device_pitch_in_bytes *
+                                   image_info.image_height;
                 }
 
                 nvimgcdcsImage_t image;
@@ -293,9 +303,12 @@ PYBIND11_MODULE(nvimgcodecs, m)
         .def_property_readonly("ndim", &Image::getNdim)
         .def_property_readonly("dtype", &Image::dtype);
 
-    m.def("imread", [](const char* file_name) -> Image* {
-        return Image::createImageFromFile(module.instance_, file_name);
-    }, "Loads an image from a specified file", "file_name"_a);
+    m.def(
+        "imread",
+        [](const char* file_name) -> Image* {
+            return Image::createImageFromFile(module.instance_, file_name);
+        },
+        "Loads an image from a specified file", "file_name"_a);
     m.def(
         "imwrite",
         [](const char* file_name, Image* image, const int* params = NULL) -> void {

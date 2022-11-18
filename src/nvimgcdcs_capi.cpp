@@ -825,7 +825,6 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
             int bytes_per_element =
                 image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
-            image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             nvimgcdcsDecodeParams_t decode_params;
             memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
             decode_params.backend.useGPU = true;
@@ -851,22 +850,23 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             bool is_device_output =
                 std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
                     NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != decoder_capabilties.end();
-
-            unsigned char* image_buffer;
+            bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
+            unsigned char* device_buffer;
             if (is_device_output) {
                 size_t device_pitch_in_bytes = 0;
-                CHECK_CUDA(cudaMallocPitch((void**)&image_buffer, &device_pitch_in_bytes,
-                    image_info.image_width * bytes_per_element,
-                    image_info.image_height * image_info.num_components));
+                CHECK_CUDA(cudaMallocPitch((void**)&device_buffer, &device_pitch_in_bytes,
+                    image_info.image_width * bytes_per_element *
+                        (is_interleaved ? image_info.num_components : 1),
+                    image_info.image_height * (is_interleaved ? 1 : image_info.num_components)));
                 image_info.component_info[0].device_pitch_in_bytes = device_pitch_in_bytes;
                 image_info.component_info[1].device_pitch_in_bytes = device_pitch_in_bytes;
                 image_info.component_info[2].device_pitch_in_bytes = device_pitch_in_bytes;
 
-                size_t image_buffer_size =
+                size_t device_buffer_size =
                     device_pitch_in_bytes * image_info.image_height * image_info.num_components;
-                (*image)->dev_image_buffer_      = image_buffer;
-                (*image)->dev_image_buffer_size_ = image_buffer_size;
-                nvimgcdcsImageSetDeviceBuffer(*image, image_buffer, image_buffer_size);
+                (*image)->dev_image_buffer_      = device_buffer;
+                (*image)->dev_image_buffer_size_ = device_buffer_size;
+                nvimgcdcsImageSetDeviceBuffer(*image, device_buffer, device_buffer_size);
             }
 
             if (is_host_output) {
@@ -874,9 +874,12 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                     image_info.image_width * image_info.image_height * image_info.num_components);
                 nvimgcdcsImageSetHostBuffer(*image, (*image)->host_image_buffer_.data(),
                     (*image)->host_image_buffer_.size());
-                image_info.component_info[0].host_pitch_in_bytes = image_info.image_width;
-                image_info.component_info[1].host_pitch_in_bytes = image_info.image_width;
-                image_info.component_info[2].host_pitch_in_bytes = image_info.image_width;
+                image_info.component_info[0].host_pitch_in_bytes =
+                    image_info.image_width * (is_interleaved ? image_info.num_components : 1);
+                image_info.component_info[1].host_pitch_in_bytes =
+                    image_info.image_width * (is_interleaved ? image_info.num_components : 1);
+                image_info.component_info[2].host_pitch_in_bytes =
+                    image_info.image_width * (is_interleaved ? image_info.num_components : 1);
             }
 
             nvimgcdcsImageSetImageInfo(*image, &image_info);
@@ -902,7 +905,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
     return ret;
 }
 static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"},
-    {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}, {".tiff", "tiff"}, {".tif", "tiff"}};
+    {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}, {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}};
 
 inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
 {
@@ -969,18 +972,19 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             void* host_buffer       = nullptr;
             size_t host_buffer_size = 0;
             nvimgcdcsImageGetHostBuffer(image, &host_buffer, &host_buffer_size);
-
+            bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
             if (is_device_input && device_buffer == nullptr) {
                 //TODO use custom allocators
                 size_t bytes_per_element = sample_type_to_bytes_per_element(image_info.sample_type);
                 size_t device_pitch_in_bytes = 0;
                 CHECK_CUDA(cudaMallocPitch((void**)&device_buffer, &device_pitch_in_bytes,
-                    image_info.image_width * bytes_per_element,
-                    image_info.image_height * image_info.num_components));
+                    image_info.image_width * bytes_per_element *
+                        (is_interleaved ? image_info.num_components : 1),
+                    image_info.image_height * (is_interleaved ? 1 : image_info.num_components)));
                 image_info.component_info[0].device_pitch_in_bytes = device_pitch_in_bytes;
                 image_info.component_info[1].device_pitch_in_bytes = device_pitch_in_bytes;
                 image_info.component_info[2].device_pitch_in_bytes = device_pitch_in_bytes;
-                size_t device_buffer_size =
+                device_buffer_size =
                     device_pitch_in_bytes * image_info.image_height * image_info.num_components;
                 nvimgcdcsImageSetDeviceBuffer(image, device_buffer, device_buffer_size);
                 nvimgcdcsImageSetImageInfo(image, &image_info);
@@ -1001,18 +1005,22 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                 }
             } else if (is_host_input && host_buffer == nullptr) {
                 image->host_image_buffer_.resize(
-                    image_info.image_width * image_info.image_height * image_info.num_components);
-                image_info.component_info[0].host_pitch_in_bytes = image_info.image_width;
-                image_info.component_info[1].host_pitch_in_bytes = image_info.image_width;
-                image_info.component_info[2].host_pitch_in_bytes = image_info.image_width;
+                    image_info.image_width * image_info.image_height * image_info.num_components); //TODO more bytes per sample
+                image_info.component_info[0].host_pitch_in_bytes =
+                    image_info.image_width * (is_interleaved ? image_info.num_components:1);
+                image_info.component_info[1].host_pitch_in_bytes =
+                    image_info.image_width  *(is_interleaved ? image_info.num_components : 1);
+                image_info.component_info[2].host_pitch_in_bytes =
+                    image_info.image_width * (is_interleaved ? image_info.num_components : 1);
                 nvimgcdcsImageSetHostBuffer(
                     image, image->host_image_buffer_.data(), image->host_image_buffer_.size());
                 nvimgcdcsImageSetImageInfo(image, &image_info);    
                 if (device_buffer) {
                     CHECK_CUDA(cudaMemcpy2D(image->host_image_buffer_.data(),
                         (size_t)image_info.component_info[0].host_pitch_in_bytes, device_buffer,
-                        (size_t)image_info.component_info[0].device_pitch_in_bytes, image_info.image_width,
-                        image_info.image_height * image_info.num_components,
+                        (size_t)image_info.component_info[0].device_pitch_in_bytes,
+                        (size_t)image_info.component_info[0].host_pitch_in_bytes,
+                        image_info.image_height * (is_interleaved ? 1 : image_info.num_components),
                         cudaMemcpyDeviceToHost));
                 } else {
                     nvimgcdcsImageDetachEncodeState(image);

@@ -12,6 +12,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
+if(WIN32)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+  # XXX: cmake appends /MT after /MD that produces D9025 warnings about overriding flags, hence...
+  string(REGEX REPLACE "/MD " "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+  string(REGEX REPLACE "/MDd " "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+endif()
 
 option(BUILD_LIBRARY "Build library" ON)
 option(BUILD_TEST "Build tests" ON)
@@ -101,9 +107,10 @@ endif()
 #add_subdirectory(docs)
 #endif()
 
-#if(BUILD_TEST)
-#add_subdirectory(test)
-#endif()
+if(BUILD_TEST)
+add_subdirectory(test)
+endif()
+
 set (NVIMGCDCS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 if(BUILD_EXTENSIONS)
     add_subdirectory(extensions)

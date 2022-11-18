@@ -143,6 +143,7 @@ extern "C"
         NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampling_t;
 
+    //Interleave - even Planar - odd
     typedef enum
     {
         NVIMGCDCS_SAMPLEFORMAT_UNKNOWN        = -1,
@@ -150,11 +151,11 @@ extern "C"
         NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED    = 1, //unchanged planar
         NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED    = 2, //unchanged interleave
         NVIMGCDCS_SAMPLEFORMAT_P_RGB          = 3, //planar RGB
-        NVIMGCDCS_SAMPLEFORMAT_P_BGR          = 4, //planar BGR
-        NVIMGCDCS_SAMPLEFORMAT_I_RGB          = 5, //interleaved RGB
+        NVIMGCDCS_SAMPLEFORMAT_I_RGB          = 4, //interleaved RGB
+        NVIMGCDCS_SAMPLEFORMAT_P_BGR          = 5, //planar BGR
         NVIMGCDCS_SAMPLEFORMAT_I_BGR          = 6, //interleaved BGR
         NVIMGCDCS_SAMPLEFORMAT_P_Y            = 7, //Y component only
-        NVIMGCDCS_SAMPLEFORMAT_P_YUV          = 8, //YUV planar format
+        NVIMGCDCS_SAMPLEFORMAT_P_YUV          = 9, //YUV planar format
         NVIMGCDCS_SAMPLEFORMAT_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampleFormat_t;
 
@@ -165,6 +166,8 @@ extern "C"
         NVIMGCDCS_COLORSPACE_SRGB           = 1,
         NVIMGCDCS_COLORSPACE_GRAY           = 2,
         NVIMGCDCS_COLORSPACE_SYCC           = 3,
+        NVIMGCDCS_COLORSPACE_CMYK           = 4,
+        NVIMGCDCS_COLORSPACE_YCCK           = 5,
         NVIMGCDCS_COLORSPACE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsColorSpace_t;
 
@@ -492,8 +495,8 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder,
         nvimgcdcsDecodeParams_t* params, nvimgcdcsContainer_t container, int batchSize,
         nvimgcdcsImage_t* image); //TODO
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(nvimgcdcsDecoder_t decoder,
-        const nvimgcdcsCapability_t** capabilities, size_t* size); 
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(
+        nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(
         nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decodeState, bool* canUse); //TODO
 
@@ -512,8 +515,8 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder,
         nvimgcdcsDecodeParams_t* params, nvimgcdcsContainer_t container, int batchSize,
         nvimgcdcsImage_t* image); //TODO
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(nvimgcdcsEncoder_t encoder,
-        const nvimgcdcsCapability_t** capabilities, size_t* size); 
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(
+        nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanUseEncodeState(
         nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encodeState, bool* canUse); //TODO
 
