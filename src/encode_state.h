@@ -15,8 +15,8 @@ namespace nvimgcdcs {
 class EncodeState
 {
   public:
-    EncodeState(
-        const struct nvimgcdcsEncoderDesc* encoder_desc, nvimgcdcsEncoder_t encoder);
+    EncodeState(const struct nvimgcdcsEncoderDesc* encoder_desc, nvimgcdcsEncoder_t encoder,
+        cudaStream_t cuda_stream);
     ~EncodeState();
     nvimgcdcsEncodeState_t getInternalEncodeState();
 

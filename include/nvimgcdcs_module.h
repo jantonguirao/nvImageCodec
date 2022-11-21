@@ -91,8 +91,8 @@ extern "C"
             void* instance, nvimgcdcsEncoder_t* encoder, nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
-        nvimgcdcsStatus_t (*createEncodeState)(
-            nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
+        nvimgcdcsStatus_t (*createEncodeState)(nvimgcdcsEncoder_t encoder,
+            nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
         nvimgcdcsStatus_t (*destroyEncodeState)(nvimgcdcsEncodeState_t encode_state);
 
         nvimgcdcsStatus_t (*getCapabilities)(

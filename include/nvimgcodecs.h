@@ -502,7 +502,7 @@ extern "C"
 
     //DecodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
-        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
+        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_state);
 
     //Encoder
@@ -522,7 +522,7 @@ extern "C"
 
     //EncodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
-        nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
+        nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_state);
 
     //High-level API

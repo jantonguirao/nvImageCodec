@@ -26,9 +26,9 @@ ImageEncoder::~ImageEncoder()
     encoder_desc_->destroy(encoder_);
 }
 
-std::unique_ptr<EncodeState> ImageEncoder::createEncodeState() const
+std::unique_ptr<EncodeState> ImageEncoder::createEncodeState(cudaStream_t cuda_stream) const
 {
-    return std::make_unique<EncodeState>(encoder_desc_, encoder_);
+    return std::make_unique<EncodeState>(encoder_desc_, encoder_, cuda_stream);
 }
 
 void ImageEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)

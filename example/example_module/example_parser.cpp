@@ -200,6 +200,7 @@ static nvimgcdcsStatus_t example_parser_get_image_info(
         image_info->component_info[i].sample_type      = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;// TODO
     }
     image_info->sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+    image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

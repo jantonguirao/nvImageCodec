@@ -502,7 +502,7 @@ nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(
 }
 
 nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
-    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
+    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -510,6 +510,7 @@ nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
         {
             CHECK_NULL(decoder)
             CHECK_NULL(decode_state)
+            //TODO pass cuda_stream
             std::unique_ptr<DecodeState> decode_state_ =
                 decoder->image_decoder_->createDecodeState();
             if (decode_state_) {
@@ -773,7 +774,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(
 }
 
 nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
-    nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state)
+    nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -782,7 +783,7 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
             CHECK_NULL(encoder)
             CHECK_NULL(encode_state)
             std::unique_ptr<EncodeState> encode_state_ =
-                encoder->image_encoder_->createEncodeState();
+                encoder->image_encoder_->createEncodeState(cuda_stream);
             if (encode_state_) {
                 *encode_state                  = new nvimgcdcsEncodeState();
                 (*encode_state)->encode_state_ = std::move(encode_state_);
@@ -833,7 +834,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);
 
             nvimgcdcsDecodeState_t decode_state;
-            nvimgcdcsDecodeStateCreate(decoder, &decode_state);
+            nvimgcdcsDecodeStateCreate(decoder, &decode_state, nullptr);
 
             nvimgcdcsImageCreate(instance, image);
 
@@ -942,14 +943,14 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
 
             nvimgcdcsEncodeParams_t encode_params;
             memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
-            encode_params.backend.useCPU = true; //TODO backend depends on codec
-            encode_params.target_psnr    = 50;   //TODO passing codec specific params
+            encode_params.qstep          = 75;
+            encode_params.target_psnr = 50; //TODO passing codec specific params
             encode_params.codec          = codec_name.c_str();
 
             nvimgcdcsEncoder_t encoder;
             nvimgcdcsEncoderCreate(instance, &encoder, bmp_code_stream, &encode_params);
             nvimgcdcsEncodeState_t encode_state;
-            nvimgcdcsEncodeStateCreate(encoder, &encode_state);
+            nvimgcdcsEncodeStateCreate(encoder, &encode_state, nullptr);
             nvimgcdcsImageAttachEncodeState(image, encode_state);
 
             size_t capabilities_size;
@@ -994,7 +995,8 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                         (size_t)image_info.component_info[0].device_pitch_in_bytes,
                         image->host_image_buffer_.data(),
                         (size_t)image_info.component_info[0].host_pitch_in_bytes,
-                        image_info.image_width, image_info.image_height * image_info.num_components,
+                        image_info.image_width,
+                        image_info.image_height * (is_interleaved ? 1 : image_info.num_components),
                         cudaMemcpyHostToDevice));
                 } else {
                     nvimgcdcsImageDetachEncodeState(image);

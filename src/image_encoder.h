@@ -26,7 +26,7 @@ class ImageEncoder
   public:
     ImageEncoder(const struct nvimgcdcsEncoderDesc* desc, nvimgcdcsEncodeParams_t* params);
     ~ImageEncoder();
-    std::unique_ptr<EncodeState> createEncodeState() const;
+    std::unique_ptr<EncodeState> createEncodeState(cudaStream_t cuda_stream) const;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t *size);
     void encode(CodeStream* code_stream, Image* image, nvimgcdcsEncodeParams_t* params);
 
