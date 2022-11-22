@@ -34,9 +34,9 @@ void StdFileIoStream::close()
     }
 }
 
-void StdFileIoStream::seek(ptrdiff_t pos, int whence)
+void StdFileIoStream::seek(int64_t pos, int whence)
 {
-    if (std::fseek(fp_, pos, whence))
+    if (std::fseek(fp_, static_cast<long>(pos), whence))
         throw std::runtime_error(std::string("Seek operation failed: ") + std::strerror(errno));
 }
 

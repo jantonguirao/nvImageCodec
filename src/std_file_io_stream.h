@@ -23,7 +23,7 @@ class StdFileIoStream : public FileIoStream
     size_t read(void* buffer, size_t n_bytes) override;
     std::size_t write(void* buffer, size_t n_bytes) override;
     std::size_t putc(unsigned char ch) override;
-    void seek(ptrdiff_t pos, int whence = SEEK_SET) override;
+    void seek(int64_t pos, int whence = SEEK_SET) override;
     int64_t tell() const override;
     size_t size() const override;
 

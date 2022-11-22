@@ -374,13 +374,6 @@ extern "C"
         // would be padded to the multiple of specified number of bytes
     } nvimgcdcsInstanceCreateInfo_t;
 
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
-        nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t createInfo);
-
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceDestroy(nvimgcdcsInstance_t instance);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceGetReadyImage(nvimgcdcsInstance_t instance,
-        nvimgcdcsImage_t* image, nvimgcdcsProcessingStatus_t* processing_status, bool blocking);
-
     struct nvimgcdcsDebugMessage;
     typedef nvimgcdcsDebugMessage* nvimgcdcsDebugMessage_t;
 
@@ -433,6 +426,15 @@ extern "C"
         void* userData;
     } nvimgcdcsDebugMessengerCreateInfo_t;
 
+    // Instance
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
+        nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t createInfo);
+
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceDestroy(nvimgcdcsInstance_t instance);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceGetReadyImage(nvimgcdcsInstance_t instance,
+        nvimgcdcsImage_t* image, nvimgcdcsProcessingStatus_t* processing_status, bool blocking);
+
+    // Debug Messanger
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessangerCreate(nvimgcdcsInstance_t instance,
         nvimgcdcsDebugMessage_t* dbgMessenger,
         nvimgcdcsDebugMessengerCreateInfo_t createInfo); //TODO

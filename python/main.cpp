@@ -87,7 +87,7 @@ static std::string format_str_from_type(nvimgcdcsSampleDataType_t type)
 
 static nvimgcdcsSampleDataType_t type_from_format_str(const std::string& typestr)
 {
-    int itemsize = py::dtype(typestr).itemsize();
+    pybind11::ssize_t itemsize = py::dtype(typestr).itemsize();
     if (itemsize == 1) {
         if (py::dtype(typestr).kind() == 'i')
             return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8;
@@ -210,7 +210,7 @@ class Image
         if (!o) {
             return nullptr;
         }
-        py::object tmp{o, true /* borrowed */};
+        py::object tmp = py::reinterpret_borrow<py::object>(o);
 
         if (hasattr(tmp, "__cuda_array_interface__")) {
             py::dict iface = tmp.attr("__cuda_array_interface__").cast<py::dict>();
@@ -234,7 +234,7 @@ class Image
             std::vector<int> vstrides;
             if (iface.contains("strides")) {
                 py::object strides = iface["strides"];
-                if (strides != py::none()) {
+                if (!strides.is(py::none())) {
                     strides = strides.cast<py::tuple>();
                     for (auto& o : strides) {
                         vstrides.push_back(o.cast<int>());

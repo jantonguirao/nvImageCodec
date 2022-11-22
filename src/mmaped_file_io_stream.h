@@ -23,7 +23,7 @@ class MmapedFileIoStream : public FileIoStream
     static bool reserveFileMappings(unsigned int num);
     static void freeFileMappings(unsigned int num);
     std::size_t read(void* buffer, size_t n_bytes) override;
-    void seek(ptrdiff_t pos, int whence = SEEK_SET) override;
+    void seek(int64_t pos, int whence = SEEK_SET) override;
     int64_t tell() const override;
     std::size_t size() const override;
 
