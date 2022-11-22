@@ -117,10 +117,8 @@ int main(int argc, const char* argv[])
     std::cout << "\t - components:" << image_info.num_components << std::endl;
     std::cout << "\t - codec:" << codec_name << std::endl;
     int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
-    //image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     nvimgcdcsDecodeParams_t decode_params;
     memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
-    decode_params.backend.useGPU = true;
 
     nvimgcdcsDecoder_t decoder;
     nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);

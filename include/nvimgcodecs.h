@@ -230,8 +230,6 @@ extern "C"
         bool useGPU;
         bool useHwEng;
         int variant;
-        int maxCpuThreads;
-        int cudaDeviceId;
     } nvimgcdcsBackend_t;
 
     typedef enum
@@ -278,13 +276,16 @@ extern "C"
 
         nvimgcdcsDecodeStep_t decode_step;
         nvimgcdcsDecodePhase_t decode_phase;
-        nvimgcdcsOrientation_t orientation;
-        nvimgcdcsScaleFactor_t scale;
-        nvimgcdcsBackend_t backend;
-        nvimgcdcsDataDict_t config;
         bool apply_orientation;
+        nvimgcdcsOrientation_t orientation;
         bool apply_scaling;
+        nvimgcdcsScaleFactor_t scale;
+        int num_backends; //Zero means that all backendsa re allowed.
+        nvimgcdcsBackend_t* backends;  
+        int maxCpuThreads;
+        int cudaDeviceId;
         cudaStream_t cuda_stream;
+        nvimgcdcsDataDict_t config;
     } nvimgcdcsDecodeParams_t;
 
     typedef struct
@@ -320,6 +321,8 @@ extern "C"
         NVIMGCDCS_CAPABILITY_HOST_OUTPUT    = 7,
         NVIMGCDCS_CAPABILITY_DEVICE_INPUT   = 8,
         NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT  = 9,
+        NVIMGCDCS_CAPABILITY_PHASE_DECODING = 10,
+        NVIMGCDCS_CAPABILITY_STEP_DECODING  = 11,
         NVIMGCDCS_CAPABILITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsCapability_t;
 

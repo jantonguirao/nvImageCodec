@@ -828,7 +828,6 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                 image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
             nvimgcdcsDecodeParams_t decode_params;
             memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
-            decode_params.backend.useGPU = true;
 
             nvimgcdcsDecoder_t decoder;
             nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);
