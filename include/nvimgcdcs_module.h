@@ -25,8 +25,8 @@
 extern "C"
 {
 #endif
-    struct nvimgcdcsModule;
-    typedef struct nvimgcdcsModule* nvimgcdcsModule_t;
+    struct nvimgcdcsExtModule;
+    typedef struct nvimgcdcsExtModule* nvimgcdcsExtModule_t;
 
     struct nvimgcdcsParser;
     typedef struct nvimgcdcsParser* nvimgcdcsParser_t;
@@ -152,7 +152,7 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         const void* next;
-        
+
         const char* id; // famework named identifier e.g. nvImageCodecs
         uint32_t version;
         void* instance;
@@ -165,20 +165,23 @@ extern "C"
 
     typedef struct nvimgcdcsFrameworkDesc nvimgcdcsFrameworkDesc_t;
 
-    typedef nvimgcdcsStatus_t(nvimgcdcsModuleLoad_t)(nvimgcdcsFrameworkDesc_t* framework);
+    typedef nvimgcdcsStatus_t(nvimgcdcsExtModuleLoad_t)(
+        nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t* module);
+    typedef nvimgcdcsStatus_t(nvimgcdcsExtModuleUnload_t)(
+        nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t module);
     typedef uint32_t(nvimgcdcsModuleVersion_t)(void);
 
-    NVIMGCDCSAPI uint32_t nvimgcdcsModuleVersion();
+    NVIMGCDCSAPI uint32_t nvimgcdcsExtModuleGetVersion();
 #define NVIMGCDCS_EXTENSION_MODULE()  \
-    uint32_t nvimgcdcsModuleVersion() \
+    uint32_t nvimgcdcsExtModuleGetVersion() \
     {                                 \
         return NVIMGCDCS_VER;         \
     }
 
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsModuleLoad(
-        nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t* module);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsModuleUnload(
-        nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t module);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtModuleLoad(
+        nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t* module);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtModuleUnload(
+        nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t module);
 
 #if defined(__cplusplus)
 }

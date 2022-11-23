@@ -6,8 +6,8 @@ extern nvimgcdcsParserDesc example_parser;
 extern nvimgcdcsEncoderDesc example_encoder;
 extern nvimgcdcsDecoderDesc example_decoder;
 
-nvimgcdcsStatus_t nvimgcdcsModuleLoad(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t* module)
+nvimgcdcsStatus_t nvimgcdcsExtModuleLoad(
+    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t* module)
 {
     framework->registerParser(framework->instance, &example_parser);
     framework->registerEncoder(framework->instance, &example_encoder);
@@ -16,8 +16,8 @@ nvimgcdcsStatus_t nvimgcdcsModuleLoad(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvimgcdcsModuleUnload(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsModule_t module)
+nvimgcdcsStatus_t nvimgcdcsExtModuleUnload(
+    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t module)
 {
     return NVIMGCDCS_STATUS_SUCCESS;
 }

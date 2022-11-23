@@ -20,6 +20,9 @@
 namespace nvimgcdcs {
 class CodecRegistry;
 class Image;
+
+
+
 class PluginFramework
 {
   public:
@@ -29,6 +32,15 @@ class PluginFramework
     void loadExtModule(const std::string& modulePath);
     void unloadAllExtModules();
   private:
+    struct Module
+    {
+        nvimgcdcsModuleHandle lib_handle_;
+        nvimgcdcsExtModule_t module_handle_;
+        nvimgcdcsModuleVersion_t* getVersion;
+        nvimgcdcsExtModuleLoad_t* load;
+        nvimgcdcsExtModuleUnload_t* unload;
+    };
+
     nvimgcdcsStatus_t registerEncoder(const struct nvimgcdcsEncoderDesc* desc);
     nvimgcdcsStatus_t registerDecoder(const struct nvimgcdcsDecoderDesc* desc);
     nvimgcdcsStatus_t registerParser(const struct nvimgcdcsParserDesc* desc);
@@ -40,7 +52,7 @@ class PluginFramework
     static nvimgcdcsStatus_t static_register_parser(
         void* instance, const struct nvimgcdcsParserDesc* desc);
 
-    std::vector<nvimgcdcsModuleHandle> modules_;
+    std::vector<Module> modules_;
     nvimgcdcsFrameworkDesc framework_desc_;
     CodecRegistry* codec_registry_;
     std::vector<std::string_view> plugin_dirs_;

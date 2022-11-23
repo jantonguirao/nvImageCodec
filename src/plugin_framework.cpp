@@ -73,24 +73,28 @@ void PluginFramework::discoverAndLoadExtModules()
 void PluginFramework::loadExtModule(const std::string& modulePath)
 {
     std::cout << "Loading extension module:" << modulePath  << std::endl;
-    nvimgcdcsModuleHandle moduleHandle = nvimgcdcsLoadModule(modulePath);
-    modules_.push_back(moduleHandle);
+    PluginFramework::Module module;
+    module.lib_handle_ = nvimgcdcsLoadModule(modulePath);
     std::cout << "Getting module version" << std::endl;
-    nvimgcdcsModuleVersion_t* moduleVersion =
-        nvimgcdcsGetFuncAddress<nvimgcdcsModuleVersion_t>(moduleHandle, "nvimgcdcsModuleVersion");
-    uint32_t version = moduleVersion();
+    module.getVersion = nvimgcdcsGetFuncAddress<nvimgcdcsModuleVersion_t>(
+        module.lib_handle_, "nvimgcdcsExtModuleGetVersion");
+    uint32_t version = module.getVersion();
     std::cout << "Extension module:" << modulePath << " version:" << version
               << std::endl;
-    nvimgcdcsModuleLoad_t* moduleLoad =
-        nvimgcdcsGetFuncAddress<nvimgcdcsModuleLoad_t>(moduleHandle, "nvimgcdcsModuleLoad");
-    moduleLoad(&framework_desc_);
+    module.load = nvimgcdcsGetFuncAddress<nvimgcdcsExtModuleLoad_t>(
+        module.lib_handle_, "nvimgcdcsExtModuleLoad");
+    module.unload = nvimgcdcsGetFuncAddress<nvimgcdcsExtModuleUnload_t>(
+        module.lib_handle_, "nvimgcdcsExtModuleUnload");
+
+    module.load(&framework_desc_, &module.module_handle_);
+    modules_.push_back(module);
 }
 
 void PluginFramework::unloadAllExtModules()
 {
-    for (const auto& entry : modules_) {
-        //TODO call unload  module function
-        nvimgcdcsUnloadModule(entry);
+    for (const auto& module : modules_) {
+        module.unload(&framework_desc_, module.module_handle_);
+        nvimgcdcsUnloadModule(module.lib_handle_);
     }
     modules_.clear();
 }

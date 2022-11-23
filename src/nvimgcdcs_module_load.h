@@ -28,7 +28,7 @@ inline nvimgcdcsModuleHandle nvimgcdcsLoadModule(const std::string &modulePath)
 inline void nvimgcdcsUnloadModule(nvimgcdcsModuleHandle moduleHandle)
 {
     const int result = ::dlclose(moduleHandle);
-    if (result == 0) {
+    if (result != 0) {
         throw std::runtime_error(std::string("Failed to unload module"));
     }
 }
