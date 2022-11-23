@@ -9,21 +9,22 @@
  */
 #include "image.h"
 #include <cassert>
+#include <cstring>
 #include <iostream>
 
 namespace nvimgcdcs {
 
 Image::Image(ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue)
     : image_info_()
-    , ready_images_queue_(ready_images_queue)
     , host_buffer_(nullptr)
     , host_buffer_size_(0)
     , device_buffer_(nullptr)
     , device_buffer_size_(0)
+        , decode_state_(nullptr)
     , encode_state_(nullptr)
-    , decode_state_(nullptr)
     , image_desc_{this, Image::static_get_image_info, Image::static_get_device_buffer,
           Image::static_get_host_buffer, Image::static_image_ready}
+        , ready_images_queue_(ready_images_queue)
     , processing_status_(NVIMGCDCS_PROCESSING_STATUS_UNKNOWN)
 {
     memset(&image_info_, 0, sizeof(image_info_));

@@ -24,7 +24,7 @@
 
 #include <filesystem>
 #include <iostream>
-#include <span>
+//#include <span>
 #include <stdexcept>
 #include <string>
 
@@ -841,6 +841,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             nvimgcdcsDecoderGetCapabilities(decoder, nullptr, &capabilities_size);
             const nvimgcdcsCapability_t* capabilities_ptr;
             nvimgcdcsDecoderGetCapabilities(decoder, &capabilities_ptr, &capabilities_size);
+#if 0
             std::span<const nvimgcdcsCapability_t> decoder_capabilties{
                 capabilities_ptr, capabilities_size};
 
@@ -850,6 +851,19 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             bool is_device_output =
                 std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
                     NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != decoder_capabilties.end();
+#else
+            bool is_host_output =
+                std::find(capabilities_ptr,
+                    capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                    NVIMGCDCS_CAPABILITY_HOST_OUTPUT) !=
+                capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+            bool is_device_output =
+                std::find(capabilities_ptr,
+                    capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                    NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) !=
+                capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+            
+#endif
             bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
             unsigned char* device_buffer;
             if (is_device_output) {
@@ -905,7 +919,8 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
     return ret;
 }
 static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"},
-    {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}, {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}};
+    {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}, {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"},
+    {".jpeg", "jpeg"}};
 
 inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
 {
@@ -956,6 +971,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             nvimgcdcsEncoderGetCapabilities(encoder, nullptr, &capabilities_size);
             const nvimgcdcsCapability_t* capabilities_ptr;
             nvimgcdcsEncoderGetCapabilities(encoder, &capabilities_ptr, &capabilities_size);
+#if 0
             std::span<const nvimgcdcsCapability_t> encoder_capabilties{
                 capabilities_ptr, capabilities_size};
 
@@ -964,7 +980,18 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             bool is_device_input =
                 std::find(encoder_capabilties.begin(), encoder_capabilties.end(),
                     NVIMGCDCS_CAPABILITY_DEVICE_INPUT) != encoder_capabilties.end();
-
+#else
+            bool is_host_input =
+                std::find(capabilities_ptr,
+                    capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                    NVIMGCDCS_CAPABILITY_HOST_INPUT) !=
+                capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+            bool is_device_input =
+                std::find(capabilities_ptr,
+                    capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                    NVIMGCDCS_CAPABILITY_DEVICE_INPUT) !=
+                capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+#endif
             void* device_buffer       = nullptr;
             size_t device_buffer_size = 0;
             nvimgcdcsImageGetDeviceBuffer(image, &device_buffer, &device_buffer_size);
@@ -1006,7 +1033,8 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                 }
             } else if (is_host_input && host_buffer == nullptr) {
                 image->host_image_buffer_.resize(
-                    image_info.image_width * image_info.image_height * image_info.num_components); //TODO more bytes per sample
+                    image_info.image_width * image_info.image_height *
+                    image_info.num_components); //TODO more bytes per sample
                 image_info.component_info[0].host_pitch_in_bytes =
                     image_info.image_width * (is_interleaved ? image_info.num_components:1);
                 image_info.component_info[1].host_pitch_in_bytes =

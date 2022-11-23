@@ -33,6 +33,8 @@ message(STATUS "props ProductVersionFiles ${ProductVersionFiles}")
 add_library(${NVIMGCDCS_LIBRARY_NAME} SHARED ${NVIMGCDCS_SRCS} ${ProductVersionFiles})
 add_library(${NVIMGCDCS_LIBRARY_NAME}_static STATIC   ${NVIMGCDCS_SRCS} ${ProductVersionFiles})
 
+set(LIBTOPACK ${NVIMGCDCS_LIBRARY_NAME} ${NVIMGCDCS_LIBRARY_NAME}_static)
+
 find_library(CUDART_SHARED 
     NAMES cudart
     PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
@@ -52,3 +54,18 @@ configure_library_version(NVIMGCDCS_LIBRARY_NAME
     "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcdcs_version.h"
 )
 
+set(NVIMGCDCS_PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodecs.h")
+set(NVIMGCDCS_PUBLIC_HEADERS "${NVIMGCDCS_PUBLIC_HEADERS}\;${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcdcs_module.h")
+set(NVIMGCDCS_PUBLIC_HEADERS "${NVIMGCDCS_PUBLIC_HEADERS}\;${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcdcs_version.h")
+
+set_target_properties(${NVIMGCDCS_LIBRARY_NAME} PROPERTIES PUBLIC_HEADER ${NVIMGCDCS_PUBLIC_HEADERS})
+
+install(TARGETS
+${LIBTOPACK} DESTINATION lib64
+PUBLIC_HEADER DESTINATION include
+)
+
+install(FILES
+${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt
+DESTINATION .
+)

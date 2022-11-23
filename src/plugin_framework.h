@@ -40,9 +40,9 @@ class PluginFramework
     static nvimgcdcsStatus_t static_register_parser(
         void* instance, const struct nvimgcdcsParserDesc* desc);
 
-    std::vector<std::string_view> plugin_dirs_;
     std::vector<nvimgcdcsModuleHandle> modules_;
     nvimgcdcsFrameworkDesc framework_desc_;
     CodecRegistry* codec_registry_;
+    std::vector<std::string_view> plugin_dirs_;
 };
 } // namespace nvimgcdcs

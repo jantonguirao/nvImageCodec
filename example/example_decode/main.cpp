@@ -5,7 +5,7 @@
 #include <cstring>
 #include <filesystem>
 #include <iostream>
-#include <span>
+//#include <span>
 #include <vector>
 
 #define CHECK_CUDA(call)                                                                \
@@ -129,19 +129,32 @@ int main(int argc, const char* argv[])
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image);
 
+    unsigned char* device_buffer = nullptr;
+    std::vector<unsigned char> host_buffer;
+
     size_t capabilities_size;
     nvimgcdcsDecoderGetCapabilities(decoder, nullptr, &capabilities_size);
     const nvimgcdcsCapability_t* capabilities_ptr;
     nvimgcdcsDecoderGetCapabilities(decoder, &capabilities_ptr, &capabilities_size);
+#if 0    
     std::span<const nvimgcdcsCapability_t> decoder_capabilties{capabilities_ptr, capabilities_size};
 
-    unsigned char* device_buffer = nullptr;
-    std::vector<unsigned char> host_buffer;
+
     bool is_host_output   = std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
                                 NVIMGCDCS_CAPABILITY_HOST_OUTPUT) != decoder_capabilties.end();
     bool is_device_output = std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
                                 NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != decoder_capabilties.end();
-
+#else
+    bool is_host_output = std::find(capabilities_ptr,
+                              capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                              NVIMGCDCS_CAPABILITY_HOST_OUTPUT) !=
+                          capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+    bool is_device_output =
+        std::find(capabilities_ptr,
+            capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+            NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) !=
+        capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+#endif
     nvimgcdcsCodeStream_t output_code_stream;
     fs::path output_file = fs::absolute(exe_path).parent_path() / fs::path(params.output);
     std::cout << "Saving to " << output_file.string() << " file" << std::endl;
@@ -161,13 +174,23 @@ int main(int argc, const char* argv[])
 
     nvimgcdcsEncoderGetCapabilities(encoder, nullptr, &capabilities_size);
     nvimgcdcsEncoderGetCapabilities(encoder, &capabilities_ptr, &capabilities_size);
+#if 0
     std::span<const nvimgcdcsCapability_t> encoder_capabilties{capabilities_ptr, capabilities_size};
 
     bool is_host_input   = std::find(encoder_capabilties.begin(), encoder_capabilties.end(),
                                NVIMGCDCS_CAPABILITY_HOST_INPUT) != encoder_capabilties.end();
     bool is_device_input = std::find(encoder_capabilties.begin(), encoder_capabilties.end(),
                                NVIMGCDCS_CAPABILITY_DEVICE_INPUT) != encoder_capabilties.end();
-
+#else
+    bool is_host_input = std::find(capabilities_ptr,
+                             capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                             NVIMGCDCS_CAPABILITY_HOST_INPUT) !=
+                         capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+    bool is_device_input = std::find(capabilities_ptr,
+                               capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                               NVIMGCDCS_CAPABILITY_DEVICE_INPUT) !=
+                           capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+#endif
     bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
 
     if (is_host_output || is_host_input) {
@@ -214,7 +237,8 @@ int main(int argc, const char* argv[])
         CHECK_CUDA(cudaMemcpy2D(device_buffer,
             (size_t)image_info.component_info[0].device_pitch_in_bytes, host_buffer.data(),
             (size_t)image_info.component_info[0].host_pitch_in_bytes, image_info.image_width,
-            image_info.image_height * (is_interleaved ? 1 : image_info.num_components), cudaMemcpyHostToDevice));
+            image_info.image_height * (is_interleaved ? 1 : image_info.num_components),
+            cudaMemcpyHostToDevice));
     } else if (is_device_output && is_host_input) {
         CHECK_CUDA(cudaMemcpy2D(host_buffer.data(),
             (size_t)image_info.component_info[0].host_pitch_in_bytes, device_buffer,
