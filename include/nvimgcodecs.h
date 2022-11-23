@@ -41,7 +41,14 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION,
+        NVIMGCDCS_STRUCTURE_TYPE_REGION,
         NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
@@ -273,6 +280,17 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         const void* next;
+        int* start;
+        int* end;
+        int ndim;
+        bool align_to_tile;
+        nvimgcdcsDataDict_t config;
+    } nvimgcdcsRegion_t;
+
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
 
         nvimgcdcsDecodeStep_t decode_step;
         nvimgcdcsDecodePhase_t decode_phase;
@@ -280,6 +298,9 @@ extern "C"
         nvimgcdcsOrientation_t orientation;
         bool apply_scaling;
         nvimgcdcsScaleFactor_t scale;
+        bool apply_roi;
+        nvimgcdcsRegion_t region;
+
         int num_backends; //Zero means that all backendsa re allowed.
         nvimgcdcsBackend_t* backends;  
         int maxCpuThreads;
@@ -292,12 +313,17 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         const void* next;
+
         double qstep;
         double target_psnr;
         const char* codec;
-        nvimgcdcsBackend_t backend;
-        nvimgcdcsDataDict_t config;
+
+        int num_backends; //Zero means that all backendsa re allowed.
+        nvimgcdcsBackend_t* backends;
+        int maxCpuThreads;
+        int cudaDeviceId;
         cudaStream_t cuda_stream;
+        nvimgcdcsDataDict_t config;
     } nvimgcdcsEncodeParams_t;
 
     typedef struct

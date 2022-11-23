@@ -102,6 +102,8 @@ static nvimgcdcsStatus_t example_decoder_decode(nvimgcdcsDecoder_t decoder,
 
 // clang-format off
 nvimgcdcsDecoderDesc_t example_decoder = {
+    NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
+    NULL,
     NULL,               // instance    
     "example_decoder",  //id
     0x00000100,         // version

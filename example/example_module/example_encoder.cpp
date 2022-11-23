@@ -214,6 +214,8 @@ static nvimgcdcsStatus_t example_encoder_encode(nvimgcdcsEncoder_t encoder,
 
 // clang-format off
 nvimgcdcsEncoderDesc example_encoder = {
+    NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
+    NULL,
     NULL,               // instance    
     "example_encoder",  //id
      0x00000100,        // version

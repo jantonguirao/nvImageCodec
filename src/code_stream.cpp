@@ -26,7 +26,7 @@ CodeStream::CodeStream(CodecRegistry* codec_registry)
     , io_stream_(nullptr)
     , io_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static,
           write_static, putc_static, skip_static, seek_static, tell_static, size_static}
-    , code_stream_desc_{this, "", &io_stream_desc_}
+    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, "", &io_stream_desc_}
     , image_info_(nullptr)
     , parse_state_(nullptr)
 {

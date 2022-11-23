@@ -36,6 +36,9 @@ extern "C"
 
     struct nvimgcdcsCodeStreamDesc
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
         void* instance;
         const char* codec;
         nvimgcdcsIoStreamDesc_t io_stream;
@@ -45,6 +48,9 @@ extern "C"
 
     struct nvimgcdcsImageDesc
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
         void* instance;
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
         nvimgcdcsStatus_t (*getDeviceBuffer)(void* instance, void** buffer, size_t* size);
@@ -56,6 +62,9 @@ extern "C"
 
     struct nvimgcdcsParserDesc
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
         void* instance; // plugin instance pointer which will be passed back in functions
         const char* id; // named identifier e.g. nvJpeg2000
         uint32_t version;
@@ -79,6 +88,9 @@ extern "C"
 
     struct nvimgcdcsEncoderDesc
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
         void* instance; // plugin instance pointer which will be passed back in functions
         const char* id; // named identifier e.g. nvJpeg2000
         uint32_t version;
@@ -107,6 +119,9 @@ extern "C"
 
     struct nvimgcdcsDecoderDesc
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
         void* instance; // plugin instance pointer which will be passed back in functions
         const char* id; // named identifier e.g. nvJpeg2000
         uint32_t version;
@@ -135,6 +150,9 @@ extern "C"
 
     struct nvimgcdcsFrameworkDesc
     {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+        
         const char* id; // famework named identifier e.g. nvImageCodecs
         uint32_t version;
         void* instance;

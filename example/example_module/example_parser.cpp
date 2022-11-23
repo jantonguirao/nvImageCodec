@@ -224,6 +224,8 @@ static nvimgcdcsStatus_t example_get_capabilities(
 
 // clang-format off
 nvimgcdcsParserDesc example_parser = {
+    NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC,
+    NULL,
     NULL,               // instance    
     "example_parser",   // id
      0x00000100,        // version

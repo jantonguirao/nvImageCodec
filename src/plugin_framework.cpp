@@ -28,8 +28,8 @@ constexpr std::string_view defaultModuleDir = "C:/Program Files (x86)/nvimgcodec
 #endif
 
 PluginFramework::PluginFramework(CodecRegistry* codec_registry)
-    : framework_desc_{"nvImageCodecs", 0x000100, this, &static_register_encoder,
-          &static_register_decoder, &static_register_parser}
+    : framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100, this,
+          &static_register_encoder, &static_register_decoder, &static_register_parser}
     , codec_registry_(codec_registry)
     , plugin_dirs_{defaultModuleDir}
 {
@@ -89,6 +89,7 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
 void PluginFramework::unloadAllExtModules()
 {
     for (const auto& entry : modules_) {
+        //TODO call unload  module function
         nvimgcdcsUnloadModule(entry);
     }
     modules_.clear();
