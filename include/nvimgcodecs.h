@@ -42,6 +42,15 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION,
         NVIMGCDCS_STRUCTURE_TYPE_REGION,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODING,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_IMAGE_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_COMPOENT_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_RESOLUTION_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_DECODE_PARAMS,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
@@ -65,7 +74,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         nvimgcdcsDeviceMalloc_t device_malloc;
         nvimgcdcsDeviceFree_t device_free;
     } nvimgcdcsDeviceAllocator_t;
@@ -73,7 +82,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         nvimgcdcsPinnedMalloc_t pinned_malloc;
         nvimgcdcsPinnedFree_t pinned_free;
     } nvimgcdcsPinnedAllocator_t;
@@ -91,7 +100,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         nvimgcdcsDeviceMallocV2_t dev_malloc;
         nvimgcdcsDeviceFreeV2_t dev_free;
         void* dev_ctx;
@@ -100,7 +109,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         nvimgcdcsPinnedMallocV2_t pinned_malloc;
         nvimgcdcsPinnedFreeV2_t pinned_free;
         void* pinned_ctx;
@@ -148,7 +157,7 @@ extern "C"
         NVIMGCDCS_SAMPLING_GRAY           = 7,
         NVIMGCDCS_SAMPLING_410V           = 8,
         NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsSampling_t;
+    } nvimgcdcsChromaSubsampling_t;
 
     //Interleave - even Planar - odd
     typedef enum
@@ -190,8 +199,8 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
-        int rotated;
+        void* next;
+        int rotated; //CW
         bool flip_x;
         bool flip_y;
     } nvimgcdcsOrientation_t;
@@ -199,7 +208,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         uint32_t component_width;
         uint32_t component_height;
         size_t host_pitch_in_bytes;
@@ -211,20 +220,85 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
+
         uint32_t image_width;
         uint32_t image_height;
-        uint32_t tile_width;
-        uint32_t tile_height;
-        uint32_t num_tiles_x; // no of tiles in horizontal direction
-        uint32_t num_tiles_y; // no of tiles in vertical direction
+
         uint32_t num_components;
         nvimgcdcsImageComponentInfo_t component_info[NVIMGCDCS_MAX_NUM_COMPONENTS];
         nvimgcdcsColorSpace_t color_space;
         nvimgcdcsSampleFormat_t sample_format;
-        nvimgcdcsSampling_t sampling;
+        nvimgcdcsChromaSubsampling_t sampling;
         nvimgcdcsSampleDataType_t sample_type;
+        nvimgcdcsOrientation_t orientation;
     } nvimgcdcsImageInfo_t;
+
+    // Currently parseable JPEG encodings (SOF markers)
+    typedef enum
+    {
+        NVIMGCDCS_JPEG_ENCODING_UNKNOWN                         = 0x0,
+        NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT                    = 0xc0,
+        NVIMGCDCS_JPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN = 0xc1,
+        NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN         = 0xc2,
+        NVIMGCDCS_JPEG_ENCODING_ENUM_FORCE_INT                  = 0xFFFFFFFF
+    } nvimgcdcsJpegEncoding_t;
+
+    //TODO fill with data in nvJpeg2k
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        uint32_t width;
+        uint32_t height;
+
+    } nvimgcdcsJpeg2kResolutionInfo_t;
+
+#define NVIMGCDCS_MAX_NUM_RESOLUTIONS 32
+    //TODO fill with data in nvJpeg2k
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        uint32_t tile_width;
+        uint32_t tile_height;
+
+        nvimgcdcsJpeg2kResolutionInfo_t resolution_info;
+    } nvimgcdcsJpeg2kTileComponentInfo_t;
+
+    //TODO fill with data in nvJpeg2k
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        uint32_t num_resolutions;
+        nvimgcdcsJpeg2kTileComponentInfo_t component_info[NVIMGCDCS_MAX_NUM_COMPONENTS];
+    } nvimgcdcsJpeg2kTileInfo_t;
+
+    //TODO fill with data in nvJpeg2k
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        uint32_t tile_width;
+        uint32_t tile_height;
+        uint32_t num_tiles_x;                // no of tiles in horizontal direction
+        uint32_t num_tiles_y;                // no of tiles in vertical direction
+        nvimgcdcsJpeg2kTileInfo_t tile_info; //for each tile in raster scan order
+    } nvimgcdcsJpeg2kImageInfo_t;
+
+    //TODO fill with data in nvJpeg
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        nvimgcdcsJpegEncoding_t encoding;
+    } nvimgcdcsJpegImageInfo_t;
 
     struct nvimgcdcsImage;
     typedef struct nvimgcdcsImage* nvimgcdcsImage_t;
@@ -232,7 +306,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         bool useCPU;
         bool useGPU;
         bool useHwEng;
@@ -241,16 +315,18 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN                   = -1,
-        NVIMGCDCS_PROCESSING_STATUS_SUCCESS                   = 0,
-        NVIMGCDCS_PROCESSING_STATUS_INCOMPLETE                = 1,
-        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED           = 2,
-        NVIMGCDCS_PROCESSING_STATUS_IMAGE_NOT_SUPPORTED       = 3,
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_NOT_SUPPORTED    = 4,
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_NOT_SUPPORTED = 5,
-        NVIMGCDCS_PROCESSING_STATUS_SCALING_NOT_SUPPORTED     = 6,
-        NVIMGCDCS_PROCESSING_STATUS_DECODING                  = 7,
-        NVIMGCDCS_PROCESSING_STATUS_ENCODING                  = 8,
+        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN                     = -1,
+        NVIMGCDCS_PROCESSING_STATUS_SUCCESS                     = 0,
+        NVIMGCDCS_PROCESSING_STATUS_INCOMPLETE                  = 1,
+        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED             = 2,
+        NVIMGCDCS_PROCESSING_STATUS_IMAGE_NOT_SUPPORTED         = 3,
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_NOT_SUPPORTED      = 4,
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_NOT_SUPPORTED   = 5,
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_NOT_SUPPORTED = 6,
+        NVIMGCDCS_PROCESSING_STATUS_SCALING_NOT_SUPPORTED       = 7,
+        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION         = 8,
+        NVIMGCDCS_PROCESSING_STATUS_DECODING                    = 9,
+        NVIMGCDCS_PROCESSING_STATUS_ENCODING                    = 10,
         //...
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsProcessingStatus_t;
@@ -279,7 +355,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         int* start;
         int* end;
         int ndim;
@@ -290,19 +366,21 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
 
         nvimgcdcsDecodeStep_t decode_step;
         nvimgcdcsDecodePhase_t decode_phase;
-        bool apply_orientation;
+        bool enable_orientation;
         nvimgcdcsOrientation_t orientation;
-        bool apply_scaling;
+        bool enable_scaling;
         nvimgcdcsScaleFactor_t scale;
-        bool apply_roi;
+        bool enable_roi;
         nvimgcdcsRegion_t region;
-
-        int num_backends; //Zero means that all backendsa re allowed.
-        nvimgcdcsBackend_t* backends;  
+        //For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
+        //For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.
+        bool enable_color_conversion;
+        int num_backends; //Zero means that all backends are allowed.
+        nvimgcdcsBackend_t* backends;
         int maxCpuThreads;
         int cudaDeviceId;
         cudaStream_t cuda_stream;
@@ -312,11 +390,27 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
+        uint32_t tile_id;
+        uint32_t num_res_levels;
+    } nvimgcdcsJpeg2kDecodeParams_t;
 
-        double qstep;
-        double target_psnr;
+    typedef enum
+    {
+        NVIMGCDCS_MCT_MODE_YCC = 0, //transform RGB color images to YUV (default false)
+        NVIMGCDCS_MCT_MODE_RGB            = 1,
+        NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsMctMode_t;
+
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        float quality;
+        float target_psnr;
         const char* codec;
+        nvimgcdcsMctMode_t mct_mode;
 
         int num_backends; //Zero means that all backendsa re allowed.
         nvimgcdcsBackend_t* backends;
@@ -326,10 +420,59 @@ extern "C"
         nvimgcdcsDataDict_t config;
     } nvimgcdcsEncodeParams_t;
 
+#define NVIMGCDCS_JPEG2K_MAXRES 33
+
+    typedef enum
+    {
+        NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP           = 0,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP           = 1,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL           = 2,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL           = 3,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL           = 4,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsJpeg2kProgOrder_t;
+
+    typedef enum
+    {
+        NVIMGCDCS_JPEG2K_STREAM_J2K            = 0,
+        NVIMGCDCS_JPEG2K_STREAM_JP2            = 1,
+        NVIMGCDCS_JPEG2K_STREAM_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsJpeg2kBitstreamType_t;
+
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
+
+        nvimgcdcsJpeg2kBitstreamType_t stream_type;
+        uint16_t rsiz;
+        uint32_t enable_SOP_marker;
+        uint32_t enable_EPH_marker;
+        nvimgcdcsJpeg2kProgOrder_t prog_order;
+        uint32_t num_layers;
+        uint32_t num_resolutions;
+        uint32_t code_block_w;
+        uint32_t code_block_h;
+        uint32_t encode_modes;
+        uint32_t irreversible;
+        uint32_t enable_custom_precincts;
+        uint32_t precint_width[NVIMGCDCS_JPEG2K_MAXRES];
+        uint32_t precint_height[NVIMGCDCS_JPEG2K_MAXRES];
+    } nvimgcdcsJpeg2kEncodeParams_t;
+
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+        nvimgcdcsJpegEncoding_t encoding;
+        bool optimized_huffman;
+    } nvimgcdcsJpegEncodeParams_t;
+
+    //TODO
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
         int stream_count;
 
     } nvimgcdcsContainer;
@@ -355,7 +498,7 @@ extern "C"
     struct nvimgcdcsIOStreamDesc
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
 
         void* instance;
 
@@ -391,7 +534,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         nvimgcdcsDeviceAllocator_t* device_allocator; //TODO
         nvimgcdcsPinnedAllocator_t* pinned_allocator; //TODO
         size_t deviceMemPadding;                      //TODO any device memory allocation
@@ -428,7 +571,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         const char* message;       //null-terminated string detailing the trigger conditions
         uint32_t internalStatusId; //it is internal codec status id
         const char* codec; //codec name if codec is rising message or NULL otherwise (e.g framework)
@@ -445,7 +588,7 @@ extern "C"
     typedef struct
     {
         nvimgcdcsStructureType_t type;
-        const void* next;
+        void* next;
         nvimgcdcsDebugMessageSeverity_t messageSeverity;
         nvimgcdcsDebugMessageType_t messageType;
         nvimgcdcsDebugCallback_t userCallback;
@@ -557,8 +700,77 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_state);
 
     //High-level API
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(
-        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name);
+
+    typedef enum
+    {
+        NVIMGCDCS_IMREAD_UNCHANGED = -1,
+        NVIMGCDCS_IMREAD_GRAYSCALE = 0, // do not convert to RGB
+        NVIMGCDCS_IMREAD_COLOR = 1, //for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
+               //for Jpeg2k and 422/420 chroma subsampling enable conversion to RGB
+
+            //TODO NVIMGCDCS_IMREAD_ANYDEPTH  = 2, //accept 16-bit and 32-bit images, othewise convert to 8-bit
+            //TODO  NVIMGCDCS_IMREAD_ANYCOLOR  = 4, //
+            //   NVIMGCDCS_IMREAD_LOAD_GDAL           = 8,
+            //TODO  NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_2 = 16,
+            //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_2     = 17,
+            //TODO  NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_4 = 32,
+            //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_4     = 33,
+            //TODO NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_8 = 64,
+            //TODO  NVIMGCDCS_IMREAD_REDUCED_COLOR_8     = 65,
+            NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 128, //Ignore orientation from Exif
+        NVIMGCDCS_IMREAD_ENUM_FORCE_INT      = 0xFFFFFFFF
+    } nvimgcdcsImreadFlags_t;
+
+    typedef enum
+    {
+        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 1, // 0-100 default 95
+        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE     = 2,
+        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE        = 3, //optimized_huffman
+        // NVIMGCDCS_IMWRITE_JPEG_RST_INTERVAL    = 4,
+        // NVIMGCDCS_IMWRITE_JPEG_LUMA_QUALITY    = 5,
+        // NVIMGCDCS_IMWRITE_JPEG_CHROMA_QUALITY  = 6,
+        NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 7,
+
+        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 100, // default 50
+        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 101,  // num_decomps default 5
+        NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 103, // code_block_w code_block_h (default 64 64)
+        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 104,
+
+        // NVIMGCDCS_IMWRITE_PNG_COMPRESSION = 16,
+        // NVIMGCDCS_IMWRITE_PNG_STRATEGY    = 17,
+        // NVIMGCDCS_IMWRITE_PNG_BILEVEL     = 18,
+
+        // NVIMGCDCS_IMWRITE_PXM_BINARY      = 32,
+        // NVIMGCDCS_IMWRITE_EXR_TYPE        = (3 << 4) + 0,
+        // NVIMGCDCS_IMWRITE_WEBP_QUALITY    = 64,
+        // NVIMGCDCS_IMWRITE_HDR_COMPRESSION = (5 << 4) + 0,
+        // NVIMGCDCS_IMWRITE_PAM_TUPLETYPE   = 128,
+
+        // NVIMGCDCS_IMWRITE_TIFF_RESUNIT     = 256,
+        // NVIMGCDCS_IMWRITE_TIFF_XDPI        = 257,
+        // NVIMGCDCS_IMWRITE_TIFF_YDPI        = 258,
+        // NVIMGCDCS_IMWRITE_TIFF_COMPRESSION = 259,
+
+        NVIMGCDCS_IMWRITE_MCT_MODE =            500, // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )  
+        NVIMGCDCS_IMWRITE_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsImwriteParams_t;
+    
+    typedef enum
+    {
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444 = 0x111111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422 = 0x211111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420 = 0x221111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440 = 0x121111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411 = 0x411111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410 = 0x441111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410V = 0x440000, //TODO 
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY = 0x110000,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsImwriteSamplingFactor_t;
+
+    NVIMGCDCSAPI nvimgcdcsStatus_t
+    nvimgcdcsImRead(
+        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, int flags);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance,
         nvimgcdcsImage_t image, const char* file_name, const int* params);
 #if defined(__cplusplus)

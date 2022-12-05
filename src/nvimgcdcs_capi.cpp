@@ -809,7 +809,7 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_stat
 
 //TODO extract implementation from this function and leave here only wrapper
 nvimgcdcsStatus_t nvimgcdcsImRead(
-    nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name)
+    nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, int flags)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
@@ -828,6 +828,19 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                 image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
             nvimgcdcsDecodeParams_t decode_params;
             memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
+            decode_params.enable_color_conversion = flags & NVIMGCDCS_IMREAD_COLOR;
+            decode_params.enable_orientation      = !(flags & NVIMGCDCS_IMREAD_IGNORE_ORIENTATION);
+            if (decode_params.enable_orientation) {
+                decode_params.orientation.rotated =
+                    image_info.orientation.rotated == 90
+                        ? 270
+                        : (image_info.orientation.rotated == 270 ? 90 : 0);
+                if (decode_params.orientation.rotated) {
+                    auto tmp                = image_info.image_width;
+                    image_info.image_width  = image_info.image_height;
+                    image_info.image_height = tmp;
+                }
+            }
 
             nvimgcdcsDecoder_t decoder;
             nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);
@@ -862,7 +875,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                     capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
                     NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) !=
                 capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-            
+
 #endif
             bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
             unsigned char* device_buffer;
@@ -896,6 +909,9 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                     image_info.image_width * (is_interleaved ? image_info.num_components : 1);
             }
 
+            image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+            image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
+
             nvimgcdcsImageSetImageInfo(*image, &image_info);
             nvimgcdcsImageAttachDecodeState(*image, decode_state);
             nvimgcdcsDecoderDecode(decoder, code_stream, *image, &decode_params);
@@ -927,6 +943,91 @@ inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_
     //TODO for more types
     return sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
 }
+
+static void fill_encode_params(
+    const int* params, nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsImageInfo_t* image_info)
+{
+    nvimgcdcsJpegEncodeParams_t* jpeg_encode_params =
+        static_cast<nvimgcdcsJpegEncodeParams_t*>(encode_params->next);
+    nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params =
+        static_cast<nvimgcdcsJpeg2kEncodeParams_t*>(encode_params->next);
+
+    const int* param = params;
+    while (param && *param) {
+        std::cout << "imwrite param: " << *param << std::endl;
+        switch (*param) {
+        case NVIMGCDCS_IMWRITE_JPEG_QUALITY: {
+            param++;
+            int quality            = *param;
+            encode_params->quality = static_cast<float>(quality);
+            std::cout << "imwrite param: quality:" << *param << std::endl;
+            break;
+        }
+        case NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE: {
+            jpeg_encode_params->encoding = NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
+            break;
+        }
+        case NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE: {
+            jpeg_encode_params->optimized_huffman = true;
+            break;
+        }
+        case NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR: {
+            param++;
+            std::cout << "imwrite param: sampling factor:" << *param << std::endl;
+            nvimgcdcsImwriteSamplingFactor_t sampling_factor =
+                static_cast<nvimgcdcsImwriteSamplingFactor_t>(*param);
+            std::map<nvimgcdcsImwriteSamplingFactor_t, nvimgcdcsChromaSubsampling_t> sf2css = {
+                {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444, NVIMGCDCS_SAMPLING_444},
+                {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420, NVIMGCDCS_SAMPLING_420},
+                {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440, NVIMGCDCS_SAMPLING_440},
+                {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422, NVIMGCDCS_SAMPLING_422},
+                {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411, NVIMGCDCS_SAMPLING_411},
+                {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410, NVIMGCDCS_SAMPLING_410},
+                {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY, NVIMGCDCS_SAMPLING_GRAY},
+                {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410V, NVIMGCDCS_SAMPLING_410V}};
+
+            auto it = sf2css.find(sampling_factor);
+            if (it != sf2css.end()) {
+                image_info->sampling = it->second;
+            } else {
+                assert(!"MISSING CHROMA SUBSAMPLING VALUE");
+            }
+            break;
+        }
+        case NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR: {
+            param++;
+            int target_psnr = *param;
+            memcpy(&encode_params->target_psnr, &target_psnr, sizeof(float));
+            break;
+        }
+        case NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS: {
+            param++;
+            jpeg2k_encode_params->num_resolutions = *param;
+            break;
+        }
+        case NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE: {
+            param++;
+            jpeg2k_encode_params->code_block_w = *param;
+            param++;
+            jpeg2k_encode_params->code_block_h = *param;
+            break;
+        }
+        case NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE: {
+            jpeg2k_encode_params->irreversible = false;
+            break;
+        }
+        case NVIMGCDCS_IMWRITE_MCT_MODE: {
+            param++;
+            encode_params->mct_mode = static_cast<nvimgcdcsMctMode_t>(*param);
+            break;
+        }
+        default:
+            break;
+        };
+        param++;
+    }
+}
+
 //TODO extract implementation from this function and leave here only wrapper
 nvimgcdcsStatus_t nvimgcdcsImWrite(
     nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params)
@@ -950,19 +1051,56 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                     codec_name = it->second;
                 }
             }
-            nvimgcdcsCodeStream_t bmp_code_stream;
-            nvimgcdcsCodeStreamCreateToFile(
-                instance, &bmp_code_stream, file_name, codec_name.c_str());
-            nvimgcdcsCodeStreamSetImageInfo(bmp_code_stream, &image_info);
 
+            if (image_info.sampling == NVIMGCDCS_SAMPLING_UNKNOWN ||
+                image_info.sampling == NVIMGCDCS_SAMPLING_NOT_SUPPORTED)
+                image_info.sampling = NVIMGCDCS_SAMPLING_444;
             nvimgcdcsEncodeParams_t encode_params;
             memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
-            encode_params.qstep          = 75;
-            encode_params.target_psnr = 50; //TODO passing codec specific params
-            encode_params.codec          = codec_name.c_str();
+            //Defaults
+            encode_params.quality     = 95;
+            encode_params.target_psnr = 50;
+            encode_params.mct_mode    = NVIMGCDCS_MCT_MODE_RGB;
+            encode_params.codec       = codec_name.c_str();
+            
+            nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
+            nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
+            if (codec_name == "jpeg2k") {
+                memset(&jpeg2k_encode_params, 0, sizeof(jpeg2k_encode_params));
+                jpeg2k_encode_params.type         = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
+                jpeg2k_encode_params.stream_type  = file_path.extension().string() == ".jp2"
+                                                        ? NVIMGCDCS_JPEG2K_STREAM_JP2
+                                                        : NVIMGCDCS_JPEG2K_STREAM_J2K;
+                jpeg2k_encode_params.prog_order   = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL; //TODO
+                jpeg2k_encode_params.num_layers   = 1;
+                jpeg2k_encode_params.irreversible = 1;
+                //jpeg2k_encode_params.rsiz = ;
+                jpeg2k_encode_params.enable_SOP_marker = 0;
+                jpeg2k_encode_params.enable_EPH_marker = 0;
+                jpeg2k_encode_params.num_resolutions   = 5;
+                jpeg2k_encode_params.code_block_w      = 64;
+                jpeg2k_encode_params.code_block_h      = 64;
+                // jpeg2k_encode_params.encode_modes;
+                jpeg2k_encode_params.enable_custom_precincts = 0;
+
+                encode_params.next = &jpeg2k_encode_params;
+            } else if (codec_name == "jpeg") {
+                memset(&jpeg_encode_params, 0, sizeof(jpeg_encode_params));
+                jpeg_encode_params.type              = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
+                jpeg_encode_params.encoding          = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
+                jpeg_encode_params.optimized_huffman = false;
+                encode_params.next                   = &jpeg_encode_params;
+            }
+            fill_encode_params(params, &encode_params, &image_info);
+            
+            nvimgcdcsCodeStream_t output_code_stream;
+            nvimgcdcsCodeStreamCreateToFile(
+                instance, &output_code_stream, file_name, codec_name.c_str());
+            nvimgcdcsCodeStreamSetImageInfo(output_code_stream, &image_info);
+            nvimgcdcsImageSetImageInfo(image, &image_info);
 
             nvimgcdcsEncoder_t encoder;
-            nvimgcdcsEncoderCreate(instance, &encoder, bmp_code_stream, &encode_params);
+            nvimgcdcsEncoderCreate(instance, &encoder, output_code_stream, &encode_params);
             nvimgcdcsEncodeState_t encode_state;
             nvimgcdcsEncodeStateCreate(encoder, &encode_state, nullptr);
             nvimgcdcsImageAttachEncodeState(image, encode_state);
@@ -1028,7 +1166,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                     nvimgcdcsImageDetachEncodeState(image);
                     nvimgcdcsEncodeStateDestroy(encode_state);
                     nvimgcdcsEncoderDestroy(encoder);
-                    nvimgcdcsCodeStreamDestroy(bmp_code_stream);
+                    nvimgcdcsCodeStreamDestroy(output_code_stream);
                     return NVIMGCDCS_STATUS_INVALID_PARAMETER;
                 }
             } else if (is_host_input && host_buffer == nullptr) {
@@ -1036,14 +1174,14 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                     image_info.image_width * image_info.image_height *
                     image_info.num_components); //TODO more bytes per sample
                 image_info.component_info[0].host_pitch_in_bytes =
-                    image_info.image_width * (is_interleaved ? image_info.num_components:1);
+                    image_info.image_width * (is_interleaved ? image_info.num_components : 1);
                 image_info.component_info[1].host_pitch_in_bytes =
-                    image_info.image_width  *(is_interleaved ? image_info.num_components : 1);
+                    image_info.image_width * (is_interleaved ? image_info.num_components : 1);
                 image_info.component_info[2].host_pitch_in_bytes =
                     image_info.image_width * (is_interleaved ? image_info.num_components : 1);
                 nvimgcdcsImageSetHostBuffer(
                     image, image->host_image_buffer_.data(), image->host_image_buffer_.size());
-                nvimgcdcsImageSetImageInfo(image, &image_info);    
+                nvimgcdcsImageSetImageInfo(image, &image_info);
                 if (device_buffer) {
                     CHECK_CUDA(cudaMemcpy2D(image->host_image_buffer_.data(),
                         (size_t)image_info.component_info[0].host_pitch_in_bytes, device_buffer,
@@ -1055,12 +1193,12 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                     nvimgcdcsImageDetachEncodeState(image);
                     nvimgcdcsEncodeStateDestroy(encode_state);
                     nvimgcdcsEncoderDestroy(encoder);
-                    nvimgcdcsCodeStreamDestroy(bmp_code_stream);
+                    nvimgcdcsCodeStreamDestroy(output_code_stream);
                     return NVIMGCDCS_STATUS_INVALID_PARAMETER;
                 }
             }
 
-            nvimgcdcsEncoderEncode(encoder, bmp_code_stream, image, &encode_params);
+            nvimgcdcsEncoderEncode(encoder, output_code_stream, image, &encode_params);
 
             nvimgcdcsImage_t ready_image;
             nvimgcdcsProcessingStatus_t encode_status;
@@ -1074,7 +1212,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             nvimgcdcsImageDetachEncodeState(image);
             nvimgcdcsEncodeStateDestroy(encode_state);
             nvimgcdcsEncoderDestroy(encoder);
-            nvimgcdcsCodeStreamDestroy(bmp_code_stream);
+            nvimgcdcsCodeStreamDestroy(output_code_stream);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;

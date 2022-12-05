@@ -15,16 +15,18 @@ static nvimgcdcsStatus_t example_parser_can_parse(
 {
     std::cout << "example_parser_can_parse" << std::endl;
 
-    size_t signature_size = 2;
-    std::vector<unsigned char> signature_buffer(signature_size);
-    size_t output_size                = 0;
+    constexpr size_t min_bmp_stream_size = 18u;
     nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
-    if (length < 18u) {
+    if (length < min_bmp_stream_size) {
         *result = false;
         return NVIMGCDCS_STATUS_SUCCESS;
     }
+
+    constexpr size_t signature_size = 2;
+    std::vector<unsigned char> signature_buffer(signature_size);
+    size_t output_size = 0;
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
     io_stream->read(io_stream->instance, &output_size, &signature_buffer[0], signature_size);
     if (output_size != signature_size) {
