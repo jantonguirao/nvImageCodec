@@ -1207,7 +1207,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             if (encode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
                 throw ExceptionNVIMGCDCS(INTERNAL_ERROR, "Something went wrong with encoding");
             }
-            assert(ready_image == *image);
+            assert(ready_image == image);
 
             nvimgcdcsImageDetachEncodeState(image);
             nvimgcdcsEncodeStateDestroy(encode_state);
