@@ -3,7 +3,7 @@ if(NOT BUILD_ID)
 set (BUILD_ID 0)
 endif()
 
-project(nvimgcdcs VERSION 0.1.0.${BUILD_ID} LANGUAGES CXX CUDA)
+project(nvimgcodecs VERSION 0.1.0.${BUILD_ID} LANGUAGES CXX CUDA)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -36,7 +36,7 @@ else()
 set(CPACK_GENERATOR "TGZ")
 endif()
 
-set(CPACK_PACKAGE_NAME "libnvimgcdcs")
+set(CPACK_PACKAGE_NAME "libnvimgcodecs")
 set(CPACK_PACKAGE_VENDOR "NVIDIA CORPORATION")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GPU Accelerated Image Codecs library")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})

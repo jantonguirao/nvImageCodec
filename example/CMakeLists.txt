@@ -1,3 +1,3 @@
-add_subdirectory(example_module)
-add_subdirectory(example_decode)
+add_subdirectory(nvbmp)
+add_subdirectory(nvimtrans)
 add_subdirectory(example_high_level_api)

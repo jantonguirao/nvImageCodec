@@ -324,7 +324,7 @@ int main(int argc, const char* argv[])
         jpeg2k_encode_params.prog_order      = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL;
         jpeg2k_encode_params.num_resolutions = params.num_decomps;
 
-        //TODO
+        //TODO Support for more jpeg2k specific parameters
         // uint16_t rsiz;
         // uint32_t enable_SOP_marker;
         // uint32_t enable_EPH_marker;

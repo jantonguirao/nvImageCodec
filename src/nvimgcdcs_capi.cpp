@@ -1071,7 +1071,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                 jpeg2k_encode_params.stream_type  = file_path.extension().string() == ".jp2"
                                                         ? NVIMGCDCS_JPEG2K_STREAM_JP2
                                                         : NVIMGCDCS_JPEG2K_STREAM_J2K;
-                jpeg2k_encode_params.prog_order   = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL; //TODO
+                jpeg2k_encode_params.prog_order   = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL; //TODO Support for all j2k progression orders
                 jpeg2k_encode_params.num_layers   = 1;
                 jpeg2k_encode_params.irreversible = 1;
                 //jpeg2k_encode_params.rsiz = ;

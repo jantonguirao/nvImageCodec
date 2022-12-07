@@ -57,5 +57,5 @@ target_link_libraries(nvimgcodecs_python
 include(GNUInstallDirs)
 
 install(TARGETS nvimgcodecs_python
-    LIBRARY DESTINATION lib
+    LIBRARY DESTINATION lib64
 )

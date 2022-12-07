@@ -12,8 +12,8 @@ def file_md5(file_name):
     return hash_md5.hexdigest()
 
 @t.mark.parametrize("exec_dir_path, transcode_exec",
-    [(os.path.abspath("../build/example/example_decode/RelWithDebInfo"), "example_nvimgcdc_decode"),
-     (os.path.abspath("../build/example/example_high_level_api/RelWithDebInfo"), "example_nvimgcdc_high_level_api")
+    [(os.path.abspath("../bin/bin"), "nvimtrans"),
+     (os.path.abspath("../bin/bin"), "nvimgcodecs_example_high_level_api")
     ]
 )
 @t.mark.parametrize(

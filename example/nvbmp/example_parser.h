@@ -15,5 +15,5 @@
 struct nvimgcdcsParseState
 {
     uint32_t header_size;
-    std::vector<unsigned char> buffer; //TODO move up to CodeStream
+    std::vector<unsigned char> buffer; //TODO move buffer from ParserState up to CodeStream
 };

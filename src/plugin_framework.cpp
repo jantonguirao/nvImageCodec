@@ -22,9 +22,9 @@ namespace fs = std::filesystem;
 namespace nvimgcdcs {
 
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-constexpr std::string_view defaultModuleDir = "/usr/libs/nvimgcodecs";
+constexpr std::string_view defaultModuleDir = "/usr/lib/nvimgcodecs/plugins";
 #elif defined(_WIN32) || defined(_WIN64)
-constexpr std::string_view defaultModuleDir = "C:/Program Files (x86)/nvimgcodecs";
+constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plugins";
 #endif
 
 PluginFramework::PluginFramework(CodecRegistry* codec_registry)
