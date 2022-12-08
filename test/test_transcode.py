@@ -1,6 +1,7 @@
 import os
 import pytest as t
 import hashlib
+import subprocess
 
 img_dir_path = os.path.abspath("../resources")
 
@@ -12,8 +13,8 @@ def file_md5(file_name):
     return hash_md5.hexdigest()
 
 @t.mark.parametrize("exec_dir_path, transcode_exec",
-    [(os.path.abspath("../bin/bin"), "nvimtrans"),
-     (os.path.abspath("../bin/bin"), "nvimgcodecs_example_high_level_api")
+    [(os.path.abspath("../build/bin/bin"), "nvimtrans"),
+     (os.path.abspath("../build/bin/bin"), "nvimgcodecs_example_high_level_api")
     ]
 )
 @t.mark.parametrize(
@@ -39,6 +40,6 @@ def test_imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec,
     os.chdir(exec_dir_path)
     input_img_path = os.path.join(img_dir_path, input_img_file)
     output_img_path = os.path.join(tmp_path, ouput_img_file)
-
-    os.system("{} -i {} -c {} {} -o {}".format(transcode_exec,  str(input_img_path), codec, params, str(output_img_path)))
+    subprocess.run(".{}{} -i {} -c {} {} -o {}".format(os.sep, transcode_exec,
+                   str(input_img_path), codec, params, str(output_img_path)), shell=True)
     assert check_sum == file_md5(output_img_path)
