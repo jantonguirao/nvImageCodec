@@ -28,14 +28,17 @@ endif()
 
 
 if(UNIX)
-set(RUNTIME_INSTALL_DESTINATION nvimgcodecs/plugins)
-else()
-set(RUNTIME_INSTALL_DESTINATION plugins)
-endif()
+        install(TARGETS ${EXAMPLE_NVIMGCDCS_LIBRARY_NAME}
+                LIBRARY DESTINATION plugins
+                PUBLIC_HEADER DESTINATION include
+        )
 
+else()
 install(TARGETS  ${EXAMPLE_NVIMGCDCS_LIBRARY_NAME}
-    RUNTIME DESTINATION ${RUNTIME_INSTALL_DESTINATION}
+        RUNTIME DESTINATION plugins
     LIBRARY DESTINATION lib64
     ARCHIVE DESTINATION lib64
     PUBLIC_HEADER DESTINATION include 
-  )
+        )
+endif()
+
