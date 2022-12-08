@@ -11,6 +11,11 @@ nvImageCodecs is a library of accelerated codecs with unified interface. It is d
 - [ ] [Design slides](https://nam11.safelinks.protection.outlook.com/ap/p-59584e83/?url=https%3A%2F%2Fnvidia-my.sharepoint.com%2F%3Ap%3A%2Fp%2Ftrybicki%2FEbDMoASyk0hLukzPdpW66S4BzOvJZ9vymm0fkddy7utfkw%3Fe%3DMlduBI&data=05%7C01%7Csmatysik%40nvidia.com%7C347ebe243c764d22761908dad7cbbad2%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638059567268905928%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=xut9HNCGgftyfTR635%2BJu2Amp%2F6bF2eZsjkzhrpNOYg%3D&reserved=0)
 - [ ] [Design recording](https://nam11.safelinks.protection.outlook.com/?url=https%3A%2F%2Fnvidia-my.sharepoint.com%2F%3Av%3A%2Fp%2Ftrybicki%2FEeC0aKfe5bdFixtDmg7J3ZkBJg3Pzyl1RfPkNFyQOV2VFQ&data=05%7C01%7Csmatysik%40nvidia.com%7C347ebe243c764d22761908dad7cbbad2%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638059567269062080%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=WmjhZpi1SocpDVAP5QtcM4kOQ6aiW%2FspDvMYPGwzXbQ%3D&reserved=0)
 
+## Coding Style Guide
+
+- [ ] [CUDA/C++ Coding Style Guide](https://docs.google.com/document/d/1jNvQBMQhoIQMSot4WFUop8Bl2bCUxvuX7Xa4910RDQI/edit)
+- [ ] There is .clang-format file in the main project directory
+
 ## Roadmap
 * pre-alpha (Q4’22)
   - Goal: verify and adjust design, basic features, full-stability and performance are a non-goal
@@ -82,7 +87,21 @@ export CUDACXX=nvcc
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
-## Install
+## Install for tests
+
+Below is described temporar instalation process just for testing prototype 
+
+### Linux
+```
+cd build
+cmake --install . --config Release --prefix bin
+cd bin
+sudo ./install.sh
+```
+
+After execution there should be:
+- all plugins in /usr/lib/nvimgcodecs/plugins (it is default directory for plugin discovery)
+- libnvimgcodecs.so in /usr/lib/x86_64-linux-gnu
 
 ### Windows
 
@@ -113,7 +132,6 @@ C:\Program Files\nvimgcodecs
 │
 ├───lib64
 │       nvbmp.lib
-│       nvimgcodecs.cp39-win_amd64.pyd
 │       nvimgcodecs.lib
 │       nvimgcodecs_static.lib
 │       nvjpeg.lib
@@ -123,6 +141,9 @@ C:\Program Files\nvimgcodecs
 │       nvbmp_0.dll
 │       nvjpeg2k_0.dll
 │       nvjpeg64_22.dll
+│
+├───python
+│       nvimgcodecs.cp39-win_amd64.pyd│
 │
 └───test
         nvjpeg2k_negative_tests.exe
@@ -142,7 +163,15 @@ C:\Program Files\nvimgcodecs
 
 To install in other folder please use --prefix argument
 ```
-cmake --install . --config Release --prefix ..\bin
+cmake --install . --config Release --prefix bin
+```
+
+## Testing
+
+```
+cd build
+cmake --install . --config Release --prefix bin
+pytest ../test
 ```
 
 ## Packaging
