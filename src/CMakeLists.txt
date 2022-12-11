@@ -17,6 +17,8 @@ set (NVIMGCDCS_SRCS
     image.cpp
     parse_state.cpp
     encode_state.cpp
+    logger.cpp
+    default_debug_messenger
 )
 
 include_directories(

@@ -20,7 +20,10 @@
 #include "image.h"
 #include "image_decoder.h"
 #include "image_encoder.h"
+#include "log.h"
 #include "plugin_framework.h"
+#include "debug_messenger.h"
+#include "default_debug_messenger.h"
 
 #include <filesystem>
 #include <iostream>
@@ -67,10 +70,13 @@ __inline__ nvimgcdcsStatus_t getCAPICode(StatusNVIMGCDCS status)
 }
 
 #ifdef NDEBUG
-/*TEMP!!!*/ #define VERBOSE_ERRORS
+//TODO TEMP!!! #define VERBOSE_ERRORS
 #else
     #define VERBOSE_ERRORS
 #endif
+
+// TODO use Logger
+// TODO move to separate file
 
 #define NVIMGCDCSAPI_TRY try
 
@@ -106,12 +112,26 @@ __inline__ nvimgcdcsStatus_t getCAPICode(StatusNVIMGCDCS status)
         }
 #endif
 
-    struct nvimgcdcsHandle //TODO extract to separate class Core ?
+struct nvimgcdcsHandle //TODO extract to separate class  and rename it (Core ?)
 {
-    nvimgcdcsHandle(
-        nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator)
-        : device_allocator_(device_allocator)
-        , pinned_allocator_(pinned_allocator)
+    struct DefaultDebugMessengerRegistrator
+    {
+        DefaultDebugMessengerRegistrator(DefaultDebugMessenger* dbg_messenger)
+            : debug_messenger_(dbg_messenger->getDesc())
+        {
+            Logger::get().registerDebugMessenger(&debug_messenger_);
+        };
+        ~DefaultDebugMessengerRegistrator(){
+            Logger::get().unregisterDebugMessenger(&debug_messenger_);
+        };
+        DebugMessenger debug_messenger_;
+    };
+
+    nvimgcdcsHandle(nvimgcdcsInstanceCreateInfo_t createInfo)
+        : device_allocator_(createInfo.device_allocator)
+        , pinned_allocator_(createInfo.pinned_allocator)
+        , debug_messenger_(createInfo.message_severity, createInfo.message_type)
+        , registrator_(&debug_messenger_)
         , codec_registry_()
         , plugin_framework_(&codec_registry_)
     {
@@ -154,6 +174,8 @@ __inline__ nvimgcdcsStatus_t getCAPICode(StatusNVIMGCDCS status)
 
     nvimgcdcsDeviceAllocator_t* device_allocator_;
     nvimgcdcsPinnedAllocator_t* pinned_allocator_;
+    DefaultDebugMessenger debug_messenger_;
+    DefaultDebugMessengerRegistrator registrator_;
     CodecRegistry codec_registry_;
     PluginFramework plugin_framework_;
     ThreadSafeQueue<nvimgcdcsImageDesc_t> ready_images_queue_;
@@ -180,6 +202,16 @@ struct nvimgcdcsEncoder
 struct nvimgcdcsEncodeState
 {
     std::unique_ptr<EncodeState> encode_state_;
+};
+
+struct nvimgcdcsDebugMessenger
+{
+    nvimgcdcsInstance_t instance_;
+    nvimgcdcsDebugMessenger(const nvimgcdcsDebugMessengerDesc_t* desc)
+        : debug_messenger_(desc)
+    {
+    }
+    DebugMessenger debug_messenger_;
 };
 
 struct nvimgcdcsImage
@@ -222,7 +254,7 @@ nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
         {
             CHECK_NULL(instance);
             nvimgcdcs =
-                new nvimgcdcsHandle(createInfo.device_allocator, createInfo.pinned_allocator);
+                new nvimgcdcsHandle(createInfo);
             nvimgcdcs->plugin_framework_.discoverAndLoadExtModules();
             *instance = nvimgcdcs;
         }
@@ -910,7 +942,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             }
 
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-            image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
+            image_info.color_space   = NVIMGCDCS_COLORSPACE_SRGB;
 
             nvimgcdcsImageSetImageInfo(*image, &image_info);
             nvimgcdcsImageAttachDecodeState(*image, decode_state);
@@ -954,13 +986,13 @@ static void fill_encode_params(
 
     const int* param = params;
     while (param && *param) {
-        std::cout << "imwrite param: " << *param << std::endl;
+        NVIMGCDCS_LOG_TRACE("imwrite param: " << *param);
         switch (*param) {
         case NVIMGCDCS_IMWRITE_JPEG_QUALITY: {
             param++;
             int quality            = *param;
             encode_params->quality = static_cast<float>(quality);
-            std::cout << "imwrite param: quality:" << *param << std::endl;
+            NVIMGCDCS_LOG_TRACE("imwrite param: quality:" << *param);
             break;
         }
         case NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE: {
@@ -973,7 +1005,7 @@ static void fill_encode_params(
         }
         case NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR: {
             param++;
-            std::cout << "imwrite param: sampling factor:" << *param << std::endl;
+            NVIMGCDCS_LOG_DEBUG("imwrite param: sampling factor:" << *param);
             nvimgcdcsImwriteSamplingFactor_t sampling_factor =
                 static_cast<nvimgcdcsImwriteSamplingFactor_t>(*param);
             std::map<nvimgcdcsImwriteSamplingFactor_t, nvimgcdcsChromaSubsampling_t> sf2css = {
@@ -1062,16 +1094,17 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             encode_params.target_psnr = 50;
             encode_params.mct_mode    = NVIMGCDCS_MCT_MODE_RGB;
             encode_params.codec       = codec_name.c_str();
-            
+
             nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
             nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
             if (codec_name == "jpeg2k") {
                 memset(&jpeg2k_encode_params, 0, sizeof(jpeg2k_encode_params));
-                jpeg2k_encode_params.type         = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
-                jpeg2k_encode_params.stream_type  = file_path.extension().string() == ".jp2"
-                                                        ? NVIMGCDCS_JPEG2K_STREAM_JP2
-                                                        : NVIMGCDCS_JPEG2K_STREAM_J2K;
-                jpeg2k_encode_params.prog_order   = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL; //TODO Support for all j2k progression orders
+                jpeg2k_encode_params.type        = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
+                jpeg2k_encode_params.stream_type = file_path.extension().string() == ".jp2"
+                                                       ? NVIMGCDCS_JPEG2K_STREAM_JP2
+                                                       : NVIMGCDCS_JPEG2K_STREAM_J2K;
+                jpeg2k_encode_params.prog_order =
+                    NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL; //TODO Support for all j2k progression orders
                 jpeg2k_encode_params.num_layers   = 1;
                 jpeg2k_encode_params.irreversible = 1;
                 //jpeg2k_encode_params.rsiz = ;
@@ -1092,7 +1125,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                 encode_params.next                   = &jpeg_encode_params;
             }
             fill_encode_params(params, &encode_params, &image_info);
-            
+
             nvimgcdcsCodeStream_t output_code_stream;
             nvimgcdcsCodeStreamCreateToFile(
                 instance, &output_code_stream, file_name, codec_name.c_str());
@@ -1230,6 +1263,37 @@ nvimgcdcsStatus_t nvimgcdcsInstanceGetReadyImage(nvimgcdcsInstance_t instance,
             if (*image) {
                 *processing_status = (*image)->image_.getProcessingStatus();
             }
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+
+nvimgcdcsStatus_t nvimgcdcsDebugMessengerCreate(nvimgcdcsInstance_t instance,
+    nvimgcdcsDebugMessenger_t* dbgMessenger, const nvimgcdcsDebugMessengerDesc_t* messengerDesc)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+    {
+        CHECK_NULL(instance)
+        if (messengerDesc ==  NULL){
+                messengerDesc = instance->debug_messenger_.getDesc();
+        }
+        *dbgMessenger = new nvimgcdcsDebugMessenger(messengerDesc);
+        (*dbgMessenger)->instance_ = instance;
+        Logger::get().registerDebugMessenger(&(*dbgMessenger)->debug_messenger_);
+    }
+    NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+
+nvimgcdcsStatus_t nvimgcdcsDebugMessengerDestroy(nvimgcdcsDebugMessenger_t dbgMessenger)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(dbgMessenger)
+            Logger::get().unregisterDebugMessenger(&dbgMessenger->debug_messenger_);
+            delete dbgMessenger;
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;

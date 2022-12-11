@@ -15,6 +15,7 @@
 #include "codec.h"
 #include "codec_registry.h"
 #include "image_encoder.h"
+#include "log.h"
 #include "thread_safe_queue.h"
 
 namespace fs = std::filesystem;
@@ -28,8 +29,9 @@ constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plug
 #endif
 
 PluginFramework::PluginFramework(CodecRegistry* codec_registry)
-    : framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100, this,
-          &static_register_encoder, &static_register_decoder, &static_register_parser}
+    : framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100,
+          this, &static_register_encoder, &static_register_decoder, &static_register_parser,
+          &static_log}
     , codec_registry_(codec_registry)
     , plugin_dirs_{defaultModuleDir}
 {
@@ -61,6 +63,15 @@ nvimgcdcsStatus_t PluginFramework::static_register_parser(
     return handle->registerParser(desc);
 }
 
+nvimgcdcsStatus_t PluginFramework::static_log(void* instance,
+    const nvimgcdcsDebugMessageSeverity_t message_severity,
+    const nvimgcdcsDebugMessageType_t message_type,
+    const nvimgcdcsDebugMessageData_t* data)
+{
+    PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
+    return handle->log(message_severity, message_type, data);
+}
+
 void PluginFramework::discoverAndLoadExtModules()
 {
     for (const auto& dir : plugin_dirs_)
@@ -72,17 +83,18 @@ void PluginFramework::discoverAndLoadExtModules()
 
 void PluginFramework::loadExtModule(const std::string& modulePath)
 {
-    std::cout << "Loading extension module:" << modulePath  << std::endl;
+    NVIMGCDCS_LOG_INFO("Loading extension module:" << modulePath);
     PluginFramework::Module module;
     module.lib_handle_ = nvimgcdcsLoadModule(modulePath);
-    std::cout << "Getting module version" << std::endl;
+    NVIMGCDCS_LOG_TRACE("Getting module version func");
     module.getVersion = nvimgcdcsGetFuncAddress<nvimgcdcsModuleVersion_t>(
         module.lib_handle_, "nvimgcdcsExtModuleGetVersion");
     uint32_t version = module.getVersion();
-    std::cout << "Extension module:" << modulePath << " version:" << version
-              << std::endl;
+    NVIMGCDCS_LOG_INFO("Extension module:" << modulePath << " version:" << version);
+    NVIMGCDCS_LOG_TRACE("Getting module load func");
     module.load = nvimgcdcsGetFuncAddress<nvimgcdcsExtModuleLoad_t>(
         module.lib_handle_, "nvimgcdcsExtModuleLoad");
+    NVIMGCDCS_LOG_TRACE("Getting module unload func");
     module.unload = nvimgcdcsGetFuncAddress<nvimgcdcsExtModuleUnload_t>(
         module.lib_handle_, "nvimgcdcsExtModuleUnload");
 
@@ -99,21 +111,26 @@ void PluginFramework::unloadAllExtModules()
     modules_.clear();
 }
 
+Codec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
+{
+    Codec* codec = codec_registry_->getCodecByName(codec_name);
+    if (codec == nullptr) {
+        NVIMGCDCS_LOG_INFO(
+            "Codec " << codec_name << " not yet registered, registering for first time");
+        std::unique_ptr<Codec> new_codec = std::make_unique<Codec>(codec_name);
+        codec_registry_->registerCodec(std::move(new_codec));
+        codec = codec_registry_->getCodecByName(codec_name);
+    } 
+    return codec;
+}
+
 nvimgcdcsStatus_t PluginFramework::registerEncoder(const struct nvimgcdcsEncoderDesc* desc)
 {
-    std::cout << "Framework side register_encoder" << std::endl;
-    std::cout << " - id:" << desc->id << std::endl;
-    std::cout << " - codec:" << desc->codec << std::endl;
-    Codec* codec = codec_registry_->getCodecByName(desc->codec);
-    if (codec == nullptr) {
-        std::cout << "Codec " << desc->codec << " not found, creating new one" << std::endl;
-        std::unique_ptr<Codec> new_codec = std::make_unique<Codec>(desc->codec);
-        codec_registry_->registerCodec(std::move(new_codec));
-        codec = codec_registry_->getCodecByName(desc->codec);
-    } else {
-        std::cout << "Codec " << desc->codec << " found" << std::endl;
-    }
-    std::cout << "Creating new encoder factory " << std::endl;
+    NVIMGCDCS_LOG_INFO("Framework is registering encoder");
+    NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
+    NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
+    Codec* codec = ensureExistsAndRetrieveCodec(desc->codec);
+    NVIMGCDCS_LOG_INFO("Registering " << desc->id);
     std::unique_ptr<ImageEncoderFactory> encoder_factory =
         std::make_unique<ImageEncoderFactory>(desc);
     codec->registerEncoder(std::move(encoder_factory), 1);
@@ -122,19 +139,11 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const struct nvimgcdcsEncoder
 
 nvimgcdcsStatus_t PluginFramework::registerDecoder(const struct nvimgcdcsDecoderDesc* desc)
 {
-    std::cout << "Framework side register_decoder" << std::endl;
-    std::cout << " - id:" << desc->id << std::endl;
-    std::cout << " - codec:" << desc->codec << std::endl;
-    Codec* codec = codec_registry_->getCodecByName(desc->codec);
-    if (codec == nullptr) {
-        std::cout << "Codec " << desc->codec << " not found, creating new one" << std::endl;
-        std::unique_ptr<Codec> new_codec = std::make_unique<Codec>(desc->codec);
-        codec_registry_->registerCodec(std::move(new_codec));
-        codec = codec_registry_->getCodecByName(desc->codec);
-    } else {
-        std::cout << "Codec " << desc->codec << " found" << std::endl;
-    }
-    std::cout << "Creating new decoder factory " << std::endl;
+    NVIMGCDCS_LOG_INFO("Framework is regisering decoder");
+    NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
+    NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
+    Codec* codec = ensureExistsAndRetrieveCodec(desc->codec);
+    NVIMGCDCS_LOG_INFO("Registering " << desc->id);
     std::unique_ptr<ImageDecoderFactory> decoder_factory =
         std::make_unique<ImageDecoderFactory>(desc);
     codec->registerDecoder(std::move(decoder_factory), 1);
@@ -143,23 +152,21 @@ nvimgcdcsStatus_t PluginFramework::registerDecoder(const struct nvimgcdcsDecoder
 
 nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDesc* desc)
 {
-    std::cout << "Framework side register parser" << std::endl;
-    std::cout << " - id:" << desc->id << std::endl;
-    std::cout << " - codec:" << desc->codec << std::endl;
-    Codec* codec = codec_registry_->getCodecByName(desc->codec);
-    if (codec == nullptr) {
-        std::cout << "Codec " << desc->codec << " not found, creating new one" << std::endl;
-        std::unique_ptr<Codec> new_codec = std::make_unique<Codec>(desc->codec);
-        codec_registry_->registerCodec(std::move(new_codec));
-        codec = codec_registry_->getCodecByName(desc->codec);
-    } else {
-        std::cout << "Codec " << desc->codec << " found" << std::endl;
-    }
-    std::cout << "Creating new parser factory " << std::endl;
+    NVIMGCDCS_LOG_INFO("Framework is regisering parser");
+    NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
+    NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
+    Codec* codec = ensureExistsAndRetrieveCodec(desc->codec);
+    NVIMGCDCS_LOG_INFO("Registering " << desc->id);
     std::unique_ptr<ImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
     codec->registerParser(std::move(parser_factory), 1);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-
+nvimgcdcsStatus_t PluginFramework::log(const nvimgcdcsDebugMessageSeverity_t message_severity,
+    const nvimgcdcsDebugMessageType_t message_type,
+    const nvimgcdcsDebugMessageData_t* data)
+{
+    Logger::get().log(message_severity, message_type, data);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
 } // namespace nvimgcdcs

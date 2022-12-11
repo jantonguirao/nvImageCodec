@@ -10,6 +10,7 @@
 #include "image_parser.h"
 #include <cassert>
 #include <iostream>
+#include "log.h"
 
 namespace nvimgcdcs {
 
@@ -36,7 +37,7 @@ std::string ImageParser::getCodecName() const
 void ImageParser::getImageInfo(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info)
 {
-    std::cout << "ImageParser::getImageInfo" << std::endl;
+    NVIMGCDCS_LOG_TRACE("ImageParser::getImageInfo");
     assert(code_stream);
     assert(parser_desc_->getImageInfo);
     parser_desc_->getImageInfo(parser_, image_info, code_stream);
@@ -44,6 +45,7 @@ void ImageParser::getImageInfo(
 
 std::unique_ptr<ParseState> ImageParser::createParseState()
 {
+    NVIMGCDCS_LOG_TRACE("ImageParser::createParseState");
     return std::make_unique<ParseState>(parser_desc_, parser_);
 }
 
@@ -68,11 +70,10 @@ std::unique_ptr<ImageParser> ImageParserFactory::createParser() const
 
 bool ImageParserFactory::canParse(nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    std::cout << "ImageParser::canParse" << std::endl;
+    NVIMGCDCS_LOG_TRACE("ImageParser::canParse");
     assert(code_stream);
     bool result = false;
     parser_desc_->canParse(parser_desc_->instance, & result, code_stream);
-    std::cout << "ImageParser::canParse:" << result << std::endl;
     return result;
 }
 

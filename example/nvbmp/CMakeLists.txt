@@ -1,10 +1,10 @@
 set(EXAMPLE_NVIMGCDCS_LIBRARY_NAME nvbmp)  
 
 set(EXAMPLE_NVIMGCDCS_SRC
-      example_module.cpp
-      example_encoder.cpp
-      example_decoder.cpp
-      example_parser.cpp
+      nvbmp_module.cpp
+      nvbmp_encoder.cpp
+      nvbmp_decoder.cpp
+      nvbmp_parser.cpp
 )
 include_directories(
   ../../include

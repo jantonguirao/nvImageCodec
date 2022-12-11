@@ -44,7 +44,12 @@ class Module
         instance_create_info.next             = NULL;
         instance_create_info.pinned_allocator = NULL;
         instance_create_info.device_allocator = NULL;
-
+        instance_create_info.default_debug_messenger = true;
+        instance_create_info.message_severity        = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL |
+                                                NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR |
+                                                NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING;
+        ;
+        instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
         nvimgcdcsInstanceCreate(&instance_, instance_create_info);
     }
     ~Module() { nvimgcdcsInstanceDestroy(instance_); }
@@ -246,10 +251,13 @@ class Image
                 std::string typestr       = iface["typestr"].cast<std::string>();
                 image_info.sample_type    = type_from_format_str(typestr);
                 size_t buffer_size        = 0;
-                image_info.color_space    = NVIMGCDCS_COLORSPACE_SRGB; 
-                image_info.sample_format =  NVIMGCDCS_SAMPLEFORMAT_P_RGB; //NVIMGCDCS_SAMPLEFORMAT_I_RGB; //TODO add support for various formats
+                image_info.color_space    = NVIMGCDCS_COLORSPACE_SRGB;
+                image_info.sample_format =
+                    NVIMGCDCS_SAMPLEFORMAT_P_RGB; //NVIMGCDCS_SAMPLEFORMAT_I_RGB; //TODO add support for various formats
                 image_info.sampling = NVIMGCDCS_SAMPLING_444;
-                int pitch_in_bytes = vstrides.size() > 1 ? vstrides[1] : image_info.image_width;                //*image_info.num_components;
+                int pitch_in_bytes  = vstrides.size() > 1
+                                          ? vstrides[1]
+                                          : image_info.image_width; //*image_info.num_components;
                 for (size_t c = 0; c < image_info.num_components; c++) {
                     image_info.component_info[c].component_width       = image_info.image_width;
                     image_info.component_info[c].component_height      = image_info.image_height;
@@ -302,7 +310,7 @@ PYBIND11_MODULE(nvimgcodecs, m)
     m.def(
         "imread",
         [](const char* file_name, int flags) -> Image* {
-            return Image::createImageFromFile(module.instance_, file_name,  flags);
+            return Image::createImageFromFile(module.instance_, file_name, flags);
         },
         "Loads an image from a specified file", "file_name"_a,
         "flags"_a = static_cast<int>(NVIMGCDCS_IMREAD_COLOR));
@@ -320,31 +328,45 @@ PYBIND11_MODULE(nvimgcodecs, m)
         return Image::createImageFromPy(module.instance_, src.ptr());
     });
 
-    m.attr("NVIMGCDCS_IMREAD_GRAYSCALE") = static_cast<int>(NVIMGCDCS_IMREAD_GRAYSCALE); // do not convert to RGB
+    m.attr("NVIMGCDCS_IMREAD_GRAYSCALE") =
+        static_cast<int>(NVIMGCDCS_IMREAD_GRAYSCALE); // do not convert to RGB
     //for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
     //for Jpeg2k and 422/420 chroma subsampling enable conversion to RGB
     m.attr("NVIMGCDCS_IMREAD_COLOR") = static_cast<int>(NVIMGCDCS_IMREAD_COLOR);
-    m.attr("NVIMGCDCS_IMREAD_IGNORE_ORIENTATION") = static_cast<int>(NVIMGCDCS_IMREAD_IGNORE_ORIENTATION); //Ignore orientation from Exif;
+    m.attr("NVIMGCDCS_IMREAD_IGNORE_ORIENTATION") =
+        static_cast<int>(NVIMGCDCS_IMREAD_IGNORE_ORIENTATION); //Ignore orientation from Exif;
     m.attr("NVIMGCDCS_IMWRITE_JPEG_QUALITY") =
         static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_QUALITY); // 0-100 default 95
-    m.attr("NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE") = static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE);
-    m.attr("NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE") = static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE); //optimized_huffman
-    m.attr("NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR") = static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR);
+    m.attr("NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE);
+    m.attr("NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE); //optimized_huffman
+    m.attr("NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR);
     m.attr("NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR") =
         static_cast<int>(NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR); // default 50
     m.attr("NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS") =
         static_cast<int>(NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS); // num_decomps default 5
-    m.attr("NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE") =
-        static_cast<int>(NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE); // code_block_w code_block_h (default 64 64)
-    m.attr("NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE") = static_cast<int>(NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE);
-    m.attr("NVIMGCDCS_IMWRITE_MCT_MODE") =
-        static_cast<int>(NVIMGCDCS_IMWRITE_MCT_MODE); // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )
-    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444")  = static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444);
-    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422")  = static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422);
-    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420")  = static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420);
-    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440")  = static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440);
-    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411")  = static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411);
-    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410")  = static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410);
-    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410")  = static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410);
-    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY") = static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY);
+    m.attr("NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE") = static_cast<int>(
+        NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE); // code_block_w code_block_h (default 64 64)
+    m.attr("NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE);
+    m.attr("NVIMGCDCS_IMWRITE_MCT_MODE") = static_cast<int>(
+        NVIMGCDCS_IMWRITE_MCT_MODE); // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )
+    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444);
+    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422);
+    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420);
+    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440);
+    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411);
+    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410);
+    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410);
+    m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY") =
+        static_cast<int>(NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY);
 }

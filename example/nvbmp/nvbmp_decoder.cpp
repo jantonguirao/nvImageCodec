@@ -1,7 +1,8 @@
 #include <cuda_runtime_api.h>
 #include <nvimgcdcs_module.h>
-#include "example_parser.h"
+#include "nvbmp_parser.h"
 #include "exceptions.h"
+#include "log.h"
 
 struct nvimgcdcsDecoder
 {
@@ -11,42 +12,47 @@ struct nvimgcdcsDecoder
 struct nvimgcdcsDecodeState
 {};
 
-static nvimgcdcsStatus_t example_can_decode(void* instance, bool* result,
+static nvimgcdcsStatus_t nvbmp_can_decode(void* instance, bool* result,
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params)
 {
     *result = true;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_decoder_create(
+static nvimgcdcsStatus_t nvbmp_decoder_create(
     void* instance, nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params)
 {
+    NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_create");
     *decoder = new nvimgcdcsDecoder();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_decoder_destroy(nvimgcdcsDecoder_t decoder)
+static nvimgcdcsStatus_t nvbmp_decoder_destroy(nvimgcdcsDecoder_t decoder)
 {
+    NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_destroy");
     delete decoder;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_create_decode_state(
+static nvimgcdcsStatus_t nvbmp_create_decode_state(
     nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
 {
+    NVIMGCDCS_D_LOG_TRACE("nvbmp_create_decode_state");
     *decode_state = new nvimgcdcsDecodeState();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t example_destroy_decode_state(nvimgcdcsDecodeState_t decode_state)
+nvimgcdcsStatus_t nvbmp_destroy_decode_state(nvimgcdcsDecodeState_t decode_state)
 {
+    NVIMGCDCS_D_LOG_TRACE("nvbmp_destroy_decode_state");
     delete decode_state;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t example_get_capabilities(
+nvimgcdcsStatus_t nvbmp_get_capabilities(
     nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
+    NVIMGCDCS_D_LOG_TRACE("nvbmp_get_capabilities");
     if (decoder == 0)
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
@@ -62,11 +68,11 @@ nvimgcdcsStatus_t example_get_capabilities(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_decoder_decode(nvimgcdcsDecoder_t decoder,
+static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder,
     nvimgcdcsDecodeState_t decode_state, nvimgcdcsCodeStreamDesc_t code_stream,
     nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params)
 {
-    std::cout << "example_ decoder_decode" << std::endl;
+    NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_decode" );
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
     size_t size                       = 0;
@@ -101,19 +107,19 @@ static nvimgcdcsStatus_t example_decoder_decode(nvimgcdcsDecoder_t decoder,
 }
 
 // clang-format off
-nvimgcdcsDecoderDesc_t example_decoder = {
+nvimgcdcsDecoderDesc_t nvbmp_decoder = {
     NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
     NULL,
     NULL,               // instance    
-    "example_decoder",  //id
+    "nvbmp_decoder",    //id
     0x00000100,         // version
     "bmp",              //  codec_type 
-    example_can_decode,
-    example_decoder_create,
-    example_decoder_destroy, 
-    example_create_decode_state, 
-    example_destroy_decode_state,
-    example_get_capabilities,
-    example_decoder_decode
+    nvbmp_can_decode,
+    nvbmp_decoder_create,
+    nvbmp_decoder_destroy, 
+    nvbmp_create_decode_state, 
+    nvbmp_destroy_decode_state,
+    nvbmp_get_capabilities,
+    nvbmp_decoder_decode
 };
 // clang-format on

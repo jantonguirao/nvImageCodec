@@ -148,6 +148,10 @@ extern "C"
 
     typedef struct nvimgcdcsDecoderDesc nvimgcdcsDecoderDesc_t;
 
+    typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance,
+        const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
+
     struct nvimgcdcsFrameworkDesc
     {
         nvimgcdcsStructureType_t type;
@@ -161,6 +165,7 @@ extern "C"
         nvimgcdcsStatus_t (*registerDecoder)(
             void* instance, const struct nvimgcdcsDecoderDesc* desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
+        nvimgcdcsLogFunc_t log;
     };
 
     typedef struct nvimgcdcsFrameworkDesc nvimgcdcsFrameworkDesc_t;

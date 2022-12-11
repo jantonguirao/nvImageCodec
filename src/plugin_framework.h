@@ -20,8 +20,7 @@
 namespace nvimgcdcs {
 class CodecRegistry;
 class Image;
-
-
+class Codec;
 
 class PluginFramework
 {
@@ -41,9 +40,15 @@ class PluginFramework
         nvimgcdcsExtModuleUnload_t* unload;
     };
 
+    Codec* ensureExistsAndRetrieveCodec(const char* codec_name);
+
     nvimgcdcsStatus_t registerEncoder(const struct nvimgcdcsEncoderDesc* desc);
     nvimgcdcsStatus_t registerDecoder(const struct nvimgcdcsDecoderDesc* desc);
     nvimgcdcsStatus_t registerParser(const struct nvimgcdcsParserDesc* desc);
+    nvimgcdcsStatus_t log(const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageType_t message_type,
+        const nvimgcdcsDebugMessageData_t* callback_data);
+
     //TODO define statics with macro
     static nvimgcdcsStatus_t static_register_encoder(
         void* instance, const struct nvimgcdcsEncoderDesc* desc);
@@ -51,6 +56,10 @@ class PluginFramework
         void* instance, const struct nvimgcdcsDecoderDesc* desc);
     static nvimgcdcsStatus_t static_register_parser(
         void* instance, const struct nvimgcdcsParserDesc* desc);
+    static nvimgcdcsStatus_t static_log(void* instance,
+        const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageType_t message_type,
+        const nvimgcdcsDebugMessageData_t* callback_data);
 
     std::vector<Module> modules_;
     nvimgcdcsFrameworkDesc framework_desc_;

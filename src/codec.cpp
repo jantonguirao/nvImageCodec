@@ -11,7 +11,7 @@
 #include "image_decoder.h"
 #include "image_encoder.h"
 #include "image_parser.h"
-
+#include "log.h"
 #include <iostream>
 
 namespace nvimgcdcs {
@@ -22,9 +22,9 @@ Codec::Codec(const char* name)
 
 std::unique_ptr <ImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code_stream) const
 {
-    std::cout << "Codec::getParser " << name_ << std::endl;
+    NVIMGCDCS_LOG_TRACE("Codec::getParser " << name_);
     for (const auto& entry : parsers_) {
-        std::cout << "- probing parser:" << entry.second->getParserId() << std::endl;
+        NVIMGCDCS_LOG_TRACE("- probing parser:" << entry.second->getParserId());
         if (entry.second->canParse(code_stream)) {
             return entry.second->createParser();
         }
@@ -36,9 +36,9 @@ std::unique_ptr <ImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code
 std::unique_ptr<ImageDecoder> Codec::createDecoder(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) const
 {
-    std::cout << "Codec::createDecoder " << name_ << std::endl;
+    NVIMGCDCS_LOG_TRACE("Codec::createDecoder " << name_);
     for (const auto& entry : decoders_) {
-        std::cout << "- probing decoder:" << entry.second->getDecoderId() << std::endl;
+        NVIMGCDCS_LOG_TRACE("- probing decoder:" << entry.second->getDecoderId());
         if (entry.second->canDecode(code_stream , params)) {
           return entry.second->createDecoder(params);
         }
@@ -49,9 +49,9 @@ std::unique_ptr<ImageDecoder> Codec::createDecoder(
 std::unique_ptr<ImageEncoder> Codec::createEncoder(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) const
 {
-    std::cout << "Codec::createEncoder " << name_ << std::endl;
+    NVIMGCDCS_LOG_TRACE("Codec::createEncoder " << name_);
     for (const auto& entry : encoders_) {
-        std::cout << "- probing encoder:" << entry.second->getEncoderId() << std::endl;
+        NVIMGCDCS_LOG_TRACE("- probing encoder:" << entry.second->getEncoderId());
         if (entry.second->canEncode(code_stream, params)) {
             return entry.second->createEncoder(params);
         }
@@ -66,17 +66,19 @@ const std::string& Codec::name() const
 
 void Codec::registerParser(std::unique_ptr<ImageParserFactory> parserFactory, float priority)
 {
-    std::cout << "Codec::registerParser" << std::endl;
+    NVIMGCDCS_LOG_TRACE("Codec::registerParser");
     parsers_.emplace(priority, std::move(parserFactory));
 }
 
 void Codec::registerEncoder(std::unique_ptr<ImageEncoderFactory> encoderFactory, float priority)
 {
+    NVIMGCDCS_LOG_TRACE("Codec::registerEncoder");
     encoders_.emplace(priority, std::move(encoderFactory));
 }
 
 void Codec::registerDecoder(std::unique_ptr<ImageDecoderFactory> decoderFactory, float priority)
 {
+    NVIMGCDCS_LOG_TRACE("Codec::registerDecoder");
     decoders_.emplace(priority, std::move(decoderFactory));
 }
 

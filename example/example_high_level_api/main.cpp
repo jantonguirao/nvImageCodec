@@ -15,6 +15,7 @@ struct CommandLineParams
     std::string input;
     std::string output;
     std::string output_codec;
+    int verbose;
     float quality;
     float target_psnr;
     bool write_output;
@@ -58,55 +59,61 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
     int pidx;
     if ((pidx = find_param_index(argv, argc, "-h")) != -1 ||
         (pidx = find_param_index(argv, argc, "--help")) != -1) {
-        std::cout << "Usage: " << argv[0] << "[-dec_color_trans <true|false>]"
-                  << "[-ignore_orientation <true|false>]"
-                  << "-i <input> "
-                  << "[-c <output_codec>]"
-                  << "[-q <quality>]"
-                  << "[-enc_color_trans <true|false>]"
-                  << "[-chroma_subsampling <444|422|420|440|411|410|gray|410v>]"
-                  << "[-psnr <psnr>]"
-                  << "[-reversible <true|false>]"
-                  << "[-num_decomps <num>]"
-                  << "[-block_size <height> <width>]"
-                  << "[-optimized_huffman <true|false>]"
-                  << "[-jpeg_encoding <baseline_dct|sequential_dct|progressive_dct>]"
-                  << "[-o <output>] " << std::endl;
-        std::cout << "Parameters: " << std::endl;
-        std::cout << "\tdec_color_trans\t:\t Decoding color transfrom. (default false)" << std::endl
-                  << "\t\t\t - When true, for jpeg with 4 color components assumes CMYK colorspace "
-                     "and converts to RGB/YUV."
-                  << std::endl
-                  << "\t\t\t - When true, for Jpeg2k and 422/420 chroma subsampling enable "
-                     "conversion to RGB."
-                  << std::endl;
-        std::cout << "\tignore_orientation\t:\t Ignore EXFIF orientation (default false)]"
-                  << std::endl;
-        std::cout << "\tinput\t:\t Path to single image" << std::endl;
-        std::cout << "\toutput_codec (defualt:bmp)\t: Output codec (default bmp)" << std::endl;
-        std::cout << "\tquality\t:\t Quality to encode with (default 95)" << std::endl;
-        std::cout << "\tchroma_subsampling\t:\t Chroma subsampling (default 444)" << std::endl;
-        std::cout << "\tenc_color_trans\t:\t Encoding color transfrom. For true transform RGB "
-                     "color images to "
-                     "YUV (default false)"
-                  << std::endl;
-        std::cout << "\tpsnr\t:\t Target psnr (default 50)" << std::endl;
+        std::cout << "Usage: " << argv[0] << " [decoding options]"
+                  << " -i <input> "
+                  << "[encoding options]"
+                  << " -o <output> " << std::endl;
+        std::cout << std::endl;
+        std::cout << "General options: " << std::endl;
+        std::cout << "  -h\t\t: show help" << std::endl;
+        std::cout << "  --help\t\t: show help" << std::endl;
+        std::cout << "  -verbose\t\t: verbosity level from 0 to 5 (default 1)" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Decoding options: " << std::endl;
         std::cout
-            << "\treversible\t:\t false for lossy and true for lossless compresion (default false) "
+            << "  -dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
+            << "  \t\t\t - When true, for jpeg with 4 color components assumes CMYK colorspace "
+               "and converts to RGB/YUV."
+            << std::endl
+            << "  \t\t\t - When true, for Jpeg2k and 422/420 chroma subsampling enable "
+               "conversion to RGB."
+            << std::endl;
+        std::cout << "  -ignore_orientation\t: Ignore EXFIF orientation (default false)"
+                  << std::endl;
+        std::cout << "  -input\t\t: Path to single image" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Encoding options: " << std::endl;
+        std::cout << "  -output_codec\t\t: Output codec (default bmp)" << std::endl;
+        std::cout << "  -quality\t\t: Quality to encode with (default 95)" << std::endl;
+        std::cout << "  -chroma_subsampling\t: Chroma subsampling (default 444)" << std::endl;
+        std::cout << "  -enc_color_trans\t: Encoding color transfrom. For true transform RGB "
+                     "color images to YUV (default false)"
+                  << std::endl;
+        std::cout << "  -psnr\t\t\t: Target psnr (default 50)" << std::endl;
+        std::cout << "  -reversible\t\t: false for lossy and true for lossless compresion (default "
+                     "false) "
+                  << std::endl;
+        std::cout
+            << "  -num_decomps\t\t: number of wavelet transform decompositions levels (default 5)"
             << std::endl;
         std::cout
-            << "\tnum_decomps\t:\t number of wavelet transform decompositions levels (default 5)"
+            << "  -optimized_huffman\t: For false non-optimized Huffman will be used. Otherwise "
+               "optimized version will be used. (default false)."
             << std::endl;
-        std::cout
-            << "\toptimized_huffman\t:\t For false non-optimized Huffman will be used. Otherwise "
-               "optimized version will be used. (default false).";
-        std::cout << "\tjpeg_encoding\t:\t Corresponds to the JPEG marker"
+        std::cout << "  -jpeg_encoding\t: Corresponds to the JPEG marker"
                      " baseline_dct, sequential_dct or progressive_dct (default "
-                     "baseline_dct).";
-        std::cout << "\toutput\t:\t File to write decoded image using <output_codec>" << std::endl;
+                     "baseline_dct)."
+                  << std::endl;
+        ;
+        std::cout << "  -output\t\t: File to write decoded image using <output_codec>" << std::endl;
 
         return EXIT_SUCCESS;
     }
+    params->verbose = 1;
+    if ((pidx = find_param_index(argv, argc, "-verbose")) != -1) {
+        params->verbose = static_cast<int>(strtod(argv[pidx + 1], NULL));
+    }
+
     params->input = "./";
     if ((pidx = find_param_index(argv, argc, "-i")) != -1) {
         params->input = argv[pidx + 1];
@@ -197,6 +204,22 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
     }
     return -1;
 }
+uint32_t verbosity2severity(int verbose)
+{
+    uint32_t result = 0;
+    if (verbose >= 1)
+        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR;
+    if (verbose >= 2)
+        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING;
+    if (verbose >= 3)
+        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO;
+    if (verbose >= 4)
+        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG;
+    if (verbose >= 5)
+        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE;
+
+    return result;
+}
 
 int get_read_flags(const CommandLineParams& params)
 {
@@ -278,7 +301,9 @@ int main(int argc, const char* argv[])
     instance_create_info.next             = NULL;
     instance_create_info.pinned_allocator = NULL;
     instance_create_info.device_allocator = NULL;
-
+    instance_create_info.default_debug_messenger = true;
+    instance_create_info.message_severity        = verbosity2severity(params.verbose);
+    instance_create_info.message_type            = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
 
     nvimgcdcsImage_t image;

@@ -1,22 +1,22 @@
+#include "nvbmp_parser.h"
 #include <nvimgcdcs_module.h>
+#include <cassert>
 #include <iostream>
 #include <vector>
-#include <cassert>
-#include "example_parser.h"
+#include "log.h"
 
 struct nvimgcdcsParser
 {
     std::vector<nvimgcdcsCapability_t> capabilities_ = {NVIMGCDCS_CAPABILITY_HOST_INPUT};
 };
 
-
-static nvimgcdcsStatus_t example_parser_can_parse(
+static nvimgcdcsStatus_t nvbmp_parser_can_parse(
     void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    std::cout << "example_parser_can_parse" << std::endl;
+    NVIMGCDCS_P_LOG_TRACE("nvbmp_parser_can_parse");
 
     constexpr size_t min_bmp_stream_size = 18u;
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t io_stream    = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     if (length < min_bmp_stream_size) {
@@ -38,29 +38,31 @@ static nvimgcdcsStatus_t example_parser_can_parse(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_parser_create(void* instance, nvimgcdcsParser_t* parser)
+static nvimgcdcsStatus_t nvbmp_parser_create(void* instance, nvimgcdcsParser_t* parser)
 {
+    NVIMGCDCS_P_LOG_TRACE("nvbmp_parser_create");
     *parser = new nvimgcdcsParser();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_parser_destroy(nvimgcdcsParser_t parser)
+static nvimgcdcsStatus_t nvbmp_parser_destroy(nvimgcdcsParser_t parser)
 {
+    NVIMGCDCS_P_LOG_TRACE("nvbmp_parser_destroy");
     delete parser;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_create_parse_state(
+static nvimgcdcsStatus_t nvbmp_create_parse_state(
     nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
-    std::cout << "example_create_parse_state" << std::endl;
+    NVIMGCDCS_P_LOG_TRACE("nvbmp_create_parse_state");
     *parse_state = new nvimgcdcsParseState();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_destroy_parse_state(nvimgcdcsParseState_t parse_state)
+static nvimgcdcsStatus_t nvbmp_destroy_parse_state(nvimgcdcsParseState_t parse_state)
 {
-    std::cout << "example_destroy_parse_state" << std::endl;
+    NVIMGCDCS_P_LOG_TRACE("nvbmp_destroy_parse_state");
     delete parse_state;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -91,13 +93,14 @@ struct BitmapInfoHeader
 };
 static_assert(sizeof(BitmapInfoHeader) == 40);
 
-static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, int palette_entry_size)
+static bool is_color_palette(
+    nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, int palette_entry_size)
 {
     std::vector<uint8_t> entry;
     entry.resize(palette_entry_size);
     for (int i = 0; i < ncolors; i++) {
         size_t output_size;
-        io_stream->read(io_stream->instance, &output_size,entry.data(), palette_entry_size);
+        io_stream->read(io_stream->instance, &output_size, entry.data(), palette_entry_size);
 
         const auto b = entry[0], g = entry[1], r = entry[2]; // a = p[3];
         if (b != g || b != r)
@@ -130,10 +133,10 @@ static int number_of_channels(nvimgcdcsIoStreamDesc_t io_stream, int bpp, int co
     return 0;
 }
 
-static nvimgcdcsStatus_t example_parser_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
+    nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    std::cout << "example_parser_get_image_info" << std::endl;
+    NVIMGCDCS_P_LOG_TRACE("nvbmp_parser_get_image_info");
 
     nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
     size_t length;
@@ -150,18 +153,18 @@ static nvimgcdcsStatus_t example_parser_get_image_info(
         sizeof(code_stream->parse_state->header_size));
     io_stream->skip(io_stream->instance, -4);
 
-    int bpp = 0;
-    int compression_type    = BMP_COMPRESSION_RGB;
-    int ncolors             = 0;
-    int palette_entry_size  = 0;
-    size_t palette_start = 0;
+    int bpp                = 0;
+    int compression_type   = BMP_COMPRESSION_RGB;
+    int ncolors            = 0;
+    int palette_entry_size = 0;
+    size_t palette_start   = 0;
 
     if (length >= 26 && code_stream->parse_state->header_size == 12) {
         BitmapCoreHeader header = {};
         io_stream->read(io_stream->instance, &output_size, &header, sizeof(header));
         image_info->image_width  = header.width;
         image_info->image_height = header.heigth;
-        bpp = header.bpp;
+        bpp                      = header.bpp;
         if (bpp <= 8) {
             io_stream->tell(io_stream->instance, &palette_start);
             palette_entry_size = 3;
@@ -174,9 +177,9 @@ static nvimgcdcsStatus_t example_parser_get_image_info(
             io_stream->instance, code_stream->parse_state->header_size - sizeof(header));
         image_info->image_width  = abs(header.width);
         image_info->image_height = abs(header.heigth);
-        bpp              = header.bpp;
-        compression_type = header.compression;
-        ncolors          = header.colors_used;
+        bpp                      = header.bpp;
+        compression_type         = header.compression;
+        ncolors                  = header.colors_used;
         if (bpp <= 8) {
             io_stream->tell(io_stream->instance, &palette_start);
             palette_entry_size = 4;
@@ -198,17 +201,19 @@ static nvimgcdcsStatus_t example_parser_get_image_info(
 
     for (size_t i = 0; i < image_info->num_components; i++) {
         image_info->component_info[i].component_height = image_info->image_height;
-        image_info->component_info[i].component_width = image_info->image_width;
-        image_info->component_info[i].sample_type      = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;// TODO Allow other sample data types
+        image_info->component_info[i].component_width  = image_info->image_width;
+        image_info->component_info[i].sample_type =
+            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; // TODO Allow other sample data types
     }
-    image_info->sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+    image_info->sample_type   = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
     image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_get_capabilities(
+static nvimgcdcsStatus_t nvbmp_get_capabilities(
     nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
+    NVIMGCDCS_P_LOG_TRACE("nvbmp_get_capabilities");
     if (parser == 0)
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
@@ -225,20 +230,20 @@ static nvimgcdcsStatus_t example_get_capabilities(
 }
 
 // clang-format off
-nvimgcdcsParserDesc example_parser = {
+nvimgcdcsParserDesc nvbmp_parser = {
     NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC,
     NULL,
     NULL,               // instance    
-    "example_parser",   // id
+    "nvbmp_parser",     // id
      0x00000100,        // version
     "bmp",              // codec_type 
 
-    example_parser_can_parse,
-    example_parser_create,
-    example_parser_destroy,
-    example_create_parse_state,
-    example_destroy_parse_state,
-    example_parser_get_image_info,
-    example_get_capabilities
+    nvbmp_parser_can_parse,
+    nvbmp_parser_create,
+    nvbmp_parser_destroy,
+    nvbmp_create_parse_state,
+    nvbmp_destroy_parse_state,
+    nvbmp_parser_get_image_info,
+    nvbmp_get_capabilities
 };
 // clang-format on   

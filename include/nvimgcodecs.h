@@ -58,6 +58,8 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
@@ -397,7 +399,7 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_MCT_MODE_YCC = 0, //transform RGB color images to YUV (default false)
+        NVIMGCDCS_MCT_MODE_YCC            = 0, //transform RGB color images to YUV (default false)
         NVIMGCDCS_MCT_MODE_RGB            = 1,
         NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsMctMode_t;
@@ -530,58 +532,56 @@ extern "C"
     struct nvimgcdcsDecodeState;
     typedef nvimgcdcsDecodeState* nvimgcdcsDecodeState_t;
 
-    // Instance
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-        nvimgcdcsDeviceAllocator_t* device_allocator; //TODO
-        nvimgcdcsPinnedAllocator_t* pinned_allocator; //TODO
-        size_t deviceMemPadding;                      //TODO any device memory allocation
-        // would be padded to the multiple of specified number of bytes.
-        size_t pinnedMemPadding; //TODO any pinned host memory allocation
-        // would be padded to the multiple of specified number of bytes
-    } nvimgcdcsInstanceCreateInfo_t;
-
-    struct nvimgcdcsDebugMessage;
-    typedef nvimgcdcsDebugMessage* nvimgcdcsDebugMessage_t;
+    struct nvimgcdcsDebugMessenger;
+    typedef nvimgcdcsDebugMessenger* nvimgcdcsDebugMessenger_t;
 
     typedef enum
     {
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_VERBOSE_BIT = 1, // Diagnostic message
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO_BIT =
-            2, // Informational message like the creation of a resource
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING_BIT =
-            4, // Message about behavior that is not necessarily an error, but very likely a bug in your application
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR_BIT =
-            8, // Message about behavior that is invalid and may cause crashes
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_UKNOWN = -1,
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_NONE   = 0,
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE  = 1, // Diagnostic message useful for developers
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG  = 2, // Diagnostic message useful for developers
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO =
+            4, // Informational message like the creation of a resource
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING =
+            8, // Message about behavior that is not necessarily an error, but very likely a bug in your application
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR =
+            16, // Message about behavior that is invalid and may cause impropare execution or result of operation (e.g. can't open file) but not application
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL =
+            24, // Message about behavior that is invalid and may cause crashes and forcing to shutdown application
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL =
+            0x0FFFFFFF, //Used in case filtering out by message severity
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDebugMessageSeverity_t;
 
     typedef enum
     {
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL_BIT =
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_UKNOWN = -1,
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_NONE   = 0,
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL =
             1, // Some event has happened that is unrelated to the specification or performance
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION_BIT =
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION =
             2, // Something has happened that indicates a possible mistake
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE_BIT = 4, // Potential non-optimal use
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT  = 0xFFFFFFFF
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE = 4,  // Potential non-optimal use
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL = 0x0FFFFFFF, //Used in case filtering out by message type
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDebugMessageType_t;
 
     typedef struct
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        const char* message;       //null-terminated string detailing the trigger conditions
-        uint32_t internalStatusId; //it is internal codec status id
+
+        const char* message;         //null-terminated string detailing the trigger conditions
+        uint32_t internal_status_id; //it is internal codec status id
         const char* codec; //codec name if codec is rising message or NULL otherwise (e.g framework)
-        const char* codecId;
-        uint32_t codecVersion;
+        const char* codec_id;
+        uint32_t codec_version;
     } nvimgcdcsDebugMessageData_t;
 
-    typedef bool (*nvimgcdcsDebugCallback_t)(nvimgcdcsDebugMessageSeverity_t messageSeverity,
-        const nvimgcdcsDebugMessageType_t messageType,
-        const nvimgcdcsDebugMessageData_t pCallbackData,
+    typedef bool (*nvimgcdcsDebugCallback_t)(const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageType_t message_type,
+        const nvimgcdcsDebugMessageData_t* callback_data,
         void* user_data // pointer that was specified during the setup of the callback
     );
 
@@ -589,11 +589,30 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        nvimgcdcsDebugMessageSeverity_t messageSeverity;
-        nvimgcdcsDebugMessageType_t messageType;
-        nvimgcdcsDebugCallback_t userCallback;
+
+        uint32_t message_severity;
+        uint32_t message_type;
+        nvimgcdcsDebugCallback_t user_callback;
         void* userData;
-    } nvimgcdcsDebugMessengerCreateInfo_t;
+    } nvimgcdcsDebugMessengerDesc_t;
+
+    // Instance
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        nvimgcdcsDeviceAllocator_t* device_allocator;     //TODO
+        nvimgcdcsPinnedAllocator_t* pinned_allocator;     //TODO
+        size_t deviceMemPadding;                          //TODO any device memory allocation
+        bool default_debug_messenger;                     //Create default debug messenger
+        uint32_t message_severity; //severity for default debug messenger
+        uint32_t message_type;     //message type for default debug messenger
+        // would be padded to the multiple of specified number of bytes.
+        size_t pinnedMemPadding; //TODO any pinned host memory allocation
+        // would be padded to the multiple of specified number of bytes
+
+    } nvimgcdcsInstanceCreateInfo_t;
 
     // Instance
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
@@ -604,11 +623,11 @@ extern "C"
         nvimgcdcsImage_t* image, nvimgcdcsProcessingStatus_t* processing_status, bool blocking);
 
     // Debug Messanger
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessangerCreate(nvimgcdcsInstance_t instance,
-        nvimgcdcsDebugMessage_t* dbgMessenger,
-        nvimgcdcsDebugMessengerCreateInfo_t createInfo); //TODO
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessangerDestroy(
-        nvimgcdcsDebugMessage_t* dbgMessenger); //TODO
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessengerCreate(nvimgcdcsInstance_t instance,
+        nvimgcdcsDebugMessenger_t* dbgMessenger,
+        const nvimgcdcsDebugMessengerDesc_t* messengerDesc);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessengerDestroy(
+        nvimgcdcsDebugMessenger_t dbgMessenger);
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
@@ -705,36 +724,37 @@ extern "C"
     {
         NVIMGCDCS_IMREAD_UNCHANGED = -1,
         NVIMGCDCS_IMREAD_GRAYSCALE = 0, // do not convert to RGB
-        NVIMGCDCS_IMREAD_COLOR = 1, //for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
+        NVIMGCDCS_IMREAD_COLOR =
+            1, //for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
                //for Jpeg2k and 422/420 chroma subsampling enable conversion to RGB
 
-            //TODO NVIMGCDCS_IMREAD_ANYDEPTH  = 2, //accept 16-bit and 32-bit images, othewise convert to 8-bit
-            //TODO  NVIMGCDCS_IMREAD_ANYCOLOR  = 4, //
-            //   NVIMGCDCS_IMREAD_LOAD_GDAL           = 8,
-            //TODO  NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_2 = 16,
-            //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_2     = 17,
-            //TODO  NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_4 = 32,
-            //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_4     = 33,
-            //TODO NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_8 = 64,
-            //TODO  NVIMGCDCS_IMREAD_REDUCED_COLOR_8     = 65,
-            NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 128, //Ignore orientation from Exif
-        NVIMGCDCS_IMREAD_ENUM_FORCE_INT      = 0xFFFFFFFF
+        //TODO NVIMGCDCS_IMREAD_ANYDEPTH  = 2, //accept 16-bit and 32-bit images, othewise convert to 8-bit
+        //TODO  NVIMGCDCS_IMREAD_ANYCOLOR  = 4, //
+        //   NVIMGCDCS_IMREAD_LOAD_GDAL           = 8,
+        //TODO  NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_2 = 16,
+        //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_2     = 17,
+        //TODO  NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_4 = 32,
+        //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_4     = 33,
+        //TODO NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_8 = 64,
+        //TODO  NVIMGCDCS_IMREAD_REDUCED_COLOR_8     = 65,
+        NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 128, //Ignore orientation from Exif
+        NVIMGCDCS_IMREAD_ENUM_FORCE_INT     = 0xFFFFFFFF
     } nvimgcdcsImreadFlags_t;
 
     typedef enum
     {
-        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 1, // 0-100 default 95
-        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE     = 2,
-        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE        = 3, //optimized_huffman
+        NVIMGCDCS_IMWRITE_JPEG_QUALITY     = 1, // 0-100 default 95
+        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 2,
+        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE    = 3, //optimized_huffman
         // NVIMGCDCS_IMWRITE_JPEG_RST_INTERVAL    = 4,
         // NVIMGCDCS_IMWRITE_JPEG_LUMA_QUALITY    = 5,
         // NVIMGCDCS_IMWRITE_JPEG_CHROMA_QUALITY  = 6,
         NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 7,
 
-        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 100, // default 50
-        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 101,  // num_decomps default 5
+        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR     = 100, // default 50
+        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS     = 101, // num_decomps default 5
         NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 103, // code_block_w code_block_h (default 64 64)
-        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 104,
+        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE      = 104,
 
         // NVIMGCDCS_IMWRITE_PNG_COMPRESSION = 16,
         // NVIMGCDCS_IMWRITE_PNG_STRATEGY    = 17,
@@ -751,25 +771,25 @@ extern "C"
         // NVIMGCDCS_IMWRITE_TIFF_YDPI        = 258,
         // NVIMGCDCS_IMWRITE_TIFF_COMPRESSION = 259,
 
-        NVIMGCDCS_IMWRITE_MCT_MODE =            500, // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )  
+        NVIMGCDCS_IMWRITE_MCT_MODE =
+            500, // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )
         NVIMGCDCS_IMWRITE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImwriteParams_t;
-    
+
     typedef enum
     {
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444 = 0x111111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422 = 0x211111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420 = 0x221111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440 = 0x121111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411 = 0x411111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410 = 0x441111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410V = 0x440000, //TODO 
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY = 0x110000,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444            = 0x111111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422            = 0x211111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420            = 0x221111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440            = 0x121111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411            = 0x411111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410            = 0x441111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410V           = 0x440000, //TODO
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY           = 0x110000,
         NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImwriteSamplingFactor_t;
 
-    NVIMGCDCSAPI nvimgcdcsStatus_t
-    nvimgcdcsImRead(
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, int flags);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance,
         nvimgcdcsImage_t image, const char* file_name, const int* params);

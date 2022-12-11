@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include "exceptions.h"
+#include "log.h"
 
 struct nvimgcdcsEncoder
 {
@@ -75,8 +76,8 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
     }
 
     if (verbose && precision > 8) {
-        std::cout << "BMP write - truncating " << (int)precision << " bit data to 8 bit"
-                  << std::endl;
+        NVIMGCDCS_E_LOG_WARNING(
+            "BMP write - truncating " << (int)precision << " bit data to 8 bit");
     }
 
     //
@@ -130,43 +131,51 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
     return 0;
 }
 
-static nvimgcdcsStatus_t example_encoder_can_encode(void* instance, bool* result,
+static nvimgcdcsStatus_t nvbmp_encoder_can_encode(void* instance, bool* result,
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params)
 {
+    NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_can_encode");
+
     *result = std::string(params->codec) == "bmp" /*&& (NVIMGCDCS_SAMPLEFORMAT_P_RGB)*/;
 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_encoder_create(
+static nvimgcdcsStatus_t nvbmp_encoder_create(
     void* instance, nvimgcdcsEncoder_t* encoder, nvimgcdcsEncodeParams_t* params)
 {
+    NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_create");
+
     *encoder = new nvimgcdcsEncoder();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_encoder_destroy(nvimgcdcsEncoder_t encoder)
+static nvimgcdcsStatus_t nvbmp_encoder_destroy(nvimgcdcsEncoder_t encoder)
 {
+    NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_destroy");
     delete encoder;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t example_create_encode_state(
+static nvimgcdcsStatus_t nvbmp_create_encode_state(
     nvimgcdcsEncoder_t decoder, nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream)
 {
+    NVIMGCDCS_E_LOG_TRACE("nvbmp_create_encode_state");
     *encode_state = new nvimgcdcsEncodeState();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t example_destroy_encode_state(nvimgcdcsEncodeState_t encode_state)
+nvimgcdcsStatus_t nvbmp_destroy_encode_state(nvimgcdcsEncodeState_t encode_state)
 {
+    NVIMGCDCS_E_LOG_TRACE("nvbmp_destroy_encode_state");
     delete encode_state;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t example_get_capabilities(
+nvimgcdcsStatus_t nvbmp_get_capabilities(
     nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
+    NVIMGCDCS_E_LOG_TRACE("nvbmp_get_capabilities");
     if (encoder == 0)
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
@@ -182,10 +191,11 @@ nvimgcdcsStatus_t example_get_capabilities(
     return NVIMGCDCS_STATUS_SUCCESS;
 }   
 
-static nvimgcdcsStatus_t example_encoder_encode(nvimgcdcsEncoder_t encoder,
+static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
     nvimgcdcsEncodeState_t encode_state, nvimgcdcsCodeStreamDesc_t code_stream,
     nvimgcdcsImageDesc_t image, nvimgcdcsEncodeParams_t* params)
 {
+    NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_encode");
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
     unsigned char* host_image_buffer;
@@ -213,19 +223,19 @@ static nvimgcdcsStatus_t example_encoder_encode(nvimgcdcsEncoder_t encoder,
 }
 
 // clang-format off
-nvimgcdcsEncoderDesc example_encoder = {
+nvimgcdcsEncoderDesc nvbmp_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
     NULL,               // instance    
-    "example_encoder",  //id
+    "nvbmp_encoder",    //id
      0x00000100,        // version
     "bmp",              //  codec_type 
-    example_encoder_can_encode,
-    example_encoder_create,
-    example_encoder_destroy, 
-    example_create_encode_state, 
-    example_destroy_encode_state,
-    example_get_capabilities,
-    example_encoder_encode
+    nvbmp_encoder_can_encode,
+    nvbmp_encoder_create,
+    nvbmp_encoder_destroy, 
+    nvbmp_create_encode_state, 
+    nvbmp_destroy_encode_state,
+    nvbmp_get_capabilities,
+    nvbmp_encoder_encode
 };
 // clang-format on    

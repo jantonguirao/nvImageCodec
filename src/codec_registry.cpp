@@ -11,6 +11,7 @@
 #include "codec_registry.h"
 #include "codec.h"
 #include "image_parser.h"
+#include "log.h"
 
 #include <iostream>
 #include <stdexcept>
@@ -31,7 +32,7 @@ void CodecRegistry::registerCodec(std::unique_ptr<Codec> codec)
 const std::pair<Codec*, std::unique_ptr<ImageParser>> CodecRegistry::getCodecAndParser(
     nvimgcdcsCodeStreamDesc_t code_stream) const
 {
-    std::cout << "CodecRegistry::getCodecAndParser" << std::endl;
+    NVIMGCDCS_LOG_TRACE("CodecRegistry::getCodecAndParser");
     for (const auto& entry : by_name_) {
         std::unique_ptr<ImageParser> parser = entry.second->createParser(code_stream);
         if (parser) {
