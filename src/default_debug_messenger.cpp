@@ -40,22 +40,22 @@ bool DefaultDebugMessenger::debugCallback(nvimgcdcsDebugMessageSeverity_t messag
 
     switch (message_severity) {
     case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR:
-        std::cerr << "ERROR: ";
+        std::cerr << "[ERROR] ";
         break;
     case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL:
-        std::cerr << "FATAL ERROR: ";
+        std::cerr << "[FATAL ERROR] ";
         break;
     case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING:
-        std::cerr << "WARNING: ";
+        std::cerr << "[WARNING] ";
         break;
     case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO:
-        std::cerr << "INFO: ";
+        std::cerr << "[INFO] ";
         break;
     case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG:
-        std::cerr << "DEBUG: ";
+        std::cerr << "[DEBUG] ";
         break;
     case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE:
-        std::cerr << "TRACE: ";
+        std::cerr << "[TRACE] ";
         break;
 
     default:
