@@ -6,26 +6,60 @@
 #include <cstring>
 #include <filesystem>
 #include <iostream>
-//#include <span>
 #include <map>
 #include <string>
 #include <vector>
-
+#include <fstream>
+#if defined(_WIN32)
+    #include <windows.h>
+#endif
 #define CHECK_CUDA(call)                                                                \
     {                                                                                   \
         cudaError_t _e = (call);                                                        \
         if (_e != cudaSuccess) {                                                        \
-            std::cout << "CUDA Runtime failure: '#" << _e << "' at " << __FILE__ << ":" \
+            std::cerr << "CUDA Runtime failure: '#" << _e << "' at " << __FILE__ << ":" \
                       << __LINE__ << std::endl;                                         \
             return EXIT_FAILURE;                                                        \
         }                                                                               \
     }
+
+double wtime(void)
+{
+#if defined(_WIN32)
+    LARGE_INTEGER t;
+    static double oofreq;
+    static int checkedForHighResTimer;
+    static BOOL hasHighResTimer;
+
+    if (!checkedForHighResTimer) {
+        hasHighResTimer        = QueryPerformanceFrequency(&t);
+        oofreq                 = 1.0 / (double)t.QuadPart;
+        checkedForHighResTimer = 1;
+    }
+    if (hasHighResTimer) {
+        QueryPerformanceCounter(&t);
+        return (double)t.QuadPart * oofreq;
+    } else {
+        return (double)GetTickCount() / 1000.0;
+    }
+#else
+    struct timespec tp;
+    int rv = clock_gettime(CLOCK_MONOTONIC, &tp);
+
+    if (rv)
+        return 0;
+
+    return tp.tv_nsec / 1.0E+9 + (double)tp.tv_sec;
+
+#endif
+}
 
 struct CommandLineParams
 {
     std::string input;
     std::string output;
     std::string output_codec;
+    int warmup;
     int verbose;
     float quality;
     float target_psnr;
@@ -79,6 +113,7 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         std::cout << "  -h\t\t: show help" << std::endl;
         std::cout << "  --help\t\t: show help" << std::endl;
         std::cout << "  -verbose\t\t: verbosity level from 0 to 5 (default 1)" << std::endl;
+        std::cout << "  -w\t\t: warmup iterations (default 0)" << std::endl;
         std::cout << std::endl;
         std::cout << "Decoding options: " << std::endl;
         std::cout
@@ -120,6 +155,11 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
 
         return EXIT_SUCCESS;
     }
+    params->warmup = 0;
+    if ((pidx = find_param_index(argv, argc, "-w")) != -1) {
+        params->warmup = static_cast<int>(strtod(argv[pidx + 1], NULL));
+    }
+
     params->verbose = 1;
     if ((pidx = find_param_index(argv, argc, "-verbose")) != -1) {
         params->verbose = static_cast<int>(strtod(argv[pidx + 1], NULL));
@@ -240,6 +280,11 @@ int main(int argc, const char* argv[])
         return status;
     }
 
+    double total_time = 0.;
+    double parse_time  = 0.;
+    double decode_time = 0.;
+    int total_images = 1;
+
     namespace fs = std::filesystem;
     nvimgcdcsInstance_t instance;
     nvimgcdcsInstanceCreateInfo_t instance_create_info;
@@ -257,11 +302,17 @@ int main(int argc, const char* argv[])
     fs::path exe_path(argv[0]);
     fs::path input_file = fs::absolute(exe_path).parent_path() / fs::path(params.input);
     std::cout << "Loading " << input_file.string() << " file" << std::endl;
+    std::ifstream file(input_file.string(), std::ios::binary);
+    std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(file), {});
+    if (0) {
     nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, input_file.string().c_str());
-    
+    } else {
+        nvimgcdcsCodeStreamCreateFromHostMem(instance, &code_stream, buffer.data(), buffer.size());
+    }
+    parse_time = wtime();
     nvimgcdcsImageInfo_t image_info;
     nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
-
+    parse_time = wtime() - parse_time;
     char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
     nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
     
@@ -271,7 +322,6 @@ int main(int argc, const char* argv[])
     std::cout << "\t - components:" << image_info.num_components << std::endl;
     std::cout << "\t - codec:" << codec_name << std::endl;
 
-    int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
     nvimgcdcsDecodeParams_t decode_params;
     memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
     decode_params.enable_color_conversion = params.dec_color_trans;
@@ -286,6 +336,7 @@ int main(int argc, const char* argv[])
             image_info.image_height = tmp;
         }
     }
+    int bytes_per_element    = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
 
@@ -298,22 +349,11 @@ int main(int argc, const char* argv[])
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image);
 
-    unsigned char* device_buffer = nullptr;
-    std::vector<unsigned char> host_buffer;
-
     size_t capabilities_size;
     nvimgcdcsDecoderGetCapabilities(decoder, nullptr, &capabilities_size);
     const nvimgcdcsCapability_t* capabilities_ptr;
     nvimgcdcsDecoderGetCapabilities(decoder, &capabilities_ptr, &capabilities_size);
-#if 0    
-    std::span<const nvimgcdcsCapability_t> decoder_capabilties{capabilities_ptr, capabilities_size};
 
-
-    bool is_host_output   = std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
-                                NVIMGCDCS_CAPABILITY_HOST_OUTPUT) != decoder_capabilties.end();
-    bool is_device_output = std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
-                                NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != decoder_capabilties.end();
-#else
     bool is_host_output = std::find(capabilities_ptr,
                               capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
                               NVIMGCDCS_CAPABILITY_HOST_OUTPUT) !=
@@ -323,10 +363,11 @@ int main(int argc, const char* argv[])
             capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
             NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) !=
         capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-#endif
-    nvimgcdcsCodeStream_t output_code_stream;
+
     fs::path output_file = fs::absolute(exe_path).parent_path() / fs::path(params.output);
     std::cout << "Saving to " << output_file.string() << " file" << std::endl;
+
+    nvimgcdcsCodeStream_t output_code_stream;
     nvimgcdcsCodeStreamCreateToFile(
         instance, &output_code_stream, output_file.string().c_str(), params.output_codec.data());
     nvimgcdcsCodeStreamSetImageInfo(output_code_stream, &image_info);
@@ -381,14 +422,7 @@ int main(int argc, const char* argv[])
 
     nvimgcdcsEncoderGetCapabilities(encoder, nullptr, &capabilities_size);
     nvimgcdcsEncoderGetCapabilities(encoder, &capabilities_ptr, &capabilities_size);
-#if 0
-    std::span<const nvimgcdcsCapability_t> encoder_capabilties{capabilities_ptr, capabilities_size};
 
-    bool is_host_input   = std::find(encoder_capabilties.begin(), encoder_capabilties.end(),
-                               NVIMGCDCS_CAPABILITY_HOST_INPUT) != encoder_capabilties.end();
-    bool is_device_input = std::find(encoder_capabilties.begin(), encoder_capabilties.end(),
-                               NVIMGCDCS_CAPABILITY_DEVICE_INPUT) != encoder_capabilties.end();
-#else
     bool is_host_input = std::find(capabilities_ptr,
                              capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
                              NVIMGCDCS_CAPABILITY_HOST_INPUT) !=
@@ -397,12 +431,16 @@ int main(int argc, const char* argv[])
                                capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
                                NVIMGCDCS_CAPABILITY_DEVICE_INPUT) !=
                            capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-#endif
+
     bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
+
+    unsigned char* device_buffer = nullptr;
+    std::vector<unsigned char> host_buffer;
 
     if (is_host_output || is_host_input) {
         host_buffer.resize(image_info.image_width * image_info.image_height *
-                           image_info.num_components); //TODO more bytes per sample
+                           image_info.num_components *
+                           bytes_per_element); 
         image_info.component_info[0].host_pitch_in_bytes =
             image_info.image_width * (is_interleaved ? image_info.num_components : 1);
         image_info.component_info[1].host_pitch_in_bytes =
@@ -429,16 +467,40 @@ int main(int argc, const char* argv[])
     nvimgcdcsImageSetImageInfo(image, &image_info);
     nvimgcdcsImageAttachDecodeState(image, decode_state);
 
+    // warm up
+    for (int warmup_iter = 0; warmup_iter < params.warmup; warmup_iter++) {
+        if (warmup_iter == 0) {
+            std::cout << "Warmup started!" << std::endl;
+        }
+        nvimgcdcsDecoderDecode(decoder, code_stream, image, &decode_params);
+        nvimgcdcsImage_t ready_decoded_image;
+        nvimgcdcsProcessingStatus_t decode_status;
+        nvimgcdcsInstanceGetReadyImage(instance, &ready_decoded_image, &decode_status, true);
+        if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+            std::cerr << "Error: Something went wrong during warmup decoding" << std::endl;
+        }
+        if (warmup_iter == (params.warmup - 1)) {
+            std::cout << "Warmup done!" << std::endl;
+        }
+    }
+    decode_time = wtime();
     nvimgcdcsDecoderDecode(decoder, code_stream, image, &decode_params);
 
     nvimgcdcsImage_t ready_decoded_image;
     nvimgcdcsProcessingStatus_t decode_status;
     nvimgcdcsInstanceGetReadyImage(instance, &ready_decoded_image, &decode_status, true);
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
-        std::cout << "Error: Something went wrong with decoding" << std::endl;
+        std::cerr << "Error: Something went wrong with decoding" << std::endl;
     }
 
+    decode_time = wtime() - decode_time;
+
     assert(ready_decoded_image == image); //we sent only one image to decoder
+
+    total_time = parse_time + decode_time;
+    std::cout << "Total images processed: " << total_images << std::endl;
+    std::cout << "Total time spent on decoding: " << total_time << std::endl;
+    std::cout << "Avg time/image: " << total_time / total_images << std::endl;
 
     if (is_host_output && is_device_input) {
         CHECK_CUDA(cudaMemcpy2D(device_buffer,
@@ -465,9 +527,10 @@ int main(int argc, const char* argv[])
     nvimgcdcsProcessingStatus_t encode_status;
     nvimgcdcsInstanceGetReadyImage(instance, &ready_encoded_image, &encode_status, true);
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
-        std::cout << "Error: Something went wrong with encoding" << std::endl;
+        std::cerr << "Error: Something went wrong with encoding" << std::endl;
     }
     assert(ready_encoded_image == image);
+
 
     nvimgcdcsImageDetachEncodeState(image);
     nvimgcdcsImageDetachDecodeState(image);
