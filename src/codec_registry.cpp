@@ -10,7 +10,7 @@
 
 #include "codec_registry.h"
 #include "codec.h"
-#include "image_parser.h"
+#include "iimage_parser.h"
 #include "log.h"
 
 #include <iostream>
@@ -22,19 +22,19 @@ CodecRegistry::CodecRegistry()
 {
 }
 
-void CodecRegistry::registerCodec(std::unique_ptr<Codec> codec)
+void CodecRegistry::registerCodec(std::unique_ptr<ICodec> codec)
 {
     if (by_name_.find(codec->name()) != by_name_.end())
         throw std::invalid_argument("A different codec with the same name already registered.");
     by_name_.insert(std::make_pair(codec->name(), std::move(codec)));
 }
 
-const std::pair<Codec*, std::unique_ptr<ImageParser>> CodecRegistry::getCodecAndParser(
+const std::pair<ICodec*, std::unique_ptr<IImageParser>> CodecRegistry::getCodecAndParser(
     nvimgcdcsCodeStreamDesc_t code_stream) const
 {
     NVIMGCDCS_LOG_TRACE("CodecRegistry::getCodecAndParser");
     for (const auto& entry : by_name_) {
-        std::unique_ptr<ImageParser> parser = entry.second->createParser(code_stream);
+        std::unique_ptr<IImageParser> parser = entry.second->createParser(code_stream);
         if (parser) {
             return std::make_pair(entry.second.get(), std::move(parser));
         }
@@ -43,7 +43,7 @@ const std::pair<Codec*, std::unique_ptr<ImageParser>> CodecRegistry::getCodecAnd
     return std::make_pair(nullptr, nullptr);
 }
 
-Codec* CodecRegistry::getCodecByName(const char* name)
+ICodec* CodecRegistry::getCodecByName(const char* name)
 {
     auto it = by_name_.find(name);
     if (it != by_name_.end())

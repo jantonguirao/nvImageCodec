@@ -9,21 +9,13 @@
  */
 
 #pragma once
-
 #include <nvimgcdcs_module.h>
-#include "iparse_state.h"
 
 namespace nvimgcdcs {
-class ParseState : public IParseState
+class IDecodeState
 {
   public:
-    ParseState(const struct nvimgcdcsParserDesc*parser_desc, nvimgcdcsParser_t parser);
-    ~ParseState() override;
-    nvimgcdcsParseState_t getInternalParseState() override;
-
-  private:
-    const struct nvimgcdcsParserDesc* parser_desc_;
-    nvimgcdcsParser_t parser_;
-    nvimgcdcsParseState_t parse_state_;
+    virtual ~IDecodeState() = default;
+    virtual nvimgcdcsDecodeState_t getInternalDecodeState() = 0;
 };
 } // namespace nvimgcdcs

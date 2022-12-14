@@ -13,31 +13,32 @@
 #include <nvimgcdcs_module.h>
 #include <nvimgcodecs.h>
 #include "thread_safe_queue.h"
+#include "iimage.h"
 
 namespace nvimgcdcs {
-class DecodeState;
-class EncodeState;
+class IDecodeState;
+class IEncodeState;
 
-class Image
+class Image : public IImage
 {
   public:
     explicit Image(ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue);
-    ~Image();
-    void setHostBuffer(void* buffer, size_t size);
-    void getHostBuffer(void** buffer, size_t* size);
-    void setDeviceBuffer(void* buffer, size_t size);
-    void getDeviceBuffer(void** buffer, size_t* size);
-    void setImageInfo(const nvimgcdcsImageInfo_t* image_info);
-    void getImageInfo(nvimgcdcsImageInfo_t* image_info);
-    void attachDecodeState(DecodeState* decode_state);
-    DecodeState* getAttachedDecodeState();
-    void detachDecodeState();
-    void attachEncodeState(EncodeState* encode_state);
-    EncodeState* getAttachedEncodeState();
-    void detachEncodeState();
-    nvimgcdcsImageDesc_t getImageDesc();
-    void setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status);
-    nvimgcdcsProcessingStatus_t getProcessingStatus() const;
+    ~Image() override;
+    void setHostBuffer(void* buffer, size_t size) override;
+    void getHostBuffer(void** buffer, size_t* size) override;
+    void setDeviceBuffer(void* buffer, size_t size) override;
+    void getDeviceBuffer(void** buffer, size_t* size) override;
+    void setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
+    void getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
+    void attachDecodeState(IDecodeState* decode_state) override;
+    IDecodeState* getAttachedDecodeState() override;
+    void detachDecodeState() override;
+    void attachEncodeState(IEncodeState* encode_state) override;
+    IEncodeState* getAttachedEncodeState() override;
+    void detachEncodeState() override;
+    nvimgcdcsImageDesc_t getImageDesc() override;
+    void setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status) override;
+    nvimgcdcsProcessingStatus_t getProcessingStatus() const override;
 
   private:
     nvimgcdcsStatus_t imageReady(nvimgcdcsProcessingStatus_t processing_status);
@@ -53,8 +54,8 @@ class Image
     size_t host_buffer_size_;
     void* device_buffer_;
     size_t device_buffer_size_;
-    DecodeState* decode_state_;
-    EncodeState* encode_state_;
+    IDecodeState* decode_state_;
+    IEncodeState* encode_state_;
     nvimgcdcsImageDesc image_desc_;
     ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue_;
     nvimgcdcsProcessingStatus_t processing_status_;

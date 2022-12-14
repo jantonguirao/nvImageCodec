@@ -10,15 +10,16 @@
 
 #pragma once
 #include <nvimgcdcs_module.h>
+#include "idecode_state.h"
 
 namespace nvimgcdcs {
-class DecodeState
+class DecodeState : public IDecodeState
 {
   public:
     DecodeState(
         const struct nvimgcdcsDecoderDesc* decoder_desc, nvimgcdcsDecoder_t decoder);
-    ~DecodeState();
-    nvimgcdcsDecodeState_t getInternalDecodeState();
+    ~DecodeState() override;
+    nvimgcdcsDecodeState_t getInternalDecodeState() override;
 
   private:
     const struct nvimgcdcsDecoderDesc* decoder_desc_;

@@ -5,14 +5,16 @@
 #include <cassert>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
-#include <fstream>
+
 #if defined(_WIN32)
     #include <windows.h>
 #endif
+
 #define CHECK_CUDA(call)                                                                \
     {                                                                                   \
         cudaError_t _e = (call);                                                        \
@@ -116,8 +118,7 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         std::cout << "  -w\t\t: warmup iterations (default 0)" << std::endl;
         std::cout << std::endl;
         std::cout << "Decoding options: " << std::endl;
-        std::cout
-            << "  -dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
+        std::cout << "  -dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
             << "  \t\t\t - When true, for jpeg with 4 color components assumes CMYK colorspace "
                "and converts to RGB/YUV."
             << std::endl
@@ -439,8 +440,7 @@ int main(int argc, const char* argv[])
 
     if (is_host_output || is_host_input) {
         host_buffer.resize(image_info.image_width * image_info.image_height *
-                           image_info.num_components *
-                           bytes_per_element); 
+                           image_info.num_components * bytes_per_element);
         image_info.component_info[0].host_pitch_in_bytes =
             image_info.image_width * (is_interleaved ? image_info.num_components : 1);
         image_info.component_info[1].host_pitch_in_bytes =
@@ -527,10 +527,9 @@ int main(int argc, const char* argv[])
     nvimgcdcsProcessingStatus_t encode_status;
     nvimgcdcsInstanceGetReadyImage(instance, &ready_encoded_image, &encode_status, true);
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
-        std::cerr << "Error: Something went wrong with encoding" << std::endl;
+        std::cerr << "Error: Something went wrong during encoding" << std::endl;
     }
     assert(ready_encoded_image == image);
-
 
     nvimgcdcsImageDetachEncodeState(image);
     nvimgcdcsImageDetachDecodeState(image);

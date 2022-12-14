@@ -9,9 +9,9 @@
  */
 #include "image_encoder.h"
 #include <cassert>
-#include "code_stream.h"
+#include "icode_stream.h"
 #include "encode_state.h"
-#include "image.h"
+#include "iimage.h"
 
 namespace nvimgcdcs {
 
@@ -26,7 +26,7 @@ ImageEncoder::~ImageEncoder()
     encoder_desc_->destroy(encoder_);
 }
 
-std::unique_ptr<EncodeState> ImageEncoder::createEncodeState(cudaStream_t cuda_stream) const
+std::unique_ptr<IEncodeState> ImageEncoder::createEncodeState(cudaStream_t cuda_stream) const
 {
     return std::make_unique<EncodeState>(encoder_desc_, encoder_, cuda_stream);
 }
@@ -36,9 +36,9 @@ void ImageEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, s
     encoder_desc_->getCapabilities(encoder_, capabilities, size);
 }
 
-void ImageEncoder::encode(CodeStream* code_stream, Image* image, nvimgcdcsEncodeParams_t* params)
+void ImageEncoder::encode(ICodeStream* code_stream, IImage* image, nvimgcdcsEncodeParams_t* params)
 {
-    EncodeState* encode_state                    = image->getAttachedEncodeState();
+    IEncodeState* encode_state                    = image->getAttachedEncodeState();
     nvimgcdcsEncodeState_t internal_encode_state = encode_state->getInternalEncodeState();
     nvimgcdcsImageDesc* image_desc               = image->getImageDesc();
 
@@ -47,34 +47,4 @@ void ImageEncoder::encode(CodeStream* code_stream, Image* image, nvimgcdcsEncode
     encoder_desc_->encode(encoder_, internal_encode_state, code_stream_desc, image_desc, params);
 }
 
-ImageEncoderFactory::ImageEncoderFactory(const struct nvimgcdcsEncoderDesc* desc)
-    : encoder_desc_(desc)
-{
-}
-
-std::string ImageEncoderFactory::getCodecName() const
-{
-    return encoder_desc_->codec;
-}
-
-std::string ImageEncoderFactory::getEncoderId() const
-{
-    return encoder_desc_->id;
-}
-
-bool ImageEncoderFactory::canEncode(
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params)
-{
-    assert(code_stream);
-    assert(encoder_desc_->canEncode);
-    bool result = false;
-    encoder_desc_->canEncode(encoder_desc_->instance, &result, code_stream, params);
-    return result;
-}
-
-std::unique_ptr<ImageEncoder> ImageEncoderFactory::createEncoder(
-    nvimgcdcsEncodeParams_t* params) const
-{
-    return std::make_unique<ImageEncoder>(encoder_desc_, params);
-}
 } // namespace nvimgcdcs

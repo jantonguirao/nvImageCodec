@@ -17,6 +17,9 @@
 #include "image_encoder.h"
 #include "log.h"
 #include "thread_safe_queue.h"
+#include "image_parser_factory.h"
+#include "image_encoder_factory.h"
+#include "image_decoder_factory.h"
 
 namespace fs = std::filesystem;
 
@@ -28,7 +31,7 @@ constexpr std::string_view defaultModuleDir = "/usr/lib/nvimgcodecs/plugins";
 constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plugins";
 #endif
 
-PluginFramework::PluginFramework(CodecRegistry* codec_registry)
+PluginFramework::PluginFramework(ICodecRegistry* codec_registry)
     : framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100,
           this, &static_register_encoder, &static_register_decoder, &static_register_parser,
           &static_log}
@@ -111,9 +114,9 @@ void PluginFramework::unloadAllExtModules()
     modules_.clear();
 }
 
-Codec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
+ICodec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
 {
-    Codec* codec = codec_registry_->getCodecByName(codec_name);
+    ICodec* codec = codec_registry_->getCodecByName(codec_name);
     if (codec == nullptr) {
         NVIMGCDCS_LOG_INFO(
             "Codec " << codec_name << " not yet registered, registering for first time");
@@ -129,11 +132,11 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const struct nvimgcdcsEncoder
     NVIMGCDCS_LOG_INFO("Framework is registering encoder");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
     NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
-    Codec* codec = ensureExistsAndRetrieveCodec(desc->codec);
+    ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
-    std::unique_ptr<ImageEncoderFactory> encoder_factory =
+    std::unique_ptr<IImageEncoderFactory> encoder_factory =
         std::make_unique<ImageEncoderFactory>(desc);
-    codec->registerEncoder(std::move(encoder_factory), 1);
+    codec->registerEncoderFactory(std::move(encoder_factory), 1);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -142,11 +145,11 @@ nvimgcdcsStatus_t PluginFramework::registerDecoder(const struct nvimgcdcsDecoder
     NVIMGCDCS_LOG_INFO("Framework is regisering decoder");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
     NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
-    Codec* codec = ensureExistsAndRetrieveCodec(desc->codec);
+    ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
-    std::unique_ptr<ImageDecoderFactory> decoder_factory =
+    std::unique_ptr<IImageDecoderFactory> decoder_factory =
         std::make_unique<ImageDecoderFactory>(desc);
-    codec->registerDecoder(std::move(decoder_factory), 1);
+    codec->registerDecoderFactory(std::move(decoder_factory), 1);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -155,10 +158,10 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDe
     NVIMGCDCS_LOG_INFO("Framework is regisering parser");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
     NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
-    Codec* codec = ensureExistsAndRetrieveCodec(desc->codec);
+    ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
-    std::unique_ptr<ImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
-    codec->registerParser(std::move(parser_factory), 1);
+    std::unique_ptr<IImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
+    codec->registerParserFactory(std::move(parser_factory), 1);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

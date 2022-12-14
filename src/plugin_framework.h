@@ -18,14 +18,14 @@
 #include "thread_safe_queue.h"
 
 namespace nvimgcdcs {
-class CodecRegistry;
-class Image;
-class Codec;
+
+class ICodecRegistry;
+class ICodec;
 
 class PluginFramework
 {
   public:
-    explicit PluginFramework(CodecRegistry* codec_registry);
+    explicit PluginFramework(ICodecRegistry* codec_registry);
     ~PluginFramework();
     void discoverAndLoadExtModules();
     void loadExtModule(const std::string& modulePath);
@@ -40,7 +40,7 @@ class PluginFramework
         nvimgcdcsExtModuleUnload_t* unload;
     };
 
-    Codec* ensureExistsAndRetrieveCodec(const char* codec_name);
+    ICodec* ensureExistsAndRetrieveCodec(const char* codec_name);
 
     nvimgcdcsStatus_t registerEncoder(const struct nvimgcdcsEncoderDesc* desc);
     nvimgcdcsStatus_t registerDecoder(const struct nvimgcdcsDecoderDesc* desc);
@@ -63,7 +63,7 @@ class PluginFramework
 
     std::vector<Module> modules_;
     nvimgcdcsFrameworkDesc framework_desc_;
-    CodecRegistry* codec_registry_;
+    ICodecRegistry* codec_registry_;
     std::vector<std::string_view> plugin_dirs_;
 };
 } // namespace nvimgcdcs

@@ -16,10 +16,10 @@
 #include "file_io_stream.h"
 #include "image_parser.h"
 #include "mem_io_stream.h"
-#include "parse_state.h"
+
 namespace nvimgcdcs {
 
-CodeStream::CodeStream(CodecRegistry* codec_registry)
+CodeStream::CodeStream(ICodecRegistry* codec_registry)
     : codec_registry_(codec_registry)
     , codec_(nullptr)
     , parser_(nullptr)
@@ -90,7 +90,7 @@ std::string CodeStream::getCodecName() const
 {
     return parser_->getCodecName();
 }
-Codec* CodeStream::getCodec() const
+ICodec* CodeStream::getCodec() const
 {
     return codec_;
 }

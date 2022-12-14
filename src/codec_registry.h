@@ -14,21 +14,23 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "codec.h"
+#include "icodec.h"
+#include "icodec_registry.h"
+
 namespace nvimgcdcs {
 
-class ImageParser;
-class CodecRegistry
+class IImageParser;
+
+class CodecRegistry : public ICodecRegistry
 {
   public:
     CodecRegistry();
-    ~CodecRegistry() = default;
-    void registerCodec(std::unique_ptr<Codec> codec);
-    const std::pair<Codec*, std::unique_ptr<ImageParser>> getCodecAndParser(
-        nvimgcdcsCodeStreamDesc_t code_stream) const;
-    Codec* getCodecByName(const char* name);
+    void registerCodec(std::unique_ptr<ICodec> codec) override;
+    const std::pair<ICodec*, std::unique_ptr<IImageParser>> getCodecAndParser(
+        nvimgcdcsCodeStreamDesc_t code_stream) const override;
+    ICodec* getCodecByName(const char* name)  override;
   private:
-    std::vector<Codec*> codec_ptrs_;
-    std::map<std::string, std::unique_ptr<Codec>> by_name_;
+    std::vector<ICodec*> codec_ptrs_;
+    std::map<std::string, std::unique_ptr<ICodec>> by_name_;
 };
 } // namespace nvimgcdcs

@@ -8,11 +8,11 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 #include "codec.h"
+#include <iostream>
 #include "image_decoder.h"
 #include "image_encoder.h"
 #include "image_parser.h"
 #include "log.h"
-#include <iostream>
 
 namespace nvimgcdcs {
 Codec::Codec(const char* name)
@@ -20,7 +20,7 @@ Codec::Codec(const char* name)
 {
 }
 
-std::unique_ptr <ImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code_stream) const
+std::unique_ptr <IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code_stream) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::getParser " << name_);
     for (const auto& entry : parsers_) {
@@ -33,7 +33,7 @@ std::unique_ptr <ImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code
     return nullptr;
 }
 
-std::unique_ptr<ImageDecoder> Codec::createDecoder(
+std::unique_ptr<IImageDecoder> Codec::createDecoder(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::createDecoder " << name_);
@@ -46,7 +46,7 @@ std::unique_ptr<ImageDecoder> Codec::createDecoder(
     return nullptr;
 }
 
-std::unique_ptr<ImageEncoder> Codec::createEncoder(
+std::unique_ptr<IImageEncoder> Codec::createEncoder(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::createEncoder " << name_);
@@ -64,19 +64,19 @@ const std::string& Codec::name() const
     return name_;
 }
 
-void Codec::registerParser(std::unique_ptr<ImageParserFactory> parserFactory, float priority)
+void Codec::registerParserFactory(std::unique_ptr<IImageParserFactory> parserFactory, float priority)
 {
     NVIMGCDCS_LOG_TRACE("Codec::registerParser");
     parsers_.emplace(priority, std::move(parserFactory));
 }
 
-void Codec::registerEncoder(std::unique_ptr<ImageEncoderFactory> encoderFactory, float priority)
+void Codec::registerEncoderFactory(std::unique_ptr<IImageEncoderFactory> encoderFactory, float priority)
 {
     NVIMGCDCS_LOG_TRACE("Codec::registerEncoder");
     encoders_.emplace(priority, std::move(encoderFactory));
 }
 
-void Codec::registerDecoder(std::unique_ptr<ImageDecoderFactory> decoderFactory, float priority)
+void Codec::registerDecoderFactory(std::unique_ptr<IImageDecoderFactory> decoderFactory, float priority)
 {
     NVIMGCDCS_LOG_TRACE("Codec::registerDecoder");
     decoders_.emplace(priority, std::move(decoderFactory));

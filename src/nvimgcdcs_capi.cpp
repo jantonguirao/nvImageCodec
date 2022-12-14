@@ -12,14 +12,14 @@
 
 #include <cstring>
 #include "code_stream.h"
-#include "codec.h"
+#include "icodec.h"
 #include "codec_registry.h"
-#include "decode_state.h"
-#include "encode_state.h"
+#include "idecode_state.h"
+#include "iencode_state.h"
 #include "exception.h"
 #include "image.h"
-#include "image_decoder.h"
-#include "image_encoder.h"
+#include "iimage_decoder.h"
+#include "iimage_encoder.h"
 #include "log.h"
 #include "plugin_framework.h"
 #include "debug_messenger.h"
@@ -27,7 +27,6 @@
 
 #include <filesystem>
 #include <iostream>
-//#include <span>
 #include <stdexcept>
 #include <string>
 
@@ -185,23 +184,23 @@ struct nvimgcdcsHandle //TODO extract to separate class  and rename it (Core ?)
 struct nvimgcdcsDecoder
 {
     nvimgcdcsInstance_t instance_;
-    std::unique_ptr<ImageDecoder> image_decoder_;
+    std::unique_ptr<IImageDecoder> image_decoder_;
 };
 
 struct nvimgcdcsDecodeState
 {
-    std::unique_ptr<DecodeState> decode_state_;
+    std::unique_ptr<IDecodeState> decode_state_;
 };
 
 struct nvimgcdcsEncoder
 {
     nvimgcdcsInstance_t instance_;
-    std::unique_ptr<ImageEncoder> image_encoder_;
+    std::unique_ptr<IImageEncoder> image_encoder_;
 };
 
 struct nvimgcdcsEncodeState
 {
-    std::unique_ptr<EncodeState> encode_state_;
+    std::unique_ptr<IEncodeState> encode_state_;
 };
 
 struct nvimgcdcsDebugMessenger
@@ -446,9 +445,9 @@ nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcs
             CHECK_NULL(instance)
             CHECK_NULL(decoder)
             CHECK_NULL(stream)
-            Codec* codec = stream->code_stream_.getCodec();
+            ICodec* codec = stream->code_stream_.getCodec();
             CHECK_NULL(codec)
-            std::unique_ptr<ImageDecoder> image_decoder =
+            std::unique_ptr<IImageDecoder> image_decoder =
                 codec->createDecoder(stream->code_stream_.getCodeStreamDesc(), params);
             if (image_decoder) {
                 *decoder                   = new nvimgcdcsDecoder();
@@ -543,7 +542,7 @@ nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
             CHECK_NULL(decoder)
             CHECK_NULL(decode_state)
             //TODO pass cuda_stream
-            std::unique_ptr<DecodeState> decode_state_ =
+            std::unique_ptr<IDecodeState> decode_state_ =
                 decoder->image_decoder_->createDecodeState();
             if (decode_state_) {
                 *decode_state                  = new nvimgcdcsDecodeState();
@@ -743,9 +742,9 @@ nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcs
             CHECK_NULL(instance)
             CHECK_NULL(encoder)
             CHECK_NULL(stream)
-            Codec* codec = stream->code_stream_.getCodec();
+            ICodec* codec = stream->code_stream_.getCodec();
             CHECK_NULL(codec)
-            std::unique_ptr<ImageEncoder> image_encoder =
+            std::unique_ptr<IImageEncoder> image_encoder =
                 codec->createEncoder(stream->code_stream_.getCodeStreamDesc(), params);
             if (image_encoder) {
                 *encoder                   = new nvimgcdcsEncoder();
@@ -814,7 +813,7 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
         {
             CHECK_NULL(encoder)
             CHECK_NULL(encode_state)
-            std::unique_ptr<EncodeState> encode_state_ =
+            std::unique_ptr<IEncodeState> encode_state_ =
                 encoder->image_encoder_->createEncodeState(cuda_stream);
             if (encode_state_) {
                 *encode_state                  = new nvimgcdcsEncodeState();
@@ -886,17 +885,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             nvimgcdcsDecoderGetCapabilities(decoder, nullptr, &capabilities_size);
             const nvimgcdcsCapability_t* capabilities_ptr;
             nvimgcdcsDecoderGetCapabilities(decoder, &capabilities_ptr, &capabilities_size);
-#if 0
-            std::span<const nvimgcdcsCapability_t> decoder_capabilties{
-                capabilities_ptr, capabilities_size};
 
-            bool is_host_output =
-                std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
-                    NVIMGCDCS_CAPABILITY_HOST_OUTPUT) != decoder_capabilties.end();
-            bool is_device_output =
-                std::find(decoder_capabilties.begin(), decoder_capabilties.end(),
-                    NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != decoder_capabilties.end();
-#else
             bool is_host_output =
                 std::find(capabilities_ptr,
                     capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
@@ -908,7 +897,6 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                     NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) !=
                 capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
 
-#endif
             bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
             unsigned char* device_buffer;
             if (is_device_output) {

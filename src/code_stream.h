@@ -15,26 +15,29 @@
 #include <string>
 #include <memory>
 #include "io_stream.h"
-#include "parse_state.h"
+#include "iparse_state.h"
+#include "iimage_parser.h"
+#include "icode_stream.h"
 
 namespace nvimgcdcs {
-class CodecRegistry;
-class Codec;
-class ImageParser;
-class CodeStream
+
+class ICodecRegistry;
+class ICodec;
+
+class CodeStream : public ICodeStream
 {
   public:
-    explicit CodeStream(CodecRegistry* codec_registry);
-    void parseFromFile(const std::string& file_name);
-    void parseFromMem(unsigned char* data, size_t size);
-    void setOutputToFile(const char* file_name, const char* codec_name);
-    void setOutputToHostMem(unsigned char* output_buffer, size_t size, const char* codec_name);
-    void getImageInfo(nvimgcdcsImageInfo_t* image_info);
-    void setImageInfo(const nvimgcdcsImageInfo_t* image_info);
-    std::string getCodecName() const;
-    Codec* getCodec() const;
-    nvimgcdcsIOStreamDesc* getInputStreamDesc();
-    nvimgcdcsCodeStreamDesc* getCodeStreamDesc();
+    explicit CodeStream(ICodecRegistry* codec_registry);
+    void parseFromFile(const std::string& file_name) override;
+    void parseFromMem(unsigned char* data, size_t size) override;
+    void setOutputToFile(const char* file_name, const char* codec_name) override;
+    void setOutputToHostMem(unsigned char* output_buffer, size_t size, const char* codec_name) override;
+    void getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
+    void setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
+    std::string getCodecName() const override;
+    ICodec* getCodec() const override;
+    nvimgcdcsIOStreamDesc* getInputStreamDesc() override;
+    nvimgcdcsCodeStreamDesc* getCodeStreamDesc() override;
 
   private:
     void parse();
@@ -55,13 +58,13 @@ class CodeStream
     static nvimgcdcsStatus_t tell_static(void* instance, size_t* offset);
     static nvimgcdcsStatus_t size_static(void* instance, size_t* size);
 
-    CodecRegistry* codec_registry_;
-    Codec* codec_;
-    std::unique_ptr<ImageParser> parser_;
+    ICodecRegistry* codec_registry_;
+    ICodec* codec_;
+    std::unique_ptr<IImageParser> parser_;
     std::unique_ptr<IoStream> io_stream_;
     nvimgcdcsIOStreamDesc io_stream_desc_;
     nvimgcdcsCodeStreamDesc code_stream_desc_;
     std::unique_ptr<nvimgcdcsImageInfo_t> image_info_;
-    std::unique_ptr<ParseState> parse_state_;
+    std::unique_ptr<IParseState> parse_state_;
 };
 } // namespace nvimgcdcs

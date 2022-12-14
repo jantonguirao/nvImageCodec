@@ -14,34 +14,25 @@
 #include <nvimgcodecs.h>
 #include <string>
 #include <memory>
+#include "iimage_decoder.h"
 
 namespace nvimgcdcs {
-class DecodeState;
-class Image;
-class CodeStream;
+class IDecodeState;
+class IImage;
+class ICodeStream;
 
-class ImageDecoder
+class ImageDecoder : public IImageDecoder
 {
   public:
     ImageDecoder(const struct nvimgcdcsDecoderDesc* desc, nvimgcdcsDecodeParams_t* params);
-    ~ImageDecoder();
-    std::unique_ptr<DecodeState> createDecodeState() const;
-    void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
-    void decode(CodeStream* code_stream, Image* image, nvimgcdcsDecodeParams_t* params);
+    ~ImageDecoder() override;
+    std::unique_ptr<IDecodeState> createDecodeState() const override;
+    void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
+    void decode(ICodeStream* code_stream, IImage* image, nvimgcdcsDecodeParams_t* params) override;
+
   private:
     const struct nvimgcdcsDecoderDesc* decoder_desc_;
     nvimgcdcsDecoder_t decoder_;
 };
 
-class ImageDecoderFactory
-{
-  public:
-    explicit ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc);
-    std::string getDecoderId() const;
-    std::string getCodecName() const;
-    bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params);
-    std::unique_ptr<ImageDecoder> createDecoder(nvimgcdcsDecodeParams_t* params) const;
-  private:
-    const struct nvimgcdcsDecoderDesc* decoder_desc_;
-};
 } // namespace nvimgcdcs

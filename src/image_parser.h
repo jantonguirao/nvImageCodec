@@ -11,39 +11,25 @@
 #pragma once
 
 #include <nvimgcdcs_module.h>
-#include <string>
 #include <memory>
-#include "parse_state.h"
-namespace nvimgcdcs {
+#include <string>
+#include "iimage_parser.h"
 
-class ImageParser
+namespace nvimgcdcs {
+class IParseState;
+class ImageParser : public IImageParser
 {
   public:
     explicit ImageParser(const struct nvimgcdcsParserDesc* desc);
-    ~ImageParser();
-    std::string getParserId() const;
-    std::string getCodecName() const;
-    void getImageInfo(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info);
-    std::unique_ptr<ParseState> createParseState();
+    ~ImageParser() override;
+    std::string getParserId() const override;
+    std::string getCodecName() const override;
+    void getImageInfo(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info) override;
+    std::unique_ptr<IParseState> createParseState() override;
 
   private:
     const struct nvimgcdcsParserDesc* parser_desc_;
     nvimgcdcsParser_t parser_;
-};
-
-class ImageParserFactory
-{
-  public:
-    explicit ImageParserFactory(const struct nvimgcdcsParserDesc* desc);
-    std::string getParserId() const;
-    std::string getCodecName() const;
-    bool canParse(nvimgcdcsCodeStreamDesc_t code_stream);
-    std::unique_ptr<ImageParser> createParser() const;
-    
-
-
-  private:
-    const struct nvimgcdcsParserDesc* parser_desc_;
 };
 
 } // namespace nvimgcdcs

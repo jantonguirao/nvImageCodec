@@ -62,7 +62,7 @@ void Image::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     *image_info = image_info_;
 }
 
-void Image::attachDecodeState(DecodeState* decode_state)
+void Image::attachDecodeState(IDecodeState* decode_state)
 {
     decode_state_ = decode_state;
 }
@@ -70,12 +70,12 @@ void Image::detachDecodeState()
 {
     decode_state_ = nullptr;
 }
-DecodeState* Image::getAttachedDecodeState()
+IDecodeState* Image::getAttachedDecodeState()
 {
     return decode_state_;
 }
 
-void Image::attachEncodeState(EncodeState* encode_state)
+void Image::attachEncodeState(IEncodeState* encode_state)
 {
     encode_state_ = encode_state;
 }
@@ -83,7 +83,7 @@ void Image::detachEncodeState()
 {
     encode_state_ = nullptr;
 }
-EncodeState* Image::getAttachedEncodeState()
+IEncodeState* Image::getAttachedEncodeState()
 {
     return encode_state_;
 }

@@ -10,15 +10,16 @@
 
 #pragma once
 #include <nvimgcdcs_module.h>
+#include "iencode_state.h"
 
 namespace nvimgcdcs {
-class EncodeState
+class EncodeState : public IEncodeState
 {
   public:
     EncodeState(const struct nvimgcdcsEncoderDesc* encoder_desc, nvimgcdcsEncoder_t encoder,
         cudaStream_t cuda_stream);
-    ~EncodeState();
-    nvimgcdcsEncodeState_t getInternalEncodeState();
+    ~EncodeState() override;
+    nvimgcdcsEncodeState_t getInternalEncodeState() override;
 
   private:
     const struct nvimgcdcsEncoderDesc* encoder_desc_;

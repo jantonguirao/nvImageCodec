@@ -11,19 +11,22 @@
 #pragma once
 
 #include <nvimgcdcs_module.h>
-#include "iparse_state.h"
+#include <nvimgcodecs.h>
+#include <memory>
+#include <string>
 
 namespace nvimgcdcs {
-class ParseState : public IParseState
+
+class IImageDecoder;
+
+class IImageDecoderFactory
 {
   public:
-    ParseState(const struct nvimgcdcsParserDesc*parser_desc, nvimgcdcsParser_t parser);
-    ~ParseState() override;
-    nvimgcdcsParseState_t getInternalParseState() override;
-
-  private:
-    const struct nvimgcdcsParserDesc* parser_desc_;
-    nvimgcdcsParser_t parser_;
-    nvimgcdcsParseState_t parse_state_;
+    virtual ~IImageDecoderFactory() = default;
+    virtual std::string getDecoderId() const = 0;
+    virtual std::string getCodecName() const = 0;
+    virtual bool canDecode(
+        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) = 0;
+    virtual std::unique_ptr<IImageDecoder> createDecoder(nvimgcdcsDecodeParams_t* params) const = 0;
 };
 } // namespace nvimgcdcs

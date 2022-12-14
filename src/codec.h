@@ -13,35 +13,39 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
 
-#include "image_decoder.h"
-#include "image_encoder.h"
-#include "image_parser.h"
+#include "iimage_parser_factory.h"
+#include "iimage_encoder_factory.h"
+#include "iimage_decoder_factory.h"
+
+#include "icodec.h"
 
 namespace nvimgcdcs {
 
-class Codec
+class IImageParser;
+class IImageEncoder;
+class IImageDecoder;
+
+class Codec : public ICodec
 {
   public:
     explicit Codec(const char* name);
-
-    std::unique_ptr<ImageParser> createParser(nvimgcdcsCodeStreamDesc_t code_stream) const;
-    std::unique_ptr<ImageDecoder> createDecoder(
-        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) const;
-    std::unique_ptr<ImageEncoder> createEncoder(
-        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) const;
-
-    const std::string& name() const;
-
-    void registerParser(std::unique_ptr<ImageParserFactory> factory, float priority);
-    void registerEncoder(std::unique_ptr<ImageEncoderFactory> factory, float priority);
-    void registerDecoder(std::unique_ptr<ImageDecoderFactory> factory, float priority);
-
+    const std::string& name() const override;
+    std::unique_ptr<IImageParser> createParser(nvimgcdcsCodeStreamDesc_t code_stream) const override;
+    std::unique_ptr<IImageDecoder> createDecoder(
+        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) const override;
+    std::unique_ptr<IImageEncoder> createEncoder(
+        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) const override;
+    void registerParserFactory(
+        std::unique_ptr<IImageParserFactory> factory, float priority) override;
+    void registerEncoderFactory(
+        std::unique_ptr<IImageEncoderFactory> factory, float priority) override;
+    void registerDecoderFactory(
+        std::unique_ptr<IImageDecoderFactory> factory, float priority) override;
   private:
     std::string name_;
-    std::multimap<float, std::unique_ptr<ImageParserFactory>> parsers_;
-    std::multimap<float, std::unique_ptr<ImageEncoderFactory>> encoders_;
-    std::multimap<float, std::unique_ptr<ImageDecoderFactory>> decoders_;
+    std::multimap<float, std::unique_ptr<IImageParserFactory>> parsers_;
+    std::multimap<float, std::unique_ptr<IImageEncoderFactory>> encoders_;
+    std::multimap<float, std::unique_ptr<IImageDecoderFactory>> decoders_;
 };
 } // namespace nvimgcdcs

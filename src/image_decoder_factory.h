@@ -14,26 +14,22 @@
 #include <nvimgcodecs.h>
 #include <memory>
 #include <string>
-#include "iimage_encoder.h"
+#include "iimage_decoder_factory.h"
 
 namespace nvimgcdcs {
 
-class IEncodeState;
-class IImage;
-class ICodeStream;
+class IImageDecoder;
 
-class ImageEncoder : public IImageEncoder
+class ImageDecoderFactory : public IImageDecoderFactory
 {
   public:
-    ImageEncoder(const struct nvimgcdcsEncoderDesc* desc, nvimgcdcsEncodeParams_t* params);
-    ~ImageEncoder() override;
-    std::unique_ptr<IEncodeState> createEncodeState(cudaStream_t cuda_stream) const override;
-    void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
-    void encode(ICodeStream* code_stream, IImage* image, nvimgcdcsEncodeParams_t* params) override;
+    explicit ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc);
+    std::string getDecoderId() const override;
+    std::string getCodecName() const override;
+    bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) override;
+    std::unique_ptr<IImageDecoder> createDecoder(nvimgcdcsDecodeParams_t* params) const override;
 
   private:
-    const struct nvimgcdcsEncoderDesc* encoder_desc_;
-    nvimgcdcsEncoder_t encoder_;
+    const struct nvimgcdcsDecoderDesc* decoder_desc_;
 };
-
 } // namespace nvimgcdcs

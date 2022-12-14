@@ -18,7 +18,10 @@ set (NVIMGCDCS_SRCS
     parse_state.cpp
     encode_state.cpp
     logger.cpp
-    default_debug_messenger
+    default_debug_messenger.cpp
+    image_parser_factory.cpp
+    image_encoder_factory.cpp
+    image_decoder_factory.cpp
 )
 
 include_directories(
