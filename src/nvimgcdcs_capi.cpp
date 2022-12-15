@@ -24,6 +24,7 @@
 #include "plugin_framework.h"
 #include "debug_messenger.h"
 #include "default_debug_messenger.h"
+#include "iostream_factory.h"
 
 #include <filesystem>
 #include <iostream>
@@ -284,7 +285,7 @@ nvimgcdcsStatus_t nvimgcdcsInstanceDestroy(nvimgcdcsInstance_t instance)
 struct nvimgcdcsCodeStream
 {
     explicit nvimgcdcsCodeStream(CodecRegistry* codec_registry)
-        : code_stream_(codec_registry)
+        : code_stream_(codec_registry, std::make_unique<IoStreamFactory>())
     {
     }
     nvimgcdcs::CodeStream code_stream_;

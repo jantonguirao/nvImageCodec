@@ -3,10 +3,13 @@
 
 set(SRCS
     nvimgcodecs_tests.cpp
+    codec_test.cpp
+    code_stream_test.cpp
 )
 # Headers file are located here:
 include_directories(
     ../src
+    ../include
     SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )
 
@@ -22,8 +25,7 @@ find_library(CUDART_SHARED
 include(Dependencies)
 
 add_executable(nvimgcodecs_tests ${SRCS})
-
-foreach(testapp nvimgcodecs_tests )
+foreach(testapp nvimgcodecs_tests)
     target_include_directories(${testapp} SYSTEM BEFORE
         PRIVATE
         ${GTEST_INCLUDE_DIRS}
@@ -33,9 +35,12 @@ foreach(testapp nvimgcodecs_tests )
         set(PTHREAD pthread)
     endif()
 
-    target_link_libraries(${testapp} PUBLIC nvimgcodecs_static ${CUDART_SHARED} ${GTEST_LIBRARIES} ${PTHREAD})
+    target_link_libraries(${testapp} PUBLIC nvimgcodecs_static ${CUDART_SHARED} GTest::gtest GTest::gmock ${PTHREAD})
 endforeach()
 
 install(TARGETS ${FILESTOPACK}
     DESTINATION test COMPONENT Applications
 )
+
+add_test(NAME nvImageCodecsTest-L0 COMMAND nvimgcodecs_tests)
+add_test(NAME nvImageCodecsTest-L2 COMMAND ${PYTHON_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

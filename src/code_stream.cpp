@@ -13,20 +13,21 @@
 #include <string>
 #include "codec.h"
 #include "codec_registry.h"
-#include "file_io_stream.h"
 #include "image_parser.h"
-#include "mem_io_stream.h"
 
 namespace nvimgcdcs {
 
-CodeStream::CodeStream(ICodecRegistry* codec_registry)
+CodeStream::CodeStream(
+    ICodecRegistry* codec_registry, std::unique_ptr<IIoStreamFactory> io_stream_factory)
     : codec_registry_(codec_registry)
     , codec_(nullptr)
     , parser_(nullptr)
+    , io_stream_factory_(std::move(io_stream_factory))
     , io_stream_(nullptr)
     , io_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static,
           write_static, putc_static, skip_static, seek_static, tell_static, size_static}
-    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, "", &io_stream_desc_}
+    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, "",
+          &io_stream_desc_}
     , image_info_(nullptr)
     , parse_state_(nullptr)
 {
@@ -46,25 +47,25 @@ void CodeStream::parse()
 
 void CodeStream::parseFromFile(const std::string& file_name)
 {
-    io_stream_ = FileIoStream::open(file_name, false, false, false);
+    io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, false, false);
     parse();
 }
 
 void CodeStream::parseFromMem(unsigned char* data, size_t size)
 {
-    io_stream_ = std::make_unique<MemIoStream>(data, size);
+    io_stream_ = io_stream_factory_->createMemIoStream(data, size);
     parse();
 }
 void CodeStream::setOutputToFile(const char* file_name, const char* codec_name)
 {
-    io_stream_ = FileIoStream::open(file_name, false, false, true);
+    io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, false, true);
     codec_     = codec_registry_->getCodecByName(codec_name);
 }
 
 void CodeStream::setOutputToHostMem(
     unsigned char* output_buffer, size_t size, const char* codec_name)
 {
-    io_stream_ = std::make_unique<MemIoStream>(output_buffer, size);
+    io_stream_ = io_stream_factory_->createMemIoStream(output_buffer, size);
     codec_     = codec_registry_->getCodecByName(codec_name);
 }
 

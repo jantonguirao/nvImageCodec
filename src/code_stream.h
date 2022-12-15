@@ -18,6 +18,7 @@
 #include "iparse_state.h"
 #include "iimage_parser.h"
 #include "icode_stream.h"
+#include "iiostream_factory.h"
 
 namespace nvimgcdcs {
 
@@ -27,7 +28,7 @@ class ICodec;
 class CodeStream : public ICodeStream
 {
   public:
-    explicit CodeStream(ICodecRegistry* codec_registry);
+    explicit CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStreamFactory> io_stream_factory);
     void parseFromFile(const std::string& file_name) override;
     void parseFromMem(unsigned char* data, size_t size) override;
     void setOutputToFile(const char* file_name, const char* codec_name) override;
@@ -61,6 +62,7 @@ class CodeStream : public ICodeStream
     ICodecRegistry* codec_registry_;
     ICodec* codec_;
     std::unique_ptr<IImageParser> parser_;
+    std::unique_ptr<IIoStreamFactory> io_stream_factory_;
     std::unique_ptr<IoStream> io_stream_;
     nvimgcdcsIOStreamDesc io_stream_desc_;
     nvimgcdcsCodeStreamDesc code_stream_desc_;

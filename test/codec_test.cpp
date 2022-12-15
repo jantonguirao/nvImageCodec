@@ -1,0 +1,81 @@
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <memory>
+
+#include "../src/codec.h"
+#include "../src/iimage_parser.h"
+#include "../src/iimage_parser_factory.h"
+#include "mock_image_parser_factory.h"
+
+namespace nvimgcdcs { namespace test {
+
+TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_123)
+{
+    Codec codec("test_codec");
+    std::unique_ptr<MockImageParserFactory> factory1 = std::make_unique<MockImageParserFactory>();
+    std::unique_ptr<MockImageParserFactory> factory2 = std::make_unique<MockImageParserFactory>();
+    std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();
+
+    ::testing::Sequence s1;
+    EXPECT_CALL(*factory1.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory1.get(), canParse(nullptr)).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory2.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory2.get(), canParse(nullptr)).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory3.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory3.get(), canParse(nullptr)).Times(1).InSequence(s1);
+
+    codec.registerParserFactory(std::move(factory1), 1);
+    codec.registerParserFactory(std::move(factory2), 2);
+    codec.registerParserFactory(std::move(factory3), 3);
+
+    nvimgcdcsCodeStreamDesc_t code_stream = nullptr;
+    std::unique_ptr<IImageParser> parser  = codec.createParser(code_stream);
+}
+
+TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_231)
+{
+    Codec codec("test_codec");
+    std::unique_ptr<MockImageParserFactory> factory1 = std::make_unique<MockImageParserFactory>();
+    std::unique_ptr<MockImageParserFactory> factory2 = std::make_unique<MockImageParserFactory>();
+    std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();
+
+    ::testing::Sequence s1;
+    EXPECT_CALL(*factory1.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory1.get(), canParse(nullptr)).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory2.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory2.get(), canParse(nullptr)).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory3.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory3.get(), canParse(nullptr)).Times(1).InSequence(s1);
+
+    codec.registerParserFactory(std::move(factory2), 2);
+    codec.registerParserFactory(std::move(factory3), 3);
+    codec.registerParserFactory(std::move(factory1), 1);
+
+    nvimgcdcsCodeStreamDesc_t code_stream = nullptr;
+    std::unique_ptr<IImageParser> parser  = codec.createParser(code_stream);
+}
+
+TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_321)
+{
+    Codec codec("test_codec");
+    std::unique_ptr<MockImageParserFactory> factory1 = std::make_unique<MockImageParserFactory>();
+    std::unique_ptr<MockImageParserFactory> factory2 = std::make_unique<MockImageParserFactory>();
+    std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();
+
+    ::testing::Sequence s1;
+    EXPECT_CALL(*factory1.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory1.get(), canParse(nullptr)).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory2.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory2.get(), canParse(nullptr)).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory3.get(), getParserId()).Times(1).InSequence(s1);
+    EXPECT_CALL(*factory3.get(), canParse(nullptr)).Times(1).InSequence(s1);
+
+    codec.registerParserFactory(std::move(factory3), 3);
+    codec.registerParserFactory(std::move(factory2), 2);
+    codec.registerParserFactory(std::move(factory1), 1);
+
+    nvimgcdcsCodeStreamDesc_t code_stream = nullptr;
+    std::unique_ptr<IImageParser> parser  = codec.createParser(code_stream);
+}
+
+}} // namespace nvimgcdcs::test

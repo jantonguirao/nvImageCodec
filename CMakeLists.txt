@@ -108,6 +108,7 @@ endif()
 #endif()
 
 if(BUILD_TEST)
+enable_testing()
 add_subdirectory(test)
 endif()
 

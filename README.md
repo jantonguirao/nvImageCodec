@@ -167,7 +167,14 @@ cmake --install . --config Release --prefix bin
 ```
 
 ## Testing
+Run CTest to execute L0 and L2 tests
+```
+cd build
+cmake --install . --config Release --prefix bin
+ctest -C Release
+```
 
+Run L2 pytest
 ```
 cd build
 cmake --install . --config Release --prefix bin
