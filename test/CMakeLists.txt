@@ -5,7 +5,8 @@ set(SRCS
     nvimgcodecs_tests.cpp
     codec_test.cpp
     code_stream_test.cpp
-)
+    codec_registry_test.cpp
+    )
 # Headers file are located here:
 include_directories(
     ../src

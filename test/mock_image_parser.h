@@ -2,6 +2,8 @@
 #include <gtest/gtest.h>
 #include <nvimgcdcs_module.h>
 #include "../src/iimage_parser.h"
+#include "../src/iparse_state.h"
+#include <memory>
 
 namespace nvimgcdcs { namespace test {
 
