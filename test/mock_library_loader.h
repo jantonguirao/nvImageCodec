@@ -11,16 +11,17 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <nvimgcdcs_module.h>
-#include "../src/iparse_state.h"
+#include "../src/ilibrary_loader.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcdcs {
 
-class MockParseState : public IParseState
+class MockLibraryLoader : public ILibraryLoader
 {
   public:
-    MOCK_METHOD(nvimgcdcsParseState_t, getInternalParseState,(), (override));
+    MOCK_METHOD(LibraryHandle, loadLibrary, (const std::string& library_path), (override));
+    MOCK_METHOD(void, unloadLibrary, (LibraryHandle library_handle), (override));
+    MOCK_METHOD(void*, getFuncAddress, (LibraryHandle library_handle, const std::string& func_name),
+        (override));
 };
 
-}} // namespace nvimgcdcs::test
+} // namespace nvimgcdcs

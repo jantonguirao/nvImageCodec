@@ -6,6 +6,7 @@ set(SRCS
     codec_test.cpp
     code_stream_test.cpp
     codec_registry_test.cpp
+    plugin_framework_test.cpp
     )
 # Headers file are located here:
 include_directories(

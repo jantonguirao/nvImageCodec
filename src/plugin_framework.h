@@ -11,10 +11,11 @@
 #pragma once
 #include <nvimgcdcs_module.h>
 #include <nvimgcodecs.h>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include "nvimgcdcs_module_load.h"
+#include "idirectory_scaner.h"
+#include "ilibrary_loader.h"
 #include "thread_safe_queue.h"
 
 namespace nvimgcdcs {
@@ -25,15 +26,18 @@ class ICodec;
 class PluginFramework
 {
   public:
-    explicit PluginFramework(ICodecRegistry* codec_registry);
+    explicit PluginFramework(ICodecRegistry* codec_registry,
+        std::unique_ptr<IDirectoryScaner> directory_scaner,
+        std::unique_ptr<ILibraryLoader> library_loader);
     ~PluginFramework();
     void discoverAndLoadExtModules();
     void loadExtModule(const std::string& modulePath);
     void unloadAllExtModules();
+
   private:
     struct Module
     {
-        nvimgcdcsModuleHandle lib_handle_;
+        ILibraryLoader::LibraryHandle lib_handle_;
         nvimgcdcsExtModule_t module_handle_;
         nvimgcdcsModuleVersion_t* getVersion;
         nvimgcdcsExtModuleLoad_t* load;
@@ -61,6 +65,8 @@ class PluginFramework
         const nvimgcdcsDebugMessageType_t message_type,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
+    std::unique_ptr<IDirectoryScaner> directory_scaner_;
+    std::unique_ptr<ILibraryLoader> library_loader_;
     std::vector<Module> modules_;
     nvimgcdcsFrameworkDesc framework_desc_;
     ICodecRegistry* codec_registry_;

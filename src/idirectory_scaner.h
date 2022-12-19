@@ -10,17 +10,19 @@
 
 #pragma once
 
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-#include <nvimgcdcs_module.h>
-#include "../src/iparse_state.h"
+#include <filesystem>
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcdcs {
 
-class MockParseState : public IParseState
+namespace fs = std::filesystem;
+
+class IDirectoryScaner
 {
   public:
-    MOCK_METHOD(nvimgcdcsParseState_t, getInternalParseState,(), (override));
+    virtual ~IDirectoryScaner()                   = default;
+    virtual void start(const fs::path& directory) = 0;
+    virtual bool hasMore()                         = 0;
+    virtual fs::path next()                       = 0;
 };
 
-}} // namespace nvimgcdcs::test
+} // namespace nvimgcdcs

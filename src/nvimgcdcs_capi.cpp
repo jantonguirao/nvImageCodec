@@ -25,6 +25,8 @@
 #include "debug_messenger.h"
 #include "default_debug_messenger.h"
 #include "iostream_factory.h"
+#include "library_loader.h"
+#include "directory_scaner.h"
 
 #include <filesystem>
 #include <iostream>
@@ -127,13 +129,14 @@ struct nvimgcdcsHandle //TODO extract to separate class  and rename it (Core ?)
         DebugMessenger debug_messenger_;
     };
 
-    nvimgcdcsHandle(nvimgcdcsInstanceCreateInfo_t createInfo)
+    explicit nvimgcdcsHandle(nvimgcdcsInstanceCreateInfo_t createInfo)
         : device_allocator_(createInfo.device_allocator)
         , pinned_allocator_(createInfo.pinned_allocator)
         , debug_messenger_(createInfo.message_severity, createInfo.message_type)
         , registrator_(&debug_messenger_)
         , codec_registry_()
-        , plugin_framework_(&codec_registry_)
+        , plugin_framework_(&codec_registry_, std::move(std::make_unique<DirectoryScaner>()),
+              std::move(std::make_unique<LibraryLoader>()))
     {
     }
 
