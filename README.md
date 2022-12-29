@@ -16,38 +16,6 @@ nvImageCodecs is a library of accelerated codecs with unified interface. It is d
 - [CUDA/C++ Coding Style Guide](https://docs.google.com/document/d/1jNvQBMQhoIQMSot4WFUop8Bl2bCUxvuX7Xa4910RDQI/edit)
 - There is .clang-format file in the main project directory
 
-## Roadmap
-* pre-alpha (Q4’22)
-  - Goal: verify and adjust design, basic features, full-stability and performance are a non-goal
-  - Contents: 
-    - Plugin framework with extension modules discovery and loading (NF-001)
-    - Codec registry with decoder\encoder matching mechanism (F-006)
-    - Define plugin Interface(s) and implement at least two codec plugins (Decoder, Encoder, Parser)
-      - nvJpeg
-      - nvJpeg2k
-    - Unified API (NF-002)
-    - Python bindings
-* alpha (Q1’23)
-  - Goal: integration-ready (DALI), all DALI must-haves implemented
-  - Contents: 
-    - Batch processing (F-002, F-003)
-    - Partial decoding (F-008)
-    - Decoupled API
-    - Error and debug messages handling (F-004)
-    - Custom allocators (F-009)
-    - Plugins
-      - nvTiff
-      - FasterPng
-    - Prepare to add custom plugins (NF-004)
-    - Work with file-like API  (F-007)
-* beta (Q2’23)
-  - Goal: public release
-  - Contents
-    - Work with raw API (seek&load parts of data) (F-015)
-    - Metadata parsing (F-005, F-013)
-    - Performance optimization (PERF-001)
-    - Adding wrapping plugins for 3rd party codecs
-
 ## Prototype
 Currently this project is in prototype state  with initial support for:
 - nvJPEG
@@ -65,9 +33,9 @@ There are following known limitation:
 ## Pre-requisites
 - git
 - git lfs (images used for testing are stored as lfs files) 
-- CMake (3.14 or later)
-- gcc 11.10
-- NVIDIA CUDA 11.8 or greater
+- CMake >= 3.14
+- gcc >= 9.4 
+- NVIDIA CUDA >= 11.8 
 - Python for tests and examples
 - Supported systems:
   - Windows >= 10 
