@@ -22,7 +22,7 @@ class DirectoryScaner : public IDirectoryScaner
 {
   public:
     void start(const fs::path& directory) override { dir_it_ = fs::directory_iterator(directory); }
-    bool hasMore() override { return dir_it_ == fs::directory_iterator(); }
+    bool hasMore() override { return dir_it_ != fs::directory_iterator(); }
     fs::path next() override
     {
         fs::path tmp = dir_it_->path();
