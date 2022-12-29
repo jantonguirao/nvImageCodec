@@ -43,24 +43,7 @@ nvimgcdcsStatus_t testExtModuleUnload(
 
 TEST(PluginFrameworkTest, test_ext_module_discovery)
 {
-  /*  const std::string codec_name("test_codec");
-    MockCodec codec;
-    EXPECT_CALL(codec, name()).WillRepeatedly(ReturnRef(codec_name));
-
-    nvimgcdcsParseState_t nvimg_parse_state = nullptr;
-
-    std::unique_ptr<MockParseState> parse_state = std::make_unique<MockParseState>();
-    EXPECT_CALL(*parse_state.get(), getInternalParseState())
-        .WillRepeatedly(Return(nvimg_parse_state));
-
-    std::unique_ptr<MockImageParser> parser = std::make_unique<MockImageParser>();
-    EXPECT_CALL(*parser.get(), createParseState())
-        .WillRepeatedly(Return(ByMove(std::move(parse_state))));
-*/
     MockCodecRegistry codec_registry;
-    // EXPECT_CALL(codec_registry, getCodecAndParser(_))
-    //     .Times(1)
-    //     .WillRepeatedly(Return(ByMove(std::make_pair(&codec, std::move(parser)))));
 
     std::unique_ptr<MockDirectoryScaner> directory_scaner = std::make_unique<MockDirectoryScaner>();
     EXPECT_CALL(*directory_scaner.get(), start(_)).Times(1);
