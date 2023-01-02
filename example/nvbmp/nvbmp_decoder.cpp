@@ -1,5 +1,5 @@
 #include <cuda_runtime_api.h>
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 #include "nvbmp_parser.h"
 #include "exceptions.h"
 #include "log.h"

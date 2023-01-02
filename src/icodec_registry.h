@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 #include <map>
 #include <memory>
 #include <string>

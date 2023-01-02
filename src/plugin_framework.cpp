@@ -10,8 +10,11 @@
 
 #include "plugin_framework.h"
 
+#include <cstring>
 #include <filesystem>
 #include <iostream>
+#include <algorithm>
+
 #include "codec.h"
 #include "codec_registry.h"
 #include "image_decoder_factory.h"
@@ -46,7 +49,7 @@ PluginFramework::PluginFramework(ICodecRegistry* codec_registry,
 
 PluginFramework::~PluginFramework()
 {
-    unloadAllExtModules();
+    unregisterAllExtensions();
 }
 
 nvimgcdcsStatus_t PluginFramework::static_register_encoder(
@@ -78,6 +81,90 @@ nvimgcdcsStatus_t PluginFramework::static_log(void* instance,
     return handle->log(message_severity, message_type, data);
 }
 
+
+
+nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* extension,
+    const nvimgcdcsExtensionDesc_t* extension_desc, const Module& module)
+{
+    if (extension_desc == nullptr) {
+        NVIMGCDCS_LOG_ERROR("Extension description cannot be null");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+
+    if (extension_desc->id == nullptr) {
+        NVIMGCDCS_LOG_ERROR("Extension id cannot be null");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+
+    NVIMGCDCS_LOG_INFO(
+        "Registering extension " << extension_desc->id << " version:" << extension_desc->version);
+
+    if (extension_desc->create == nullptr) {
+        NVIMGCDCS_LOG_ERROR("Could not find  'create' function in extension module");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+
+    if (extension_desc->destroy == nullptr) {
+        NVIMGCDCS_LOG_ERROR("Could not find  'destroy' function in extension module");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+
+    PluginFramework::Extension internal_extension;
+    internal_extension.desc_ = *extension_desc;
+    internal_extension.module_ = module;
+    nvimgcdcsStatus_t status =
+        internal_extension.desc_.create(&framework_desc_, &internal_extension.handle_);
+    if (status != NVIMGCDCS_STATUS_SUCCESS) {
+        NVIMGCDCS_LOG_ERROR("Could not create extension");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+    *extension = internal_extension.handle_;
+
+    extensions_.push_back(internal_extension);
+
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t PluginFramework::registerExtension(
+    nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc)
+{
+    Module module;
+    module.lib_handle_ = nullptr;
+
+    return registerExtension(extension, extension_desc, module);
+}
+
+nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::vector<Extension>::const_iterator it)
+{
+    it->desc_.destroy(&framework_desc_, it->handle_);
+
+    if (it->module_.lib_handle_ != nullptr) {
+        NVIMGCDCS_LOG_INFO("Unloading extension module:" << it->module_.path_);
+        library_loader_->unloadLibrary(it->module_.lib_handle_);
+    }
+    extensions_.erase(it);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t PluginFramework::unregisterExtension(nvimgcdcsExtension_t extension)
+{
+    auto it = std::find_if(
+        extensions_.begin(), extensions_.end(), [&](auto e) ->bool { return e.handle_ == extension; });
+    if (it == extensions_.end()) {
+        NVIMGCDCS_LOG_WARNING("Could not find extension to unregister ");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+
+    return unregisterExtension(it);
+}
+
+void PluginFramework::unregisterAllExtensions()
+{
+   while (!extensions_.empty()) {
+       unregisterExtension(extensions_.begin());
+    }
+}
+
 void PluginFramework::discoverAndLoadExtModules()
 {
     for (const auto& dir : plugin_dirs_) {
@@ -93,32 +180,45 @@ void PluginFramework::discoverAndLoadExtModules()
 
 void PluginFramework::loadExtModule(const std::string& modulePath)
 {
-    NVIMGCDCS_LOG_INFO("Loading extension module:" << modulePath);
+    NVIMGCDCS_LOG_INFO("Loading extension module: " << modulePath);
     PluginFramework::Module module;
-    module.lib_handle_ = library_loader_->loadLibrary(modulePath);
-    NVIMGCDCS_LOG_TRACE("Getting module version func");
-    module.getVersion = reinterpret_cast<nvimgcdcsModuleVersion_t*>(
-        library_loader_->getFuncAddress(module.lib_handle_, "nvimgcdcsExtModuleGetVersion"));
-    uint32_t version = module.getVersion();
-    NVIMGCDCS_LOG_INFO("Extension module:" << modulePath << " version:" << version);
-    NVIMGCDCS_LOG_TRACE("Getting module load func");
-    module.load = reinterpret_cast<nvimgcdcsExtModuleLoad_t*>(
-        library_loader_->getFuncAddress(module.lib_handle_, "nvimgcdcsExtModuleLoad"));
-    NVIMGCDCS_LOG_TRACE("Getting module unload func");
-    module.unload = reinterpret_cast<nvimgcdcsExtModuleUnload_t*>(
-        library_loader_->getFuncAddress(module.lib_handle_, "nvimgcdcsExtModuleUnload"));
+    module.path_ = modulePath;
+    try {
+        module.lib_handle_ = library_loader_->loadLibrary(modulePath);
+    } catch (...) {
+        NVIMGCDCS_LOG_ERROR("Could not load extension module library: " << modulePath);
+        return;
+    }
 
-    module.load(&framework_desc_, &module.module_handle_);
-    modules_.push_back(module);
-}
+    NVIMGCDCS_LOG_TRACE("Getting extension module entry func");
+    try {
+        module.extension_entry_ = reinterpret_cast<nvimgcdcsExtensionModuleEntryFunc_t>(
+            library_loader_->getFuncAddress(module.lib_handle_, "nvimgcdcsExtensionModuleEntry"));
 
-void PluginFramework::unloadAllExtModules()
-{
-    for (const auto& module : modules_) {
-        module.unload(&framework_desc_, module.module_handle_);
+    } catch (...) {
+        NVIMGCDCS_LOG_ERROR("Could not find extension module entry function: " << modulePath);
+        NVIMGCDCS_LOG_INFO("Unloading extension module:" << modulePath);
+        library_loader_->unloadLibrary(module.lib_handle_);
+
+        return;
+    }
+    nvimgcdcsExtensionDesc_t extension_desc;
+    memset(&extension_desc, 0, sizeof(extension_desc));
+    extension_desc.type      = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
+    nvimgcdcsStatus_t status = module.extension_entry_(&extension_desc);
+    if (status != NVIMGCDCS_STATUS_SUCCESS) {
+        NVIMGCDCS_LOG_ERROR("Could not get extension module description");
+        NVIMGCDCS_LOG_INFO("Unloading extension module:" << modulePath);
+        library_loader_->unloadLibrary(module.lib_handle_);
+
+        return;
+    }
+    nvimgcdcsExtension_t extension;
+    status = registerExtension(&extension, &extension_desc, module);
+    if (status != NVIMGCDCS_STATUS_SUCCESS) {
+        NVIMGCDCS_LOG_INFO("Unloading extension module:" << modulePath);
         library_loader_->unloadLibrary(module.lib_handle_);
     }
-    modules_.clear();
 }
 
 ICodec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)

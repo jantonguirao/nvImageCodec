@@ -60,6 +60,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA,
+        NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
@@ -596,18 +597,181 @@ extern "C"
         void* userData;
     } nvimgcdcsDebugMessengerDesc_t;
 
+    struct nvimgcdcsParser;
+    typedef struct nvimgcdcsParser* nvimgcdcsParser_t;
+
+    struct nvimgcdcsParseState;
+    typedef struct nvimgcdcsParseState* nvimgcdcsParseState_t;
+
+    struct nvimgcdcsCodeStreamDesc
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
+        void* instance;
+        const char* codec;
+        nvimgcdcsIoStreamDesc_t io_stream;
+        nvimgcdcsParseState_t parse_state;
+    };
+    typedef struct nvimgcdcsCodeStreamDesc* nvimgcdcsCodeStreamDesc_t;
+
+    struct nvimgcdcsImageDesc
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
+        void* instance;
+        nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
+        nvimgcdcsStatus_t (*getDeviceBuffer)(void* instance, void** buffer, size_t* size);
+        nvimgcdcsStatus_t (*getHostBuffer)(void* instance, void** buffer, size_t* size);
+        nvimgcdcsStatus_t (*imageReady)(
+            void* instance, nvimgcdcsProcessingStatus_t processing_status);
+    };
+    typedef struct nvimgcdcsImageDesc* nvimgcdcsImageDesc_t;
+
+    struct nvimgcdcsParserDesc
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
+        void* instance; // plugin instance pointer which will be passed back in functions
+        const char* id; // named identifier e.g. nvJpeg2000
+        uint32_t version;
+        const char* codec; // e.g. jpeg2000
+
+        nvimgcdcsStatus_t (*canParse)(
+            void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
+        nvimgcdcsStatus_t (*destroy)(nvimgcdcsParser_t parser);
+
+        nvimgcdcsStatus_t (*createParseState)(
+            nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state);
+        nvimgcdcsStatus_t (*destroyParseState)(nvimgcdcsParseState_t parse_state);
+
+        nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result,
+            nvimgcdcsCodeStreamDesc_t code_stream);
+
+        nvimgcdcsStatus_t (*getCapabilities)(
+            nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size);
+    };
+
+    struct nvimgcdcsEncoderDesc
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
+        void* instance; // plugin instance pointer which will be passed back in functions
+        const char* id; // named identifier e.g. nvJpeg2000
+        uint32_t version;
+        const char* codec; // e.g. jpeg2000
+
+        nvimgcdcsStatus_t (*canEncode)(void* instance, bool* result,
+            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params);
+
+        nvimgcdcsStatus_t (*create)(
+            void* instance, nvimgcdcsEncoder_t* encoder, nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
+
+        nvimgcdcsStatus_t (*createEncodeState)(nvimgcdcsEncoder_t encoder,
+            nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
+        nvimgcdcsStatus_t (*destroyEncodeState)(nvimgcdcsEncodeState_t encode_state);
+
+        nvimgcdcsStatus_t (*getCapabilities)(
+            nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
+        nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state,
+            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+            nvimgcdcsEncodeParams_t* params);
+    };
+
+    typedef struct nvimgcdcsEncoderDesc nvimgcdcsEncoderDesc_t;
+
+    struct nvimgcdcsDecoderDesc
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
+        void* instance; // plugin instance pointer which will be passed back in functions
+        const char* id; // named identifier e.g. nvJpeg2000
+        uint32_t version;
+        const char* codec; // e.g. jpeg2000
+
+        nvimgcdcsStatus_t (*canDecode)(void* instance, bool* result,
+            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params);
+
+        nvimgcdcsStatus_t (*create)(
+            void* instance, nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
+
+        nvimgcdcsStatus_t (*createDecodeState)(
+            nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
+        nvimgcdcsStatus_t (*destroyDecodeState)(nvimgcdcsDecodeState_t decode_state);
+
+        nvimgcdcsStatus_t (*getCapabilities)(
+            nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
+        nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state,
+            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+            nvimgcdcsDecodeParams_t* params);
+    };
+
+    typedef struct nvimgcdcsDecoderDesc nvimgcdcsDecoderDesc_t;
+
+    typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance,
+        const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
+
+    typedef struct nvimgcdcsFrameworkDesc
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
+        const char* id; // famework named identifier e.g. nvImageCodecs
+        uint32_t version;
+        void* instance;
+        nvimgcdcsStatus_t (*registerEncoder)(
+            void* instance, const struct nvimgcdcsEncoderDesc* desc);
+        nvimgcdcsStatus_t (*registerDecoder)(
+            void* instance, const struct nvimgcdcsDecoderDesc* desc);
+        nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
+        nvimgcdcsLogFunc_t log;
+    } nvimgcdcsFrameworkDesc_t;
+
+    struct nvimgcdcsExtension;
+    typedef struct nvimgcdcsExtension* nvimgcdcsExtension_t;
+
+    typedef struct nvimgcdcsExtensionDesc
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        const char* id;
+        uint32_t version;
+
+        nvimgcdcsStatus_t (*create)(
+            nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t* extension);
+        nvimgcdcsStatus_t (*destroy)(
+            nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t extension);
+    } nvimgcdcsExtensionDesc_t;
+
+    typedef nvimgcdcsStatus_t (*nvimgcdcsExtensionModuleEntryFunc_t)(
+        nvimgcdcsExtensionDesc_t* ext_desc);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(
+        nvimgcdcsExtensionDesc_t* ext_desc);
+
     // Instance
     typedef struct
     {
         nvimgcdcsStructureType_t type;
         void* next;
 
-        nvimgcdcsDeviceAllocator_t* device_allocator;     //TODO
-        nvimgcdcsPinnedAllocator_t* pinned_allocator;     //TODO
-        size_t deviceMemPadding;                          //TODO any device memory allocation
-        bool default_debug_messenger;                     //Create default debug messenger
-        uint32_t message_severity; //severity for default debug messenger
-        uint32_t message_type;     //message type for default debug messenger
+        nvimgcdcsDeviceAllocator_t* device_allocator; //TODO
+        nvimgcdcsPinnedAllocator_t* pinned_allocator; //TODO
+        size_t deviceMemPadding;                      //TODO any device memory allocation
+        bool load_extension_modules;                  //Discover and load extension modules on start
+        bool default_debug_messenger;                 //Create default debug messenger
+        uint32_t message_severity;                    //severity for default debug messenger
+        uint32_t message_type;                        //message type for default debug messenger
         // would be padded to the multiple of specified number of bytes.
         size_t pinnedMemPadding; //TODO any pinned host memory allocation
         // would be padded to the multiple of specified number of bytes
@@ -616,18 +780,23 @@ extern "C"
 
     // Instance
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
-        nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t createInfo);
+        nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info);
 
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceDestroy(nvimgcdcsInstance_t instance);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceGetReadyImage(nvimgcdcsInstance_t instance,
         nvimgcdcsImage_t* image, nvimgcdcsProcessingStatus_t* processing_status, bool blocking);
 
+    // Extension
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionCreate(nvimgcdcsInstance_t instance,
+        nvimgcdcsExtension_t* extension, nvimgcdcsExtensionDesc_t* extension_desc);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(nvimgcdcsExtension_t extension);
+
     // Debug Messanger
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessengerCreate(nvimgcdcsInstance_t instance,
-        nvimgcdcsDebugMessenger_t* dbgMessenger,
-        const nvimgcdcsDebugMessengerDesc_t* messengerDesc);
+        nvimgcdcsDebugMessenger_t* dbg_messenger,
+        const nvimgcdcsDebugMessengerDesc_t* messenger_desc);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessengerDestroy(
-        nvimgcdcsDebugMessenger_t dbgMessenger);
+        nvimgcdcsDebugMessenger_t dbg_messenger);
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(

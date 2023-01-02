@@ -1,5 +1,5 @@
 #include "nvbmp_parser.h"
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 #include <cassert>
 #include <iostream>
 #include <vector>

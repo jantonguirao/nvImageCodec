@@ -217,6 +217,12 @@ struct nvimgcdcsDebugMessenger
     DebugMessenger debug_messenger_;
 };
 
+struct nvimgcdcsExtension
+{
+    nvimgcdcsInstance_t nvimgcdcs_instance_;
+    nvimgcdcsExtension_t extension_ext_handle_;
+};
+
 struct nvimgcdcsImage
 {
 
@@ -249,7 +255,7 @@ struct nvimgcdcsImage
 };
 
 nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
-    nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t createInfo)
+    nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info)
 {
     nvimgcdcsStatus_t ret         = NVIMGCDCS_STATUS_SUCCESS;
     nvimgcdcsInstance_t nvimgcdcs = nullptr;
@@ -257,8 +263,11 @@ nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
         {
             CHECK_NULL(instance);
             nvimgcdcs =
-                new nvimgcdcsHandle(createInfo);
-            nvimgcdcs->plugin_framework_.discoverAndLoadExtModules();
+                new nvimgcdcsHandle(create_info);
+            if (create_info.load_extension_modules) {
+                nvimgcdcs->plugin_framework_.discoverAndLoadExtModules();
+            }
+
             *instance = nvimgcdcs;
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -279,6 +288,45 @@ nvimgcdcsStatus_t nvimgcdcsInstanceDestroy(nvimgcdcsInstance_t instance)
         {
             CHECK_NULL(instance)
             delete instance;
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+
+    return ret;
+}
+
+nvimgcdcsStatus_t nvimgcdcsExtensionCreate(nvimgcdcsInstance_t instance,
+    nvimgcdcsExtension_t* extension, nvimgcdcsExtensionDesc_t* extension_desc)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(instance)
+            CHECK_NULL(extension_desc)
+            nvimgcdcsExtension_t extension_ext_handle;
+            ret = instance->plugin_framework_.registerExtension(
+                &extension_ext_handle, extension_desc);
+            if (ret == NVIMGCDCS_STATUS_SUCCESS) {
+                *extension                        = new nvimgcdcsExtension();
+                (*extension)->nvimgcdcs_instance_ = instance;
+                (*extension)->extension_ext_handle_ = extension_ext_handle;
+            }
+
+
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+
+    return ret;
+}
+
+nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(nvimgcdcsExtension_t extension)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(extension)
+
+            return extension->nvimgcdcs_instance_->plugin_framework_.unregisterExtension(
+                extension->extension_ext_handle_);
         }
     NVIMGCDCSAPI_CATCH(ret)
 

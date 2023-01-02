@@ -12,7 +12,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 #include "../src/iparse_state.h"
 
 namespace nvimgcdcs { namespace test {

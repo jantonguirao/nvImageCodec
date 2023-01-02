@@ -29,15 +29,22 @@ uint32_t testExtModuleGetVersion()
     return 1;
 }
 
-nvimgcdcsStatus_t testExtModuleLoad(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t* module)
+nvimgcdcsStatus_t testExtModuleCreate(
+    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t* extension)
 {
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t testExtModuleUnload(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t module)
+nvimgcdcsStatus_t testExtModuleDestroy(
+    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t extension)
 {
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t testExtModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc)
+{
+    ext_desc->create = &testExtModuleCreate;
+    ext_desc->destroy = &testExtModuleDestroy;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -60,12 +67,8 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
 
     std::unique_ptr<MockLibraryLoader> library_loader = std::make_unique<MockLibraryLoader>();
     EXPECT_CALL(*library_loader.get(), loadLibrary(_)).Times(2);
-    EXPECT_CALL(*library_loader.get(), getFuncAddress(_, Eq("nvimgcdcsExtModuleGetVersion")))
-        .WillRepeatedly(Return((ILibraryLoader::LibraryHandle)&testExtModuleGetVersion));
-    EXPECT_CALL(*library_loader.get(), getFuncAddress(_, Eq("nvimgcdcsExtModuleLoad")))
-        .WillRepeatedly(Return((ILibraryLoader::LibraryHandle)&testExtModuleLoad));
-    EXPECT_CALL(*library_loader.get(), getFuncAddress(_, Eq("nvimgcdcsExtModuleUnload")))
-        .WillRepeatedly(Return((ILibraryLoader::LibraryHandle)&testExtModuleUnload));
+    EXPECT_CALL(*library_loader.get(), getFuncAddress(_, Eq("nvimgcdcsExtensionModuleEntry")))
+        .WillRepeatedly(Return((ILibraryLoader::LibraryHandle)&testExtModuleEntry));
     EXPECT_CALL(*library_loader.get(), unloadLibrary(_)).Times(2);
 
     PluginFramework framework(

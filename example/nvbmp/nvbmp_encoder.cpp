@@ -1,5 +1,5 @@
 
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 #include <string>
 #include <vector>
 #include "exceptions.h"

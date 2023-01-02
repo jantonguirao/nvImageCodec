@@ -91,7 +91,7 @@ C:\Program Files\nvimgcodecs
 │       nvjpeg2k_example.exe
 │
 ├───include
-│       nvimgcdcs_module.h
+│       nvimgcodecs.h
 │       nvimgcdcs_version.h
 │       nvimgcodecs.h
 │       nvjpeg.h

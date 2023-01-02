@@ -9,7 +9,7 @@
  */
 
 #pragma once
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 
 namespace nvimgcdcs {
 class IDecodeState

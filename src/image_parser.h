@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 #include <memory>
 #include <string>
 #include "iimage_parser.h"

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 #include <nvimgcodecs.h>
 #include "thread_safe_queue.h"
 #include "iimage.h"

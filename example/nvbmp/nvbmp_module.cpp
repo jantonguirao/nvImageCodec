@@ -1,18 +1,16 @@
-#include <nvimgcdcs_module.h>
+#include <nvimgcodecs.h>
 #include "log.h"
-
-NVIMGCDCS_EXTENSION_MODULE()
 
 extern nvimgcdcsParserDesc nvbmp_parser;
 extern nvimgcdcsEncoderDesc nvbmp_encoder;
 extern nvimgcdcsDecoderDesc nvbmp_decoder;
 
-nvimgcdcsStatus_t nvimgcdcsExtModuleLoad(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t* module)
+nvimgcdcsStatus_t nvimgcdcsExtensionCreate(
+    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t* extension)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
 
-    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtModuleLoad");
+    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");
     framework->registerParser(framework->instance, &nvbmp_parser);
     framework->registerEncoder(framework->instance, &nvbmp_encoder);
     framework->registerDecoder(framework->instance, &nvbmp_decoder);
@@ -20,10 +18,37 @@ nvimgcdcsStatus_t nvimgcdcsExtModuleLoad(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvimgcdcsExtModuleUnload(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtModule_t module)
+nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(
+    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t extension)
 {
-    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtModuleUnload");
+    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionDestroy");
     Logger::get().unregisterLogFunc();
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+// clang-format off
+nvimgcdcsExtensionDesc_t nvbmp_extension = {
+    NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
+    NULL,
+
+    "nvbmp_extension",  // id
+     0x00000100,        // version
+
+    nvimgcdcsExtensionCreate,
+    nvimgcdcsExtensionDestroy
+};
+// clang-format on  
+
+nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc)
+{
+    if (ext_desc == nullptr) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+
+    if ( ext_desc->type != NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC){
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+
+    *ext_desc = nvbmp_extension;
     return NVIMGCDCS_STATUS_SUCCESS;
 }

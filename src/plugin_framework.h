@@ -9,7 +9,7 @@
  */
 
 #pragma once
-#include <nvimgcdcs_module.h>
+
 #include <nvimgcodecs.h>
 #include <map>
 #include <string>
@@ -30,19 +30,33 @@ class PluginFramework
         std::unique_ptr<IDirectoryScaner> directory_scaner,
         std::unique_ptr<ILibraryLoader> library_loader);
     ~PluginFramework();
+    nvimgcdcsStatus_t registerExtension(
+        nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc);
+    nvimgcdcsStatus_t unregisterExtension(nvimgcdcsExtension_t extension);
+    void unregisterAllExtensions();
+
     void discoverAndLoadExtModules();
     void loadExtModule(const std::string& modulePath);
-    void unloadAllExtModules();
 
   private:
     struct Module
     {
+        std::string path_;
         ILibraryLoader::LibraryHandle lib_handle_;
-        nvimgcdcsExtModule_t module_handle_;
-        nvimgcdcsModuleVersion_t* getVersion;
-        nvimgcdcsExtModuleLoad_t* load;
-        nvimgcdcsExtModuleUnload_t* unload;
+        nvimgcdcsExtensionModuleEntryFunc_t extension_entry_;
     };
+
+    struct Extension
+    {
+        nvimgcdcsExtension_t handle_;
+        nvimgcdcsExtensionDesc_t desc_;
+        Module module_;
+    };
+
+    nvimgcdcsStatus_t registerExtension(
+        nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc,
+        const Module& module);
+    nvimgcdcsStatus_t unregisterExtension(std::vector<Extension>::const_iterator it);
 
     ICodec* ensureExistsAndRetrieveCodec(const char* codec_name);
 
@@ -67,8 +81,8 @@ class PluginFramework
 
     std::unique_ptr<IDirectoryScaner> directory_scaner_;
     std::unique_ptr<ILibraryLoader> library_loader_;
-    std::vector<Module> modules_;
-    nvimgcdcsFrameworkDesc framework_desc_;
+    std::vector<Extension> extensions_;
+    nvimgcdcsFrameworkDesc_t framework_desc_;
     ICodecRegistry* codec_registry_;
     std::vector<std::string_view> plugin_dirs_;
 };
