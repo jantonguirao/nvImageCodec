@@ -32,13 +32,13 @@ std::string ImageDecoderFactory::getCodecName() const
     return decoder_desc_->codec;
 }
 
-bool ImageDecoderFactory::canDecode(
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params)
+bool ImageDecoderFactory::canDecode(nvimgcdcsCodeStreamDesc_t code_stream,
+    nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params)
 {
     assert(code_stream);
     assert(decoder_desc_->canDecode);
     bool result = false;
-    decoder_desc_->canDecode(decoder_desc_->instance, &result, code_stream, params);
+    decoder_desc_->canDecode(decoder_desc_->instance, &result, code_stream, image, params);
     return result;
 }
 

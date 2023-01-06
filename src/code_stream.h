@@ -59,8 +59,12 @@ class CodeStream : public ICodeStream
     static nvimgcdcsStatus_t tell_static(void* instance, size_t* offset);
     static nvimgcdcsStatus_t size_static(void* instance, size_t* size);
 
+    static nvimgcdcsStatus_t static_get_codec_name(void* instance, char* codec_name);
+    static nvimgcdcsStatus_t static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result);
+
     ICodecRegistry* codec_registry_;
     ICodec* codec_;
+    std::string codec_name_;
     std::unique_ptr<IImageParser> parser_;
     std::unique_ptr<IIoStreamFactory> io_stream_factory_;
     std::unique_ptr<IoStream> io_stream_;

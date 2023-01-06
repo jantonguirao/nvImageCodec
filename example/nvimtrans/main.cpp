@@ -10,6 +10,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "nvpxm.h"
 
 #if defined(_WIN32)
     #include <windows.h>
@@ -118,7 +119,8 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         std::cout << "  -w\t\t: warmup iterations (default 0)" << std::endl;
         std::cout << std::endl;
         std::cout << "Decoding options: " << std::endl;
-        std::cout << "  -dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
+        std::cout
+            << "  -dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
             << "  \t\t\t - When true, for jpeg with 4 color components assumes CMYK colorspace "
                "and converts to RGB/YUV."
             << std::endl
@@ -147,7 +149,7 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
             << "  -optimized_huffman\t: For false non-optimized Huffman will be used. Otherwise "
                "optimized version will be used. (default false)."
             << std::endl;
-        std::cout << "  -jpeg_encoding\t: Corresponds to the JPEG marker" 
+        std::cout << "  -jpeg_encoding\t: Corresponds to the JPEG marker"
                      " baseline_dct, sequential_dct or progressive_dct (default "
                      "baseline_dct)."
                   << std::endl;
@@ -258,19 +260,19 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
 }
 uint32_t verbosity2severity(int verbose)
 {
-   uint32_t result = 0;
-   if (verbose >= 1)
+    uint32_t result = 0;
+    if (verbose >= 1)
         result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR;
-   if (verbose >= 2)
+    if (verbose >= 2)
         result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING;
-   if (verbose >= 3)
+    if (verbose >= 3)
         result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO;
-   if (verbose >= 4)
+    if (verbose >= 4)
         result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG;
-   if (verbose >= 5)
+    if (verbose >= 5)
         result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE;
 
-   return result;
+    return result;
 }
 
 int main(int argc, const char* argv[])
@@ -281,25 +283,32 @@ int main(int argc, const char* argv[])
         return status;
     }
 
-    double total_time = 0.;
+    double total_time  = 0.;
     double parse_time  = 0.;
     double decode_time = 0.;
-    int total_images = 1;
+    int total_images   = 1;
 
     namespace fs = std::filesystem;
     nvimgcdcsInstance_t instance;
     nvimgcdcsInstanceCreateInfo_t instance_create_info;
-    instance_create_info.type             = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instance_create_info.next             = NULL;
-    instance_create_info.pinned_allocator = NULL;
-    instance_create_info.device_allocator = NULL;
+    instance_create_info.type                    = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instance_create_info.next                    = NULL;
+    instance_create_info.pinned_allocator        = NULL;
+    instance_create_info.device_allocator        = NULL;
     instance_create_info.load_extension_modules  = true;
     instance_create_info.default_debug_messenger = true;
-    instance_create_info.message_severity = verbosity2severity(params.verbose);
-    instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
+    instance_create_info.message_severity        = verbosity2severity(params.verbose);
+    instance_create_info.message_type            = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
-    
+    nvimgcdcsExtension_t pxm_extension;
+    nvimgcdcsExtensionDesc_t pxm_extension_desc;
+    memset(&pxm_extension_desc, 0, sizeof(pxm_extension_desc));
+    pxm_extension_desc.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
+
+    nvpxm::get_nvpxm_extension_desc(&pxm_extension_desc);
+    nvimgcdcsExtensionCreate(instance, &pxm_extension, &pxm_extension_desc);
+
     nvimgcdcsCodeStream_t code_stream;
     fs::path exe_path(argv[0]);
     fs::path input_file = fs::absolute(exe_path).parent_path() / fs::path(params.input);
@@ -307,17 +316,18 @@ int main(int argc, const char* argv[])
     std::ifstream file(input_file.string(), std::ios::binary);
     std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(file), {});
     if (0) {
-    nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, input_file.string().c_str());
+        nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, input_file.string().c_str());
     } else {
         nvimgcdcsCodeStreamCreateFromHostMem(instance, &code_stream, buffer.data(), buffer.size());
     }
+
     parse_time = wtime();
     nvimgcdcsImageInfo_t image_info;
     nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
     parse_time = wtime() - parse_time;
     char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
     nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
-    
+
     std::cout << "Input image info: " << std::endl;
     std::cout << "\t - width:" << image_info.image_width << std::endl;
     std::cout << "\t - height:" << image_info.image_height << std::endl;
@@ -340,16 +350,16 @@ int main(int argc, const char* argv[])
     }
     int bytes_per_element    = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-    image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
-
-    nvimgcdcsDecoder_t decoder;
-    nvimgcdcsDecoderCreate(instance, &decoder, code_stream, &decode_params);
-
-    nvimgcdcsDecodeState_t decode_state;
-    nvimgcdcsDecodeStateCreate(decoder, &decode_state, nullptr);
+    image_info.color_space   = NVIMGCDCS_COLORSPACE_SRGB;
 
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image);
+
+    nvimgcdcsDecoder_t decoder;
+    nvimgcdcsDecoderCreate(instance, &decoder, code_stream, image, &decode_params);
+
+    nvimgcdcsDecodeState_t decode_state;
+    nvimgcdcsDecodeStateCreate(decoder, &decode_state, nullptr);
 
     size_t capabilities_size;
     nvimgcdcsDecoderGetCapabilities(decoder, nullptr, &capabilities_size);
@@ -382,12 +392,11 @@ int main(int argc, const char* argv[])
     encode_params.target_psnr = params.target_psnr;
     encode_params.mct_mode =
         params.enc_color_trans ? NVIMGCDCS_MCT_MODE_YCC : NVIMGCDCS_MCT_MODE_RGB;
-    encode_params.codec = params.output_codec.data();
 
     //codec sepcific encode params
     nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
     nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
-    if (strcmp(encode_params.codec, "jpeg2k") == 0) {
+    if (params.output_codec == "jpeg2k") {
         memset(&jpeg2k_encode_params, 0, sizeof(jpeg2k_encode_params));
         jpeg2k_encode_params.type            = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
         jpeg2k_encode_params.stream_type     = output_file.extension().string() == ".jp2"
@@ -411,16 +420,16 @@ int main(int argc, const char* argv[])
         // uint32_t precint_height[NVIMGCDCS_JPEG2K_MAXRES];
 
         encode_params.next = &jpeg2k_encode_params;
-    } else if (strcmp(encode_params.codec, "jpeg") == 0) {
+    } else if (params.output_codec == "jpeg") {
         memset(&jpeg_encode_params, 0, sizeof(jpeg_encode_params));
         jpeg_encode_params.type              = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
         jpeg_encode_params.encoding          = params.jpeg_encoding;
         jpeg_encode_params.optimized_huffman = params.optimized_huffman;
         encode_params.next                   = &jpeg_encode_params;
     }
-
+    nvimgcdcsImageSetImageInfo(image, &image_info);
     nvimgcdcsEncoder_t encoder = nullptr;
-    nvimgcdcsEncoderCreate(instance, &encoder, output_code_stream, &encode_params);
+    nvimgcdcsEncoderCreate(instance, &encoder, image, output_code_stream, &encode_params);
 
     nvimgcdcsEncoderGetCapabilities(encoder, nullptr, &capabilities_size);
     nvimgcdcsEncoderGetCapabilities(encoder, &capabilities_ptr, &capabilities_size);
@@ -546,6 +555,7 @@ int main(int argc, const char* argv[])
     nvimgcdcsDecodeStateDestroy(decode_state);
     nvimgcdcsDecoderDestroy(decoder);
     nvimgcdcsCodeStreamDestroy(code_stream);
+    nvimgcdcsExtensionDestroy(pxm_extension);
     nvimgcdcsInstanceDestroy(instance);
 
     return EXIT_SUCCESS;

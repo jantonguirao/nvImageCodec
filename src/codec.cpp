@@ -20,12 +20,13 @@ Codec::Codec(const char* name)
 {
 }
 
-std::unique_ptr <IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code_stream) const
+std::unique_ptr<IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code_stream) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::getParser " << name_);
     for (const auto& entry : parsers_) {
         NVIMGCDCS_LOG_TRACE("- probing parser:" << entry.second->getParserId());
         if (entry.second->canParse(code_stream)) {
+            NVIMGCDCS_LOG_TRACE("- - can parse");
             return entry.second->createParser();
         }
     }
@@ -33,26 +34,28 @@ std::unique_ptr <IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t cod
     return nullptr;
 }
 
-std::unique_ptr<IImageDecoder> Codec::createDecoder(
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params) const
+std::unique_ptr<IImageDecoder> Codec::createDecoder(nvimgcdcsCodeStreamDesc_t code_stream,
+    nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::createDecoder " << name_);
     for (const auto& entry : decoders_) {
         NVIMGCDCS_LOG_TRACE("- probing decoder:" << entry.second->getDecoderId());
-        if (entry.second->canDecode(code_stream , params)) {
-          return entry.second->createDecoder(params);
+        if (entry.second->canDecode(code_stream, image, params)) {
+            NVIMGCDCS_LOG_TRACE("- - can decode");
+            return entry.second->createDecoder(params);
         }
     }
     return nullptr;
 }
 
-std::unique_ptr<IImageEncoder> Codec::createEncoder(
+std::unique_ptr<IImageEncoder> Codec::createEncoder(nvimgcdcsImageDesc_t image,
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::createEncoder " << name_);
     for (const auto& entry : encoders_) {
         NVIMGCDCS_LOG_TRACE("- probing encoder:" << entry.second->getEncoderId());
-        if (entry.second->canEncode(code_stream, params)) {
+        if (entry.second->canEncode(image, code_stream, params)) {
+            NVIMGCDCS_LOG_TRACE("- - can encode");
             return entry.second->createEncoder(params);
         }
     }
@@ -64,19 +67,22 @@ const std::string& Codec::name() const
     return name_;
 }
 
-void Codec::registerParserFactory(std::unique_ptr<IImageParserFactory> parserFactory, float priority)
+void Codec::registerParserFactory(
+    std::unique_ptr<IImageParserFactory> parserFactory, float priority)
 {
     NVIMGCDCS_LOG_TRACE("Codec::registerParser");
     parsers_.emplace(priority, std::move(parserFactory));
 }
 
-void Codec::registerEncoderFactory(std::unique_ptr<IImageEncoderFactory> encoderFactory, float priority)
+void Codec::registerEncoderFactory(
+    std::unique_ptr<IImageEncoderFactory> encoderFactory, float priority)
 {
     NVIMGCDCS_LOG_TRACE("Codec::registerEncoder");
     encoders_.emplace(priority, std::move(encoderFactory));
 }
 
-void Codec::registerDecoderFactory(std::unique_ptr<IImageDecoderFactory> decoderFactory, float priority)
+void Codec::registerDecoderFactory(
+    std::unique_ptr<IImageDecoderFactory> decoderFactory, float priority)
 {
     NVIMGCDCS_LOG_TRACE("Codec::registerDecoder");
     decoders_.emplace(priority, std::move(decoderFactory));

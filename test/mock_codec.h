@@ -13,17 +13,16 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "../src/icodec.h"
-#include "../src/iimage_parser.h"
 #include "../src/iimage_decoder.h"
-#include "../src/iimage_encoder.h"
-#include "../src/iimage_parser_factory.h"
 #include "../src/iimage_decoder_factory.h"
+#include "../src/iimage_encoder.h"
 #include "../src/iimage_encoder_factory.h"
+#include "../src/iimage_parser.h"
+#include "../src/iimage_parser_factory.h"
 
 #include <memory>
 
 namespace nvimgcdcs { namespace test {
-
 
 class MockCodec : public ICodec
 {
@@ -32,10 +31,12 @@ class MockCodec : public ICodec
     MOCK_METHOD(std::unique_ptr<IImageParser>, createParser,
         (nvimgcdcsCodeStreamDesc_t code_stream), (const, override));
     MOCK_METHOD(std::unique_ptr<IImageDecoder>, createDecoder,
-        (nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params),
+        (nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+            nvimgcdcsDecodeParams_t* params),
         (const, override));
     MOCK_METHOD(std::unique_ptr<IImageEncoder>, createEncoder,
-        (nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params),
+        (nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
+            nvimgcdcsEncodeParams_t* params),
         (const, override));
     MOCK_METHOD(void, registerParserFactory,
         (std::unique_ptr<IImageParserFactory> factory, float priority), (override));

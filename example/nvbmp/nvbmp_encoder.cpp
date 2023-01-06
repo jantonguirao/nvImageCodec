@@ -1,5 +1,6 @@
 
 #include <nvimgcodecs.h>
+#include <cstring>
 #include <string>
 #include <vector>
 #include "exceptions.h"
@@ -132,11 +133,26 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
 }
 
 static nvimgcdcsStatus_t nvbmp_encoder_can_encode(void* instance, bool* result,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
+    nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_can_encode");
-
-    *result = std::string(params->codec) == "bmp" /*&& (NVIMGCDCS_SAMPLEFORMAT_P_RGB)*/;
+    *result = true;
+    char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
+    code_stream->getCodecName(code_stream->instance, codec_name);
+    if (strcmp(codec_name, "bmp") != 0) {
+        *result = false;
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+    if (params->backends != nullptr) {
+        *result = false;
+        for (int b = 0; b < params->num_backends; ++b) {
+            if (params->backends[b].useCPU) {
+                *result = true;
+            }
+        }
+    }
+    //TODO check format /*&& (NVIMGCDCS_SAMPLEFORMAT_P_RGB)*/;
 
     return NVIMGCDCS_STATUS_SUCCESS;
 }

@@ -31,12 +31,13 @@ std::string ImageEncoderFactory::getEncoderId() const
 }
 
 bool ImageEncoderFactory::canEncode(
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
+    nvimgcdcsEncodeParams_t* params)
 {
     assert(code_stream);
     assert(encoder_desc_->canEncode);
     bool result = false;
-    encoder_desc_->canEncode(encoder_desc_->instance, &result, code_stream, params);
+    encoder_desc_->canEncode(encoder_desc_->instance, &result, image, code_stream, params);
     return result;
 }
 

@@ -121,7 +121,6 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
     *extension = internal_extension.handle_;
 
     extensions_.push_back(internal_extension);
-
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

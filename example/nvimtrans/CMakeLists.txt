@@ -2,6 +2,7 @@ set(NVIMGCDCS_EXAMPLE_NAME nvimtrans)
 
 set(NVIMGCDCS_EXAMPLE_SRC
       main.cpp
+      nvpxm.cpp
 )
 include_directories(
   ../../include

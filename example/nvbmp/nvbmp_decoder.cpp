@@ -1,5 +1,6 @@
 #include <cuda_runtime_api.h>
 #include <nvimgcodecs.h>
+#include <cstring>
 #include "nvbmp_parser.h"
 #include "exceptions.h"
 #include "log.h"
@@ -13,9 +14,25 @@ struct nvimgcdcsDecodeState
 {};
 
 static nvimgcdcsStatus_t nvbmp_can_decode(void* instance, bool* result,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t code_stream,
+    nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params)
 {
     *result = true;
+    char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
+    code_stream->getCodecName(code_stream->instance, codec_name);
+
+    if (strcmp(codec_name, "bmp") != 0) {
+        *result = false;
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+    if (params->backends != nullptr) {
+        *result = false;
+        for (int b = 0; b < params->num_backends; ++b) {
+            if (params->backends[b].useCPU) {
+                *result = true;
+            }
+        }
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

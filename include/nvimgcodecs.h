@@ -314,6 +314,8 @@ extern "C"
         bool useGPU;
         bool useHwEng;
         int variant;
+        int maxCpuThreads;
+        int cudaDeviceId;
     } nvimgcdcsBackend_t;
 
     typedef enum
@@ -384,8 +386,6 @@ extern "C"
         bool enable_color_conversion;
         int num_backends; //Zero means that all backends are allowed.
         nvimgcdcsBackend_t* backends;
-        int maxCpuThreads;
-        int cudaDeviceId;
         cudaStream_t cuda_stream;
         nvimgcdcsDataDict_t config;
     } nvimgcdcsDecodeParams_t;
@@ -412,13 +412,10 @@ extern "C"
 
         float quality;
         float target_psnr;
-        const char* codec;
         nvimgcdcsMctMode_t mct_mode;
 
         int num_backends; //Zero means that all backendsa re allowed.
         nvimgcdcsBackend_t* backends;
-        int maxCpuThreads;
-        int cudaDeviceId;
         cudaStream_t cuda_stream;
         nvimgcdcsDataDict_t config;
     } nvimgcdcsEncodeParams_t;
@@ -609,9 +606,12 @@ extern "C"
         const void* next;
 
         void* instance;
-        const char* codec;
+
         nvimgcdcsIoStreamDesc_t io_stream;
         nvimgcdcsParseState_t parse_state;
+
+        nvimgcdcsStatus_t (*getCodecName)(void* instance, char* codec_name);
+        nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
     };
     typedef struct nvimgcdcsCodeStreamDesc* nvimgcdcsCodeStreamDesc_t;
 
@@ -665,7 +665,7 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*canEncode)(void* instance, bool* result,
+        nvimgcdcsStatus_t (*canEncode)(void* instance, bool* result, nvimgcdcsImageDesc_t image,
             nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params);
 
         nvimgcdcsStatus_t (*create)(
@@ -697,7 +697,8 @@ extern "C"
         const char* codec; // e.g. jpeg2000
 
         nvimgcdcsStatus_t (*canDecode)(void* instance, bool* result,
-            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsDecodeParams_t* params);
+            nvimgcdcsCodeStreamDesc_t code_stream,
+            nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params);
 
         nvimgcdcsStatus_t (*create)(
             void* instance, nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params);
@@ -850,7 +851,8 @@ extern "C"
 
     //Decoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance,
-        nvimgcdcsDecoder_t* decoder, nvimgcdcsCodeStream_t stream, nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsDecoder_t* decoder, nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image,
+        nvimgcdcsDecodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder,
         nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image, nvimgcdcsDecodeParams_t* params);
@@ -869,7 +871,8 @@ extern "C"
 
     //Encoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance,
-        nvimgcdcsEncoder_t* encoder, nvimgcdcsCodeStream_t stream, nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsEncoder_t* encoder, nvimgcdcsImage_t image, nvimgcdcsCodeStream_t stream,
+        nvimgcdcsEncodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder,
         nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t input_image,

@@ -11,7 +11,6 @@
 #pragma once
 
 #include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
 #include <memory>
 #include <string>
 
@@ -22,10 +21,11 @@ class IImageEncoder;
 class IImageEncoderFactory
 {
   public:
-    virtual ~IImageEncoderFactory() = default;
+    virtual ~IImageEncoderFactory()          = default;
     virtual std::string getEncoderId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual bool canEncode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) = 0;
+    virtual bool canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
+        nvimgcdcsEncodeParams_t* params)     = 0;
     virtual std::unique_ptr<IImageEncoder> createEncoder(nvimgcdcsEncodeParams_t* params) const = 0;
 };
 } // namespace nvimgcdcs

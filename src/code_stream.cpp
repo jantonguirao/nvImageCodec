@@ -11,23 +11,25 @@
 #include "code_stream.h"
 #include <iostream>
 #include <string>
+#include <cstring>
 #include "codec.h"
 #include "codec_registry.h"
 #include "image_parser.h"
 
-namespace nvimgcdcs {
+    namespace nvimgcdcs {
 
 CodeStream::CodeStream(
     ICodecRegistry* codec_registry, std::unique_ptr<IIoStreamFactory> io_stream_factory)
     : codec_registry_(codec_registry)
     , codec_(nullptr)
+    , codec_name_("")
     , parser_(nullptr)
     , io_stream_factory_(std::move(io_stream_factory))
     , io_stream_(nullptr)
     , io_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static,
           write_static, putc_static, skip_static, seek_static, tell_static, size_static}
-    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, "",
-          &io_stream_desc_}
+    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, &io_stream_desc_, nullptr, static_get_codec_name,
+          static_get_image_info}
     , image_info_(nullptr)
     , parse_state_(nullptr)
 {
@@ -39,8 +41,8 @@ void CodeStream::parse()
     if (codec == nullptr || !parser)
         throw std::runtime_error("Could not match parser");
     codec_                        = codec;
-    code_stream_desc_.codec       = codec->name().c_str();
     parser_                       = std::move(parser);
+    codec_name_                   = parser_->getCodecName();
     parse_state_                  = parser_->createParseState();
     code_stream_desc_.parse_state = parse_state_->getInternalParseState();
 }
@@ -58,8 +60,9 @@ void CodeStream::parseFromMem(unsigned char* data, size_t size)
 }
 void CodeStream::setOutputToFile(const char* file_name, const char* codec_name)
 {
-    io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, false, true);
-    codec_     = codec_registry_->getCodecByName(codec_name);
+    io_stream_  = io_stream_factory_->createFileIoStream(file_name, false, false, true);
+    codec_      = codec_registry_->getCodecByName(codec_name);
+    codec_name_ = std::string(codec_name);
 }
 
 void CodeStream::setOutputToHostMem(
@@ -67,6 +70,7 @@ void CodeStream::setOutputToHostMem(
 {
     io_stream_ = io_stream_factory_->createMemIoStream(output_buffer, size);
     codec_     = codec_registry_->getCodecByName(codec_name);
+    codec_name_ = std::string(codec_name);
 }
 
 void CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
@@ -89,7 +93,7 @@ void CodeStream::setImageInfo(const nvimgcdcsImageInfo_t* image_info)
 }
 std::string CodeStream::getCodecName() const
 {
-    return parser_->getCodecName();
+    return codec_name_;
 }
 ICodec* CodeStream::getCodec() const
 {
@@ -124,8 +128,7 @@ nvimgcdcsStatus_t CodeStream::putc(size_t* output_size, unsigned char ch)
     assert(io_stream_);
     *output_size = io_stream_->putc(ch);
 
-    return *output_size == 1 ? NVIMGCDCS_STATUS_SUCCESS
-                             : NVIMGCDCS_STATUS_BAD_CODESTREAM;
+    return *output_size == 1 ? NVIMGCDCS_STATUS_SUCCESS : NVIMGCDCS_STATUS_BAD_CODESTREAM;
 }
 
 nvimgcdcsStatus_t CodeStream::skip(size_t count)
@@ -172,8 +175,7 @@ nvimgcdcsStatus_t CodeStream::write_static(
     return handle->write(output_size, buf, bytes);
 }
 
-nvimgcdcsStatus_t CodeStream::putc_static(
-    void* instance, size_t* output_size, unsigned char ch)
+nvimgcdcsStatus_t CodeStream::putc_static(void* instance, size_t* output_size, unsigned char ch)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
@@ -186,23 +188,43 @@ nvimgcdcsStatus_t CodeStream::skip_static(void* instance, size_t count)
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->skip(count);
 }
+
 nvimgcdcsStatus_t CodeStream::seek_static(void* instance, size_t offset, int whence)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->seek(offset, whence);
 }
+
 nvimgcdcsStatus_t CodeStream::tell_static(void* instance, size_t* offset)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->tell(offset);
 }
+
 nvimgcdcsStatus_t CodeStream::size_static(void* instance, size_t* size)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->size(size);
+}
+
+nvimgcdcsStatus_t CodeStream::static_get_codec_name(void* instance, char* codec_name)
+{
+    assert(instance);
+    CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
+    std::string str = handle->getCodecName();
+    strcpy(codec_name, str.c_str());
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t CodeStream::static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result)
+{
+    assert(instance);
+    CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
+    handle->getImageInfo(result);
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 } // namespace nvimgcdcs
