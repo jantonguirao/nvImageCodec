@@ -235,6 +235,7 @@ extern "C"
         nvimgcdcsChromaSubsampling_t sampling;
         nvimgcdcsSampleDataType_t sample_type;
         nvimgcdcsOrientation_t orientation;
+        cudaStream_t cuda_stream;
     } nvimgcdcsImageInfo_t;
 
     // Currently parseable JPEG encodings (SOF markers)
@@ -386,7 +387,6 @@ extern "C"
         bool enable_color_conversion;
         int num_backends; //Zero means that all backends are allowed.
         nvimgcdcsBackend_t* backends;
-        cudaStream_t cuda_stream;
         nvimgcdcsDataDict_t config;
     } nvimgcdcsDecodeParams_t;
 
@@ -416,7 +416,6 @@ extern "C"
 
         int num_backends; //Zero means that all backendsa re allowed.
         nvimgcdcsBackend_t* backends;
-        cudaStream_t cuda_stream;
         nvimgcdcsDataDict_t config;
     } nvimgcdcsEncodeParams_t;
 
