@@ -1008,9 +1008,10 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
+
 static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"},
     {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}, {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"},
-    {".jpeg", "jpeg"}};
+    {".jpeg", "jpeg"}, {".ppm", "pxm"}, {".pgm", "pxm"}, {".pbm", "pxm"}};
 
 inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
 {

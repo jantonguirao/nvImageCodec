@@ -104,6 +104,10 @@ int find_param_index(const char** argv, int argc, const char* parm)
 
 int process_commandline_params(int argc, const char* argv[], CommandLineParams* params)
 {
+    static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"},
+        {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}, {".tiff", "tiff"}, {".tif", "tiff"},
+        {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pxm"}, {".pgm", "pxm"}, {".pbm", "pxm"}};
+
     int pidx;
     if ((pidx = find_param_index(argv, argc, "-h")) != -1 ||
         (pidx = find_param_index(argv, argc, "--help")) != -1) {
@@ -191,15 +195,24 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         params->target_psnr = static_cast<float>(strtod(argv[pidx + 1], NULL));
     }
 
-    params->output_codec = "bmp";
-    if ((pidx = find_param_index(argv, argc, "-c")) != -1) {
-        params->output_codec = argv[pidx + 1];
-    }
-
     params->write_output = false;
     if ((pidx = find_param_index(argv, argc, "-o")) != -1) {
         params->output = argv[pidx + 1];
     }
+
+    params->output_codec = "bmp";
+    std::filesystem::path file_path(params->output);
+    if (file_path.has_extension()) {
+        std::string extension = file_path.extension().string();
+        auto it               = ext2codec.find(extension);
+        if (it != ext2codec.end()) {
+            params->output_codec = it->second;
+        }
+    }
+    if ((pidx = find_param_index(argv, argc, "-c")) != -1) {
+        params->output_codec = argv[pidx + 1];
+    }
+
     params->reversible = false;
     if ((pidx = find_param_index(argv, argc, "-reversible")) != -1) {
         params->reversible = strcmp(argv[pidx + 1], "true") == 0;
