@@ -1,6 +1,5 @@
 #include <nvimgcodecs.h>
 #include <cstring>
-#include <future>
 #include <iostream>
 #include <sstream>
 #include <string>
