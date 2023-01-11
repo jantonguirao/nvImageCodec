@@ -25,7 +25,7 @@ class ICodecRegistry
   public:
     virtual ~ICodecRegistry() = default;
     virtual void registerCodec(std::unique_ptr<ICodec> codec) = 0;
-    virtual const std::pair<ICodec*, std::unique_ptr<IImageParser>> getCodecAndParser(
+    virtual std::unique_ptr<IImageParser> getParser(
         nvimgcdcsCodeStreamDesc_t code_stream) const = 0;
     virtual ICodec* getCodecByName(const char* name) = 0;
 };

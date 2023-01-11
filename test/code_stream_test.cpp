@@ -45,10 +45,9 @@ TEST(CodeStreamTest, test_parse_from_file)
     EXPECT_CALL(*parser.get(), createParseState()).WillRepeatedly(Return(ByMove(std::move(parse_state))));
 
     MockCodecRegistry codec_registry;
-    EXPECT_CALL(codec_registry, getCodecAndParser(_))
+    EXPECT_CALL(codec_registry, getParser(_))
         .Times(1)
-        .WillRepeatedly(Return(ByMove(std::make_pair(
-            &codec, std::move(parser)))));
+        .WillRepeatedly(Return(ByMove(std::move(parser))));
 
     std::unique_ptr<MockIoStreamFactory> iostream_factory = std::make_unique<MockIoStreamFactory>();
     EXPECT_CALL(*iostream_factory.get(), createFileIoStream(_, _, _, false)).Times(1);
@@ -74,10 +73,10 @@ TEST(CodeStreamTest, test_parse_from_mem)
         .WillRepeatedly(Return(ByMove(std::move(parse_state))));
 
     MockCodecRegistry codec_registry;
-    EXPECT_CALL(codec_registry, getCodecAndParser(_))
+    EXPECT_CALL(codec_registry, getParser(_))
         .Times(1)
         .WillRepeatedly(
-            Return(ByMove(std::make_pair(&codec, std::move(parser)))));
+            Return(ByMove(std::move(parser))));
 
     std::unique_ptr<MockIoStreamFactory> iostream_factory = std::make_unique<MockIoStreamFactory>();
     EXPECT_CALL(*iostream_factory.get(), createMemIoStream(_, _)).Times(1);

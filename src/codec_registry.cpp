@@ -29,18 +29,18 @@ void CodecRegistry::registerCodec(std::unique_ptr<ICodec> codec)
     by_name_.insert(std::make_pair(codec->name(), std::move(codec)));
 }
 
-const std::pair<ICodec*, std::unique_ptr<IImageParser>> CodecRegistry::getCodecAndParser(
+std::unique_ptr<IImageParser> CodecRegistry::getParser(
     nvimgcdcsCodeStreamDesc_t code_stream) const
 {
-    NVIMGCDCS_LOG_TRACE("CodecRegistry::getCodecAndParser");
+    NVIMGCDCS_LOG_TRACE("CodecRegistry::getParser");
     for (const auto& entry : by_name_) {
         std::unique_ptr<IImageParser> parser = entry.second->createParser(code_stream);
         if (parser) {
-            return std::make_pair(entry.second.get(), std::move(parser));
+            return parser;
         }
     }
 
-    return std::make_pair(nullptr, nullptr);
+    return nullptr;
 }
 
 ICodec* CodecRegistry::getCodecByName(const char* name)

@@ -43,7 +43,7 @@ TEST(codec_registry, get_codec_by_name)
     EXPECT_EQ(codec_registry.getCodecByName(codec_name1.c_str()), codec1_ptr);
 }
 
-TEST(codec_registry, get_codec_and_parser_for_given_code_stream)
+TEST(codec_registry, get_parser_for_given_code_stream)
 {
     nvimgcdcsCodeStreamDesc code_stream1;
     nvimgcdcsCodeStreamDesc code_stream2;
@@ -68,15 +68,14 @@ TEST(codec_registry, get_codec_and_parser_for_given_code_stream)
     EXPECT_CALL(*codec2_ptr, createParser(Eq(&code_stream2))).WillOnce(Return(ByMove(std::move(parser2))));
 
     CodecRegistry codec_registry;
-
     codec_registry.registerCodec(std::move(codec1));
     codec_registry.registerCodec(std::move(codec2));
 
-    auto pair2 = codec_registry.getCodecAndParser(&code_stream2);
-    auto pair1 = codec_registry.getCodecAndParser(&code_stream1);
+    auto parser_2 = codec_registry.getParser(&code_stream2);
+    auto parser_1 = codec_registry.getParser(&code_stream1);
 
-    EXPECT_EQ(pair2.second.get(), parser2_ptr);
-    EXPECT_EQ(pair1.second.get(), parser1_ptr);
+    EXPECT_EQ(parser_2.get(), parser2_ptr);
+    EXPECT_EQ(parser_1.get(), parser1_ptr);
 }
 
 }} // namespace nvimgcdcs::test

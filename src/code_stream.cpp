@@ -21,7 +21,6 @@
 CodeStream::CodeStream(
     ICodecRegistry* codec_registry, std::unique_ptr<IIoStreamFactory> io_stream_factory)
     : codec_registry_(codec_registry)
-    , codec_(nullptr)
     , codec_name_("")
     , parser_(nullptr)
     , io_stream_factory_(std::move(io_stream_factory))
@@ -37,10 +36,9 @@ CodeStream::CodeStream(
 
 void CodeStream::parse()
 {
-    auto [codec, parser] = codec_registry_->getCodecAndParser(&code_stream_desc_);
-    if (codec == nullptr || !parser)
+    auto parser = codec_registry_->getParser(&code_stream_desc_);
+    if (!parser)
         throw std::runtime_error("Could not match parser");
-    codec_                        = codec;
     parser_                       = std::move(parser);
     codec_name_                   = parser_->getCodecName();
     parse_state_                  = parser_->createParseState();
@@ -97,7 +95,7 @@ std::string CodeStream::getCodecName() const
 }
 ICodec* CodeStream::getCodec() const
 {
-    return codec_;
+    return codec_registry_->getCodecByName(codec_name_.c_str());
 }
 
 nvimgcdcsIOStreamDesc* CodeStream::getInputStreamDesc()

@@ -22,7 +22,7 @@ class MockCodecRegistry : public ICodecRegistry
 {
   public:
     MOCK_METHOD(void, registerCodec, (std::unique_ptr<ICodec> codec), (override));
-    MOCK_METHOD((const std::pair<ICodec*, std::unique_ptr<IImageParser>>), getCodecAndParser,(
+    MOCK_METHOD((std::unique_ptr<IImageParser>), getParser,(
         nvimgcdcsCodeStreamDesc_t code_stream), (const, override));
     MOCK_METHOD(ICodec*, getCodecByName, (const char* name) ,  (override));
 };
