@@ -17,4 +17,4 @@ namespace nvpxm {
 
 nvimgcdcsStatus_t get_nvpxm_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);
 
-} // namespace nvimgcdcs
+} // namespace nvpxm

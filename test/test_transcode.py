@@ -40,9 +40,9 @@ def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, oupu
     ("base/4k_lossless_q95_444.jpg", "jpeg", "4k_lossless-jpg.jpg","", "34e667ecd9df74f8be165bedbac72bb0"),
     ("base/4k_lossless_q95_444.jpg", "jpeg2k", "4k_lossless-jpg.jp2","", "f34e26bdcddd718428a5494b609a1c56"),
 
-    ("base/4k_lossless.bmp", "jpeg",  "4k_lossless-bmp-420.jpg","-chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
-    ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-420.jpg","-chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
-    ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-422.jpg","-chroma_subsampling 422", "288ea71d08e74876d90c89c33284c56f"),
+    ("base/4k_lossless.bmp", "jpeg",  "4k_lossless-bmp-420.jpg","--chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
+    ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-420.jpg","--chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
+    ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-422.jpg","--chroma_subsampling 422", "288ea71d08e74876d90c89c33284c56f"),
     ]
 )
 def test_imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, ouput_img_file, params, check_sum):

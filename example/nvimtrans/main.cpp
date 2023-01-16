@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include "nvpxm.h"
+#include "command_line_params.h"
 
 namespace fs = std::filesystem;
 
@@ -69,235 +70,6 @@ double wtime(void)
 #endif
 }
 
-struct CommandLineParams
-{
-    std::string input;
-    std::string output;
-    std::string output_codec;
-    int warmup;
-    int batch_size;
-    int total_images;
-    int device_id;
-    int verbose;
-    float quality;
-    float target_psnr;
-    bool write_output;
-    bool reversible;
-    int num_decomps;
-    int code_block_w;
-    int code_block_h;
-    bool dec_color_trans;
-    bool enc_color_trans;
-    bool optimized_huffman;
-    bool ignore_orientation;
-    nvimgcdcsJpegEncoding_t jpeg_encoding;
-    nvimgcdcsChromaSubsampling_t chroma_subsampling;
-};
-
-int find_param_index(const char** argv, int argc, const char* parm)
-{
-    int count = 0;
-    int index = -1;
-
-    for (int i = 0; i < argc; i++) {
-        if (strncmp(argv[i], parm, 100) == 0) {
-            index = i;
-            count++;
-        }
-    }
-
-    if (count == 0 || count == 1) {
-        return index;
-    } else {
-        std::cout << "Error, parameter " << parm << " has been specified more than once, exiting\n"
-                  << std::endl;
-        return -1;
-    }
-
-    return -1;
-}
-
-int process_commandline_params(int argc, const char* argv[], CommandLineParams* params)
-{
-    static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"},
-        {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}, {".tiff", "tiff"}, {".tif", "tiff"},
-        {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pxm"}, {".pgm", "pxm"}, {".pbm", "pxm"}};
-
-    int pidx;
-    if ((pidx = find_param_index(argv, argc, "-h")) != -1 ||
-        (pidx = find_param_index(argv, argc, "--help")) != -1) {
-        std::cout << "Usage: " << argv[0] << " [decoding options]"
-                  << " -i <input> "
-                  << "[encoding options]"
-                  << " -o <output> " << std::endl;
-        std::cout << std::endl;
-        std::cout << "General options: " << std::endl;
-        std::cout << "  -h\t\t: show help" << std::endl;
-        std::cout << "  --help\t\t: show help" << std::endl;
-        std::cout << "  -verbose\t\t: verbosity level from 0 to 5 (default 1)" << std::endl;
-        std::cout << "  -w\t\t: warmup iterations (default 0)" << std::endl;
-        std::cout << std::endl;
-        std::cout << "Decoding options: " << std::endl;
-        std::cout
-            << "  -dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
-            << "  \t\t\t - When true, for jpeg with 4 color components assumes CMYK colorspace "
-               "and converts to RGB/YUV."
-            << std::endl
-            << "  \t\t\t - When true, for Jpeg2k and 422/420 chroma subsampling enable "
-               "conversion to RGB."
-            << std::endl;
-        std::cout << "  -ignore_orientation\t: Ignore EXFIF orientation (default false)"
-                  << std::endl;
-        std::cout << "  -input\t\t: Path to single image" << std::endl;
-        std::cout << std::endl;
-        std::cout << "Encoding options: " << std::endl;
-        std::cout << "  -output_codec\t\t: Output codec (default bmp)" << std::endl;
-        std::cout << "  -quality\t\t: Quality to encode with (default 95)" << std::endl;
-        std::cout << "  -chroma_subsampling\t: Chroma subsampling (default 444)" << std::endl;
-        std::cout << "  -enc_color_trans\t: Encoding color transfrom. For true transform RGB "
-                     "color images to YUV (default false)"
-                  << std::endl;
-        std::cout << "  -psnr\t\t\t: Target psnr (default 50)" << std::endl;
-        std::cout << "  -reversible\t\t: false for lossy and true for lossless compresion (default "
-                     "false) "
-                  << std::endl;
-        std::cout
-            << "  -num_decomps\t\t: number of wavelet transform decompositions levels (default 5)"
-            << std::endl;
-        std::cout
-            << "  -optimized_huffman\t: For false non-optimized Huffman will be used. Otherwise "
-               "optimized version will be used. (default false)."
-            << std::endl;
-        std::cout << "  -jpeg_encoding\t: Corresponds to the JPEG marker"
-                     " baseline_dct, sequential_dct or progressive_dct (default "
-                     "baseline_dct)."
-                  << std::endl;
-        ;
-        std::cout << "  -output\t\t: File to write decoded image using <output_codec>" << std::endl;
-
-        return EXIT_SUCCESS;
-    }
-    params->warmup = 0;
-    if ((pidx = find_param_index(argv, argc, "-w")) != -1) {
-        params->warmup = static_cast<int>(strtod(argv[pidx + 1], NULL));
-    }
-
-    params->verbose = 1;
-    if ((pidx = find_param_index(argv, argc, "-verbose")) != -1) {
-        params->verbose = static_cast<int>(strtod(argv[pidx + 1], NULL));
-    }
-
-    params->input = "./";
-    if ((pidx = find_param_index(argv, argc, "-i")) != -1) {
-        params->input = argv[pidx + 1];
-    } else {
-        std::cout << "Please specify input directory with encoded images" << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    params->ignore_orientation = false;
-    if ((pidx = find_param_index(argv, argc, "-ignore_orientation")) != -1) {
-        params->ignore_orientation = strcmp(argv[pidx + 1], "true") == 0;
-    }
-
-    params->quality = 95;
-    if ((pidx = find_param_index(argv, argc, "-q")) != -1) {
-        params->quality = static_cast<float>(strtod(argv[pidx + 1], NULL));
-    }
-
-    params->target_psnr = 50;
-    if ((pidx = find_param_index(argv, argc, "-psnr")) != -1) {
-        params->target_psnr = static_cast<float>(strtod(argv[pidx + 1], NULL));
-    }
-
-    params->write_output = false;
-    if ((pidx = find_param_index(argv, argc, "-o")) != -1) {
-        params->output = argv[pidx + 1];
-    }
-
-    params->output_codec = "bmp";
-    fs::path file_path(params->output);
-    if (file_path.has_extension()) {
-        std::string extension = file_path.extension().string();
-        auto it               = ext2codec.find(extension);
-        if (it != ext2codec.end()) {
-            params->output_codec = it->second;
-        }
-    }
-    if ((pidx = find_param_index(argv, argc, "-c")) != -1) {
-        params->output_codec = argv[pidx + 1];
-    }
-
-    params->reversible = false;
-    if ((pidx = find_param_index(argv, argc, "-reversible")) != -1) {
-        params->reversible = strcmp(argv[pidx + 1], "true") == 0;
-    }
-
-    params->num_decomps = 5;
-    if ((pidx = find_param_index(argv, argc, "-num_decomps")) != -1) {
-        params->num_decomps = atoi(argv[pidx + 1]);
-    }
-
-    params->code_block_w = 64;
-    params->code_block_h = 64;
-    if ((pidx = find_param_index(argv, argc, "-block_size")) != -1) {
-        params->code_block_h = atoi(argv[pidx + 1]);
-        params->code_block_w = atoi(argv[pidx + 2]);
-    }
-    params->dec_color_trans = false;
-    if ((pidx = find_param_index(argv, argc, "-dec_color_trans")) != -1) {
-        params->dec_color_trans = strcmp(argv[pidx + 1], "true") == 0;
-    }
-    params->enc_color_trans = false;
-    if ((pidx = find_param_index(argv, argc, "-enc_color_trans")) != -1) {
-        params->enc_color_trans = strcmp(argv[pidx + 1], "true") == 0;
-    }
-
-    params->optimized_huffman = false;
-    if ((pidx = find_param_index(argv, argc, "-optimized_huffman")) != -1) {
-        params->optimized_huffman = strcmp(argv[pidx + 1], "true") == 0;
-    }
-
-    params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
-    if ((pidx = find_param_index(argv, argc, "-jpeg_encoding")) != -1) {
-        if (strcmp(argv[pidx + 1], "baseline_dct") == 0) {
-            params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
-        } else if (strcmp(argv[pidx + 1], "sequential_dct") == 0) {
-            params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN;
-        } else if (strcmp(argv[pidx + 1], "progressive_dct") == 0) {
-            params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
-        } else {
-            std::cout << "Unknown jpeg encoding type: " << argv[pidx + 1] << std::endl;
-        }
-    }
-    params->chroma_subsampling = NVIMGCDCS_SAMPLING_444;
-    if ((pidx = find_param_index(argv, argc, "-chroma_subsampling")) != -1) {
-        std::map<std::string, nvimgcdcsChromaSubsampling_t> str2Css = {
-            {"444", NVIMGCDCS_SAMPLING_444}, {"420", NVIMGCDCS_SAMPLING_420},
-            {"440", NVIMGCDCS_SAMPLING_440}, {"422", NVIMGCDCS_SAMPLING_422},
-            {"411", NVIMGCDCS_SAMPLING_411}, {"410", NVIMGCDCS_SAMPLING_410},
-            {"gray", NVIMGCDCS_SAMPLING_GRAY}, {"410v", NVIMGCDCS_SAMPLING_410V}};
-        auto it = str2Css.find(argv[pidx + 1]);
-        if (it != str2Css.end()) {
-            params->chroma_subsampling = it->second;
-        } else {
-            std::cout << "Unknown chroma subsampling type: " << argv[pidx + 1] << std::endl;
-        }
-    }
-
-
-    params->batch_size    = 1;
-    if ((pidx = find_param_index(argv, argc, "-b")) != -1) {
-        params->batch_size = std::atoi(argv[pidx + 1]);
-    }
-
-    params->total_images = -1;
-    if ((pidx = find_param_index(argv, argc, "-t")) != -1) {
-        params->total_images = std::atoi(argv[pidx + 1]);
-    }
-
-    return -1;
-}
 uint32_t verbosity2severity(int verbose)
 {
     uint32_t result = 0;
@@ -315,9 +87,8 @@ uint32_t verbosity2severity(int verbose)
     return result;
 }
 
-void fill_encode_params(const CommandLineParams& params,
-    fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
-    nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params,
+void fill_encode_params(const CommandLineParams& params, fs::path output_path,
+    nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params,
     nvimgcdcsJpegEncodeParams_t* jpeg_encode_params)
 {
     memset(encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
@@ -331,8 +102,8 @@ void fill_encode_params(const CommandLineParams& params,
         memset(jpeg2k_encode_params, 0, sizeof(jpeg2k_encode_params));
         jpeg2k_encode_params->type            = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
         jpeg2k_encode_params->stream_type     = output_path.extension().string() == ".jp2"
-                                                   ? NVIMGCDCS_JPEG2K_STREAM_JP2
-                                                   : NVIMGCDCS_JPEG2K_STREAM_J2K;
+                                                    ? NVIMGCDCS_JPEG2K_STREAM_JP2
+                                                    : NVIMGCDCS_JPEG2K_STREAM_J2K;
         jpeg2k_encode_params->code_block_w    = params.code_block_w;
         jpeg2k_encode_params->code_block_h    = params.code_block_h;
         jpeg2k_encode_params->irreversible    = !params.reversible;
@@ -661,12 +432,11 @@ struct ImageBuffer
     size_t pitch_in_bytes;
 };
 
-int prepare_decode_resources(
-    nvimgcdcsInstance_t instance, FileData& file_data, std::vector<size_t>& file_len,
-    std::vector<ImageBuffer>& ibuf, FileNames& current_names, nvimgcdcsDecoder_t& decoder,
-    bool& is_host_output,
-    bool& is_device_output, std::vector<nvimgcdcsCodeStream_t> & code_streams,
-    std::vector<nvimgcdcsImage_t>& images, std::vector<nvimgcdcsDecodeState_t>& decode_states,
+int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
+    std::vector<size_t>& file_len, std::vector<ImageBuffer>& ibuf, FileNames& current_names,
+    nvimgcdcsDecoder_t& decoder, bool& is_host_output, bool& is_device_output,
+    std::vector<nvimgcdcsCodeStream_t>& code_streams, std::vector<nvimgcdcsImage_t>& images,
+    std::vector<nvimgcdcsDecodeState_t>& decode_states,
     const nvimgcdcsDecodeParams_t& decode_params, double& parse_time)
 {
     parse_time = 0;
@@ -745,7 +515,7 @@ int prepare_decode_resources(
         CHECK_NVIMGCDCS(nvimgcdcsImageSetImageInfo(images[i], &image_info));
 
         if (decoder == nullptr) {
-           //std::cout << "Creating decoder " << std::endl;
+            //std::cout << "Creating decoder " << std::endl;
             CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(
                 instance, &decoder, code_streams[i], images[i], &decode_params));
 
@@ -810,8 +580,6 @@ int prepare_decode_resources(
             CHECK_NVIMGCDCS(nvimgcdcsDecodeStateCreate(decoder, &decode_states[i], nullptr));
             CHECK_NVIMGCDCS(nvimgcdcsImageAttachDecodeState(images[i], decode_states[i]));
         }
-
-
     }
     return EXIT_SUCCESS;
 }
@@ -824,17 +592,17 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
     const std::string& codec_name)
 {
     for (uint32_t i = 0; i < current_names.size(); i++) {
-        fs::path filename = fs::path(current_names[i]).filename();
-        filename = filename.replace_extension("jp2"); //TODO get extension to codec
-        fs::path output_filename = output_path /  filename;
+        fs::path filename        = fs::path(current_names[i]).filename();
+        filename                 = filename.replace_extension("jp2"); //TODO get extension to codec
+        fs::path output_filename = output_path / filename;
 
         //std::cout << "Perparing output: " << output_filename.string()  << std::endl;
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(
             instance, &out_code_streams[i], output_filename.string().c_str(), codec_name.c_str()));
         if (encoder == nullptr) {
             //std::cout << "Creating encoder"  << std::endl;
-            CHECK_NVIMGCDCS(
-                nvimgcdcsEncoderCreate(instance, &encoder, images[i], out_code_streams[i], &encode_params))
+            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(
+                instance, &encoder, images[i], out_code_streams[i], &encode_params))
         }
         if (encode_states[i] == nullptr) {
             //std::cout << "Creating encode state" << std::endl;
@@ -845,8 +613,8 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
     return EXIT_SUCCESS;
 }
 
-int process_images(nvimgcdcsInstance_t instance, fs::path input_path,
-    fs::path output_path, const CommandLineParams& params)
+int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path output_path,
+    const CommandLineParams& params)
 {
     double time = wtime();
     //std::cout << "Collecting source images from input directory: " << input_path.string()
@@ -883,15 +651,16 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path,
     nvimgcdcsEncodeParams_t encode_params;
     nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
     nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
-    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
+    fill_encode_params(
+        params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
 
     bool is_host_output   = false;
     bool is_device_output = false;
-    bool is_host_input   = false;
-    bool is_device_input = false;
+    bool is_host_input    = false;
+    bool is_device_input  = false;
 
     cudaEvent_t startEvent = NULL;
-    cudaEvent_t stopEvent = NULL;
+    cudaEvent_t stopEvent  = NULL;
 
     CHECK_CUDA(cudaEventCreateWithFlags(&startEvent, cudaEventBlockingSync));
     CHECK_CUDA(cudaEventCreateWithFlags(&stopEvent, cudaEventBlockingSync));
@@ -901,13 +670,13 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path,
     int total_processed = 0;
 
     double total_processing_time = 0;
-    double total_reading_time = 0;
-    double total_parse_time  = 0;
-    double total_decode_time = 0;
-    double total_encode_time = 0;
+    double total_reading_time    = 0;
+    double total_parse_time      = 0;
+    double total_decode_time     = 0;
+    double total_encode_time     = 0;
     double total_time            = 0;
 
-    int warmup       = 0;
+    int warmup = 0;
     while (total_processed < total_images) {
         //std::cout << "Reading batch"  << std::endl;
         double start_reading_time = wtime();
@@ -918,15 +687,15 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path,
 
         double parse_time = 0;
         //std::cout << "Preparing decode resources" << std::endl;
-        if (prepare_decode_resources(instance, file_data, file_len, image_buffers, current_names, decoder,
-                is_host_output, is_device_output, in_code_streams, images, decode_states, decode_params,
-                parse_time))
+        if (prepare_decode_resources(instance, file_data, file_len, image_buffers, current_names,
+                decoder, is_host_output, is_device_output, in_code_streams, images, decode_states,
+                decode_params, parse_time))
             return EXIT_FAILURE;
 
         //std::cout << "Decoding batch" << std::endl;
         CHECK_CUDA(cudaEventRecord(startEvent, NULL));
-        CHECK_NVIMGCDCS(nvimgcdcsDecoderDecodeBatch(decoder,
-            in_code_streams.data(), images.data(), params.batch_size, &decode_params));
+        CHECK_NVIMGCDCS(nvimgcdcsDecoderDecodeBatch(
+            decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params));
         CHECK_CUDA(cudaEventRecord(stopEvent, NULL));
         CHECK_CUDA(cudaEventSynchronize(stopEvent));
         CHECK_CUDA(cudaEventElapsedTime(&loopTime, startEvent, stopEvent));
@@ -934,16 +703,16 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path,
             0.001 * static_cast<double>(loopTime); // cudaEventElapsedTime returns milliseconds
 
         //std::cout << "Preparing encode resources" << std::endl;
-        if (prepare_encode_resources(instance, current_names,
-                encoder, is_host_input, is_device_input, out_code_streams, images, encode_states,
-                encode_params, params.output , params.output_codec))
+        if (prepare_encode_resources(instance, current_names, encoder, is_host_input,
+                is_device_input, out_code_streams, images, encode_states, encode_params,
+                params.output, params.output_codec))
             return EXIT_FAILURE;
 
         //std::cout << "Encoding batch" << std::endl;
         CHECK_CUDA(cudaEventRecord(startEvent, NULL));
 
         CHECK_NVIMGCDCS(nvimgcdcsEncoderEncodeBatch(
-             encoder, images.data(), out_code_streams.data(), params.batch_size, &encode_params));
+            encoder, images.data(), out_code_streams.data(), params.batch_size, &encode_params));
 
         CHECK_CUDA(cudaEventRecord(stopEvent, NULL));
         CHECK_CUDA(cudaEventSynchronize(stopEvent));
@@ -981,7 +750,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path,
         }
     }
 
-    if(decoder) {
+    if (decoder) {
         nvimgcdcsDecoderDestroy(decoder);
     }
 
@@ -1032,6 +801,22 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path,
     return EXIT_SUCCESS;
 }
 
+void list_cuda_devices()
+{
+    int num_devices;
+    cudaGetDeviceCount(&num_devices);
+    for (int i = 0; i < num_devices; i++) {
+        cudaDeviceProp prop;
+        cudaGetDeviceProperties(&prop, i);
+        printf("Device Number: %d\n", i);
+        printf("  Device name: %s\n", prop.name);
+        printf("  Memory Clock Rate (KHz): %d\n", prop.memoryClockRate);
+        printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
+        printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
+            2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
+    }
+}
+
 int main(int argc, const char* argv[])
 {
     int exit_code = EXIT_SUCCESS;
@@ -1039,6 +824,10 @@ int main(int argc, const char* argv[])
     int status = process_commandline_params(argc, argv, &params);
     if (status != -1) {
         return status;
+    }
+
+    if (params.list_cuda_devices) {
+        list_cuda_devices();
     }
 
     nvimgcdcsInstance_t instance;
@@ -1076,3 +865,5 @@ int main(int argc, const char* argv[])
 
     return exit_code;
 }
+
+
