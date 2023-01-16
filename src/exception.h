@@ -15,6 +15,7 @@
 #include <string>
 
 namespace nvimgcdcs {
+    
 enum StatusNVIMGCDCS
 {
     STATUS_OK = 0,

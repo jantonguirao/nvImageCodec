@@ -32,7 +32,7 @@ std::string ImageEncoderFactory::getEncoderId() const
 
 bool ImageEncoderFactory::canEncode(
     nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsEncodeParams_t* params)
+    const nvimgcdcsEncodeParams_t* params)
 {
     assert(code_stream);
     assert(encoder_desc_->canEncode);
@@ -42,7 +42,7 @@ bool ImageEncoderFactory::canEncode(
 }
 
 std::unique_ptr<IImageEncoder> ImageEncoderFactory::createEncoder(
-    nvimgcdcsEncodeParams_t* params) const
+    const nvimgcdcsEncodeParams_t* params) const
 {
     return std::make_unique<ImageEncoder>(encoder_desc_, params);
 }

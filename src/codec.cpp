@@ -35,7 +35,7 @@ std::unique_ptr<IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code
 }
 
 std::unique_ptr<IImageDecoder> Codec::createDecoder(nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params) const
+    nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::createDecoder " << name_);
     for (const auto& entry : decoders_) {
@@ -49,7 +49,7 @@ std::unique_ptr<IImageDecoder> Codec::createDecoder(nvimgcdcsCodeStreamDesc_t co
 }
 
 std::unique_ptr<IImageEncoder> Codec::createEncoder(nvimgcdcsImageDesc_t image,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params) const
+    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::createEncoder " << name_);
     for (const auto& entry : encoders_) {

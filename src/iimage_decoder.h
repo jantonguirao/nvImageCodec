@@ -14,6 +14,7 @@
 #include <nvimgcodecs.h>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace nvimgcdcs {
 class IDecodeState;
@@ -26,7 +27,11 @@ class IImageDecoder
     virtual ~IImageDecoder() = default;
     virtual std::unique_ptr<IDecodeState> createDecodeState() const = 0;
     virtual void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) = 0;
-    virtual void decode(ICodeStream* code_stream, IImage* image, nvimgcdcsDecodeParams_t* params) = 0;
+    virtual bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+       const  nvimgcdcsDecodeParams_t* params) const = 0;
+    virtual void decode(ICodeStream* code_stream, IImage* image, const nvimgcdcsDecodeParams_t* params) = 0;
+    virtual void decodeBatch(const std::vector<ICodeStream*>& code_streams,
+        const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params) = 0;
 };
 
 } // namespace nvimgcdcs

@@ -33,7 +33,7 @@ std::string ImageDecoderFactory::getCodecName() const
 }
 
 bool ImageDecoderFactory::canDecode(nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
 {
     assert(code_stream);
     assert(decoder_desc_->canDecode);
@@ -43,7 +43,7 @@ bool ImageDecoderFactory::canDecode(nvimgcdcsCodeStreamDesc_t code_stream,
 }
 
 std::unique_ptr<IImageDecoder> ImageDecoderFactory::createDecoder(
-    nvimgcdcsDecodeParams_t* params) const
+    const nvimgcdcsDecodeParams_t* params) const
 {
     return std::make_unique<ImageDecoder>(decoder_desc_, params);
 }

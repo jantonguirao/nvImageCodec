@@ -24,11 +24,16 @@ class ICodeStream;
 class ImageDecoder : public IImageDecoder
 {
   public:
-    ImageDecoder(const struct nvimgcdcsDecoderDesc* desc, nvimgcdcsDecodeParams_t* params);
+    ImageDecoder(const struct nvimgcdcsDecoderDesc* desc, const nvimgcdcsDecodeParams_t* params);
     ~ImageDecoder() override;
     std::unique_ptr<IDecodeState> createDecodeState() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
-    void decode(ICodeStream* code_stream, IImage* image, nvimgcdcsDecodeParams_t* params) override;
+    bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+        const nvimgcdcsDecodeParams_t* params) const override;
+    void decode(ICodeStream* code_stream, IImage* image, const nvimgcdcsDecodeParams_t* params) override;
+    void decodeBatch(
+        const std::vector<ICodeStream*>& code_streams,
+        const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params) override;
 
   private:
     const struct nvimgcdcsDecoderDesc* decoder_desc_;

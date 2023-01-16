@@ -28,7 +28,7 @@ namespace nvpxm {
     }
 
 static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsImageDesc_t image,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_can_encode");
     *result = true;
@@ -76,7 +76,7 @@ static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsI
 }
 
 static nvimgcdcsStatus_t pxm_create(
-    void* instance, nvimgcdcsEncoder_t* encoder, nvimgcdcsEncodeParams_t* params)
+    void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_create_encoder");
     *encoder = new nvimgcdcsEncoder();
@@ -219,7 +219,7 @@ int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
 
 static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state,
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
-    nvimgcdcsEncodeParams_t* params)
+    const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_encode");
     nvimgcdcsImageInfo_t image_info;
@@ -265,7 +265,8 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
     pxm_create_encode_state,
     pxm_destroy_encode_state,
     pxm_get_capabilities,
-    pxm_encode
+    pxm_encode,
+    NULL
 };
 // clang-format on
 

@@ -27,8 +27,8 @@ class ImageDecoderFactory : public IImageDecoderFactory
     std::string getDecoderId() const override;
     std::string getCodecName() const override;
     bool canDecode(
-        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params) override;
-    std::unique_ptr<IImageDecoder> createDecoder(nvimgcdcsDecodeParams_t* params) const override;
+        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params) override;
+    std::unique_ptr<IImageDecoder> createDecoder(const nvimgcdcsDecodeParams_t* params) const override;
 
   private:
     const struct nvimgcdcsDecoderDesc* decoder_desc_;

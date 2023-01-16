@@ -15,7 +15,7 @@ struct nvimgcdcsDecodeState
 
 static nvimgcdcsStatus_t nvbmp_can_decode(void* instance, bool* result,
     nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
 {
     *result = true;
     char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
@@ -37,7 +37,7 @@ static nvimgcdcsStatus_t nvbmp_can_decode(void* instance, bool* result,
 }
 
 static nvimgcdcsStatus_t nvbmp_decoder_create(
-    void* instance, nvimgcdcsDecoder_t* decoder, nvimgcdcsDecodeParams_t* params)
+    void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_create");
     *decoder = new nvimgcdcsDecoder();
@@ -87,7 +87,7 @@ nvimgcdcsStatus_t nvbmp_get_capabilities(
 
 static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder,
     nvimgcdcsDecodeState_t decode_state, nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_decode" );
     nvimgcdcsImageInfo_t image_info;
@@ -137,6 +137,7 @@ nvimgcdcsDecoderDesc_t nvbmp_decoder = {
     nvbmp_create_decode_state, 
     nvbmp_destroy_decode_state,
     nvbmp_get_capabilities,
-    nvbmp_decoder_decode
+    nvbmp_decoder_decode,
+    NULL
 };
 // clang-format on

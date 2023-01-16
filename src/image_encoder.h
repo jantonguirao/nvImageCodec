@@ -11,7 +11,6 @@
 #pragma once
 
 #include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
 #include <memory>
 #include <string>
 #include "iimage_encoder.h"
@@ -25,11 +24,16 @@ class ICodeStream;
 class ImageEncoder : public IImageEncoder
 {
   public:
-    ImageEncoder(const struct nvimgcdcsEncoderDesc* desc, nvimgcdcsEncodeParams_t* params);
+    ImageEncoder(const struct nvimgcdcsEncoderDesc* desc, const nvimgcdcsEncodeParams_t* params);
     ~ImageEncoder() override;
     std::unique_ptr<IEncodeState> createEncodeState(cudaStream_t cuda_stream) const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
-    void encode(ICodeStream* code_stream, IImage* image, nvimgcdcsEncodeParams_t* params) override;
+    bool canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
+        const nvimgcdcsEncodeParams_t* params) const override;
+    void encode(ICodeStream* code_stream, IImage* image, const nvimgcdcsEncodeParams_t* params) override;
+    void encodeBatch(const std::vector<IImage*>& images,
+        const std::vector<ICodeStream*>& code_streams,
+        const nvimgcdcsEncodeParams_t* params) override;
 
   private:
     const struct nvimgcdcsEncoderDesc* encoder_desc_;

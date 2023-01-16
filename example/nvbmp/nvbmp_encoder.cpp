@@ -134,7 +134,7 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
 
 static nvimgcdcsStatus_t nvbmp_encoder_can_encode(void* instance, bool* result,
     nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsEncodeParams_t* params)
+    const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_can_encode");
     *result = true;
@@ -158,7 +158,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_can_encode(void* instance, bool* result,
 }
 
 static nvimgcdcsStatus_t nvbmp_encoder_create(
-    void* instance, nvimgcdcsEncoder_t* encoder, nvimgcdcsEncodeParams_t* params)
+    void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_create");
 
@@ -209,7 +209,7 @@ nvimgcdcsStatus_t nvbmp_get_capabilities(
 
 static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
     nvimgcdcsEncodeState_t encode_state, nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsImageDesc_t image, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_encode");
     nvimgcdcsImageInfo_t image_info;
@@ -252,6 +252,7 @@ nvimgcdcsEncoderDesc nvbmp_encoder = {
     nvbmp_create_encode_state, 
     nvbmp_destroy_encode_state,
     nvbmp_get_capabilities,
-    nvbmp_encoder_encode
+    nvbmp_encoder_encode,
+    NULL
 };
 // clang-format on    
