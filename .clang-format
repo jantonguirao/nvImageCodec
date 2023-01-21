@@ -43,7 +43,7 @@ AlignTrailingComments: true
 AlignEscapedNewlines: Left
 AlignOperands:   Align
 AlignAfterOpenBracket: DontAlign
-AlignConsecutiveAssignments: true
+AlignConsecutiveAssignments: false
 AlignConsecutiveMacros: false
 AlignConsecutiveBitFields: true
 AlignConsecutiveDeclarations: false
