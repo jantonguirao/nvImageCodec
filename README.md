@@ -1,95 +1,160 @@
 # nvImageCodecs
 
-Unified Image Codec 
+## Description
+
+nvImageCodecs is a library of accelerated codecs with unified interface. It is designed as a framework for extension modules which delivers particular codec plugins.
+
+## Requirements
+- [nvImageCodecs PRD](https://nam11.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdocs.google.com%2Fdocument%2Fd%2F1KrFzidHNfozNYk8a3crs0ekNH3ETisT1%2Fedit&data=05%7C01%7Csmatysik%40nvidia.com%7C7a7093b7b5804d1b98f008dac16b827e%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638034964732398522%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=GD26jloLP4IdjvI%2BdYrmIs5PZgYCMHXWMXnLjGRfAJ4%3D&reserved=0)
+
+## Design
+- [Design slides](https://nam11.safelinks.protection.outlook.com/ap/p-59584e83/?url=https%3A%2F%2Fnvidia-my.sharepoint.com%2F%3Ap%3A%2Fp%2Ftrybicki%2FEbDMoASyk0hLukzPdpW66S4BzOvJZ9vymm0fkddy7utfkw%3Fe%3DMlduBI&data=05%7C01%7Csmatysik%40nvidia.com%7C347ebe243c764d22761908dad7cbbad2%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638059567268905928%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=xut9HNCGgftyfTR635%2BJu2Amp%2F6bF2eZsjkzhrpNOYg%3D&reserved=0)
+- [Design recording](https://nam11.safelinks.protection.outlook.com/?url=https%3A%2F%2Fnvidia-my.sharepoint.com%2F%3Av%3A%2Fp%2Ftrybicki%2FEeC0aKfe5bdFixtDmg7J3ZkBJg3Pzyl1RfPkNFyQOV2VFQ&data=05%7C01%7Csmatysik%40nvidia.com%7C347ebe243c764d22761908dad7cbbad2%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638059567269062080%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=WmjhZpi1SocpDVAP5QtcM4kOQ6aiW%2FspDvMYPGwzXbQ%3D&reserved=0)
+
+## Coding Style Guide
+
+- [CUDA/C++ Coding Style Guide](https://docs.google.com/document/d/1jNvQBMQhoIQMSot4WFUop8Bl2bCUxvuX7Xa4910RDQI/edit)
+- There is .clang-format file in the main project directory
+
+## Prototype
+Currently this project is in prototype state  with initial support for:
 - nvJPEG
 - nvJPEG2000
-- nvTIFF
+- nvBMP (as a example extension module)
 
-## Getting started
+There are following known limitation:
+- Only planar RGB format is supported as a input for encoder and output from decoder
+- There is limited set of supported decoder and encoder parameters
+- No custom allocators yet
+- No batch processing yet
+- No ROI support yet
+- No Metadata support yet (appart of EXIF orientation for jpeg)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Pre-requisites
+- git
+- git lfs (images used for testing are stored as lfs files) 
+- CMake >= 3.14
+- gcc >= 9.4 
+- NVIDIA CUDA >= 11.8 
+- Python for tests and examples
+- Supported systems:
+  - Windows >= 10 
+  - Ubuntu >= 20.04
+  - WSL2 with Ubuntu >= 20.04 
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+## Build
 
 ```
-cd existing_repo
-git remote add origin https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec.git
-git branch -M main
-git push -uf origin main
+git lfs clone ssh://git@gitlab-master.nvidia.com:12051/cuda-hpc-libraries/nvimagecodec.git
+cd nvimagecodec
+git checkout prototype
+git submodule update --init --recursive --remote
+mkdir build
+cd build
+export CUDACXX=nvcc
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make
+```
+## Install for tests
+
+Below is described temporar instalation process just for testing prototype 
+
+### Linux
+```
+cd build
+cmake --install . --config Release --prefix bin
+cd bin
+sudo ./install.sh
 ```
 
-## Integrate with your tools
+After execution there should be:
+- all plugins in /usr/lib/nvimgcodecs/plugins (it is default directory for plugin discovery)
+- libnvimgcodecs.so in /usr/lib/x86_64-linux-gnu
 
-- [ ] [Set up project integrations](https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec/-/settings/integrations)
+### Windows
 
-## Collaborate with your team
+To install nvImageCodecs on Windows please execute following commmands in console with administrator privileges
+```
+cd build
+cmake --install . --config Release
+```
+All necessery files should be installed in C:\Program Files\nvimgcodecs directory.
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+```
+C:\Program Files\nvimgcodecs
+│   LICENSE.txt
+│
+├───bin
+│       nvimgcodecs.dll
+│       nvimgcodecs_example_high_level_api.exe
+│       nvimtrans.exe
+│       nvjpeg2k_example.exe
+│
+├───include
+│       nvimgcodecs.h
+│       nvimgcdcs_version.h
+│       nvimgcodecs.h
+│       nvjpeg.h
+│       nvjpeg2k.h
+│       nvjpeg2k_version.h
+│
+├───lib64
+│       nvbmp.lib
+│       nvimgcodecs.lib
+│       nvimgcodecs_static.lib
+│       nvjpeg.lib
+│       nvjpeg2k.lib
+│
+├───plugins
+│       nvbmp_0.dll
+│       nvjpeg2k_0.dll
+│       nvjpeg64_22.dll
+│
+├───python
+│       nvimgcodecs.cp39-win_amd64.pyd│
+│
+└───test
+        nvjpeg2k_negative_tests.exe
+        nvjpeg2k_perf_tests.exe
+        nvjpeg2k_tests.exe
+        nvjpeg_example.exe
+        nvjpeg_example_batched.exe
+        nvjpeg_example_encode.exe
+        nvjpeg_example_new.exe
+        nvjpeg_example_transcode.exe
+        nvjpeg_exposed.exe
+        nvjpeg_tests.exe
+        nvjpeg_tests_L2.exe
+        nvjpeg_tests_perf.exe
 
-## Test and Deploy
+```
 
-Use the built-in continuous integration in GitLab.
+To install in other folder please use --prefix argument
+```
+cmake --install . --config Release --prefix bin
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+## Testing
+Run CTest to execute L0 and L2 tests
+```
+cd build
+cmake --install . --config Release --prefix bin
+ctest -C Release
+```
 
-***
+Run L2 pytest
+```
+cd build
+cmake --install . --config Release --prefix bin
+pytest ../test
+```
 
-# Editing this README
+## Packaging
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+From a succesfully built project, installers can be generated using cpack:
+```
+cd build
+cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=Release
+```
+This will generate in build directory *.zip or *tar.xz files
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
