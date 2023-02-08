@@ -30,7 +30,7 @@ before_script:
             - build/test/nvimagecodec_tests_static
         expire_in: 2 weeks
 
-build:nvjpeg2k:
+build:nvimagecodec:
     extends: .build:nvimagecodec
 
     script:
