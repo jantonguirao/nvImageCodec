@@ -1,0 +1,50 @@
+.build-nvimagecodec-docs-script: &build-nvimagecodec-docs-script |
+    # Get build type
+    source /etc/bashrc
+    source .gitlab/ci/build_type.sh
+    # Build
+    mkdir -p build
+    cd build
+    cmake -DCMAKE_BUILD_TYPE=$NVIMAGECODEC_BUILD_TYPE -DBUILD_DOCS=ON -DBUILD_TEST=OFF ..
+    nice -n 19 make docs
+    cd ..
+
+docs:nvjpeg2k:
+    stage: build
+    tags:
+        - docker
+    dependencies: []
+    artifacts:
+        paths:
+            - html
+        expire_in: 2 weeks
+    only:
+        refs:
+            - /^docs.*$/ # branch contains "docs"
+    script:
+        - *build-nvimagecodec-docs-script
+        - mkdir -p html
+        - cp -r docs/nvimagecodec/_build/html/* html
+
+pages:
+    stage: deploy
+    tags:
+        - docker
+    dependencies: []
+    artifacts:
+        paths:
+            - public
+        expire_in: 1 week
+    # The logic is: (any of refs) AND (any of changes)
+    only:
+        refs:
+            - master
+        changes:
+            - docs/nvimagecodec/**/*
+            - docs/CMakeLists.txt
+            - CMakeLists.txt
+    script:
+        - *build-nvimagecodec-docs-script
+        - mkdir .public
+        - cp -r docs/nvimagecodec/_build/html/* .public
+        - mv .public public

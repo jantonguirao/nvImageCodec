@@ -1,13 +1,48 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
-# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
-# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
-# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
-stages:
-- test
-sast:
-  stage: test
-include:
-- template: Security/SAST.gitlab-ci.yml
+image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvjpeg2k/build:native-x86_64-centos7-11.8-12.0
+
+variables:
+    GIT_SUBMODULE_STRATEGY: normal
+    DEPENDENCIES_DIR: "$CI_PROJECT_DIR/.dependencies"
+    CMAKE_URL: "https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.tar.gz"
+    CMAKE_ROOT: "$CI_PROJECT_DIR/.dependencies/cmake"
+    GTEST_GIT_URL: "https://github.com/google/googletest.git"
+    GTEST_TAG: "release-1.10.0"
+    GTEST_SOURCE_ROOT: "$CI_PROJECT_DIR/.dependencies/googletest"
+    GTEST_ROOT: "$CI_PROJECT_DIR/.dependencies/gtest"
+
+
+before_script:
+  - export CUDACXX=/usr/local/cuda-11.8/bin/nvcc
+
+.build:
+    stage: build
+    tags:
+        - docker
+        - cuda
+
+.build:nvimagecodec:
+    extends: .build
+    artifacts:
+        paths:
+            - build/src/*.so.*
+            - build/src/*.a
+            - build/test/nvimagecodec_tests
+            - build/test/nvimagecodec_tests_static
+        expire_in: 2 weeks
+
+build:nvjpeg2k:
+    extends: .build:nvimagecodec
+
+    script:
+        # Get build type
+        - source /etc/bashrc
+        - source .gitlab/ci/build_type.sh
+        # Build
+        - mkdir -p build
+        - cd build
+        - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
+        - nice -n 19 make -j8
+
+
+# Documentation jobs
+include: '.gitlab/ci/build_docs.yml'
