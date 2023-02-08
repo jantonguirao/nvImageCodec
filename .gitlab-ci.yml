@@ -40,7 +40,7 @@ build:nvjpeg2k:
         # Build
         - mkdir -p build
         - cd build
-        - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
+        - cmake -DCMAKE_BUILD_TYPE=Release ../.
         - nice -n 19 make -j8
 
 
