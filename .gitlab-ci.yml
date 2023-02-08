@@ -40,9 +40,10 @@ build:nvjpeg2k:
         # Build
         - mkdir -p build
         - cd build
-        - cmake -DCMAKE_BUILD_TYPE=Release ../.
+        - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
         - nice -n 19 make -j8
 
 
 # Documentation jobs
-include: '.gitlab/ci/build_docs.yml'
+# include: '.gitlab/ci/build_docs.yml'
+
