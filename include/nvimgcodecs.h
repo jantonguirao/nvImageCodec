@@ -14,7 +14,6 @@
 #include <cuda_runtime_api.h>
 #include <stdint.h>
 #include <stdlib.h>
-//#include "library_types.h"
 #include "nvimgcdcs_data.h"
 #include "nvimgcdcs_version.h"
 
@@ -203,7 +202,7 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        int rotated; //CW
+        int rotated; //Clockwise
         bool flip_x;
         bool flip_y;
     } nvimgcdcsOrientation_t;
@@ -466,16 +465,6 @@ extern "C"
         nvimgcdcsJpegEncoding_t encoding;
         bool optimized_huffman;
     } nvimgcdcsJpegEncodeParams_t;
-
-    //TODO
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-        int stream_count;
-
-    } nvimgcdcsContainer;
-    typedef nvimgcdcsContainer* nvimgcdcsContainer_t;
 
     typedef enum
     {
@@ -862,9 +851,6 @@ extern "C"
         nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(
         nvimgcdcsCodeStream_t stream_handle, char* codec_name);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCopyExtMetaData(
-        nvimgcdcsEncodeState_t encodeState, nvimgcdcsCodeStream_t dst_stream_handle,
-        nvimgcdcsCodeStream_t src_stream_handle); //TODO
 
     //Decoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGenericCreate(
@@ -885,8 +871,6 @@ extern "C"
         nvimgcdcsFuture_t* future, bool blocking);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(
         nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(
-        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decodeState, bool* can_use); //TODO
 
     //DecodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
@@ -912,8 +896,6 @@ extern "C"
         nvimgcdcsFuture_t* future, bool blocking);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(
         nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanUseEncodeState(
-        nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encodeState, bool* canUse); //TODO
 
     //EncodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
@@ -931,16 +913,6 @@ extern "C"
         //for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
         //for Jpeg2k and 422/420 chroma subsampling enable conversion to RGB
         NVIMGCDCS_IMREAD_COLOR = 1,
-
-        //TODO NVIMGCDCS_IMREAD_ANYDEPTH            = 2, //accept 16-bit and 32-bit images, othewise convert to 8-bit
-        //TODO NVIMGCDCS_IMREAD_ANYCOLOR            = 4, //
-        //     NVIMGCDCS_IMREAD_LOAD_GDAL           = 8,
-        //TODO NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_2 = 16,
-        //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_2     = 17,
-        //TODO NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_4 = 32,
-        //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_4     = 33,
-        //TODO NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_8 = 64,
-        //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_8     = 65,
         NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 128, //Ignore orientation from Exif
         NVIMGCDCS_IMREAD_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImreadFlags_t;
@@ -950,33 +922,14 @@ extern "C"
         NVIMGCDCS_IMWRITE_JPEG_QUALITY = 1, // 0-100 default 95
         NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 2,
         NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 3, //optimized_huffman
-        // NVIMGCDCS_IMWRITE_JPEG_RST_INTERVAL    = 4,
-        // NVIMGCDCS_IMWRITE_JPEG_LUMA_QUALITY    = 5,
-        // NVIMGCDCS_IMWRITE_JPEG_CHROMA_QUALITY  = 6,
         NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 7,
 
         NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 100,     // default 50
         NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 101,     // num_decomps default 5
         NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 103, // code_block_w code_block_h (default 64 64)
         NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 104,
-
-        // NVIMGCDCS_IMWRITE_PNG_COMPRESSION = 16,
-        // NVIMGCDCS_IMWRITE_PNG_STRATEGY    = 17,
-        // NVIMGCDCS_IMWRITE_PNG_BILEVEL     = 18,
-
-        // NVIMGCDCS_IMWRITE_PXM_BINARY      = 32,
-        // NVIMGCDCS_IMWRITE_EXR_TYPE        = (3 << 4) + 0,
-        // NVIMGCDCS_IMWRITE_WEBP_QUALITY    = 64,
-        // NVIMGCDCS_IMWRITE_HDR_COMPRESSION = (5 << 4) + 0,
-        // NVIMGCDCS_IMWRITE_PAM_TUPLETYPE   = 128,
-
-        // NVIMGCDCS_IMWRITE_TIFF_RESUNIT     = 256,
-        // NVIMGCDCS_IMWRITE_TIFF_XDPI        = 257,
-        // NVIMGCDCS_IMWRITE_TIFF_YDPI        = 258,
-        // NVIMGCDCS_IMWRITE_TIFF_COMPRESSION = 259,
-
-        // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )
-        NVIMGCDCS_IMWRITE_MCT_MODE = 500,
+        NVIMGCDCS_IMWRITE_MCT_MODE =
+            500, // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )
         NVIMGCDCS_IMWRITE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImwriteParams_t;
 
