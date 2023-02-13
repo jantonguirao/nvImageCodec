@@ -9,13 +9,21 @@
  */
 
 #pragma once
+
 #include <nvimgcodecs.h>
+#include <memory>
+#include "processing_results.h"
 
 namespace nvimgcdcs {
+
+class ProcessingResultsPromise;
+
 class IDecodeState
 {
   public:
     virtual ~IDecodeState() = default;
+    virtual void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) = 0;
+    virtual ProcessingResultsPromise* getPromise() = 0;
     virtual nvimgcdcsDecodeState_t getInternalDecodeState() = 0;
 };
 } // namespace nvimgcdcs

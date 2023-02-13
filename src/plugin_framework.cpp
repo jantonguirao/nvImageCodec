@@ -22,7 +22,6 @@
 #include "image_encoder_factory.h"
 #include "image_parser_factory.h"
 #include "log.h"
-#include "thread_safe_queue.h"
 
 namespace fs = std::filesystem;
 

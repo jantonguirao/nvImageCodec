@@ -14,6 +14,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "processing_results.h"
 
 namespace nvimgcdcs {
 
@@ -26,13 +27,15 @@ class IImageEncoder
   public:
     virtual ~IImageEncoder() = default;
     virtual std::unique_ptr<IEncodeState> createEncodeState(cudaStream_t cuda_stream) const = 0;
+    virtual std::unique_ptr<IEncodeState> createEncodeStateBatch(cudaStream_t cuda_stream) const = 0;
     virtual void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)  = 0;
     virtual bool canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
         const nvimgcdcsEncodeParams_t* params) const                                        = 0;
-    virtual void encode(
-        ICodeStream* code_stream, IImage* image, const nvimgcdcsEncodeParams_t* params)       = 0;
-    virtual void encodeBatch(const std::vector<IImage*>& images,
-        const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params) = 0;
+    virtual std::unique_ptr<ProcessingResultsFuture> encode(
+        ICodeStream* code_stream, IImage* image, const nvimgcdcsEncodeParams_t* params) = 0;
+    virtual std::unique_ptr<ProcessingResultsFuture> encodeBatch(IEncodeState* encode_state_batch,
+        const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
+        const nvimgcdcsEncodeParams_t* params) = 0;
 };
 
 } // namespace nvimgcdcs

@@ -12,7 +12,6 @@
 
 #include <nvimgcodecs.h>
 #include <nvimgcodecs.h>
-#include "thread_safe_queue.h"
 #include "iimage.h"
 
 namespace nvimgcdcs {
@@ -22,12 +21,13 @@ class IEncodeState;
 class Image : public IImage
 {
   public:
-    explicit Image(ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue);
+    explicit Image();
     ~Image() override;
     void setHostBuffer(void* buffer, size_t size) override;
     void getHostBuffer(void** buffer, size_t* size) override;
     void setDeviceBuffer(void* buffer, size_t size) override;
     void getDeviceBuffer(void** buffer, size_t* size) override;
+    void setIndex(int index) override;
     void setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
     void getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
     void attachDecodeState(IDecodeState* decode_state) override;
@@ -37,6 +37,7 @@ class Image : public IImage
     IEncodeState* getAttachedEncodeState() override;
     void detachEncodeState() override;
     nvimgcdcsImageDesc_t getImageDesc() override;
+    void setPromise(ProcessingResultsPromise* promise) override;
     void setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status) override;
     nvimgcdcsProcessingStatus_t getProcessingStatus() const override;
 
@@ -49,6 +50,7 @@ class Image : public IImage
     static nvimgcdcsStatus_t static_image_ready(
         void* instance, nvimgcdcsProcessingStatus_t processing_status);
 
+    int index_;
     nvimgcdcsImageInfo_t image_info_;
     void* host_buffer_;
     size_t host_buffer_size_;
@@ -57,7 +59,7 @@ class Image : public IImage
     IDecodeState* decode_state_;
     IEncodeState* encode_state_;
     nvimgcdcsImageDesc image_desc_;
-    ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue_;
+    ProcessingResultsPromise* promise_;
     nvimgcdcsProcessingStatus_t processing_status_;
 };
 } // namespace nvimgcdcs

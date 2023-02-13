@@ -263,6 +263,7 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
     pxm_create,
     pxm_destroy,
     pxm_create_encode_state,
+    NULL,
     pxm_destroy_encode_state,
     pxm_get_capabilities,
     pxm_encode,

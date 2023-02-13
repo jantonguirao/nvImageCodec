@@ -120,79 +120,79 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_STATUS_UNKNOWN                      = -1,
-        NVIMGCDCS_STATUS_SUCCESS                      = 0,
-        NVIMGCDCS_STATUS_NOT_INITIALIZED              = 1,
-        NVIMGCDCS_STATUS_INVALID_PARAMETER            = 2,
-        NVIMGCDCS_STATUS_BAD_CODESTREAM               = 3,
-        NVIMGCDCS_STATUS_CODESTREAM_NOT_SUPPORTED     = 4,
-        NVIMGCDCS_STATUS_ALLOCATOR_FAILURE            = 5,
-        NVIMGCDCS_STATUS_EXECUTION_FAILED             = 6,
-        NVIMGCDCS_STATUS_ARCH_MISMATCH                = 7,
-        NVIMGCDCS_STATUS_INTERNAL_ERROR               = 8,
+        NVIMGCDCS_STATUS_UNKNOWN = -1,
+        NVIMGCDCS_STATUS_SUCCESS = 0,
+        NVIMGCDCS_STATUS_NOT_INITIALIZED = 1,
+        NVIMGCDCS_STATUS_INVALID_PARAMETER = 2,
+        NVIMGCDCS_STATUS_BAD_CODESTREAM = 3,
+        NVIMGCDCS_STATUS_CODESTREAM_NOT_SUPPORTED = 4,
+        NVIMGCDCS_STATUS_ALLOCATOR_FAILURE = 5,
+        NVIMGCDCS_STATUS_EXECUTION_FAILED = 6,
+        NVIMGCDCS_STATUS_ARCH_MISMATCH = 7,
+        NVIMGCDCS_STATUS_INTERNAL_ERROR = 8,
         NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED = 9,
-        NVIMGCDCS_STATUS_MISSED_DEPENDENCIES          = 10,
-        NVIMGCDCS_STATUS_ENUM_FORCE_INT               = 0xFFFFFFFF
+        NVIMGCDCS_STATUS_MISSED_DEPENDENCIES = 10,
+        NVIMGCDCS_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStatus_t;
 
     typedef enum
     {
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN       = -1,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN = -1,
         NVIMGCDCS_SAMPLE_DATA_TYPE_NOT_SUPPORTED = 0,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8         = 1,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16        = 2,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8         = 3,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16        = 4,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32       = 5,
-        NVIMGCDCS_SAMPLE_ENUM_FORCE_INT          = 0xFFFFFFFF
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 = 1,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 = 2,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 = 3,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 = 4,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 5,
+        NVIMGCDCS_SAMPLE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampleDataType_t;
 
     typedef enum
     {
-        NVIMGCDCS_SAMPLING_UNKNOWN        = -1,
-        NVIMGCDCS_SAMPLING_NOT_SUPPORTED  = 0,
-        NVIMGCDCS_SAMPLING_444            = 1,
-        NVIMGCDCS_SAMPLING_422            = 2,
-        NVIMGCDCS_SAMPLING_420            = 3,
-        NVIMGCDCS_SAMPLING_440            = 4,
-        NVIMGCDCS_SAMPLING_411            = 5,
-        NVIMGCDCS_SAMPLING_410            = 6,
-        NVIMGCDCS_SAMPLING_GRAY           = 7,
-        NVIMGCDCS_SAMPLING_410V           = 8,
+        NVIMGCDCS_SAMPLING_UNKNOWN = -1,
+        NVIMGCDCS_SAMPLING_NOT_SUPPORTED = 0,
+        NVIMGCDCS_SAMPLING_444 = 1,
+        NVIMGCDCS_SAMPLING_422 = 2,
+        NVIMGCDCS_SAMPLING_420 = 3,
+        NVIMGCDCS_SAMPLING_440 = 4,
+        NVIMGCDCS_SAMPLING_411 = 5,
+        NVIMGCDCS_SAMPLING_410 = 6,
+        NVIMGCDCS_SAMPLING_GRAY = 7,
+        NVIMGCDCS_SAMPLING_410V = 8,
         NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsChromaSubsampling_t;
 
     //Interleave - even Planar - odd
     typedef enum
     {
-        NVIMGCDCS_SAMPLEFORMAT_UNKNOWN        = -1,
-        NVIMGCDCS_SAMPLEFORMAT_NOT_SUPPORTED  = 0,
-        NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED    = 1, //unchanged planar
-        NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED    = 2, //unchanged interleave
-        NVIMGCDCS_SAMPLEFORMAT_P_RGB          = 3, //planar RGB
-        NVIMGCDCS_SAMPLEFORMAT_I_RGB          = 4, //interleaved RGB
-        NVIMGCDCS_SAMPLEFORMAT_P_BGR          = 5, //planar BGR
-        NVIMGCDCS_SAMPLEFORMAT_I_BGR          = 6, //interleaved BGR
-        NVIMGCDCS_SAMPLEFORMAT_P_Y            = 7, //Y component only
-        NVIMGCDCS_SAMPLEFORMAT_P_YUV          = 9, //YUV planar format
+        NVIMGCDCS_SAMPLEFORMAT_UNKNOWN = -1,
+        NVIMGCDCS_SAMPLEFORMAT_NOT_SUPPORTED = 0,
+        NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED = 1, //unchanged planar
+        NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED = 2, //unchanged interleave
+        NVIMGCDCS_SAMPLEFORMAT_P_RGB = 3,       //planar RGB
+        NVIMGCDCS_SAMPLEFORMAT_I_RGB = 4,       //interleaved RGB
+        NVIMGCDCS_SAMPLEFORMAT_P_BGR = 5,       //planar BGR
+        NVIMGCDCS_SAMPLEFORMAT_I_BGR = 6,       //interleaved BGR
+        NVIMGCDCS_SAMPLEFORMAT_P_Y = 7,         //Y component only
+        NVIMGCDCS_SAMPLEFORMAT_P_YUV = 9,       //YUV planar format
         NVIMGCDCS_SAMPLEFORMAT_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampleFormat_t;
 
     typedef enum
     {
-        NVIMGCDCS_COLORSPACE_UNKNOWN        = -1,
-        NVIMGCDCS_COLORSPACE_NOT_SUPPORTED  = 0,
-        NVIMGCDCS_COLORSPACE_SRGB           = 1,
-        NVIMGCDCS_COLORSPACE_GRAY           = 2,
-        NVIMGCDCS_COLORSPACE_SYCC           = 3,
-        NVIMGCDCS_COLORSPACE_CMYK           = 4,
-        NVIMGCDCS_COLORSPACE_YCCK           = 5,
+        NVIMGCDCS_COLORSPACE_UNKNOWN = -1,
+        NVIMGCDCS_COLORSPACE_NOT_SUPPORTED = 0,
+        NVIMGCDCS_COLORSPACE_SRGB = 1,
+        NVIMGCDCS_COLORSPACE_GRAY = 2,
+        NVIMGCDCS_COLORSPACE_SYCC = 3,
+        NVIMGCDCS_COLORSPACE_CMYK = 4,
+        NVIMGCDCS_COLORSPACE_YCCK = 5,
         NVIMGCDCS_COLORSPACE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsColorSpace_t;
 
     typedef enum
     {
-        NVIMGCDCS_SCALE_NONE   = 0, // decoded output is not scaled
+        NVIMGCDCS_SCALE_NONE = 0,   // decoded output is not scaled
         NVIMGCDCS_SCALE_1_BY_2 = 1, // decoded output width and height is scaled by a factor of 1/2
         NVIMGCDCS_SCALE_1_BY_4 = 2, // decoded output width and height is scaled by a factor of 1/4
         NVIMGCDCS_SCALE_1_BY_8 = 3, // decoded output width and height is scaled by a factor of 1/8
@@ -241,11 +241,11 @@ extern "C"
     // Currently parseable JPEG encodings (SOF markers)
     typedef enum
     {
-        NVIMGCDCS_JPEG_ENCODING_UNKNOWN                         = 0x0,
-        NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT                    = 0xc0,
+        NVIMGCDCS_JPEG_ENCODING_UNKNOWN = 0x0,
+        NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT = 0xc0,
         NVIMGCDCS_JPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN = 0xc1,
-        NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN         = 0xc2,
-        NVIMGCDCS_JPEG_ENCODING_ENUM_FORCE_INT                  = 0xFFFFFFFF
+        NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN = 0xc2,
+        NVIMGCDCS_JPEG_ENCODING_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsJpegEncoding_t;
 
     //TODO fill with data in nvJpeg2k
@@ -321,41 +321,41 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN                     = -1,
-        NVIMGCDCS_PROCESSING_STATUS_SUCCESS                     = 0,
-        NVIMGCDCS_PROCESSING_STATUS_INCOMPLETE                  = 1,
-        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED             = 2,
-        NVIMGCDCS_PROCESSING_STATUS_IMAGE_NOT_SUPPORTED         = 3,
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_NOT_SUPPORTED      = 4,
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_NOT_SUPPORTED   = 5,
+        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = -1,
+        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0,
+        NVIMGCDCS_PROCESSING_STATUS_INCOMPLETE = 1,
+        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 2,
+        NVIMGCDCS_PROCESSING_STATUS_IMAGE_NOT_SUPPORTED = 3,
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_NOT_SUPPORTED = 4,
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_NOT_SUPPORTED = 5,
         NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_NOT_SUPPORTED = 6,
-        NVIMGCDCS_PROCESSING_STATUS_SCALING_NOT_SUPPORTED       = 7,
-        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION         = 8,
-        NVIMGCDCS_PROCESSING_STATUS_DECODING                    = 9,
-        NVIMGCDCS_PROCESSING_STATUS_ENCODING                    = 10,
+        NVIMGCDCS_PROCESSING_STATUS_SCALING_NOT_SUPPORTED = 7,
+        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION = 8,
+        NVIMGCDCS_PROCESSING_STATUS_DECODING = 9,
+        NVIMGCDCS_PROCESSING_STATUS_ENCODING = 10,
         //...
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsProcessingStatus_t;
 
     typedef enum
     {
-        NVIMGCDCS_DECODE_PHASE_ALL            = 0,
-        NVIMGCDCS_DECODE_PHASE_HOST           = 1,
-        NVIMGCDCS_DECODE_PHASE_MIXED          = 2,
-        NVIMGCDCS_DECODE_PHASE_DEVICE         = 3,
+        NVIMGCDCS_DECODE_PHASE_ALL = 0,
+        NVIMGCDCS_DECODE_PHASE_HOST = 1,
+        NVIMGCDCS_DECODE_PHASE_MIXED = 2,
+        NVIMGCDCS_DECODE_PHASE_DEVICE = 3,
         NVIMGCDCS_DECODE_PHASE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDecodePhase_t;
 
     typedef enum
     {
-        NVIMGCDCS_DECODE_STEP_ALL              = 0,
-        NVIMGCDCS_DECODE_STEP_COLOR_TRANSFORM  = 1,
+        NVIMGCDCS_DECODE_STEP_ALL = 0,
+        NVIMGCDCS_DECODE_STEP_COLOR_TRANSFORM = 1,
         NVIMGCDCS_DECODE_STEP_DOMAIN_TRANSFORM = 2,
-        NVIMGCDCS_DECODE_STEP_QUANTIZATION     = 3,
-        NVIMGCDCS_DECODE_STEP_PRE_ENTROPY      = 4,
-        NVIMGCDCS_DECODE_STEP_ENTROPY          = 5,
-        NVIMGCDCS_DECODE_STEP_PACKAGING        = 6,
-        NVIMGCDCS_DECODE_STEP_ENUM_FORCE_INT   = 0xFFFFFFFF
+        NVIMGCDCS_DECODE_STEP_QUANTIZATION = 3,
+        NVIMGCDCS_DECODE_STEP_PRE_ENTROPY = 4,
+        NVIMGCDCS_DECODE_STEP_ENTROPY = 5,
+        NVIMGCDCS_DECODE_STEP_PACKAGING = 6,
+        NVIMGCDCS_DECODE_STEP_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDecodeStep_t;
 
     typedef struct
@@ -400,8 +400,8 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_MCT_MODE_YCC            = 0, //transform RGB color images to YUV (default false)
-        NVIMGCDCS_MCT_MODE_RGB            = 1,
+        NVIMGCDCS_MCT_MODE_YCC = 0, //transform RGB color images to YUV (default false)
+        NVIMGCDCS_MCT_MODE_RGB = 1,
         NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsMctMode_t;
 
@@ -423,18 +423,18 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP           = 0,
-        NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP           = 1,
-        NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL           = 2,
-        NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL           = 3,
-        NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL           = 4,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP = 0,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP = 1,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL = 2,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL = 3,
+        NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL = 4,
         NVIMGCDCS_JPEG2K_PROG_ORDER_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsJpeg2kProgOrder_t;
 
     typedef enum
     {
-        NVIMGCDCS_JPEG2K_STREAM_J2K            = 0,
-        NVIMGCDCS_JPEG2K_STREAM_JP2            = 1,
+        NVIMGCDCS_JPEG2K_STREAM_J2K = 0,
+        NVIMGCDCS_JPEG2K_STREAM_JP2 = 1,
         NVIMGCDCS_JPEG2K_STREAM_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsJpeg2kBitstreamType_t;
 
@@ -479,18 +479,18 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_CAPABILITY_UNKNOWN        = -1,
-        NVIMGCDCS_CAPABILITY_SCALING        = 1,
-        NVIMGCDCS_CAPABILITY_ORIENTATION    = 2,
-        NVIMGCDCS_CAPABILITY_PARTIAL        = 3,
-        NVIMGCDCS_CAPABILITY_ROI            = 4,
-        NVIMGCDCS_CAPABILITY_BATCH          = 5,
-        NVIMGCDCS_CAPABILITY_HOST_INPUT     = 6,
-        NVIMGCDCS_CAPABILITY_HOST_OUTPUT    = 7,
-        NVIMGCDCS_CAPABILITY_DEVICE_INPUT   = 8,
-        NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT  = 9,
+        NVIMGCDCS_CAPABILITY_UNKNOWN = -1,
+        NVIMGCDCS_CAPABILITY_SCALING = 1,
+        NVIMGCDCS_CAPABILITY_ORIENTATION = 2,
+        NVIMGCDCS_CAPABILITY_PARTIAL = 3,
+        NVIMGCDCS_CAPABILITY_ROI = 4,
+        NVIMGCDCS_CAPABILITY_BATCH = 5,
+        NVIMGCDCS_CAPABILITY_HOST_INPUT = 6,
+        NVIMGCDCS_CAPABILITY_HOST_OUTPUT = 7,
+        NVIMGCDCS_CAPABILITY_DEVICE_INPUT = 8,
+        NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT = 9,
         NVIMGCDCS_CAPABILITY_PHASE_DECODING = 10,
-        NVIMGCDCS_CAPABILITY_STEP_DECODING  = 11,
+        NVIMGCDCS_CAPABILITY_STEP_DECODING = 11,
         NVIMGCDCS_CAPABILITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsCapability_t;
 
@@ -511,8 +511,8 @@ extern "C"
     };
     typedef struct nvimgcdcsIOStreamDesc* nvimgcdcsIoStreamDesc_t;
 
-    struct nvimgcdcsHandle;
-    typedef struct nvimgcdcsHandle* nvimgcdcsInstance_t;
+    struct nvimgcdcsInstance;
+    typedef struct nvimgcdcsInstance* nvimgcdcsInstance_t;
 
     struct nvimgcdcsCodeStream;
     typedef struct nvimgcdcsCodeStream* nvimgcdcsCodeStream_t;
@@ -535,9 +535,9 @@ extern "C"
     typedef enum
     {
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_UKNOWN = -1,
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_NONE   = 0,
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE  = 1, // Diagnostic message useful for developers
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG  = 2, // Diagnostic message useful for developers
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_NONE = 0,
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE = 1, // Diagnostic message useful for developers
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG = 2, // Diagnostic message useful for developers
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO =
             4, // Informational message like the creation of a resource
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING =
@@ -554,7 +554,7 @@ extern "C"
     typedef enum
     {
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_UKNOWN = -1,
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_NONE   = 0,
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_NONE = 0,
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL =
             1, // Some event has happened that is unrelated to the specification or performance
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION =
@@ -592,6 +592,9 @@ extern "C"
         nvimgcdcsDebugCallback_t user_callback;
         void* userData;
     } nvimgcdcsDebugMessengerDesc_t;
+
+    struct nvimgcdcsFuture;
+    typedef struct nvimgcdcsFuture* nvimgcdcsFuture_t;
 
     struct nvimgcdcsParser;
     typedef struct nvimgcdcsParser* nvimgcdcsParser_t;
@@ -673,6 +676,8 @@ extern "C"
 
         nvimgcdcsStatus_t (*createEncodeState)(nvimgcdcsEncoder_t encoder,
             nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
+        nvimgcdcsStatus_t (*createEncodeStateBatch)(nvimgcdcsEncoder_t encoder,
+            nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
         nvimgcdcsStatus_t (*destroyEncodeState)(nvimgcdcsEncodeState_t encode_state);
 
         nvimgcdcsStatus_t (*getCapabilities)(
@@ -683,8 +688,8 @@ extern "C"
             const nvimgcdcsEncodeParams_t* params);
 
         nvimgcdcsStatus_t (*encodeBatch)(nvimgcdcsEncoder_t encoder,
-            nvimgcdcsEncodeState_t* encode_states, nvimgcdcsImageDesc_t* images,
-            nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size,
+            nvimgcdcsEncodeState_t encode_state_batch, nvimgcdcsEncodeState_t* encode_states,
+            nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size,
             const nvimgcdcsEncodeParams_t* params);
     };
 
@@ -708,8 +713,10 @@ extern "C"
             void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
-        nvimgcdcsStatus_t (*createDecodeState)(
-            nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
+        nvimgcdcsStatus_t (*createDecodeState)(nvimgcdcsDecoder_t decoder,
+            nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
+        nvimgcdcsStatus_t (*createDecodeStateBatch)(nvimgcdcsDecoder_t decoder,
+            nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
         nvimgcdcsStatus_t (*destroyDecodeState)(nvimgcdcsDecodeState_t decode_state);
 
         nvimgcdcsStatus_t (*getCapabilities)(
@@ -720,8 +727,9 @@ extern "C"
             const nvimgcdcsDecodeParams_t* params);
 
         nvimgcdcsStatus_t (*decodeBatch)(nvimgcdcsDecoder_t decoder,
-            nvimgcdcsDecodeState_t* decode_states, nvimgcdcsCodeStreamDesc_t* code_streams,
-            nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+            nvimgcdcsDecodeState_t decode_state_batch, nvimgcdcsDecodeState_t* decode_states,
+            nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size,
+            const nvimgcdcsDecodeParams_t* params);
     };
 
     typedef struct nvimgcdcsDecoderDesc nvimgcdcsDecoderDesc_t;
@@ -790,10 +798,7 @@ extern "C"
     // Instance
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(
         nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info);
-
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceDestroy(nvimgcdcsInstance_t instance);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceGetReadyImage(nvimgcdcsInstance_t instance,
-        nvimgcdcsImage_t* image, nvimgcdcsProcessingStatus_t* processing_status, bool blocking);
 
     // Extension
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionCreate(nvimgcdcsInstance_t instance,
@@ -806,6 +811,10 @@ extern "C"
         const nvimgcdcsDebugMessengerDesc_t* messenger_desc);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessengerDestroy(
         nvimgcdcsDebugMessenger_t dbg_messenger);
+
+    // Future
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureWaitForAll(nvimgcdcsFuture_t future);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureDestroy(nvimgcdcsFuture_t future);
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
@@ -858,6 +867,8 @@ extern "C"
         nvimgcdcsCodeStream_t src_stream_handle); //TODO
 
     //Decoder
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGenericCreate(
+        nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance,
         nvimgcdcsDecoder_t* decoder, nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image,
         const nvimgcdcsDecodeParams_t* params);
@@ -866,11 +877,12 @@ extern "C"
         bool* result, nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image,
         const nvimgcdcsDecodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder,
-        nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image,
-        const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image, const nvimgcdcsDecodeParams_t* params,
+        nvimgcdcsFuture_t* future, bool blocking);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder,
-        nvimgcdcsCodeStream_t* streams, nvimgcdcsImage_t* images, int batch_size,
-        nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsDecodeState_t decode_state_batch, nvimgcdcsCodeStream_t* streams,
+        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params,
+        nvimgcdcsFuture_t* future, bool blocking);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(
         nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(
@@ -878,6 +890,8 @@ extern "C"
 
     //DecodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
+        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateBatchCreate(
         nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_state);
 
@@ -891,10 +905,11 @@ extern "C"
         const nvimgcdcsEncodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder,
         nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t input_image,
-        const nvimgcdcsEncodeParams_t* encode_params);
+        const nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder,
-        nvimgcdcsImage_t* images, nvimgcdcsCodeStream_t* streams, int batch_size,
-        nvimgcdcsEncodeParams_t* params); 
+        nvimgcdcsEncodeState_t encode_state_batch, nvimgcdcsImage_t* images,
+        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params,
+        nvimgcdcsFuture_t* future, bool blocking);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(
         nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanUseEncodeState(
@@ -903,6 +918,8 @@ extern "C"
     //EncodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
         nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateBatchCreate(nvimgcdcsEncoder_t encoder,
+        nvimgcdcsEncodeState_t* encode_state_batch, cudaStream_t cuda_stream);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_state);
 
     //High-level API
@@ -925,23 +942,23 @@ extern "C"
         //TODO NVIMGCDCS_IMREAD_REDUCED_GRAYSCALE_8 = 64,
         //TODO NVIMGCDCS_IMREAD_REDUCED_COLOR_8     = 65,
         NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 128, //Ignore orientation from Exif
-        NVIMGCDCS_IMREAD_ENUM_FORCE_INT     = 0xFFFFFFFF
+        NVIMGCDCS_IMREAD_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImreadFlags_t;
 
     typedef enum
     {
-        NVIMGCDCS_IMWRITE_JPEG_QUALITY     = 1, // 0-100 default 95
+        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 1, // 0-100 default 95
         NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 2,
-        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE    = 3, //optimized_huffman
+        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 3, //optimized_huffman
         // NVIMGCDCS_IMWRITE_JPEG_RST_INTERVAL    = 4,
         // NVIMGCDCS_IMWRITE_JPEG_LUMA_QUALITY    = 5,
         // NVIMGCDCS_IMWRITE_JPEG_CHROMA_QUALITY  = 6,
         NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 7,
 
-        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR     = 100, // default 50
-        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS     = 101, // num_decomps default 5
+        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 100,     // default 50
+        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 101,     // num_decomps default 5
         NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 103, // code_block_w code_block_h (default 64 64)
-        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE      = 104,
+        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 104,
 
         // NVIMGCDCS_IMWRITE_PNG_COMPRESSION = 16,
         // NVIMGCDCS_IMWRITE_PNG_STRATEGY    = 17,
@@ -959,20 +976,20 @@ extern "C"
         // NVIMGCDCS_IMWRITE_TIFF_COMPRESSION = 259,
 
         // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )
-        NVIMGCDCS_IMWRITE_MCT_MODE =           500, 
+        NVIMGCDCS_IMWRITE_MCT_MODE = 500,
         NVIMGCDCS_IMWRITE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImwriteParams_t;
 
     typedef enum
     {
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444            = 0x111111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422            = 0x211111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420            = 0x221111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440            = 0x121111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411            = 0x411111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410            = 0x441111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410V           = 0x440000, //TODO
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY           = 0x110000,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444 = 0x111111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422 = 0x211111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420 = 0x221111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440 = 0x121111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411 = 0x411111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410 = 0x441111,
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410V = 0x440000, //TODO
+        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY = 0x110000,
         NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImwriteSamplingFactor_t;
 
@@ -980,6 +997,11 @@ extern "C"
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, int flags);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance,
         nvimgcdcsImage_t image, const char* file_name, const int* params);
+
+    //TODO
+    //NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImReadBatch(
+    //    nvimgcdcsInstance_t instance, nvimgcdcsImage_t* images, const char** file_names, int batch_size, int flags);
+
 #if defined(__cplusplus)
 }
 #endif

@@ -9,21 +9,29 @@
  */
 
 #pragma once
+
 #include <nvimgcodecs.h>
+#include <memory>
 #include "iencode_state.h"
 
 namespace nvimgcdcs {
+
 class EncodeState : public IEncodeState
 {
   public:
     EncodeState(const struct nvimgcdcsEncoderDesc* encoder_desc, nvimgcdcsEncoder_t encoder,
         cudaStream_t cuda_stream);
     ~EncodeState() override;
+    void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) override;
+    ProcessingResultsPromise* getPromise() override;
     nvimgcdcsEncodeState_t getInternalEncodeState() override;
 
   private:
     const struct nvimgcdcsEncoderDesc* encoder_desc_;
     nvimgcdcsEncoder_t encoder_;
     nvimgcdcsEncodeState_t encode_state_;
+    cudaStream_t cuda_stream_;
+    std::unique_ptr<ProcessingResultsPromise> promise_;
 };
+
 } // namespace nvimgcdcs

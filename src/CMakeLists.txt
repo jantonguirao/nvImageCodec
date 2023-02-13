@@ -22,6 +22,13 @@ set (NVIMGCDCS_SRCS
     image_parser_factory.cpp
     image_encoder_factory.cpp
     image_decoder_factory.cpp
+    image_generic_decoder.cpp
+    nvimgcodecs_director.cpp
+    processing_results.cpp
+    decode_state_batch.cpp  
+    encode_state_batch.cpp
+    thread_pool.cpp
+    device_guard.cpp
 )
 
 include_directories(
@@ -44,7 +51,13 @@ find_library(CUDART_SHARED
     NAMES cudart
     PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
     )
-target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PUBLIC ${CUDART_SHARED})
+
+find_library(CUDA_LIB
+    NAMES cuda
+    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
+)
+
+target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PUBLIC ${CUDART_SHARED} ${CUDA_LIB})
 
 if(UNIX)
     # CXX flags

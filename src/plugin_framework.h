@@ -16,7 +16,6 @@
 #include <vector>
 #include "idirectory_scaner.h"
 #include "ilibrary_loader.h"
-#include "thread_safe_queue.h"
 
 namespace nvimgcdcs {
 

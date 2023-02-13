@@ -29,19 +29,22 @@ class ICodec
     virtual ~ICodec() = default;
 
     virtual const std::string& name() const = 0;
+
     virtual std::unique_ptr<IImageParser> createParser(
         nvimgcdcsCodeStreamDesc_t code_stream) const = 0;
     virtual std::unique_ptr<IImageDecoder> createDecoder(nvimgcdcsCodeStreamDesc_t code_stream,
         nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params) const = 0;
+    virtual int getDecodersNum() const = 0;
+    virtual std::unique_ptr<IImageDecoder> createDecoder(
+        int index, const nvimgcdcsDecodeParams_t* params) const = 0;
     virtual std::unique_ptr<IImageEncoder> createEncoder(nvimgcdcsImageDesc_t image,
-        nvimgcdcsCodeStreamDesc_t code_stream,
-        const nvimgcdcsEncodeParams_t* params) const                             = 0;
+        nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params) const = 0;
+
     virtual void registerParserFactory(
         std::unique_ptr<IImageParserFactory> factory, float priority) = 0;
     virtual void registerEncoderFactory(
         std::unique_ptr<IImageEncoderFactory> factory, float priority) = 0;
     virtual void registerDecoderFactory(
         std::unique_ptr<IImageDecoderFactory> factory, float priority) = 0;
-
 };
 } // namespace nvimgcdcs

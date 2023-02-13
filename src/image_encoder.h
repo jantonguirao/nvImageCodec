@@ -27,12 +27,15 @@ class ImageEncoder : public IImageEncoder
     ImageEncoder(const struct nvimgcdcsEncoderDesc* desc, const nvimgcdcsEncodeParams_t* params);
     ~ImageEncoder() override;
     std::unique_ptr<IEncodeState> createEncodeState(cudaStream_t cuda_stream) const override;
+    std::unique_ptr<IEncodeState> createEncodeStateBatch(
+        cudaStream_t cuda_stream) const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
     bool canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
         const nvimgcdcsEncodeParams_t* params) const override;
-    void encode(ICodeStream* code_stream, IImage* image, const nvimgcdcsEncodeParams_t* params) override;
-    void encodeBatch(const std::vector<IImage*>& images,
-        const std::vector<ICodeStream*>& code_streams,
+    std::unique_ptr<ProcessingResultsFuture> encode(
+        ICodeStream* code_stream, IImage* image, const nvimgcdcsEncodeParams_t* params) override;
+    std::unique_ptr<ProcessingResultsFuture> encodeBatch(IEncodeState* encode_state_batch,
+        const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
         const nvimgcdcsEncodeParams_t* params) override;
 
   private:

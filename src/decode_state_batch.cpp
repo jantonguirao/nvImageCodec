@@ -7,35 +7,41 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
-#include "decode_state.h"
+#include "decode_state_batch.h"
 
 namespace nvimgcdcs {
 
-DecodeState::DecodeState(const struct nvimgcdcsDecoderDesc* decoder_desc,
+DecodeStateBatch::DecodeStateBatch(const struct nvimgcdcsDecoderDesc* decoder_desc,
     nvimgcdcsDecoder_t decoder, cudaStream_t cuda_stream)
     : decoder_desc_(decoder_desc)
     , decoder_(decoder)
+    , decode_state_(nullptr)
     , cuda_stream_(cuda_stream)
 {
-    decoder_desc_->createDecodeState(decoder_, &decode_state_, cuda_stream);
+    if (decoder_desc_)
+        if (decoder_desc_->createDecodeStateBatch) {
+            decoder_desc_->createDecodeStateBatch(decoder_, &decode_state_, cuda_stream);
+        }
 }
 
-DecodeState::~DecodeState()
+DecodeStateBatch::~DecodeStateBatch()
 {
-    decoder_desc_->destroyDecodeState(decode_state_);
+    if (decode_state_) {
+        decoder_desc_->destroyDecodeState(decode_state_);
+    }
 }
 
-void DecodeState::setPromise(std::unique_ptr<ProcessingResultsPromise> promise)
+void DecodeStateBatch::setPromise(std::unique_ptr<ProcessingResultsPromise> promise)
 {
     promise_ = std::move(promise);
 }
 
-ProcessingResultsPromise* DecodeState::getPromise()
+ProcessingResultsPromise* DecodeStateBatch::getPromise()
 {
     return promise_.get();
 }
 
-nvimgcdcsDecodeState_t DecodeState::getInternalDecodeState()
+nvimgcdcsDecodeState_t DecodeStateBatch::getInternalDecodeState()
 {
     return decode_state_;
 }

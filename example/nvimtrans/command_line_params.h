@@ -136,7 +136,7 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
 
     params->verbose = 1;
     if (((pidx = find_param_index(argv, argc, "--verbose")) != -1) ||
-        (pidx = find_param_index(argv, argc, "-v") != -1)) {
+        ((pidx = find_param_index(argv, argc, "-v")) != -1)) {
         params->verbose = static_cast<int>(strtod(argv[pidx + 1], NULL));
     }
 

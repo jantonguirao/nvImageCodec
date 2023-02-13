@@ -11,11 +11,15 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include "idecode_state.h"
+#include "iencode_state.h"
+#include "processing_results.h"
 
 namespace nvimgcdcs {
 
-Image::Image(ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue)
-    : image_info_()
+Image::Image()
+    : index_(0)
+    , image_info_()
     , host_buffer_(nullptr)
     , host_buffer_size_(0)
     , device_buffer_(nullptr)
@@ -24,7 +28,7 @@ Image::Image(ThreadSafeQueue<nvimgcdcsImageDesc_t>* ready_images_queue)
     , encode_state_(nullptr)
     , image_desc_{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
           Image::static_get_device_buffer, Image::static_get_host_buffer, Image::static_image_ready}
-    , ready_images_queue_(ready_images_queue)
+    , promise_(nullptr)
     , processing_status_(NVIMGCDCS_PROCESSING_STATUS_UNKNOWN)
 {
     memset(&image_info_, 0, sizeof(image_info_));
@@ -35,24 +39,30 @@ Image::~Image()
 }
 void Image::setHostBuffer(void* buffer, size_t size)
 {
-    host_buffer_      = buffer;
+    host_buffer_ = buffer;
     host_buffer_size_ = size;
 }
 void Image::getHostBuffer(void** buffer, size_t* size)
 {
     *buffer = host_buffer_;
-    *size   = host_buffer_size_;
+    *size = host_buffer_size_;
 }
 void Image::setDeviceBuffer(void* buffer, size_t size)
 {
-    device_buffer_      = buffer;
+    device_buffer_ = buffer;
     device_buffer_size_ = size;
 }
 void Image::getDeviceBuffer(void** buffer, size_t* size)
 {
     *buffer = device_buffer_;
-    *size   = device_buffer_size_;
+    *size = device_buffer_size_;
 }
+
+void Image::setIndex(int index)
+{
+    index_ = index;
+}
+
 void Image::setImageInfo(const nvimgcdcsImageInfo_t* image_info)
 {
     image_info_ = *image_info;
@@ -93,6 +103,11 @@ nvimgcdcsImageDesc_t Image::getImageDesc()
     return &image_desc_;
 }
 
+void Image::setPromise(ProcessingResultsPromise* promise)
+{
+    promise_ = promise;
+}
+
 void Image::setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status)
 {
     processing_status_ = processing_status;
@@ -106,7 +121,11 @@ nvimgcdcsProcessingStatus_t Image::getProcessingStatus() const
 nvimgcdcsStatus_t Image::imageReady(nvimgcdcsProcessingStatus_t processing_status)
 {
     setProcessingStatus(processing_status);
-    ready_images_queue_->push(&image_desc_);
+    assert(promise_);
+    ProcessingResult res = NVIMGCDCS_PROCESSING_STATUS_SUCCESS == processing_status
+        ? ProcessingResult::success()
+        : ProcessingResult::failure(nullptr);
+    promise_->set(index_, res);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

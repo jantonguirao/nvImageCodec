@@ -34,6 +34,9 @@ class MockCodec : public ICodec
         (nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
             const nvimgcdcsDecodeParams_t* params),
         (const, override));
+    MOCK_METHOD(int, getDecodersNum, (), (const, override));
+    MOCK_METHOD(std::unique_ptr<IImageDecoder>, createDecoder,
+        (int index, const nvimgcdcsDecodeParams_t* params), (const, override));
     MOCK_METHOD(std::unique_ptr<IImageEncoder>, createEncoder,
         (nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
             const nvimgcdcsEncodeParams_t* params),

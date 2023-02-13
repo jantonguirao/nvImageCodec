@@ -12,11 +12,11 @@
 
 #include <nvimgcodecs.h>
 #include <nvimgcodecs.h>
-#include "thread_safe_queue.h"
 
 namespace nvimgcdcs {
 class IDecodeState;
 class IEncodeState;
+class ProcessingResultsPromise;
 
 class IImage
 {
@@ -26,6 +26,7 @@ class IImage
     virtual void getHostBuffer(void** buffer, size_t* size) = 0;
     virtual void setDeviceBuffer(void* buffer, size_t size) = 0;
     virtual void getDeviceBuffer(void** buffer, size_t* size) = 0;
+    virtual void setIndex(int index) = 0;
     virtual void setImageInfo(const nvimgcdcsImageInfo_t* image_info) = 0;
     virtual void getImageInfo(nvimgcdcsImageInfo_t* image_info) = 0;
     virtual void attachDecodeState(IDecodeState* decode_state) = 0;
@@ -35,6 +36,7 @@ class IImage
     virtual IEncodeState* getAttachedEncodeState() = 0;
     virtual void detachEncodeState() = 0;
     virtual nvimgcdcsImageDesc_t getImageDesc() = 0;
+    virtual void setPromise(ProcessingResultsPromise* promise) = 0;
     virtual void setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status) = 0;
     virtual nvimgcdcsProcessingStatus_t getProcessingStatus() const = 0;
 

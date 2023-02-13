@@ -73,9 +73,9 @@ void CodeStream::setOutputToHostMem(
 
 void CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
 {
-    assert(parser_);
     assert(image_info);
     if (!image_info_) {
+        assert(parser_);
         image_info_ = std::make_unique<nvimgcdcsImageInfo_t>();
         parser_->getImageInfo(&code_stream_desc_, image_info_.get());
     }

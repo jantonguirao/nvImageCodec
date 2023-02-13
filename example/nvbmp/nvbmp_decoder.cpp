@@ -52,7 +52,7 @@ static nvimgcdcsStatus_t nvbmp_decoder_destroy(nvimgcdcsDecoder_t decoder)
 }
 
 static nvimgcdcsStatus_t nvbmp_create_decode_state(
-    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
+    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_create_decode_state");
     *decode_state = new nvimgcdcsDecodeState();
@@ -134,7 +134,8 @@ nvimgcdcsDecoderDesc_t nvbmp_decoder = {
     nvbmp_can_decode,
     nvbmp_decoder_create,
     nvbmp_decoder_destroy, 
-    nvbmp_create_decode_state, 
+    nvbmp_create_decode_state,
+    NULL, 
     nvbmp_destroy_decode_state,
     nvbmp_get_capabilities,
     nvbmp_decoder_decode,

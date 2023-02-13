@@ -9,7 +9,10 @@
  */
 
 #pragma once
+
 #include <nvimgcodecs.h>
+#include <memory>
+#include "processing_results.h"
 
 namespace nvimgcdcs {
 
@@ -17,6 +20,8 @@ class IEncodeState
 {
   public:
     virtual ~IEncodeState() = default;
+    virtual void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) = 0;
+    virtual ProcessingResultsPromise* getPromise() = 0;
     virtual nvimgcdcsEncodeState_t getInternalEncodeState() = 0;
 };
 

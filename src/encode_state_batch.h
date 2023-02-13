@@ -9,25 +9,28 @@
  */
 
 #pragma once
+
 #include <nvimgcodecs.h>
-#include "idecode_state.h"
+#include "iencode_state.h"
 
 namespace nvimgcdcs {
-class DecodeState : public IDecodeState
+
+class EncodeStateBatch : public IEncodeState
 {
   public:
-    DecodeState(const struct nvimgcdcsDecoderDesc* decoder_desc, nvimgcdcsDecoder_t decoder,
+    EncodeStateBatch(const struct nvimgcdcsEncoderDesc* encoder_desc, nvimgcdcsEncoder_t encoder,
         cudaStream_t cuda_stream);
-    ~DecodeState() override;
+    ~EncodeStateBatch() override;
     void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) override;
     ProcessingResultsPromise* getPromise() override;
-    nvimgcdcsDecodeState_t getInternalDecodeState() override;
+    nvimgcdcsEncodeState_t getInternalEncodeState() override;
 
   private:
-    const struct nvimgcdcsDecoderDesc* decoder_desc_;
-    nvimgcdcsDecoder_t decoder_;
-    nvimgcdcsDecodeState_t decode_state_;
+    const struct nvimgcdcsEncoderDesc* encoder_desc_;
+    nvimgcdcsEncoder_t encoder_;
+    nvimgcdcsEncodeState_t encode_state_;
     cudaStream_t cuda_stream_;
     std::unique_ptr<ProcessingResultsPromise> promise_;
 };
+
 } // namespace nvimgcdcs

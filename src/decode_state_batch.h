@@ -13,12 +13,13 @@
 #include "idecode_state.h"
 
 namespace nvimgcdcs {
-class DecodeState : public IDecodeState
+
+class DecodeStateBatch : public IDecodeState
 {
   public:
-    DecodeState(const struct nvimgcdcsDecoderDesc* decoder_desc, nvimgcdcsDecoder_t decoder,
+    DecodeStateBatch(const struct nvimgcdcsDecoderDesc* decoder_desc, nvimgcdcsDecoder_t decoder,
         cudaStream_t cuda_stream);
-    ~DecodeState() override;
+    ~DecodeStateBatch() override;
     void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) override;
     ProcessingResultsPromise* getPromise() override;
     nvimgcdcsDecodeState_t getInternalDecodeState() override;

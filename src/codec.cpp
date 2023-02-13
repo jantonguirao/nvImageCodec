@@ -48,6 +48,23 @@ std::unique_ptr<IImageDecoder> Codec::createDecoder(nvimgcdcsCodeStreamDesc_t co
     return nullptr;
 }
 
+int Codec::getDecodersNum() const
+{
+    return decoders_.size();
+}
+
+std::unique_ptr<IImageDecoder> Codec::createDecoder(
+    int index, const nvimgcdcsDecodeParams_t* params) const
+{
+    if (size_t(index) >= decoders_.size()) {
+        return std::unique_ptr<IImageDecoder>();
+    }
+    auto it = decoders_.begin();
+    for (int i = 0; i < index; ++i)
+        it++;
+    return it->second->createDecoder(params);
+}
+
 std::unique_ptr<IImageEncoder> Codec::createEncoder(nvimgcdcsImageDesc_t image,
     nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params) const
 {
