@@ -22,6 +22,9 @@
 
 namespace nvimgcdcs {
 
+// arbitrary value for the CPU device ID
+constexpr int CPU_ONLY_DEVICE_ID = -99999;
+
 class ThreadPool
 {
   public:

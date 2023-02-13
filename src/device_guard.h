@@ -14,6 +14,8 @@
 
 namespace nvimgcdcs {
 
+bool cuInitChecked();
+
 // /**
 //  * Simple RAII device handling:
 //  * Switch to new device on construction, back to old

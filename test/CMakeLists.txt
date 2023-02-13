@@ -7,6 +7,9 @@ set(SRCS
     code_stream_test.cpp
     codec_registry_test.cpp
     plugin_framework_test.cpp
+    thread_pool_test.cpp
+    processing_results_test.cpp
+    device_guard_test.cpp
     )
 # Headers file are located here:
 include_directories(
@@ -22,6 +25,10 @@ find_library(CUDART_SHARED
     NAMES cudart
     PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 
+find_library(CUDA_LIB
+    NAMES cuda
+    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
+)
 
 # Find all dependencies
 include(Dependencies)
@@ -37,7 +44,7 @@ foreach(testapp nvimgcodecs_tests)
         set(PTHREAD pthread)
     endif()
 
-    target_link_libraries(${testapp} PUBLIC nvimgcodecs_static ${CUDART_SHARED} GTest::gtest GTest::gmock ${PTHREAD})
+    target_link_libraries(${testapp} PUBLIC nvimgcodecs_static ${CUDART_SHARED} ${CUDA_LIB} GTest::gtest GTest::gmock ${PTHREAD})
 endforeach()
 
 install(TARGETS ${FILESTOPACK}
