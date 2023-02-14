@@ -41,11 +41,17 @@ set_target_properties(nvimgcodecs_python PROPERTIES
 
 find_package(CUDAToolkit REQUIRED)
 
+find_library(CUDA_LIB
+    NAMES cuda
+    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
+)
+
 target_link_libraries(nvimgcodecs_python
     PRIVATE
-        nvimgcodecs_static
-        CUDA::cudart_static
-        -static-libstdc++
+    nvimgcodecs_static
+    CUDA::cudart_static
+    -static-libstdc++
+    ${CUDA_LIB}
 )
 
 #target_compile_options(nvimgcodecs_python
