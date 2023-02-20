@@ -10,10 +10,10 @@
 
 #include "plugin_framework.h"
 
+#include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <iostream>
-#include <algorithm>
 
 #include "codec.h"
 #include "codec_registry.h"
@@ -35,12 +35,13 @@ constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plug
 
 PluginFramework::PluginFramework(ICodecRegistry* codec_registry,
     std::unique_ptr<IDirectoryScaner> directory_scaner,
-    std::unique_ptr<ILibraryLoader> library_loader)
+    std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor)
     : directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
+    , executor_(std::move(executor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100,
           this, &static_register_encoder, &static_register_decoder, &static_register_parser,
-          &static_log}
+          &static_get_executor, &static_log}
     , codec_registry_(codec_registry)
     , plugin_dirs_{defaultModuleDir}
 {
@@ -72,6 +73,13 @@ nvimgcdcsStatus_t PluginFramework::static_register_parser(
     return handle->registerParser(desc);
 }
 
+nvimgcdcsStatus_t PluginFramework::static_get_executor(
+    void* instance, nvimgcdcsExecutorDesc_t* result)
+{
+    PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
+    return handle->getExecutor(result);
+}
+
 nvimgcdcsStatus_t PluginFramework::static_log(void* instance,
     const nvimgcdcsDebugMessageSeverity_t message_severity,
     const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data)
@@ -79,8 +87,6 @@ nvimgcdcsStatus_t PluginFramework::static_log(void* instance,
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->log(message_severity, message_type, data);
 }
-
-
 
 nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* extension,
     const nvimgcdcsExtensionDesc_t* extension_desc, const Module& module)
@@ -146,8 +152,8 @@ nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::vector<Extension>::c
 
 nvimgcdcsStatus_t PluginFramework::unregisterExtension(nvimgcdcsExtension_t extension)
 {
-    auto it = std::find_if(
-        extensions_.begin(), extensions_.end(), [&](auto e) ->bool { return e.handle_ == extension; });
+    auto it = std::find_if(extensions_.begin(), extensions_.end(),
+        [&](auto e) -> bool { return e.handle_ == extension; });
     if (it == extensions_.end()) {
         NVIMGCDCS_LOG_WARNING("Could not find extension to unregister ");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
@@ -158,8 +164,8 @@ nvimgcdcsStatus_t PluginFramework::unregisterExtension(nvimgcdcsExtension_t exte
 
 void PluginFramework::unregisterAllExtensions()
 {
-   while (!extensions_.empty()) {
-       unregisterExtension(extensions_.begin());
+    while (!extensions_.empty()) {
+        unregisterExtension(extensions_.begin());
     }
 }
 
@@ -202,7 +208,7 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
     }
     nvimgcdcsExtensionDesc_t extension_desc;
     memset(&extension_desc, 0, sizeof(extension_desc));
-    extension_desc.type      = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
+    extension_desc.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
     nvimgcdcsStatus_t status = module.extension_entry_(&extension_desc);
     if (status != NVIMGCDCS_STATUS_SUCCESS) {
         NVIMGCDCS_LOG_ERROR("Could not get extension module description");
@@ -268,6 +274,12 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDe
     std::unique_ptr<IImageParserFactory> parser_factory =
         std::make_unique<ImageParserFactory>(desc);
     codec->registerParserFactory(std::move(parser_factory), 1);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t PluginFramework::getExecutor(nvimgcdcsExecutorDesc_t* result)
+{
+    *result = executor_->getExecutorDesc();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

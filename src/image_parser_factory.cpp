@@ -7,10 +7,10 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
+#include "image_parser_factory.h"
 #include <cassert>
 #include <iostream>
 #include "image_parser.h"
-#include "image_parser_factory.h"
 #include "log.h"
 
 namespace nvimgcdcs {

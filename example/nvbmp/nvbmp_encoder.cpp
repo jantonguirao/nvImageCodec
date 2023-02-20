@@ -43,12 +43,12 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
     headers[4] = width;           // biWidth
     headers[5] = height;          // biHeight
 
-    headers[7]  = 0;          // biCompression
-    headers[8]  = paddedsize; // biSizeImage
-    headers[9]  = 0;          // biXPelsPerMeter
-    headers[10] = 0;          // biYPelsPerMeter
-    headers[11] = 0;          // biClrUsed
-    headers[12] = 0;          // biClrImportant
+    headers[7] = 0;          // biCompression
+    headers[8] = paddedsize; // biSizeImage
+    headers[9] = 0;          // biXPelsPerMeter
+    headers[10] = 0;         // biYPelsPerMeter
+    headers[11] = 0;         // biClrUsed
+    headers[12] = 0;         // biClrImportant
 
     size_t written_size;
     std::string bm("BM");
@@ -89,19 +89,19 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
         for (x = 0; x <= width - 1; x++) {
 
             if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
-                red   = chanR[y * pitchR + x];
+                red = chanR[y * pitchR + x];
                 green = chanG[y * pitchG + x];
-                blue  = chanB[y * pitchB + x];
+                blue = chanB[y * pitchB + x];
             } else if (SAMPLE_FORMAT == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
-                red   = chanR[(y * pitchR + 3 * x)];
+                red = chanR[(y * pitchR + 3 * x)];
                 green = chanR[(y * pitchR + 3 * x) + 1];
-                blue  = chanR[(y * pitchR + 3 * x) + 2];
+                blue = chanR[(y * pitchR + 3 * x) + 2];
             }
             int scale = precision - 8;
             if (scale > 0) {
-                red   = ((red >> scale) + ((red >> (scale - 1)) % 2));
+                red = ((red >> scale) + ((red >> (scale - 1)) % 2));
                 green = ((green >> scale) + ((green >> (scale - 1)) % 2));
-                blue  = ((blue >> scale) + ((blue >> (scale - 1)) % 2));
+                blue = ((blue >> scale) + ((blue >> (scale - 1)) % 2));
             }
 
             if (red > 255)
@@ -205,7 +205,7 @@ nvimgcdcsStatus_t nvbmp_get_capabilities(
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
-}   
+}
 
 static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
     nvimgcdcsEncodeState_t encode_state, nvimgcdcsCodeStreamDesc_t code_stream,
@@ -220,8 +220,8 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
         writeBMP<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream,
-            (unsigned char*)host_image_buffer, image_info.component_info[0].host_pitch_in_bytes, NULL, 0,
-            NULL, 0, image_info.image_width, image_info.image_height, 8, true);
+            (unsigned char*)host_image_buffer, image_info.component_info[0].host_pitch_in_bytes,
+            NULL, 0, NULL, 0, image_info.image_width, image_info.image_height, 8, true);
     } else {
         writeBMP<unsigned char>(code_stream->io_stream, (unsigned char*)host_image_buffer,
             image_info.component_info[0].host_pitch_in_bytes,

@@ -9,20 +9,21 @@
  */
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <memory>
 #include "../src/plugin_framework.h"
 #include "mock_codec_registry.h"
 #include "mock_directory_scaner.h"
+#include "mock_executor.h"
 #include "mock_library_loader.h"
-#include <memory>
 
 namespace nvimgcdcs { namespace test {
 
 using ::testing::_;
 using ::testing::ByMove;
 using ::testing::Const;
+using ::testing::Eq;
 using ::testing::Return;
 using ::testing::ReturnPointee;
-using ::testing::Eq;
 
 uint32_t testExtModuleGetVersion()
 {
@@ -30,13 +31,13 @@ uint32_t testExtModuleGetVersion()
 }
 
 nvimgcdcsStatus_t testExtModuleCreate(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t* extension)
+    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
 {
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t testExtModuleDestroy(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t extension)
+    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
 {
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -71,8 +72,10 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
         .WillRepeatedly(Return((ILibraryLoader::LibraryHandle)&testExtModuleEntry));
     EXPECT_CALL(*library_loader.get(), unloadLibrary(_)).Times(2);
 
-    PluginFramework framework(
-        &codec_registry, std::move(directory_scaner), std::move(library_loader));
+    std::unique_ptr<MockExecutor> executor = std::make_unique<MockExecutor>();
+
+    PluginFramework framework(&codec_registry, std::move(directory_scaner),
+        std::move(library_loader), std::move(executor));
     framework.discoverAndLoadExtModules();
 }
 

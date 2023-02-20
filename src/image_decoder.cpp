@@ -11,11 +11,11 @@
 #include <cassert>
 #include "decode_state.h"
 #include "decode_state_batch.h"
+#include "exception.h"
 #include "icode_stream.h"
 #include "iimage.h"
-#include "exception.h"
-#include "processing_results.h"
 #include "log.h"
+#include "processing_results.h"
 
 namespace nvimgcdcs {
 
@@ -77,7 +77,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(
     IDecodeState* decode_state = image->getAttachedDecodeState();
     decode_state->setPromise(std::move(results));
     nvimgcdcsDecodeState_t internal_decode_state = decode_state->getInternalDecodeState();
-    nvimgcdcsImageDesc* image_desc               = image->getImageDesc();
+    nvimgcdcsImageDesc* image_desc = image->getImageDesc();
     nvimgcdcsCodeStreamDesc* code_stream_desc = code_stream->getCodeStreamDesc();
     image->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
     image->setPromise(decode_state->getPromise());
@@ -101,9 +101,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decodeBatch(IDecodeState*
 
     auto future = results->getFuture();
     decode_state_batch->setPromise(std::move(results));
-    
-    if (decoder_desc_->decodeBatch == nullptr)
-    {
+
+    if (decoder_desc_->decodeBatch == nullptr) {
         for (size_t i = 0; i < code_streams.size(); ++i) {
             IDecodeState* decode_state = images[i]->getAttachedDecodeState();
             nvimgcdcsDecodeState_t internal_decode_state = decode_state->getInternalDecodeState();

@@ -36,8 +36,7 @@ static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsI
     code_stream->getCodecName(code_stream->instance, codec_name);
 
     if (strcmp(codec_name, "pxm") != 0) {
-        NVIMGCDCS_E_LOG_INFO(
-            "cannot encode because it is not pxm codec but " << codec_name);
+        NVIMGCDCS_E_LOG_INFO("cannot encode because it is not pxm codec but " << codec_name);
         *result = false;
         return NVIMGCDCS_STATUS_SUCCESS;
     }
@@ -70,7 +69,7 @@ static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsI
         }
         if (!*result) {
             NVIMGCDCS_E_LOG_INFO("cannot encode because not suppoted backend");
-        } 
+        }
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -162,7 +161,7 @@ int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
                 red = chanR[y * pitchR + x];
                 if (num_components > 1) {
                     green = chanG[y * pitchG + x];
-                    blue  = chanB[y * pitchB + x];
+                    blue = chanB[y * pitchB + x];
                     if (num_components == 4) {
                         alpha = chanA[y * pitchA + x];
                     }
@@ -171,7 +170,7 @@ int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
                 red = chanR[(y * pitchR + 3 * x)];
                 if (num_components > 1) {
                     green = chanR[(y * pitchR + 3 * x) + 1];
-                    blue  = chanR[(y * pitchR + 3 * x) + 2];
+                    blue = chanR[(y * pitchR + 3 * x) + 2];
                     if (num_components == 4) {
                         alpha = chanR[y * pitchR + x];
                     }
@@ -274,7 +273,7 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
 //extern nvimgcdcsEncoderDesc_t ppm_encoder;
 
 nvimgcdcsStatus_t extension_create(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t* extension)
+    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("extension_create");
@@ -285,7 +284,7 @@ nvimgcdcsStatus_t extension_create(
 }
 
 nvimgcdcsStatus_t extension_destroy(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t extension)
+    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("extension_destroy");
     Logger::get().unregisterLogFunc();

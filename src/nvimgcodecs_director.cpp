@@ -9,7 +9,10 @@
  */
 
 #include "nvimgcodecs_director.h"
+#include "directory_scaner.h"
 #include "image_generic_decoder.h"
+#include "library_loader.h"
+#include "default_executor.h"
 
 namespace nvimgcdcs {
 
@@ -20,7 +23,7 @@ NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_in
     , registrator_(&debug_messenger_)
     , codec_registry_()
     , plugin_framework_(&codec_registry_, std::move(std::make_unique<DirectoryScaner>()),
-          std::move(std::make_unique<LibraryLoader>()))
+          std::move(std::make_unique<LibraryLoader>()), std::move(std::make_unique<DefaultExecutor>(create_info.num_cpu_threads)))
 {
 }
 

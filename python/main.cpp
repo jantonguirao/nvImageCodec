@@ -49,8 +49,8 @@ class Module
         instance_create_info.message_severity        = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL |
                                                 NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR |
                                                 NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING;
-        ;
         instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
+        instance_create_info.num_cpu_threads = 10;
         nvimgcdcsInstanceCreate(&instance_, instance_create_info);
     }
     ~Module() { nvimgcdcsInstanceDestroy(instance_); }

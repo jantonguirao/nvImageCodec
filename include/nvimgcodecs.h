@@ -60,6 +60,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA,
         NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
@@ -306,6 +307,7 @@ extern "C"
     struct nvimgcdcsImage;
     typedef struct nvimgcdcsImage* nvimgcdcsImage_t;
 
+    //TODO formating _
     typedef struct
     {
         nvimgcdcsStructureType_t type;
@@ -314,7 +316,6 @@ extern "C"
         bool useGPU;
         bool useHwEng;
         int variant;
-        int maxCpuThreads;
         int cudaDeviceId;
     } nvimgcdcsBackend_t;
 
@@ -332,6 +333,7 @@ extern "C"
         NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION = 8,
         NVIMGCDCS_PROCESSING_STATUS_DECODING = 9,
         NVIMGCDCS_PROCESSING_STATUS_ENCODING = 10,
+        NVIMGCDCS_PROCESSING_STATUS_ERROR = 11,
         //...
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsProcessingStatus_t;
@@ -620,6 +622,9 @@ extern "C"
     };
     typedef struct nvimgcdcsImageDesc* nvimgcdcsImageDesc_t;
 
+    struct nvimgcdcsFrameworkDesc;
+    typedef struct nvimgcdcsFrameworkDesc* nvimgcdcsFrameworkDesc_t;
+
     struct nvimgcdcsParserDesc
     {
         nvimgcdcsStructureType_t type;
@@ -723,11 +728,24 @@ extern "C"
 
     typedef struct nvimgcdcsDecoderDesc nvimgcdcsDecoderDesc_t;
 
+    struct nvimgcdcsExecutorDesc
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
+        void* instance;
+
+        nvimgcdcsStatus_t (*launch)(
+            void* instance, int device_id, void* task_context, void (*task)(void* task_context));
+    };
+
+    typedef struct nvimgcdcsExecutorDesc* nvimgcdcsExecutorDesc_t;
+
     typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance,
         const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
 
-    typedef struct nvimgcdcsFrameworkDesc
+    struct nvimgcdcsFrameworkDesc
     {
         nvimgcdcsStructureType_t type;
         const void* next;
@@ -740,8 +758,9 @@ extern "C"
         nvimgcdcsStatus_t (*registerDecoder)(
             void* instance, const struct nvimgcdcsDecoderDesc* desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
+        nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t* result);
         nvimgcdcsLogFunc_t log;
-    } nvimgcdcsFrameworkDesc_t;
+    };
 
     struct nvimgcdcsExtension;
     typedef struct nvimgcdcsExtension* nvimgcdcsExtension_t;
@@ -755,9 +774,9 @@ extern "C"
         uint32_t version;
 
         nvimgcdcsStatus_t (*create)(
-            nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t* extension);
+            const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension);
         nvimgcdcsStatus_t (*destroy)(
-            nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t extension);
+            const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension);
     } nvimgcdcsExtensionDesc_t;
 
     typedef nvimgcdcsStatus_t (*nvimgcdcsExtensionModuleEntryFunc_t)(
@@ -774,14 +793,14 @@ extern "C"
         nvimgcdcsDeviceAllocator_t* device_allocator; //TODO
         nvimgcdcsPinnedAllocator_t* pinned_allocator; //TODO
         size_t deviceMemPadding;                      //TODO any device memory allocation
-        bool load_extension_modules;                  //Discover and load extension modules on start
-        bool default_debug_messenger;                 //Create default debug messenger
-        uint32_t message_severity;                    //severity for default debug messenger
-        uint32_t message_type;                        //message type for default debug messenger
-        // would be padded to the multiple of specified number of bytes.
-        size_t pinnedMemPadding; //TODO any pinned host memory allocation
+        size_t pinnedMemPadding;                      //TODO any pinned host memory allocation
         // would be padded to the multiple of specified number of bytes
-
+        bool load_extension_modules;  //Discover and load extension modules on start
+        bool default_debug_messenger; //Create default debug messenger
+        uint32_t message_severity;    //severity for default debug messenger
+        uint32_t message_type;        //message type for default debug messenger
+        // would be padded to the multiple of specified number of bytes.
+        int num_cpu_threads;
     } nvimgcdcsInstanceCreateInfo_t;
 
     // Instance

@@ -1,9 +1,9 @@
 #include <cuda_runtime_api.h>
 #include <nvimgcodecs.h>
 #include <cstring>
-#include "nvbmp_parser.h"
 #include "exceptions.h"
 #include "log.h"
+#include "nvbmp_parser.h"
 
 struct nvimgcdcsDecoder
 {
@@ -14,8 +14,8 @@ struct nvimgcdcsDecodeState
 {};
 
 static nvimgcdcsStatus_t nvbmp_can_decode(void* instance, bool* result,
-    nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+    const nvimgcdcsDecodeParams_t* params)
 {
     *result = true;
     char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
@@ -89,11 +89,11 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder,
     nvimgcdcsDecodeState_t decode_state, nvimgcdcsCodeStreamDesc_t code_stream,
     nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
 {
-    NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_decode" );
+    NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_decode");
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
-    size_t size                       = 0;
-    size_t output_size                = 0;
+    size_t size = 0;
+    size_t output_size = 0;
     nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
     io_stream->size(io_stream->instance, &size);
     code_stream->parse_state->buffer.resize(size);

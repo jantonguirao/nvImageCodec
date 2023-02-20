@@ -6,7 +6,7 @@ extern nvimgcdcsEncoderDesc nvbmp_encoder;
 extern nvimgcdcsDecoderDesc nvbmp_decoder;
 
 nvimgcdcsStatus_t nvimgcdcsExtensionCreate(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t* extension)
+    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
 
@@ -19,7 +19,7 @@ nvimgcdcsStatus_t nvimgcdcsExtensionCreate(
 }
 
 nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(
-    nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsExtension_t extension)
+    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionDestroy");
     Logger::get().unregisterLogFunc();

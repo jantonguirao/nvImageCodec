@@ -7,16 +7,16 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
+#include "image_encoder_factory.h"
 #include <cassert>
 #include "code_stream.h"
 #include "encode_state.h"
 #include "image.h"
 #include "image_encoder.h"
-#include "image_encoder_factory.h"
 namespace nvimgcdcs {
 
 ImageEncoderFactory::ImageEncoderFactory(const struct nvimgcdcsEncoderDesc* desc)
-    : encoder_desc_(desc)
+    :  encoder_desc_(desc)
 {
 }
 
@@ -30,9 +30,8 @@ std::string ImageEncoderFactory::getEncoderId() const
     return encoder_desc_->id;
 }
 
-bool ImageEncoderFactory::canEncode(
-    nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
-    const nvimgcdcsEncodeParams_t* params)
+bool ImageEncoderFactory::canEncode(nvimgcdcsImageDesc_t image,
+    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     assert(code_stream);
     assert(encoder_desc_->canEncode);

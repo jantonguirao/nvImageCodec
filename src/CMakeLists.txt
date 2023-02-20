@@ -29,6 +29,7 @@ set (NVIMGCDCS_SRCS
     encode_state_batch.cpp
     thread_pool.cpp
     device_guard.cpp
+    default_executor.cpp
 )
 
 include_directories(

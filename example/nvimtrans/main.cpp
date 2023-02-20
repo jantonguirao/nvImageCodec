@@ -854,6 +854,7 @@ int main(int argc, const char* argv[])
     instance_create_info.default_debug_messenger = true;
     instance_create_info.message_severity = verbosity2severity(params.verbose);
     instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
+    instance_create_info.num_cpu_threads = 10;
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
     nvimgcdcsExtension_t pxm_extension;

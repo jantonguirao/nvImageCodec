@@ -14,10 +14,9 @@
 #include "codec_registry.h"
 #include "debug_messenger.h"
 #include "default_debug_messenger.h"
-#include "directory_scaner.h"
-#include "library_loader.h"
 #include "log.h"
 #include "plugin_framework.h"
+#include "default_executor.h"
 
 namespace nvimgcdcs {
 

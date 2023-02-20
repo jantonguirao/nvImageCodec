@@ -16,7 +16,7 @@ static nvimgcdcsStatus_t nvbmp_parser_can_parse(
     NVIMGCDCS_P_LOG_TRACE("nvbmp_parser_can_parse");
 
     constexpr size_t min_bmp_stream_size = 18u;
-    nvimgcdcsIoStreamDesc_t io_stream    = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     if (length < min_bmp_stream_size) {
@@ -38,7 +38,8 @@ static nvimgcdcsStatus_t nvbmp_parser_can_parse(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_parser_create(void* instance, nvimgcdcsParser_t* parser)
+static nvimgcdcsStatus_t nvbmp_parser_create(
+    void* instance, nvimgcdcsParser_t* parser)
 {
     NVIMGCDCS_P_LOG_TRACE("nvbmp_parser_create");
     *parser = new nvimgcdcsParser();
@@ -69,9 +70,9 @@ static nvimgcdcsStatus_t nvbmp_destroy_parse_state(nvimgcdcsParseState_t parse_s
 
 enum BmpCompressionType
 {
-    BMP_COMPRESSION_RGB       = 0,
-    BMP_COMPRESSION_RLE8      = 1,
-    BMP_COMPRESSION_RLE4      = 2,
+    BMP_COMPRESSION_RGB = 0,
+    BMP_COMPRESSION_RLE8 = 1,
+    BMP_COMPRESSION_RLE4 = 2,
     BMP_COMPRESSION_BITFIELDS = 3
 };
 
@@ -153,37 +154,37 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
         sizeof(code_stream->parse_state->header_size));
     io_stream->skip(io_stream->instance, -4);
 
-    int bpp                = 0;
-    int compression_type   = BMP_COMPRESSION_RGB;
-    int ncolors            = 0;
+    int bpp = 0;
+    int compression_type = BMP_COMPRESSION_RGB;
+    int ncolors = 0;
     int palette_entry_size = 0;
-    size_t palette_start   = 0;
+    size_t palette_start = 0;
 
     if (length >= 26 && code_stream->parse_state->header_size == 12) {
         BitmapCoreHeader header = {};
         io_stream->read(io_stream->instance, &output_size, &header, sizeof(header));
-        image_info->image_width  = header.width;
+        image_info->image_width = header.width;
         image_info->image_height = header.heigth;
-        bpp                      = header.bpp;
+        bpp = header.bpp;
         if (bpp <= 8) {
             io_stream->tell(io_stream->instance, &palette_start);
             palette_entry_size = 3;
-            ncolors            = 1u << bpp;
+            ncolors = 1u << bpp;
         }
     } else if (length >= 50 && code_stream->parse_state->header_size >= 40) {
         BitmapInfoHeader header = {};
         io_stream->read(io_stream->instance, &output_size, &header, sizeof(header));
         io_stream->skip(
             io_stream->instance, code_stream->parse_state->header_size - sizeof(header));
-        image_info->image_width  = abs(header.width);
+        image_info->image_width = abs(header.width);
         image_info->image_height = abs(header.heigth);
-        bpp                      = header.bpp;
-        compression_type         = header.compression;
-        ncolors                  = header.colors_used;
+        bpp = header.bpp;
+        compression_type = header.compression;
+        ncolors = header.colors_used;
         if (bpp <= 8) {
             io_stream->tell(io_stream->instance, &palette_start);
             palette_entry_size = 4;
-            ncolors            = ncolors == 0 ? 1u << bpp : ncolors;
+            ncolors = ncolors == 0 ? 1u << bpp : ncolors;
         }
     } else {
         //const char* file_info = encoded->SourceInfo() ? encoded->SourceInfo() : "a file";
@@ -201,11 +202,11 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
 
     for (size_t i = 0; i < image_info->num_components; i++) {
         image_info->component_info[i].component_height = image_info->image_height;
-        image_info->component_info[i].component_width  = image_info->image_width;
+        image_info->component_info[i].component_width = image_info->image_width;
         image_info->component_info[i].sample_type =
             NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; // TODO Allow other sample data types
     }
-    image_info->sample_type   = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+    image_info->sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
     image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     return NVIMGCDCS_STATUS_SUCCESS;
 }

@@ -20,7 +20,7 @@ namespace nvimgcdcs {
 ThreadPool::ThreadPool(int num_thread, int device_id, bool set_affinity, const char* name)
     : threads_(num_thread), running_(true), work_complete_(true), started_(false)
     , active_threads_(0) {
-  if (num_thread) {
+  if (num_thread == 0) {
     NVIMGCDCS_LOG_FATAL("Thread pool must have non-zero size");
   }
 #if NVML_ENABLED
