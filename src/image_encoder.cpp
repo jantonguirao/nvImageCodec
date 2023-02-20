@@ -67,7 +67,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(
     nvimgcdcsCodeStreamDesc* code_stream_desc = code_stream->getCodeStreamDesc();
     image->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_ENCODING);
     image->setPromise(encode_state->getPromise());
-    encoder_desc_->encode(encoder_, internal_encode_state, code_stream_desc, image_desc, params);
+    encoder_desc_->encode(encoder_, internal_encode_state, image_desc, code_stream_desc, params);
 
     return future;
 }
@@ -97,7 +97,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encodeBatch(IEncodeState*
             images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
             images[i]->setPromise(encode_state_batch->getPromise());
             encoder_desc_->encode(
-                encoder_, internal_encode_state, code_stream_desc, image_desc, params);
+                encoder_, internal_encode_state, image_desc, code_stream_desc, params);
         }
     } else {
 

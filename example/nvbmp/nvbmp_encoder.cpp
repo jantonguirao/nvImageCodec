@@ -208,8 +208,8 @@ nvimgcdcsStatus_t nvbmp_get_capabilities(
 }
 
 static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
-    nvimgcdcsEncodeState_t encode_state, nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t image,
+    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_encode");
     nvimgcdcsImageInfo_t image_info;

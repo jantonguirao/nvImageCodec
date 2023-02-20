@@ -217,7 +217,7 @@ int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
 }
 
 static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+    nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
     const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_encode");

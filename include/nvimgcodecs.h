@@ -678,7 +678,7 @@ extern "C"
             nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
 
         nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state,
-            nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
+            nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
             const nvimgcdcsEncodeParams_t* params);
 
         nvimgcdcsStatus_t (*encodeBatch)(nvimgcdcsEncoder_t encoder,
