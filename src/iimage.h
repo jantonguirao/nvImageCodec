@@ -36,7 +36,7 @@ class IImage
     virtual IEncodeState* getAttachedEncodeState() = 0;
     virtual void detachEncodeState() = 0;
     virtual nvimgcdcsImageDesc_t getImageDesc() = 0;
-    virtual void setPromise(ProcessingResultsPromise* promise) = 0;
+    virtual void setPromise(const ProcessingResultsPromise& promise) = 0;
     virtual void setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status) = 0;
     virtual nvimgcdcsProcessingStatus_t getProcessingStatus() const = 0;
 

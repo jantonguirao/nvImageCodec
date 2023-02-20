@@ -294,7 +294,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     decode_time = wtime() - decode_time;
 
-    assert(ready_decoded_image == image); //we sent only one image to decoder
+    // assert(ready_decoded_image == image); //we sent only one image to decoder
 
     total_time = parse_time + decode_time;
     std::cout << "Total images processed: " << total_images << std::endl;

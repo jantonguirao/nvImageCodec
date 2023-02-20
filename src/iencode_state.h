@@ -20,8 +20,8 @@ class IEncodeState
 {
   public:
     virtual ~IEncodeState() = default;
-    virtual void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) = 0;
-    virtual ProcessingResultsPromise* getPromise() = 0;
+    virtual void setPromise(const ProcessingResultsPromise& promise) = 0;
+    virtual const ProcessingResultsPromise& getPromise() = 0;
     virtual nvimgcdcsEncodeState_t getInternalEncodeState() = 0;
 };
 

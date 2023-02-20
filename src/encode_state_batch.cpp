@@ -7,6 +7,8 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
+
+#include <memory>
 #include "encode_state_batch.h"
 
 namespace nvimgcdcs {
@@ -30,14 +32,14 @@ EncodeStateBatch::~EncodeStateBatch()
     }
 }
 
-void EncodeStateBatch::setPromise(std::unique_ptr<ProcessingResultsPromise> promise)
+void EncodeStateBatch::setPromise(const ProcessingResultsPromise& promise)
 {
-    promise_ = std::move(promise);
+    promise_ = std::make_unique<ProcessingResultsPromise>(promise);
 }
 
-ProcessingResultsPromise* EncodeStateBatch::getPromise()
+const ProcessingResultsPromise& EncodeStateBatch::getPromise()
 {
-    return promise_.get();
+    return *promise_;
 }
 
 nvimgcdcsEncodeState_t EncodeStateBatch::getInternalEncodeState()
