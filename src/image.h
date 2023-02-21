@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <memory>
 #include <nvimgcodecs.h>
 #include <nvimgcodecs.h>
 #include "iimage.h"
@@ -37,7 +38,7 @@ class Image : public IImage
     IEncodeState* getAttachedEncodeState() override;
     void detachEncodeState() override;
     nvimgcdcsImageDesc_t getImageDesc() override;
-    void setPromise(ProcessingResultsPromise* promise) override;
+    void setPromise(const ProcessingResultsPromise& promise) override;
     void setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status) override;
     nvimgcdcsProcessingStatus_t getProcessingStatus() const override;
 
@@ -59,7 +60,7 @@ class Image : public IImage
     IDecodeState* decode_state_;
     IEncodeState* encode_state_;
     nvimgcdcsImageDesc image_desc_;
-    ProcessingResultsPromise* promise_;
+    std::unique_ptr<ProcessingResultsPromise> promise_;
     nvimgcdcsProcessingStatus_t processing_status_;
 };
 } // namespace nvimgcdcs

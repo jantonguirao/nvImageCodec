@@ -71,9 +71,8 @@ void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams,
 std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(
     ICodeStream* code_stream, IImage* image, const nvimgcdcsDecodeParams_t* params)
 {
-    std::unique_ptr<ProcessingResultsPromise> results =
-        std::make_unique<ProcessingResultsPromise>(1);
-    auto future = results->getFuture();
+    ProcessingResultsPromise results(1);
+    auto future = results.getFuture();
     IDecodeState* decode_state = image->getAttachedDecodeState();
     decode_state->setPromise(std::move(results));
     nvimgcdcsDecodeState_t internal_decode_state = decode_state->getInternalDecodeState();
@@ -91,15 +90,13 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decodeBatch(IDecodeState*
     const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
     const nvimgcdcsDecodeParams_t* params)
 {
-    assert(code_stream.size() == images.size());
+    assert(code_streams.size() == images.size());
 
     int N = images.size();
-    assert(in.size() == N);
+    assert(static_cast<int>(code_streams.size()) == N);
 
-    std::unique_ptr<ProcessingResultsPromise> results =
-        std::make_unique<ProcessingResultsPromise>(N);
-
-    auto future = results->getFuture();
+    ProcessingResultsPromise results(N);
+    auto future = results.getFuture();
     decode_state_batch->setPromise(std::move(results));
 
     if (decoder_desc_->decodeBatch == nullptr) {

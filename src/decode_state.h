@@ -19,8 +19,8 @@ class DecodeState : public IDecodeState
     DecodeState(const struct nvimgcdcsDecoderDesc* decoder_desc, nvimgcdcsDecoder_t decoder,
         cudaStream_t cuda_stream);
     ~DecodeState() override;
-    void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) override;
-    ProcessingResultsPromise* getPromise() override;
+    void setPromise(const ProcessingResultsPromise& promise) override;
+    const ProcessingResultsPromise& getPromise() override;
     nvimgcdcsDecodeState_t getInternalDecodeState() override;
 
   private:

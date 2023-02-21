@@ -103,9 +103,9 @@ nvimgcdcsImageDesc_t Image::getImageDesc()
     return &image_desc_;
 }
 
-void Image::setPromise(ProcessingResultsPromise* promise)
+void Image::setPromise(const ProcessingResultsPromise& promise)
 {
-    promise_ = promise;
+    promise_ = std::make_unique<ProcessingResultsPromise>(promise);
 }
 
 void Image::setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status)

@@ -25,14 +25,14 @@ EncodeState::~EncodeState()
     encoder_desc_->destroyEncodeState(encode_state_);
 }
 
-void EncodeState::setPromise(std::unique_ptr<ProcessingResultsPromise> promise)
+void EncodeState::setPromise(const ProcessingResultsPromise& promise)
 {
-    promise_ = std::move(promise);
+    promise_ = std::make_unique<ProcessingResultsPromise>(promise);
 }
 
-ProcessingResultsPromise* EncodeState::getPromise()
+const ProcessingResultsPromise& EncodeState::getPromise()
 {
-    return promise_.get();
+    return *promise_;
 }
 
 nvimgcdcsEncodeState_t EncodeState::getInternalEncodeState()

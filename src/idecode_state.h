@@ -22,8 +22,8 @@ class IDecodeState
 {
   public:
     virtual ~IDecodeState() = default;
-    virtual void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) = 0;
-    virtual ProcessingResultsPromise* getPromise() = 0;
+    virtual void setPromise(const ProcessingResultsPromise& promise) = 0;
+    virtual const ProcessingResultsPromise& getPromise() = 0;
     virtual nvimgcdcsDecodeState_t getInternalDecodeState() = 0;
 };
 } // namespace nvimgcdcs

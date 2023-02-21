@@ -92,7 +92,7 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
         }
 #else
     #define NVIMGCDCSAPI_CATCH(a)                                     \
-        catch (const ExceptionNVIMGCDCS& e)                           \
+        catch (const Exception& e)                           \
         {                                                             \
             std::cerr << "Error status: " << e.status() << std::endl; \
             std::cerr << "Where: " << e.where() << std::endl;         \

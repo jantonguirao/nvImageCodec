@@ -31,14 +31,14 @@ DecodeStateBatch::~DecodeStateBatch()
     }
 }
 
-void DecodeStateBatch::setPromise(std::unique_ptr<ProcessingResultsPromise> promise)
+void DecodeStateBatch::setPromise(const ProcessingResultsPromise& promise)
 {
-    promise_ = std::move(promise);
+    promise_ = std::make_unique<ProcessingResultsPromise>(promise);
 }
 
-ProcessingResultsPromise* DecodeStateBatch::getPromise()
+const ProcessingResultsPromise& DecodeStateBatch::getPromise()
 {
-    return promise_.get();
+    return *promise_;
 }
 
 nvimgcdcsDecodeState_t DecodeStateBatch::getInternalDecodeState()

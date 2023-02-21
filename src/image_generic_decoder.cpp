@@ -35,7 +35,7 @@ namespace nvimgcdcs {
  */
 struct IWorkManager::Work
 {
-    Work(std::unique_ptr<ProcessingResultsPromise> results, const nvimgcdcsDecodeParams_t* params)
+    Work(const ProcessingResultsPromise& results, const nvimgcdcsDecodeParams_t* params)
         : results_(std::move(results))
         , params_(std::move(params))
     {
@@ -124,7 +124,7 @@ struct IWorkManager::Work
     // }
 
     // The original promise
-    std::unique_ptr<ProcessingResultsPromise> results_;
+    ProcessingResultsPromise results_;
     // The indices in the original request
     std::vector<int> indices_;
     std::vector<ICodeStream*> code_streams_;
@@ -154,7 +154,7 @@ class ImageGenericDecoder::Worker
     /**
    * @brief Constructs a decoder worker for a given decoder.
    *
-   * @param work_manager   - creates and recycles work 
+   * @param work_manager   - creates and recycles work
    * @param codec   - the factory that constructs the decoder for this worker
    * @param start   - if true, the decoder is immediately instantiated and the worker thread
    *                  is launched; otherwise a call to `start` is delayed until the first
@@ -346,7 +346,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     std::unique_ptr<IWorkManager::Work> fallback_work;
     auto fallback_worker = getFallback();
     if (fallback_worker) {
-        fallback_work = work_manager_->createNewWork(std::move(work->results_), work->params_);
+        fallback_work = work_manager_->createNewWork(work->results_, work->params_);
         move_work_to_fallback(fallback_work.get(), work.get(), mask);
         if (!fallback_work->empty())
             fallback_worker->addWork(std::move(fallback_work));
@@ -354,7 +354,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
         filter_work(work.get(), mask);
         for (size_t i = 0; i < mask.size(); i++) {
             if (!mask[i])
-                work->results_->set(work->indices_[i], ProcessingResult::failure(nullptr));
+                work->results_.set(work->indices_[i], ProcessingResult::failure(nullptr));
         }
     }
 
@@ -392,17 +392,17 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
                             r = ProcessingResult::failure(std::current_exception());
                         }
                     }
-                    work->results_->set(work->indices_[sub_idx], r);
+                    work->results_.set(work->indices_[sub_idx], r);
                 } else { // failed to decode
                     if (fallback_worker) {
                         // if there's fallback, we don't set the result, but try to use the fallback first
                         if (!fallback_work)
                             fallback_work = work_manager_->createNewWork(
-                                std::move(work->results_), work->params_);
+                                work->results_, work->params_);
                         fallback_work->moveEntry(work.get(), sub_idx);
                     } else {
                         // no fallback - just propagate the result to the original promise
-                        work->results_->set(work->indices_[sub_idx], r);
+                        work->results_.set(work->indices_[sub_idx], r);
                     }
                 }
             }
@@ -481,11 +481,10 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decodeBatch(
     const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params)
 {
     int N = images.size();
-    assert(in.size() == N);
+    assert(static_cast<int>(code_streams.size()) == N);
 
-    std::unique_ptr<ProcessingResultsPromise> results =
-        std::make_unique<ProcessingResultsPromise>(N);
-    auto future = results->getFuture();
+    ProcessingResultsPromise results(N);
+    auto future = results.getFuture();
     for (size_t i = 0; i < images.size(); ++i) {
         images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
     }
@@ -499,7 +498,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decodeBatch(
 }
 
 std::unique_ptr<ImageGenericDecoder::Work> ImageGenericDecoder::createNewWork(
-    std::unique_ptr<ProcessingResultsPromise> results, const nvimgcdcsDecodeParams_t* params)
+    const ProcessingResultsPromise& results, const nvimgcdcsDecodeParams_t* params)
 {
     if (free_work_items_) {
         std::lock_guard<std::mutex> g(work_mutex_);
@@ -526,7 +525,7 @@ void ImageGenericDecoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)
 void ImageGenericDecoder::combineWork(
     IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source)
 {
-    assert(target.results == source->results);
+    // assert(target.results == source->results);
 
     // if only one has temporary CPU storage, allocate it in the other
     //TODO
@@ -568,13 +567,13 @@ void ImageGenericDecoder::distributeWork(std::unique_ptr<IWorkManager::Work> wor
             std::stringstream msg_ss;
             msg_ss << "Image #" << work->indices_[i] << " not supported";
 
-            work->results_->set(i, ProcessingResult::failure(
+            work->results_.set(i, ProcessingResult::failure(
                                        std::make_exception_ptr(std::runtime_error(msg_ss.str()))));
             continue;
         }
         auto& w = dist[codec];
         if (!w)
-            w = createNewWork(std::move(work->results_), work->params_);
+            w = createNewWork(work->results_, work->params_);
         w->moveEntry(work.get(), i);
     }
 
