@@ -175,7 +175,7 @@ void PluginFramework::discoverAndLoadExtModules()
         directory_scaner_->start(dir);
         while (directory_scaner_->hasMore()) {
             fs::path dir_entry_path = directory_scaner_->next();
-            auto status = fs::symlink_status(dir_entry_path);
+            auto status = directory_scaner_->symlinkStatus(dir_entry_path);
             if (fs::is_regular_file(status)) {
                 //TODO check and filter out entries
                 const std::string module_path(dir_entry_path.string());

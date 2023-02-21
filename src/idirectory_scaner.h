@@ -19,10 +19,11 @@ namespace fs = std::filesystem;
 class IDirectoryScaner
 {
   public:
-    virtual ~IDirectoryScaner()                   = default;
+    virtual ~IDirectoryScaner() = default;
     virtual void start(const fs::path& directory) = 0;
-    virtual bool hasMore()                         = 0;
-    virtual fs::path next()                       = 0;
+    virtual bool hasMore() = 0;
+    virtual fs::path next() = 0;
+    virtual fs::file_status symlinkStatus(const fs::path& p) = 0;
 };
 
 } // namespace nvimgcdcs

@@ -56,15 +56,22 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
     std::unique_ptr<MockDirectoryScaner> directory_scaner = std::make_unique<MockDirectoryScaner>();
     EXPECT_CALL(*directory_scaner.get(), start(_)).Times(1);
     EXPECT_CALL(*directory_scaner.get(), hasMore())
-        .Times(3)
+        .Times(4)
+        .WillOnce(Return(true))
         .WillOnce(Return(true))
         .WillOnce(Return(true))
         .WillOnce(Return(false));
 
     EXPECT_CALL(*directory_scaner.get(), next())
-        .Times(2)
+        .Times(3)
         .WillOnce(Return("libnvjpeg.so.22.11.0.0"))
-        .WillOnce(Return("libnvjpeg2k.so.0.6.0.0"));
+        .WillOnce(Return("libnvjpeg2k.so.0.6.0.0"))
+        .WillOnce(Return("libnvjpeg2k.so.0"));
+    EXPECT_CALL(*directory_scaner.get(), symlinkStatus(_))
+        .Times(3)
+        .WillOnce(Return(fs::file_status(fs::file_type::regular)))
+        .WillOnce(Return(fs::file_status(fs::file_type::regular)))
+        .WillOnce(Return(fs::file_status(fs::file_type::symlink)));
 
     std::unique_ptr<MockLibraryLoader> library_loader = std::make_unique<MockLibraryLoader>();
     EXPECT_CALL(*library_loader.get(), loadLibrary(_)).Times(2);
