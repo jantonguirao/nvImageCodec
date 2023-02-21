@@ -55,9 +55,8 @@ bool ImageEncoder::canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc
 std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(
     ICodeStream* code_stream, IImage* image, const nvimgcdcsEncodeParams_t* params)
 {
-    std::unique_ptr<ProcessingResultsPromise> results =
-        std::make_unique<ProcessingResultsPromise>(1);
-    auto future = results->getFuture();
+    ProcessingResultsPromise results(1);
+    auto future = results.getFuture();
     IEncodeState* encode_state = image->getAttachedEncodeState();
     encode_state->setPromise(std::move(results));
 
@@ -76,15 +75,13 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encodeBatch(IEncodeState*
     const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
     const nvimgcdcsEncodeParams_t* params)
 {
-    assert(code_stream.size() == images.size());
+    assert(code_streams.size() == images.size());
 
     int N = images.size();
-    assert(in.size() == N);
+    assert(static_cast<int>(code_streams.size()) == N);
 
-    std::unique_ptr<ProcessingResultsPromise> results =
-        std::make_unique<ProcessingResultsPromise>(N);
-
-    auto future = results->getFuture();
+    ProcessingResultsPromise results(N);
+    auto future = results.getFuture();
     encode_state_batch->setPromise(std::move(results));
 
     if (encoder_desc_->encodeBatch == nullptr) {

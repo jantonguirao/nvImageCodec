@@ -21,8 +21,8 @@ class EncodeStateBatch : public IEncodeState
     EncodeStateBatch(const struct nvimgcdcsEncoderDesc* encoder_desc, nvimgcdcsEncoder_t encoder,
         cudaStream_t cuda_stream);
     ~EncodeStateBatch() override;
-    void setPromise(std::unique_ptr<ProcessingResultsPromise> promise) override;
-    ProcessingResultsPromise* getPromise() override;
+    void setPromise(const ProcessingResultsPromise& promise) override;
+    const ProcessingResultsPromise& getPromise() override;
     nvimgcdcsEncodeState_t getInternalEncodeState() override;
 
   private:

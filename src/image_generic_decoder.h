@@ -34,7 +34,7 @@ class IWorkManager
     struct Work;
 
     virtual ~IWorkManager() = default;
-    virtual std::unique_ptr<Work> createNewWork(std::unique_ptr<ProcessingResultsPromise> results,
+    virtual std::unique_ptr<Work> createNewWork(const ProcessingResultsPromise& results,
         const nvimgcdcsDecodeParams_t* params) = 0;
     virtual void recycleWork(std::unique_ptr<IWorkManager::Work> work) = 0;
     virtual void combineWork(
@@ -65,7 +65,7 @@ class ImageGenericDecoder : public IImageDecoder, public IWorkManager
     ImageGenericDecoder::Worker *getWorker(const ICodec* codec, int device_id);
 
     std::unique_ptr<IWorkManager::Work> createNewWork(
-        std::unique_ptr<ProcessingResultsPromise> results, const nvimgcdcsDecodeParams_t* params);
+        const ProcessingResultsPromise& results, const nvimgcdcsDecodeParams_t* params);
     void recycleWork(std::unique_ptr<IWorkManager::Work> work);
     void combineWork(IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source);
     void distributeWork(std::unique_ptr<Work> work);

@@ -175,9 +175,12 @@ void PluginFramework::discoverAndLoadExtModules()
         directory_scaner_->start(dir);
         while (directory_scaner_->hasMore()) {
             fs::path dir_entry_path = directory_scaner_->next();
-            //TODO check and filter out entries
-            const std::string module_path(dir_entry_path.string());
-            loadExtModule(module_path);
+            auto status = fs::symlink_status(dir_entry_path);
+            if (fs::is_regular_file(status)) {
+                //TODO check and filter out entries
+                const std::string module_path(dir_entry_path.string());
+                loadExtModule(module_path);
+            }
         }
     }
 }
