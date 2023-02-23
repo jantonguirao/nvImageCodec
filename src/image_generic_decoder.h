@@ -53,7 +53,7 @@ class ImageGenericDecoder : public IImageDecoder, public IWorkManager
         const nvimgcdcsDecodeParams_t* params) const override;
     void canDecode(const std::vector<ICodeStream*>& code_streams,
         const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
-        std::vector<bool>* result) const;
+        std::vector<bool>* result) const override;
     std::unique_ptr<ProcessingResultsFuture> decode(
         ICodeStream* code_stream, IImage* image, const nvimgcdcsDecodeParams_t* params) override;
     std::unique_ptr<ProcessingResultsFuture> decodeBatch(IDecodeState* decode_state_batch,
@@ -66,7 +66,7 @@ class ImageGenericDecoder : public IImageDecoder, public IWorkManager
 
     std::unique_ptr<IWorkManager::Work> createNewWork(
         const ProcessingResultsPromise& results, const nvimgcdcsDecodeParams_t* params);
-    void recycleWork(std::unique_ptr<IWorkManager::Work> work);
+    void recycleWork(std::unique_ptr<IWorkManager::Work> work) override;
     void combineWork(IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source);
     void distributeWork(std::unique_ptr<Work> work);
 

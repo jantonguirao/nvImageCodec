@@ -38,6 +38,7 @@ struct IWorkManager::Work
     Work(const ProcessingResultsPromise& results, const nvimgcdcsDecodeParams_t* params)
         : results_(std::move(results))
         , params_(std::move(params))
+        , decode_state_batch_(nullptr)
     {
     }
 
@@ -46,7 +47,8 @@ struct IWorkManager::Work
         indices_.clear();
         code_streams_.clear();
         images_.clear();
-        //  temp_buffers.clear();
+        host_temp_buffers_.clear();
+        device_temp_buffers_.clear();
     }
 
     int getSamplesNum() const { return indices_.size(); }
@@ -59,8 +61,6 @@ struct IWorkManager::Work
         code_streams_.resize(num_samples);
         if (!images_.empty())
             images_.resize(num_samples);
-        // if (!temp_buffers.empty())
-        //     temp_buffers.resize(num_samples);
     }
 
     void init(IDecodeState* decode_state_batch, const std::vector<ICodeStream*>& code_streams,
@@ -92,8 +92,10 @@ struct IWorkManager::Work
         indices_.push_back(from->indices_[which]);
         if (!from->images_.empty())
             images_.push_back(from->images_[which]);
-        // if (!from.temp_buffers.empty())
-        //    temp_buffers.push_back(std::move(from.temp_buffers[which]));
+        if (!from->host_temp_buffers_.empty())
+            host_temp_buffers_.push_back(std::move(from->host_temp_buffers_[which]));
+        if (!from->device_temp_buffers_.empty())
+            device_temp_buffers_.push_back(std::move(from->device_temp_buffers_[which]));
     }
 
     /**
@@ -101,27 +103,87 @@ struct IWorkManager::Work
    *
    * This function is used when falling back from GPU to CPU decoder.
    */
-    //void alloc_temp_outputs();
-    // void ImageGenericDecoder::Work::alloc_temp_outputs()
-    // {
-    //     outputs.resize(indices.size());
-    //     temp_buffers.clear();
-    //     for (int i = 0, n = indices.size(); i < n; i++) {
-    //         SampleView<GPUBackend>& gpu_out = gpu_outputs[i];
 
-    //         // TODO(michalz): Add missing utility functions to SampleView - or just use Tensor again...
-    //         size_t size = volume(gpu_out.shape()) * TypeTable::GetTypeInfo(gpu_out.type()).size();
-    //         constexpr int kTempBufferAlignment = 256;
+    void alloc_host_temp_outputs()
+    {
+        host_temp_buffers_.clear();
+        for (int i = 0, n = indices_.size(); i < n; i++) {
+            void* d_buffer;
+            size_t d_size;
+            images_[i]->getDeviceBuffer(&d_buffer, &d_size);
+            void* h_pinned = nullptr;
+            CHECK_CUDA(cudaMallocHost(&h_pinned, d_size));
+            std::unique_ptr<void, decltype(&cudaFreeHost)> h_ptr(h_pinned, &cudaFreeHost);
+            host_temp_buffers_.push_back(std::move(h_ptr));
+        }
+    }
 
-    //         temp_buffers.emplace_back();
-    //         auto& buf_ptr = temp_buffers.back();
-    //         buf_ptr       = mm::alloc_raw_async_unique<char, mm::memory_kind::pinned>(
-    //             size, mm::host_sync, ctx.stream, kTempBufferAlignment);
+    void alloc_device_temp_outputs()
+    {
+        device_temp_buffers_.clear();
+        for (int i = 0, n = indices_.size(); i < n; i++) {
+            void* h_buffer;
+            size_t h_size;
+            images_[i]->getHostBuffer(&h_buffer, &h_size);
+            void* device_buffer = nullptr;
+            CHECK_CUDA(cudaMalloc(&device_buffer, h_size));
+            std::unique_ptr<void, decltype(&cudaFree)> d_ptr(device_buffer, &cudaFree);
+            device_temp_buffers_.push_back(std::move(d_ptr));
+        }
+    }
 
-    //         SampleView<CPUBackend>& cpu_out = outputs[i];
-    //         cpu_out = SampleView<CPUBackend>(buf_ptr.get(), gpu_out.shape(), gpu_out.type());
-    //     }
-    // }
+    void ensure_expected_buffer_for_each_image(bool is_device_output)
+    {
+        for (size_t i = 0; i < images_.size(); ++i) {
+            void* h_buffer;
+            size_t h_size;
+            images_[i]->getHostBuffer(&h_buffer, &h_size);
+            void* d_buffer;
+            size_t d_size;
+            images_[i]->getDeviceBuffer(&d_buffer, &d_size);
+
+            bool is_output_expected_in_device = d_buffer != nullptr;
+            bool is_output_expected_in_host = h_buffer != nullptr;
+
+            if (!is_device_output && is_output_expected_in_device) {
+                if (host_temp_buffers_.empty()) {
+                    alloc_host_temp_outputs();
+                }
+                images_[i]->setHostBuffer(host_temp_buffers_[i].get(), d_size);
+            }
+            if (is_device_output && is_output_expected_in_host) {
+                if (device_temp_buffers_.empty()) {
+                    alloc_device_temp_outputs();
+                }
+                images_[i]->setDeviceBuffer(device_temp_buffers_[i].get(), h_size);
+            }
+        }
+    }
+
+    void copy_buffer_if_necessery(bool is_device_output, int sub_idx, ProcessingResult* r)
+    {
+        void* h_buffer;
+        size_t h_size;
+        images_[sub_idx]->getHostBuffer(&h_buffer, &h_size);
+        void* d_buffer;
+        size_t d_size;
+        images_[sub_idx]->getDeviceBuffer(&d_buffer, &d_size);
+        nvimgcdcsImageInfo_t image_info;
+        images_[sub_idx]->getImageInfo(&image_info);
+        try {
+            if (is_device_output && h_buffer != nullptr) {
+                CHECK_CUDA(cudaMemcpyAsync(
+                    h_buffer, d_buffer, d_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
+                images_[sub_idx]->setDeviceBuffer(nullptr, 0);
+            } else if (!is_device_output && d_buffer != nullptr) {
+                CHECK_CUDA(cudaMemcpyAsync(
+                    d_buffer, h_buffer, h_size, cudaMemcpyHostToDevice, image_info.cuda_stream));
+                images_[sub_idx]->setHostBuffer(nullptr, 0);
+            }
+        } catch (...) {
+            *r = ProcessingResult::failure(std::current_exception());
+        }
+    }
 
     // The original promise
     ProcessingResultsPromise results_;
@@ -129,7 +191,8 @@ struct IWorkManager::Work
     std::vector<int> indices_;
     std::vector<ICodeStream*> code_streams_;
     std::vector<IImage*> images_;
-    //std::vector<mm::async_uptr<void>> temp_buffers;
+    std::vector<std::unique_ptr<void, decltype(&cudaFreeHost)>> host_temp_buffers_;
+    std::vector<std::unique_ptr<void, decltype(&cudaFree)>> device_temp_buffers_;
     const nvimgcdcsDecodeParams_t* params_;
     IDecodeState* decode_state_batch_;
     std::unique_ptr<Work> next_;
@@ -203,10 +266,9 @@ class ImageGenericDecoder::Worker
     const ICodec* codec_ = nullptr;
     int index_ = 0;
     std::unique_ptr<IImageDecoder> decoder_;
-    bool produces_gpu_output_ = false;
+    bool is_device_output_ = false;
     std::vector<std::unique_ptr<IDecodeState>> decode_states_;
     std::unique_ptr<IDecodeState> decode_state_batch_;
-
     std::unique_ptr<Worker> fallback_ = nullptr;
 };
 
@@ -233,8 +295,15 @@ IImageDecoder* ImageGenericDecoder::Worker::getDecoder(const nvimgcdcsDecodePara
         decoder_ = codec_->createDecoder(index_, params);
         if (decoder_) {
             decode_state_batch_ = decoder_->createDecodeStateBatch(nullptr);
-        } else {
-            //TODO throw
+            size_t capabilities_size;
+            decoder_->getCapabilities(nullptr, &capabilities_size);
+            const nvimgcdcsCapability_t* capabilities_ptr;
+            decoder_->getCapabilities(&capabilities_ptr, &capabilities_size);
+            is_device_output_ =
+                std::find(capabilities_ptr,
+                    capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                    NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) !=
+                capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
         }
     }
     return decoder_.get();
@@ -281,8 +350,6 @@ void ImageGenericDecoder::Worker::addWork(std::unique_ptr<Work> work)
     {
         std::lock_guard guard(mtx_);
         assert((work->images_.size() == work->code_streams_.size()));
-        //assert(->rois.empty() || work->rois.size() == work->code_streams_.size());
-        //assert(work->temp_buffers.empty() || work->temp_buffers.size() == work->cpu_outputs.size());
         if (work_) {
             work_manager_->combineWork(work_.get(), std::move(work));
             // no need to notify - a work item was already there, so it will be picked up regardless
@@ -305,10 +372,11 @@ static void move_work_to_fallback(
                 // compact
                 if (!work->images_.empty())
                     work->images_[i - moved] = work->images_[i];
-                //if (!work.temp_buffers.empty())
-                //    work.temp_buffers[i - moved] = std::move(work.temp_buffers[i]);
-                //if (!work.rois[i])
-                //   work.rois[i - moved] = std::move(work.rois[i]);
+                if (!work->host_temp_buffers_.empty())
+                    work->host_temp_buffers_[i - moved] = std::move(work->host_temp_buffers_[i]);
+                if (!work->device_temp_buffers_.empty())
+                    work->device_temp_buffers_[i - moved] =
+                        std::move(work->device_temp_buffers_[i]);
                 if (!work->code_streams_.empty())
                     work->code_streams_[i - moved] = work->code_streams_[i];
                 work->indices_[i - moved] = work->indices_[i];
@@ -332,8 +400,6 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 {
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
-    //assert(->rois.empty() || work->rois.size() == work->code_streams_.size());
-    //assert(work->temp_buffers.empty() || work->temp_buffers.size() == work->cpu_outputs.size());
 
     IImageDecoder* decoder = getDecoder(work->params_);
     std::vector<bool> mask;
@@ -341,7 +407,8 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
         NVIMGCDCS_LOG_DEBUG("code streams: " << work->code_streams_.size());
         decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask);
     } else {
-        //TODO throw
+        NVIMGCDCS_LOG_ERROR("Could not create decoder");
+        return;
     }
     std::unique_ptr<IWorkManager::Work> fallback_work;
     auto fallback_worker = getFallback();
@@ -359,15 +426,12 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     }
 
     if (!work->code_streams_.empty()) {
-        bool decode_to_gpu = produces_gpu_output_;
-
-        // TODO
-        // if (!decode_to_gpu && work->cpu_outputs.empty()) {
-        //     work->alloc_temp_cpu_outputs();
+        work->ensure_expected_buffer_for_each_image(is_device_output_);
         for (size_t i = 0; i < work->images_.size(); ++i) {
             if (decode_states_.size() == i) {
                 decode_states_.push_back(decoder_->createDecodeState(nullptr));
             }
+
             work->images_[i]->attachDecodeState(decode_states_[i].get());
         }
         auto future = decoder_->decodeBatch(
@@ -383,22 +447,14 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
                 work->images_[i]->detachDecodeState();
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.success) {
-                    if (!decode_to_gpu /*&& !work->images_.empty()*/) {
-                        try {
-                            //TODO
-                            // copy(work->gpu_outputs[sub_idx], work->cpu_outputs[sub_idx],
-                            //     work->ctx.stream);
-                        } catch (...) {
-                            r = ProcessingResult::failure(std::current_exception());
-                        }
-                    }
+                    work->copy_buffer_if_necessery(is_device_output_, sub_idx, &r);
                     work->results_.set(work->indices_[sub_idx], r);
                 } else { // failed to decode
                     if (fallback_worker) {
                         // if there's fallback, we don't set the result, but try to use the fallback first
                         if (!fallback_work)
-                            fallback_work = work_manager_->createNewWork(
-                                work->results_, work->params_);
+                            fallback_work =
+                                work_manager_->createNewWork(work->results_, work->params_);
                         fallback_work->moveEntry(work.get(), sub_idx);
                     } else {
                         // no fallback - just propagate the result to the original promise
@@ -525,14 +581,16 @@ void ImageGenericDecoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)
 void ImageGenericDecoder::combineWork(
     IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source)
 {
-    // assert(target.results == source->results);
-
-    // if only one has temporary CPU storage, allocate it in the other
-    //TODO
-    // if (target.temp_buffers.empty() && !source->temp_buffers.empty())
-    //     target.alloc_temp_cpu_outputs();
-    // else if (!target.temp_buffers.empty() && source->temp_buffers.empty())
-    //     source->alloc_temp_cpu_outputs();
+    //if only one has temporary CPU  storage, allocate it in the other
+    if (target->host_temp_buffers_.empty() && !source->host_temp_buffers_.empty())
+        target->alloc_host_temp_outputs();
+    else if (!target->host_temp_buffers_.empty() && source->host_temp_buffers_.empty())
+        source->alloc_host_temp_outputs();
+    //if only one has temporary GPU storage, allocate it in the other
+    if (target->device_temp_buffers_.empty() && !source->device_temp_buffers_.empty())
+        target->alloc_device_temp_outputs();
+    else if (!target->device_temp_buffers_.empty() && source->device_temp_buffers_.empty())
+        source->alloc_device_temp_outputs();
 
     auto move_append = [](auto& dst, auto& src) {
         dst.reserve(dst.size() + src.size());
@@ -543,8 +601,8 @@ void ImageGenericDecoder::combineWork(
     move_append(target->images_, source->images_);
     move_append(target->code_streams_, source->code_streams_);
     move_append(target->indices_, source->indices_);
-    //TODO move_append(target.rois, source->rois);
-    //TODO move_append(target.temp_buffers, source->temp_buffers);
+    move_append(target->host_temp_buffers_, source->host_temp_buffers_);
+    move_append(target->device_temp_buffers_, source->device_temp_buffers_);
     recycleWork(std::move(source));
 }
 
@@ -568,7 +626,7 @@ void ImageGenericDecoder::distributeWork(std::unique_ptr<IWorkManager::Work> wor
             msg_ss << "Image #" << work->indices_[i] << " not supported";
 
             work->results_.set(i, ProcessingResult::failure(
-                                       std::make_exception_ptr(std::runtime_error(msg_ss.str()))));
+                                      std::make_exception_ptr(std::runtime_error(msg_ss.str()))));
             continue;
         }
         auto& w = dist[codec];
