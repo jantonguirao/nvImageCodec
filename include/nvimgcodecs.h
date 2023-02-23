@@ -365,7 +365,7 @@ extern "C"
         void* next;
         int* start;
         int* end;
-        int ndim;
+        int num_dim;
         bool align_to_tile;
         nvimgcdcsDataDict_t config;
     } nvimgcdcsRegion_t;
@@ -382,7 +382,8 @@ extern "C"
         bool enable_scaling;
         nvimgcdcsScaleFactor_t scale;
         bool enable_roi;
-        nvimgcdcsRegion_t region;
+        int num_rois;
+        nvimgcdcsRegion_t* region;
         //For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
         //For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.
         bool enable_color_conversion;
@@ -829,15 +830,15 @@ extern "C"
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetHostBuffer(
-        nvimgcdcsImage_t image, void* buffer, size_t size);
+        nvimgcdcsImage_t image, void* buffer, size_t size); //TODO move to ImageInfo
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetHostBuffer(
         nvimgcdcsImage_t image, void** buffer, size_t* size);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetDeviceBuffer(
-        nvimgcdcsImage_t image, void* buffer, size_t size);
+        nvimgcdcsImage_t image, void* buffer, size_t size); //TODO move to ImageInfo
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetDeviceBuffer(
         nvimgcdcsImage_t image, void** buffer, size_t* size);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetImageInfo(
-        nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
+        nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info); //TODO set ImageInfo during createImage
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(
         nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetProcessingStatus(
@@ -867,7 +868,7 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(
         nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(
-        nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
+        nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);  //TODO move to Create
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(
         nvimgcdcsCodeStream_t stream_handle, char* codec_name);
 
