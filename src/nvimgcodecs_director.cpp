@@ -11,6 +11,7 @@
 #include "nvimgcodecs_director.h"
 #include "directory_scaner.h"
 #include "image_generic_decoder.h"
+#include "image_generic_encoder.h"
 #include "library_loader.h"
 #include "default_executor.h"
 
@@ -34,6 +35,11 @@ NvImgCodecsDirector::~NvImgCodecsDirector()
 std::unique_ptr<IImageDecoder> NvImgCodecsDirector::createGenericDecoder()
 {
     return std::make_unique<ImageGenericDecoder>(&codec_registry_);
+}
+
+std::unique_ptr<IImageEncoder> NvImgCodecsDirector::createGenericEncoder()
+{
+    return std::make_unique<ImageGenericEncoder>(&codec_registry_);
 }
 
 } // namespace nvimgcdcs

@@ -19,6 +19,7 @@
 #include <mutex>
 #include "iimage_decoder.h"
 #include "processing_results.h"
+#include "iwork_manager.h"
 
 namespace nvimgcdcs {
 
@@ -27,19 +28,6 @@ class IImage;
 class ICodeStream;
 class ICodecRegistry;
 class ICodec;
-
-class IWorkManager
-{
-  public:
-    struct Work;
-
-    virtual ~IWorkManager() = default;
-    virtual std::unique_ptr<Work> createNewWork(const ProcessingResultsPromise& results,
-        const nvimgcdcsDecodeParams_t* params) = 0;
-    virtual void recycleWork(std::unique_ptr<IWorkManager::Work> work) = 0;
-    virtual void combineWork(
-        IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source) = 0;
-};
 
 class ImageGenericDecoder : public IImageDecoder, public IWorkManager
 {
@@ -65,7 +53,7 @@ class ImageGenericDecoder : public IImageDecoder, public IWorkManager
     ImageGenericDecoder::Worker *getWorker(const ICodec* codec, int device_id);
 
     std::unique_ptr<IWorkManager::Work> createNewWork(
-        const ProcessingResultsPromise& results, const nvimgcdcsDecodeParams_t* params);
+        const ProcessingResultsPromise& results, const void* params);
     void recycleWork(std::unique_ptr<IWorkManager::Work> work) override;
     void combineWork(IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source);
     void distributeWork(std::unique_ptr<Work> work);

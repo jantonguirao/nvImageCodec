@@ -837,8 +837,8 @@ extern "C"
         nvimgcdcsImage_t image, void* buffer, size_t size); //TODO move to ImageInfo
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetDeviceBuffer(
         nvimgcdcsImage_t image, void** buffer, size_t* size);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetImageInfo(
-        nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info); //TODO set ImageInfo during createImage
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetImageInfo(nvimgcdcsImage_t image,
+        nvimgcdcsImageInfo_t* image_info); //TODO set ImageInfo during createImage
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(
         nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetProcessingStatus(
@@ -868,7 +868,8 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(
         nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(
-        nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);  //TODO move to Create
+        nvimgcdcsCodeStream_t stream_handle,
+        nvimgcdcsImageInfo_t* image_info); //TODO move to Create
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(
         nvimgcdcsCodeStream_t stream_handle, char* codec_name);
 
@@ -900,6 +901,8 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_state);
 
     //Encoder
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGenericCreate(
+        nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance,
         nvimgcdcsEncoder_t* encoder, nvimgcdcsImage_t image, nvimgcdcsCodeStream_t stream,
         const nvimgcdcsEncodeParams_t* params);

@@ -810,6 +810,26 @@ nvimgcdcsStatus_t nvimgcdcsImageGetProcessingStatus(
     return ret;
 }
 
+
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGenericCreate(
+    nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(instance)
+            CHECK_NULL(encoder)
+            std::unique_ptr<IImageEncoder> image_encoder =
+                instance->director_.createGenericEncoder();
+            *encoder = new nvimgcdcsEncoder();
+            (*encoder)->image_encoder_ = std::move(image_encoder);
+            (*encoder)->instance_ = instance;
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+
 nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder,
     nvimgcdcsImage_t image, nvimgcdcsCodeStream_t stream, const nvimgcdcsEncodeParams_t* params)
 
@@ -907,6 +927,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder,
             CHECK_NULL(streams)
             CHECK_NULL(images)
             CHECK_NULL(params)
+
             std::vector<nvimgcdcs::ICodeStream*> internal_code_streams;
             std::vector<nvimgcdcs::IImage*> internal_images;
 
@@ -914,6 +935,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder,
                 internal_code_streams.push_back(&streams[i]->code_stream_);
                 internal_images.push_back(&images[i]->image_);
             }
+
             auto int_future = encoder->image_encoder_->encodeBatch(encode_state_batch->encode_state_.get(),
                 internal_images, internal_code_streams, params);
             if (blocking) {
@@ -972,11 +994,14 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateBatchCreate(nvimgcdcsEncoder_t encoder,
 
     NVIMGCDCSAPI_TRY
         {
-            CHECK_NULL(encoder)
-            CHECK_NULL(encode_state_batch)
-            std::unique_ptr<IEncodeState> encode_state_ =
-                encoder->image_encoder_->createEncodeStateBatch(cuda_stream);
-            if (encode_state_) {
+           CHECK_NULL(encoder)
+           CHECK_NULL(encode_state_batch)
+
+
+           std::unique_ptr<IEncodeState> encode_state_ =
+               encoder->image_encoder_->createEncodeStateBatch(cuda_stream);
+
+           if (encode_state_) {
                 *encode_state_batch = new nvimgcdcsEncodeState();
                 (*encode_state_batch)->encode_state_ = std::move(encode_state_);
             } else {

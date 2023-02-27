@@ -20,9 +20,10 @@ EncodeStateBatch::EncodeStateBatch(const struct nvimgcdcsEncoderDesc* encoder_de
     , encode_state_(nullptr)
     , cuda_stream_(cuda_stream)
 {
-    if (encoder_desc_->createEncodeStateBatch) {
-        encoder_desc_->createEncodeStateBatch(encoder_, &encode_state_, cuda_stream);
-    }
+    if (encoder_desc_)
+        if (encoder_desc_->createEncodeStateBatch) {
+            encoder_desc_->createEncodeStateBatch(encoder_, &encode_state_, cuda_stream);
+        }
 }
 
 EncodeStateBatch::~EncodeStateBatch()

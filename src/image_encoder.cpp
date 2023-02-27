@@ -52,6 +52,20 @@ bool ImageEncoder::canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc
     return result;
 }
 
+void ImageEncoder::canEncode(const std::vector<IImage*>& images,
+    const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params,
+    std::vector<bool>* result) const
+{
+    result->clear();
+    for (size_t i = 0; i < code_streams.size(); ++i) {
+        bool r;
+        nvimgcdcsCodeStreamDesc* cs_desc = code_streams[i]->getCodeStreamDesc();
+        nvimgcdcsImageDesc* im_desc = images[i]->getImageDesc();
+        encoder_desc_->canEncode(encoder_, &r, im_desc, cs_desc, params);
+        result->push_back(r);
+    }
+}
+
 std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(
     ICodeStream* code_stream, IImage* image, const nvimgcdcsEncodeParams_t* params)
 {

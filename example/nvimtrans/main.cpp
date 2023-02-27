@@ -560,14 +560,15 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         nvimgcdcsCodeStreamSetImageInfo(out_code_streams[i], &out_image_info);
 
         if (encoder == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(
-                instance, &encoder, images[i], out_code_streams[i], &encode_params))
+            //CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(
+            //    instance, &encoder, images[i], out_code_streams[i], &encode_params))
+            CHECK_NVIMGCDCS(nvimgcdcsEncoderGenericCreate(instance, &encoder));
             CHECK_NVIMGCDCS(nvimgcdcsEncodeStateBatchCreate(encoder, &encode_state_batch, nullptr));
         }
-        if (encode_states[i] == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsEncodeStateCreate(encoder, &encode_states[i], NULL));
-        }
-        CHECK_NVIMGCDCS(nvimgcdcsImageAttachEncodeState(images[i], encode_states[i]));
+        // if (encode_states[i] == nullptr) {
+        //     CHECK_NVIMGCDCS(nvimgcdcsEncodeStateCreate(encoder, &encode_states[i], NULL));
+        // }
+        // CHECK_NVIMGCDCS(nvimgcdcsImageAttachEncodeState(images[i], encode_states[i]));
     }
     return EXIT_SUCCESS;
 }
@@ -664,16 +665,10 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
                 encode_params, params, output_path))
             return EXIT_FAILURE;
 
-        //CHECK_CUDA(cudaEventRecord(startEvent, NULL));
         double start_encoding_time = wtime();
         CHECK_NVIMGCDCS(nvimgcdcsEncoderEncodeBatch(encoder, encode_state_batch, images.data(),
             out_code_streams.data(), params.batch_size, &encode_params, nullptr, true));
         double encode_time = wtime() - start_encoding_time;
-        //CHECK_CUDA(cudaEventRecord(stopEvent, NULL));
-        //CHECK_CUDA(cudaEventSynchronize(stopEvent));
-        //CHECK_CUDA(cudaEventElapsedTime(&loopTime, startEvent, stopEvent));
-        // double encode_time =
-        //    0.001 * static_cast<double>(loopTime); // cudaEventElapsedTime returns milliseconds
 
         if (warmup < params.warmup) {
             warmup++;
