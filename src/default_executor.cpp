@@ -15,7 +15,7 @@
 namespace nvimgcdcs {
 
 DefaultExecutor::DefaultExecutor(int num_threads)
-    : desc_{NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC, nullptr, this, &static_launch}
+    : desc_{NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC, nullptr, this, &static_launch, &static_get_num_threads}
     , num_threads_(num_threads)
 {
 }
@@ -29,8 +29,8 @@ nvimgcdcsExecutorDesc_t DefaultExecutor::getExecutorDesc()
     return &desc_;
 }
 
-nvimgcdcsStatus_t DefaultExecutor::launch(
-    int device_id, void* task_context, void (*task)(void* task_context))
+nvimgcdcsStatus_t DefaultExecutor::launch(int device_id, int sample_idx, void* task_context,
+    void (*task)(int thread_id, int sample_idx, void* task_context))
 {
     try {
         std::stringstream ss;
@@ -39,7 +39,9 @@ nvimgcdcsStatus_t DefaultExecutor::launch(
             device_id2thread_pool_.try_emplace(device_id, num_threads_, device_id, false, ss.str());
 
         auto& thread_pool = it.first->second;
-        auto task_wrapper = [task_context, task](int thread_id) { task(task_context); };
+        auto task_wrapper = [task_context, sample_idx, task](int thread_id) {
+            task(thread_id, sample_idx, task_context); 
+        };
         thread_pool.addWork(task_wrapper, 0, true);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(e.what());
@@ -49,10 +51,22 @@ nvimgcdcsStatus_t DefaultExecutor::launch(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t DefaultExecutor::static_launch(
-    void* instance, int device_id, void* task_context, void (*task)(void* task_context))
+int DefaultExecutor::get_num_threads() const
+{
+    return num_threads_;
+}
+
+nvimgcdcsStatus_t DefaultExecutor::static_launch(void* instance, int device_id, int sample_idx, void* task_context,
+    void (*task)(int thread_id, int sample_idx, void* task_context))
 {
     DefaultExecutor* handle = reinterpret_cast<DefaultExecutor*>(instance);
-    return handle->launch(device_id, task_context, task);
+    return handle->launch(device_id, sample_idx, task_context, task);
 }
+
+int DefaultExecutor::static_get_num_threads(void* instance)
+{
+    DefaultExecutor* handle = reinterpret_cast<DefaultExecutor*>(instance);
+    return handle->get_num_threads();
+}
+
 } // namespace nvimgcdcs
