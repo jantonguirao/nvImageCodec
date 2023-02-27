@@ -25,10 +25,14 @@ class DefaultExecutor : public IExecutor
     nvimgcdcsExecutorDesc_t getExecutorDesc() override;
 
   private:
-    nvimgcdcsStatus_t launch(int device_id, void* task_context, void (*task)(void* task_context));
+    nvimgcdcsStatus_t launch(int device_id, int sample_idx, void* task_context,
+        void (*task)(int thread_id, int sample_idx, void* task_context));
+    int get_num_threads() const;
 
     static nvimgcdcsStatus_t static_launch(
-        void* instance, int device_id, void* task_context, void (*task)(void* task_context));
+        void* instance, int device_id, int sample_idx, void* task_context,
+        void (*task)(int thread_id, int sample_idx, void* task_context));
+    static int static_get_num_threads(void* instance);
 
     nvimgcdcsExecutorDesc desc_;
     int num_threads_;

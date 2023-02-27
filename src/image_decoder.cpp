@@ -112,15 +112,12 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decodeBatch(IDecodeState*
                 decoder_, internal_decode_state, code_stream_desc, image_desc, params);
         }
     } else {
-        std::vector<nvimgcdcsDecodeState_t> decode_states;
         std::vector<nvimgcdcsCodeStreamDesc*> code_stream_descs;
         std::vector<nvimgcdcsImageDesc*> image_descs;
 
         for (size_t i = 0; i < code_streams.size(); ++i) {
 
             code_stream_descs.push_back(code_streams[i]->getCodeStreamDesc());
-            IDecodeState* decode_state = images[i]->getAttachedDecodeState();
-            decode_states.push_back(decode_state->getInternalDecodeState());
             image_descs.push_back(images[i]->getImageDesc());
             images[i]->setIndex(i);
             images[i]->setPromise(decode_state_batch->getPromise());
@@ -128,8 +125,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decodeBatch(IDecodeState*
         }
 
         decoder_desc_->decodeBatch(decoder_, decode_state_batch->getInternalDecodeState(),
-            decode_states.data(), code_stream_descs.data(), image_descs.data(), code_streams.size(),
-            params);
+            code_stream_descs.data(), image_descs.data(), code_streams.size(), params);
     }
 
     return future;

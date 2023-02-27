@@ -722,9 +722,8 @@ extern "C"
             const nvimgcdcsDecodeParams_t* params);
 
         nvimgcdcsStatus_t (*decodeBatch)(nvimgcdcsDecoder_t decoder,
-            nvimgcdcsDecodeState_t decode_state_batch, nvimgcdcsDecodeState_t* decode_states,
-            nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size,
-            const nvimgcdcsDecodeParams_t* params);
+            nvimgcdcsDecodeState_t decode_state_batch, nvimgcdcsCodeStreamDesc_t* code_streams,
+            nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
     };
 
     typedef struct nvimgcdcsDecoderDesc nvimgcdcsDecoderDesc_t;
@@ -736,8 +735,9 @@ extern "C"
 
         void* instance;
 
-        nvimgcdcsStatus_t (*launch)(
-            void* instance, int device_id, void* task_context, void (*task)(void* task_context));
+        nvimgcdcsStatus_t (*launch)(void* instance, int device_id, int sample_idx, void* task_context,
+            void (*task)(int thread_id, int sample_idx, void* task_context));
+        int (*get_num_threads)(void* instance);
     };
 
     typedef struct nvimgcdcsExecutorDesc* nvimgcdcsExecutorDesc_t;
