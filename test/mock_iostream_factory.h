@@ -24,8 +24,10 @@ class MockIoStreamFactory : public IIoStreamFactory
     MOCK_METHOD(std::unique_ptr<IoStream>, createFileIoStream,
         (const std::string& file_name, bool read_ahead, bool use_mmap, bool to_write),
         (const, override));
-    MOCK_METHOD(std::unique_ptr<IoStream>, createMemIoStream,(
-            unsigned char* data, size_t size), (const, override));
+    MOCK_METHOD(std::unique_ptr<IoStream>, createMemIoStream,
+        (const unsigned char* data, size_t size), (const, override));
+    MOCK_METHOD(std::unique_ptr<IoStream>, createMemIoStream, (unsigned char* data, size_t size),
+        (const, override));
 };
 
 }} // namespace nvimgcdcs::test

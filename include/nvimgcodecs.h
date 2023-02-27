@@ -854,7 +854,7 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const char* file_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
-        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, unsigned char* data,
+        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const unsigned char* data,
         size_t length);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromIOStream(
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle,

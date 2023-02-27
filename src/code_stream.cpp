@@ -51,7 +51,7 @@ void CodeStream::parseFromFile(const std::string& file_name)
     parse();
 }
 
-void CodeStream::parseFromMem(unsigned char* data, size_t size)
+void CodeStream::parseFromMem(const unsigned char* data, size_t size)
 {
     io_stream_ = io_stream_factory_->createMemIoStream(data, size);
     parse();

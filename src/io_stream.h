@@ -19,7 +19,7 @@
 namespace nvimgcdcs {
 
 /**
- * @brief An abstract file-like interface for reading data.
+ * @brief An abstract file-like interface for reading and writting data.
  */
 class IoStream
 {
@@ -112,7 +112,6 @@ class IoStream
      *                  0 in case of end-of-stream condition
      */
     virtual std::size_t read(void* buf, std::size_t bytes) = 0;
-
     virtual std::size_t write(void* buf, std::size_t bytes) = 0;
     virtual std::size_t putc(unsigned char buf) = 0;
 

@@ -316,7 +316,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
 }
 
 nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(nvimgcdcsInstance_t instance,
-    nvimgcdcsCodeStream_t* stream_handle, unsigned char* data, size_t size)
+    nvimgcdcsCodeStream_t* stream_handle, const unsigned char* data, size_t size)
 {
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, stream_handle);
 

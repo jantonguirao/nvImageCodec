@@ -11,8 +11,8 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <memory>
-#include <utility>
 #include <string>
+#include <utility>
 
 #include "../src/code_stream.h"
 #include "mock_codec.h"
@@ -25,9 +25,10 @@ namespace nvimgcdcs { namespace test {
 
 using ::testing::_;
 using ::testing::ByMove;
+using ::testing::Const;
+using ::testing::Matcher;
 using ::testing::Return;
 using ::testing::ReturnRef;
-using ::testing::Const;
 
 TEST(CodeStreamTest, test_parse_from_file)
 {
@@ -42,7 +43,8 @@ TEST(CodeStreamTest, test_parse_from_file)
         .WillRepeatedly(Return(nvimg_parse_state));
 
     std::unique_ptr<MockImageParser> parser = std::make_unique<MockImageParser>();
-    EXPECT_CALL(*parser.get(), createParseState()).WillRepeatedly(Return(ByMove(std::move(parse_state))));
+    EXPECT_CALL(*parser.get(), createParseState())
+        .WillRepeatedly(Return(ByMove(std::move(parse_state))));
 
     MockCodecRegistry codec_registry;
     EXPECT_CALL(codec_registry, getParser(_))
@@ -75,11 +77,10 @@ TEST(CodeStreamTest, test_parse_from_mem)
     MockCodecRegistry codec_registry;
     EXPECT_CALL(codec_registry, getParser(_))
         .Times(1)
-        .WillRepeatedly(
-            Return(ByMove(std::move(parser))));
+        .WillRepeatedly(Return(ByMove(std::move(parser))));
 
     std::unique_ptr<MockIoStreamFactory> iostream_factory = std::make_unique<MockIoStreamFactory>();
-    EXPECT_CALL(*iostream_factory.get(), createMemIoStream(_, _)).Times(1);
+    EXPECT_CALL(*iostream_factory.get(), createMemIoStream(Matcher<const unsigned char*>(_), _)).Times(1);
 
     CodeStream code_stream(&codec_registry, std::move(iostream_factory));
     code_stream.parseFromMem(nullptr, 0);

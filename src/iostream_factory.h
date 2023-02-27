@@ -27,12 +27,19 @@ class IoStreamFactory : public IIoStreamFactory
         const std::string& file_name, bool read_ahead, bool use_mmap, bool to_write) const override
         {
             return FileIoStream::open(file_name, read_ahead, use_mmap, to_write);
-        };
-        virtual std::unique_ptr<IoStream> createMemIoStream(unsigned char* data,
+        }
+
+       std::unique_ptr<IoStream> createMemIoStream(const unsigned char* data,
             size_t size) const override
         {
-            return std::make_unique<MemIoStream>(data, size);
-        };
+            return std::make_unique<MemIoStream<const unsigned char>>(data, size);
+        }
+        
+        std::unique_ptr<IoStream> createMemIoStream(
+            unsigned char* data, size_t size) const override
+            {
+            return std::make_unique<MemIoStream<unsigned char>>(data, size);
+            }
 };
 
 } // namespace nvimgcdcs

@@ -25,7 +25,7 @@ class ICodeStream
   public:
     virtual ~ICodeStream() = default;
     virtual void parseFromFile(const std::string& file_name) = 0;
-    virtual void parseFromMem(unsigned char* data, size_t size) = 0;
+    virtual void parseFromMem(const unsigned char* data, size_t size) = 0;
     virtual void setOutputToFile(const char* file_name, const char* codec_name) = 0;
     virtual void setOutputToHostMem(unsigned char* output_buffer, size_t size, const char* codec_name) = 0;
     virtual void getImageInfo(nvimgcdcsImageInfo_t* image_info) = 0;

@@ -30,7 +30,7 @@ class CodeStream : public ICodeStream
   public:
     explicit CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStreamFactory> io_stream_factory);
     void parseFromFile(const std::string& file_name) override;
-    void parseFromMem(unsigned char* data, size_t size) override;
+    void parseFromMem(const unsigned char* data, size_t size) override;
     void setOutputToFile(const char* file_name, const char* codec_name) override;
     void setOutputToHostMem(unsigned char* output_buffer, size_t size, const char* codec_name) override;
     void getImageInfo(nvimgcdcsImageInfo_t* image_info) override;

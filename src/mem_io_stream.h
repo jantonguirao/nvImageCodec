@@ -10,20 +10,21 @@
 
 #pragma once
 
-#include "io_stream.h"
 #include <cstring>
+#include "io_stream.h"
 
 namespace nvimgcdcs {
 
+template <typename T>
 class MemIoStream : public IoStream
 {
   public:
-    MemIoStream()  = default;
+    MemIoStream() = default;
     ~MemIoStream() = default;
-    MemIoStream(void* mem, size_t bytes)
+    MemIoStream(T* mem, size_t bytes)
     {
-        start_ = static_cast<char*>(mem);
-        size_  = bytes;
+        start_ = mem;
+        size_ = bytes;
     }
 
     std::size_t read(void* buf, size_t bytes) override
@@ -35,24 +36,38 @@ class MemIoStream : public IoStream
         pos_ += bytes;
         return bytes;
     }
+    std::size_t write(void* buf, size_t bytes)
+    {
+        if constexpr (!std::is_const<T>::value) {
+            ptrdiff_t left = size_ - pos_;
+            if (left < static_cast<ptrdiff_t>(bytes))
+                bytes = left;
 
-    std::size_t write(void* buf, size_t bytes) override
-    {
-        ptrdiff_t left = size_ - pos_;
-        if (left < static_cast<ptrdiff_t>(bytes))
-            bytes = left;
-        std::memcpy(static_cast<void*>(start_ + pos_), buf, bytes);
-        pos_ += bytes;
-        return bytes;
-    }
-    std::size_t putc(unsigned char ch) override
-    {
-        ptrdiff_t left = size_ - pos_;
-        if (left < 1)
+            std::memcpy(static_cast<void*>(start_ + pos_), buf, bytes);
+            pos_ += bytes;
+            return bytes;
+        } else {
+            assert(!"Forbiden write for const type");
             return 0;
-        std::memcpy(static_cast<void*>(start_ + pos_), &ch, 1);
-        pos_++;
-        return 1;
+        }
+    }
+
+    std::size_t putc(unsigned char ch)
+    {
+
+        if constexpr (!std::is_const<T>::value) {
+            ptrdiff_t left = size_ - pos_;
+            if (left < 1)
+                return 0;
+            std::memcpy(static_cast<void*>(start_ + pos_), &ch, 1);
+            pos_++;
+            return 1;
+        } else {
+            assert(!"Forbiden write for const type");
+            return 0;
+        }
+    
+
     }
 
     int64_t tell() const override { return pos_; }
@@ -74,10 +89,9 @@ class MemIoStream : public IoStream
     std::size_t size() const override { return size_; }
 
   private:
-    char* start_ = nullptr;
-    ptrdiff_t size_    = 0;
-    ptrdiff_t pos_     = 0;
+    T* start_ = nullptr;
+    ptrdiff_t size_ = 0;
+    ptrdiff_t pos_ = 0;
 };
-
 
 } // namespace nvimgcdcs
