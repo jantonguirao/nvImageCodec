@@ -14,6 +14,7 @@
 #include "image_generic_encoder.h"
 #include "library_loader.h"
 #include "default_executor.h"
+#include "default_image_processor.h"
 
 namespace nvimgcdcs {
 
@@ -26,6 +27,7 @@ NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_in
     , plugin_framework_(&codec_registry_, std::move(std::make_unique<DirectoryScaner>()),
           std::move(std::make_unique<LibraryLoader>()),
           std::move(std::make_unique<DefaultExecutor>(create_info.num_cpu_threads)),
+          std::move(std::make_unique<DefaultImageProcessor>()),
           device_allocator_, pinned_allocator_)
 {
 }

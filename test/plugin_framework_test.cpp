@@ -14,6 +14,7 @@
 #include "mock_codec_registry.h"
 #include "mock_directory_scaner.h"
 #include "mock_executor.h"
+#include "mock_image_processor.h"
 #include "mock_library_loader.h"
 
 namespace nvimgcdcs { namespace test {
@@ -80,9 +81,10 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
     EXPECT_CALL(*library_loader.get(), unloadLibrary(_)).Times(2);
 
     std::unique_ptr<MockExecutor> executor = std::make_unique<MockExecutor>();
+    std::unique_ptr<MockImageProcessor> image_processor = std::make_unique<MockImageProcessor>();
 
     PluginFramework framework(&codec_registry, std::move(directory_scaner),
-        std::move(library_loader), std::move(executor), nullptr, nullptr);
+        std::move(library_loader), std::move(executor), std::move(image_processor), nullptr, nullptr);
     framework.discoverAndLoadExtModules();
 }
 

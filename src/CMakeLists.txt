@@ -31,6 +31,8 @@ set(NVIMGCDCS_SRCS
     thread_pool.cpp
     device_guard.cpp
     default_executor.cpp
+    default_image_processor.cpp
+    default_image_processor_gpu.cu
 )
 
 include_directories(
