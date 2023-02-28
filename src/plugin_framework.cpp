@@ -36,16 +36,16 @@ constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plug
 PluginFramework::PluginFramework(ICodecRegistry* codec_registry,
     std::unique_ptr<IDirectoryScaner> directory_scaner,
     std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
-    std::unique_ptr<IPostprocessor> postprocessor, nvimgcdcsDeviceAllocator_t* device_allocator,
+    std::unique_ptr<IImageProcessor> image_processor, nvimgcdcsDeviceAllocator_t* device_allocator,
     nvimgcdcsPinnedAllocator_t* pinned_allocator)
     : directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
     , executor_(std::move(executor))
-    , postprocessor_(std::move(postprocessor))
+    , image_processor_(std::move(image_processor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100,
           this, device_allocator, pinned_allocator, &static_register_encoder,
           &static_register_decoder, &static_register_parser, &static_get_executor,
-          &static_get_postprocessor, &static_log}
+          &static_get_image_processor, &static_log}
     , codec_registry_(codec_registry)
     , plugin_dirs_{defaultModuleDir}
 {
@@ -84,11 +84,11 @@ nvimgcdcsStatus_t PluginFramework::static_get_executor(
     return handle->getExecutor(result);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_get_postprocessor(
-    void* instance, nvimgcdcsPostprocessorDesc_t* result)
+nvimgcdcsStatus_t PluginFramework::static_get_image_processor(
+    void* instance, nvimgcdcsImageProcessorDesc_t* result)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
-    return handle->getPostprocessor(result);
+    return handle->getImageProcessor(result);
 }
 
 nvimgcdcsStatus_t PluginFramework::static_log(void* instance,
@@ -297,9 +297,9 @@ nvimgcdcsStatus_t PluginFramework::getExecutor(nvimgcdcsExecutorDesc_t* result)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::getPostprocessor(nvimgcdcsPostprocessorDesc_t* result)
+nvimgcdcsStatus_t PluginFramework::getImageProcessor(nvimgcdcsImageProcessorDesc_t* result)
 {
-    *result = postprocessor_->getPostprocessorDesc();
+    *result = image_processor_->getImageProcessorDesc();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

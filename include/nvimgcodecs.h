@@ -63,7 +63,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA,
         NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC,
-        NVIMGCDCS_STRUCTURE_TYPE_POSTPROCESSOR_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_IMAGE_PROCESSOR_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
@@ -81,7 +81,7 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        
+
         nvimgcdcsDeviceMalloc_t device_malloc;
         nvimgcdcsDeviceFree_t device_free;
         void* device_ctx;
@@ -218,7 +218,7 @@ extern "C"
         nvimgcdcsChromaSubsampling_t sampling;
         nvimgcdcsSampleDataType_t sample_type;
         nvimgcdcsOrientation_t orientation;
-        cudaStream_t cuda_stream;
+        cudaStream_t cuda_stream;  // TODO(janton) : remove
     } nvimgcdcsImageInfo_t;
 
     // Currently parseable JPEG encodings (SOF markers)
@@ -725,20 +725,35 @@ extern "C"
 
     typedef struct nvimgcdcsExecutorDesc* nvimgcdcsExecutorDesc_t;
 
-    struct nvimgcdcsPostprocessorDesc
+
+    typedef struct {
+        // Output
+        void* out_buffer;
+        size_t out_buffer_sz;
+        nvimgcdcsSampleFormat_t out_sample_format;
+        nvimgcdcsSampleDataType_t out_sample_type;
+        // Input
+        void* in_buffer;
+        nvimgcdcsImageInfo_t image_info;
+        nvimgcdcsRegion_t region;
+        float multiplier;  // used to adjust dynamic range
+    } nvimgcdcsImageProcessorConvertParams_t;
+    struct nvimgcdcsImageProcessorDesc
     {
         nvimgcdcsStructureType_t type;
         const void* next;
 
         void* instance;
 
-        // TODO(janton): API to be defined
-        nvimgcdcsStatus_t (*convert_cpu)(void* instance, int device_id, int sample_idx);
-        nvimgcdcsStatus_t (*convert_gpu)(void* instance, int device_id, int sample_idx);
-
+        nvimgcdcsStatus_t (*convert_cpu)(
+            void* instance, const nvimgcdcsImageProcessorConvertParams_t* params,
+            nvimgcdcsPinnedAllocator_t* pinned_allocator);
+        nvimgcdcsStatus_t (*convert_gpu)(
+            void* instance, const nvimgcdcsImageProcessorConvertParams_t* params,
+            nvimgcdcsDeviceAllocator_t dev_allocator, cudaStream_t cuda_stream);
     };
 
-    typedef struct nvimgcdcsPostprocessorDesc* nvimgcdcsPostprocessorDesc_t;
+    typedef struct nvimgcdcsImageProcessorDesc* nvimgcdcsImageProcessorDesc_t;
 
 
     typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance,
@@ -750,7 +765,7 @@ extern "C"
         nvimgcdcsStructureType_t type;
         const void* next;
 
-        const char* id; // famework named identifier e.g. nvImageCodecs
+        const char* id; // framework named identifier e.g. nvImageCodecs
         uint32_t version;
         void* instance;
 
@@ -763,7 +778,7 @@ extern "C"
             void* instance, const struct nvimgcdcsDecoderDesc* desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
         nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t* result);
-        nvimgcdcsStatus_t (*getPostprocessor)(void* instance, nvimgcdcsPostprocessorDesc_t* result);
+        nvimgcdcsStatus_t (*getImageProcessor)(void* instance, nvimgcdcsImageProcessorDesc_t* result);
         nvimgcdcsLogFunc_t log;
     };
 

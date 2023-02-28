@@ -16,11 +16,11 @@
 
 namespace nvimgcdcs {
 
-class IPostprocessor
+class IImageProcessor
 {
   public:
-    virtual ~IPostprocessor() = default;
-    virtual nvimgcdcsPostprocessorDesc_t getPostprocessorDesc() = 0;
+    virtual ~IImageProcessor() = default;
+    virtual nvimgcdcsImageProcessorDesc_t getImageProcessorDesc() = 0;
 };
 
 } // namespace nvimgcdcs

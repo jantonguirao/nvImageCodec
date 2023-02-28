@@ -17,7 +17,7 @@
 #include "idirectory_scaner.h"
 #include "ilibrary_loader.h"
 #include "iexecutor.h"
-#include "ipostprocessor.h"
+#include "iimage_processor.h"
 
 namespace nvimgcdcs {
 
@@ -30,7 +30,7 @@ class PluginFramework
     explicit PluginFramework(ICodecRegistry* codec_registry,
         std::unique_ptr<IDirectoryScaner> directory_scaner,
         std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
-        std::unique_ptr<IPostprocessor> postprocessor, nvimgcdcsDeviceAllocator_t* device_allocator,
+        std::unique_ptr<IImageProcessor> image_processor, nvimgcdcsDeviceAllocator_t* device_allocator,
         nvimgcdcsPinnedAllocator_t* pinned_allocator);
     ~PluginFramework();
     nvimgcdcsStatus_t registerExtension(
@@ -67,7 +67,7 @@ class PluginFramework
     nvimgcdcsStatus_t registerDecoder(const struct nvimgcdcsDecoderDesc* desc);
     nvimgcdcsStatus_t registerParser(const struct nvimgcdcsParserDesc* desc);
     nvimgcdcsStatus_t getExecutor(nvimgcdcsExecutorDesc_t* result);
-    nvimgcdcsStatus_t getPostprocessor(nvimgcdcsPostprocessorDesc_t* result);
+    nvimgcdcsStatus_t getImageProcessor(nvimgcdcsImageProcessorDesc_t* result);
     nvimgcdcsStatus_t log(const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type,
         const nvimgcdcsDebugMessageData_t* callback_data);
@@ -80,7 +80,7 @@ class PluginFramework
     static nvimgcdcsStatus_t static_register_parser(
         void* instance, const struct nvimgcdcsParserDesc* desc);
     static nvimgcdcsStatus_t static_get_executor(void* instance, nvimgcdcsExecutorDesc_t* result);
-    static nvimgcdcsStatus_t static_get_postprocessor(void* instance, nvimgcdcsPostprocessorDesc_t* result);
+    static nvimgcdcsStatus_t static_get_image_processor(void* instance, nvimgcdcsImageProcessorDesc_t* result);
     static nvimgcdcsStatus_t static_log(void* instance,
         const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type,
@@ -90,7 +90,7 @@ class PluginFramework
     std::unique_ptr<ILibraryLoader> library_loader_;
     std::vector<Extension> extensions_;
     std::unique_ptr<IExecutor> executor_;
-    std::unique_ptr<IPostprocessor> postprocessor_;
+    std::unique_ptr<IImageProcessor> image_processor_;
     struct nvimgcdcsFrameworkDesc framework_desc_;
     ICodecRegistry* codec_registry_;
     std::vector<std::string_view> plugin_dirs_;

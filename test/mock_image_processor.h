@@ -11,15 +11,15 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include "../src/ipostprocessor.h"
+#include "../src/iimage_processor.h"
 
 namespace nvimgcdcs {
 
 
-class MockPostprocessor : public IPostprocessor
+class MockImageProcessor : public IImageProcessor
 {
   public:
-    MOCK_METHOD(nvimgcdcsPostprocessorDesc_t, getPostprocessorDesc, (), (override));
+    MOCK_METHOD(nvimgcdcsImageProcessorDesc_t, getImageProcessorDesc, (), (override));
 };
 
 } // namespace nvimgcdcs
