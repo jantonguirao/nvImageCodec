@@ -32,6 +32,7 @@ set(NVIMGCDCS_SRCS
     device_guard.cpp
     default_executor.cpp
     default_image_processor.cpp
+    default_image_processor_gpu.cu
 )
 
 include_directories(

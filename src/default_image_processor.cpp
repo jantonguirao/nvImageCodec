@@ -35,23 +35,9 @@ nvimgcdcsStatus_t DefaultImageProcessor::convert_cpu(
     return NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
 }
 
-nvimgcdcsStatus_t DefaultImageProcessor::convert_gpu(
-    const nvimgcdcsImageProcessorConvertParams_t* params, nvimgcdcsDeviceAllocator_t dev_allocator,
-    cudaStream_t cuda_stream)
-{
-    return NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
-}
-
 nvimgcdcsStatus_t DefaultImageProcessor::static_convert_cpu(void* instance,
     const nvimgcdcsImageProcessorConvertParams_t* params,
     nvimgcdcsPinnedAllocator_t* pinned_allocator)
-{
-    return NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
-}
-
-nvimgcdcsStatus_t DefaultImageProcessor::static_convert_gpu(void* instance,
-    const nvimgcdcsImageProcessorConvertParams_t* params, nvimgcdcsDeviceAllocator_t dev_allocator,
-    cudaStream_t cuda_stream)
 {
     return NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
 }
