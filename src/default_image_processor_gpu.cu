@@ -15,61 +15,34 @@
 
 namespace nvimgcdcs {
 
-// template <typename Out, typename In, class LaunchParams>
-// __global__ __launch_bounds__(LaunchParams::BLOCKTHREADS)
-// void nvimgcdcsImageProcessorConvert(
-//                 Out *out_ptr, int64_t out_stride_y, int64_t out_stride_x,
-//                 const In* in_roi_ptr, int64_t roi_size_y, int64_t roi_size_x,
-//                 int64_t in_stride_y, int64_t in_stride_x,
-//                 bool flip_y, bool flip_x)
-// {
-//     uchar3 src_pix;
-//     uchar3 dst_pix;
-//     int cX = threadIdx.x + blockIdx.x * LaunchParams::BLOCKDIMX;
-//     int cY = threadIdx.y + blockIdx.y * LaunchParams::BLOCKDIMY;
+template <typename Out, typename In>
+__global__ void nvimgcdcsImageProcessorConvert(Out* out_ptr, int64_t out_stride_y,
+    int64_t out_stride_x, int64_t out_stride_c, int out_nchannels,
+    nvimgcdcsColorSpace_t out_colorspace, const In* in_roi_start_ptr, int64_t roi_size_y,
+    int64_t roi_size_x, int64_t in_stride_y, int64_t in_stride_x, int64_t in_stride_c,
+    nvimgcdcsColorSpace_t in_colorspace, bool flip_y, bool flip_x)
+{
+    int out_x = threadIdx.x + blockIdx.x * blockDim.x;
+    int out_y = threadIdx.y + blockIdx.y * blockDim.y;
+    if (out_x >= roi_size_x || out_y >= roi_size_y)
+        return;
+    int in_x = flip_x ? roi_size_x - 1 - out_x : out_x;
+    int in_y = flip_y ? roi_size_y - 1 - out_y : out_y;
 
-//     int new_x = cX;
-//     int new_y = cY;
-
-//     if (rotate_params.horizontal_flip)
-//     {
-//         new_x = dims.width - new_x - 1;
-//     }
-
-//     if (rotate_params.vertical_flip)
-//     {
-//         new_y = dims.height - new_y - 1;
-//     }
-
-//     // Rotate
-//     int temp_x = new_x;
-//     int temp_y = new_y;
-//     new_x = (temp_x * rotate_params.cos_term) - (temp_y * rotate_params.sin_term);
-//     new_y = (temp_x * rotate_params.sin_term) + (temp_y * rotate_params.cos_term);
-
-//     // Shifting
-//     new_x += rotate_params.x_shift;
-//     new_y += rotate_params.y_shift;
-
-//     if (cX < dims.width)
-//     {
-//         if (cY < dims.height)
-//         {
-//             src_pix = read_pixel_yuv<ss, fancy_upsampling>(cX + roi_offset.width, cY + roi_offset.height, src, dims.width + roi_offset.width, dims.height + roi_offset.height);
-//             dst_pix = convert_pixel< COLORSPACE_YCBCR, OutputFormatTraits<output_format>::colorspace >(src_pix);
-//             if (output_format == NVJPEG_OUTPUT_BGR || output_format == NVJPEG_OUTPUT_BGRI)
-//             {
-//                 unsigned char t = dst_pix.x;
-//                 dst_pix.x = dst_pix.z;
-//                 dst_pix.z = t;
-//             }
-
-//             write_pixel_format<OutputFormatTraits<output_format>::is_interleaved, 
-//                         OutputFormatTraits<output_format>::num_components>(
-//                             dst_pix, new_x , new_y, dst);
-//         }
-//     }
-// }
+    // if (out_colorspace == NVIMGCDCS_COLORSPACE_UNKNOWN || in_colorspace == NVIMGCDCS_COLORSPACE_UNKNOWN) {
+    //     const In *in_pixel_ptr = in_roi_start_ptr + new_y * in_stride_y + new_x * in_stride_x;
+    //     Out *out_pixel_ptr = out_ptr + cY * out_stride_y + cX * out_stride_x;
+    //     for (int c = 0; c < out_nchannels; c++) {
+    //         In in_value = *(in_pixel_ptr + c * in_stride_c);
+    //         Out out_value = (Out) in_value;
+    //         *(out_pixel_ptr + c * out_stride_c) = out_value;
+    //     }
+    // } else {
+    //     Out out_pixel[3];
+    //     In in_pixel[3];
+    //     TODO(janton) : run color space conversion here and store in the output buffer
+    // }
+}
 
 nvimgcdcsStatus_t DefaultImageProcessor::convert_gpu(
     const nvimgcdcsImageProcessorConvertParams_t* params, nvimgcdcsDeviceAllocator_t dev_allocator,
