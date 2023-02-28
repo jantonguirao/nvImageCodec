@@ -63,6 +63,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA,
         NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_POSTPROCESSOR_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
@@ -724,6 +725,22 @@ extern "C"
 
     typedef struct nvimgcdcsExecutorDesc* nvimgcdcsExecutorDesc_t;
 
+    struct nvimgcdcsPostprocessorDesc
+    {
+        nvimgcdcsStructureType_t type;
+        const void* next;
+
+        void* instance;
+
+        // TODO(janton): API to be defined
+        nvimgcdcsStatus_t (*convert_cpu)(void* instance, int device_id, int sample_idx);
+        nvimgcdcsStatus_t (*convert_gpu)(void* instance, int device_id, int sample_idx);
+
+    };
+
+    typedef struct nvimgcdcsPostprocessorDesc* nvimgcdcsPostprocessorDesc_t;
+
+
     typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance,
         const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
@@ -746,6 +763,7 @@ extern "C"
             void* instance, const struct nvimgcdcsDecoderDesc* desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
         nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t* result);
+        nvimgcdcsStatus_t (*getPostprocessor)(void* instance, nvimgcdcsPostprocessorDesc_t* result);
         nvimgcdcsLogFunc_t log;
     };
 

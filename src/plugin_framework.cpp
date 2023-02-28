@@ -36,13 +36,16 @@ constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plug
 PluginFramework::PluginFramework(ICodecRegistry* codec_registry,
     std::unique_ptr<IDirectoryScaner> directory_scaner,
     std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
-    nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator)
+    std::unique_ptr<IPostprocessor> postprocessor, nvimgcdcsDeviceAllocator_t* device_allocator,
+    nvimgcdcsPinnedAllocator_t* pinned_allocator)
     : directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
     , executor_(std::move(executor))
+    , postprocessor_(std::move(postprocessor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100,
           this, device_allocator, pinned_allocator, &static_register_encoder,
-          &static_register_decoder, &static_register_parser, &static_get_executor, &static_log}
+          &static_register_decoder, &static_register_parser, &static_get_executor,
+          &static_get_postprocessor, &static_log}
     , codec_registry_(codec_registry)
     , plugin_dirs_{defaultModuleDir}
 {
@@ -79,6 +82,13 @@ nvimgcdcsStatus_t PluginFramework::static_get_executor(
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->getExecutor(result);
+}
+
+nvimgcdcsStatus_t PluginFramework::static_get_postprocessor(
+    void* instance, nvimgcdcsPostprocessorDesc_t* result)
+{
+    PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
+    return handle->getPostprocessor(result);
 }
 
 nvimgcdcsStatus_t PluginFramework::static_log(void* instance,
@@ -270,7 +280,7 @@ nvimgcdcsStatus_t PluginFramework::registerDecoder(const struct nvimgcdcsDecoder
 
 nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDesc* desc)
 {
-    NVIMGCDCS_LOG_INFO("Framework is regisering parser");
+    NVIMGCDCS_LOG_INFO("Framework is registering parser");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
     NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
@@ -284,6 +294,12 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDe
 nvimgcdcsStatus_t PluginFramework::getExecutor(nvimgcdcsExecutorDesc_t* result)
 {
     *result = executor_->getExecutorDesc();
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t PluginFramework::getPostprocessor(nvimgcdcsPostprocessorDesc_t* result)
+{
+    *result = postprocessor_->getPostprocessorDesc();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

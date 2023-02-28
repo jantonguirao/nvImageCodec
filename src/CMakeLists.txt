@@ -31,6 +31,7 @@ set(NVIMGCDCS_SRCS
     thread_pool.cpp
     device_guard.cpp
     default_executor.cpp
+    default_postprocessor.cpp
 )
 
 include_directories(
