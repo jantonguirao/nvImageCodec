@@ -66,36 +66,23 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
-    // Prototype for device memory allocation, modelled after cudaMalloc()
-    typedef int (*nvimgcdcsDeviceMalloc_t)(void**, size_t);
-    // Prototype for device memory release
-    typedef int (*nvimgcdcsDeviceFree_t)(void*);
-
-    // Prototype for pinned memory allocation, modelled after cudaHostAlloc()
-    typedef int (*nvimgcdcsPinnedMalloc_t)(void**, size_t, unsigned int flags);
-    // Prototype for device memory release
-    typedef int (*nvimgcdcsPinnedFree_t)(void*);
-
-    // Prototype for extended device allocation
-    typedef int (*nvimgcdcsDeviceMallocExt_t)(
+    typedef int (*nvimgcdcsDeviceMalloc_t)(
         void* ctx, void** ptr, size_t size, cudaStream_t stream);
-    // Prototype for extended device free
-    typedef int (*nvimgcdcsDeviceFreeExt_t)(void* ctx, void* ptr, size_t size, cudaStream_t stream);
 
-    // Prototype for extended pinned allocation
-    typedef int (*nvimgcdcsPinnedMallocExt_t)(
+    typedef int (*nvimgcdcsDeviceFree_t)(void* ctx, void* ptr, size_t size, cudaStream_t stream);
+
+    typedef int (*nvimgcdcsPinnedMalloc_t)(
         void* ctx, void** ptr, size_t size, cudaStream_t stream);
-    // Prototype for extended pinned free
-    typedef int (*nvimgcdcsPinnedFreeExt_t)(void* ctx, void* ptr, size_t size, cudaStream_t stream);
+
+    typedef int (*nvimgcdcsPinnedFree_t)(void* ctx, void* ptr, size_t size, cudaStream_t stream);
 
     typedef struct
     {
         nvimgcdcsStructureType_t type;
         void* next;
+        
         nvimgcdcsDeviceMalloc_t device_malloc;
         nvimgcdcsDeviceFree_t device_free;
-        nvimgcdcsDeviceMallocExt_t device_malloc_ext;
-        nvimgcdcsDeviceFreeExt_t device_free_ext;
         void* device_ctx;
         size_t device_mem_padding; // any device memory allocation
                                    // would be padded to the multiple of specified number of bytes
@@ -105,10 +92,9 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
+
         nvimgcdcsPinnedMalloc_t pinned_malloc;
         nvimgcdcsPinnedFree_t pinned_free;
-        nvimgcdcsPinnedMallocExt_t pinned_malloc_ext;
-        nvimgcdcsPinnedFreeExt_t pinned_free_ext;
         void* pinned_ctx;
         size_t pinned_mem_padding; // any pinned host memory allocation
                                    // would be padded to the multiple of specified number of bytes
