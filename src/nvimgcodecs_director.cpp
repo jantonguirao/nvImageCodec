@@ -24,7 +24,9 @@ NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_in
     , registrator_(&debug_messenger_)
     , codec_registry_()
     , plugin_framework_(&codec_registry_, std::move(std::make_unique<DirectoryScaner>()),
-          std::move(std::make_unique<LibraryLoader>()), std::move(std::make_unique<DefaultExecutor>(create_info.num_cpu_threads)))
+          std::move(std::make_unique<LibraryLoader>()),
+          std::move(std::make_unique<DefaultExecutor>(create_info.num_cpu_threads)),
+          device_allocator_, pinned_allocator_)
 {
 }
 

@@ -82,7 +82,7 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
     std::unique_ptr<MockExecutor> executor = std::make_unique<MockExecutor>();
 
     PluginFramework framework(&codec_registry, std::move(directory_scaner),
-        std::move(library_loader), std::move(executor));
+        std::move(library_loader), std::move(executor), nullptr, nullptr);
     framework.discoverAndLoadExtModules();
 }
 

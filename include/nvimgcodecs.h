@@ -37,6 +37,8 @@ extern "C"
     typedef enum
     {
         NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_DEVICE_ALLOCATOR,
+        NVIMGCDCS_STRUCTURE_TYPE_PINNED_ALLOCATOR,
         NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION,
@@ -74,12 +76,29 @@ extern "C"
     // Prototype for device memory release
     typedef int (*nvimgcdcsPinnedFree_t)(void*);
 
+    // Prototype for extended device allocation
+    typedef int (*nvimgcdcsDeviceMallocExt_t)(
+        void* ctx, void** ptr, size_t size, cudaStream_t stream);
+    // Prototype for extended device free
+    typedef int (*nvimgcdcsDeviceFreeExt_t)(void* ctx, void* ptr, size_t size, cudaStream_t stream);
+
+    // Prototype for extended pinned allocation
+    typedef int (*nvimgcdcsPinnedMallocExt_t)(
+        void* ctx, void** ptr, size_t size, cudaStream_t stream);
+    // Prototype for extended pinned free
+    typedef int (*nvimgcdcsPinnedFreeExt_t)(void* ctx, void* ptr, size_t size, cudaStream_t stream);
+
     typedef struct
     {
         nvimgcdcsStructureType_t type;
         void* next;
         nvimgcdcsDeviceMalloc_t device_malloc;
         nvimgcdcsDeviceFree_t device_free;
+        nvimgcdcsDeviceMallocExt_t device_malloc_ext;
+        nvimgcdcsDeviceFreeExt_t device_free_ext;
+        void* device_ctx;
+        size_t device_mem_padding; // any device memory allocation
+                                   // would be padded to the multiple of specified number of bytes
     } nvimgcdcsDeviceAllocator_t;
 
     typedef struct
@@ -88,35 +107,12 @@ extern "C"
         void* next;
         nvimgcdcsPinnedMalloc_t pinned_malloc;
         nvimgcdcsPinnedFree_t pinned_free;
-    } nvimgcdcsPinnedAllocator_t;
-
-    typedef int (*nvimgcdcsDeviceMallocV2_t)(
-        void* ctx, void** ptr, size_t size, cudaStream_t stream);
-
-    typedef int (*nvimgcdcsDeviceFreeV2_t)(void* ctx, void* ptr, size_t size, cudaStream_t stream);
-
-    typedef int (*nvimgcdcsPinnedMallocV2_t)(
-        void* ctx, void** ptr, size_t size, cudaStream_t stream);
-
-    typedef int (*nvimgcdcsPinnedFreeV2_t)(void* ctx, void* ptr, size_t size, cudaStream_t stream);
-
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-        nvimgcdcsDeviceMallocV2_t dev_malloc;
-        nvimgcdcsDeviceFreeV2_t dev_free;
-        void* dev_ctx;
-    } nvimgcdcsDevAllocatorV2_t;
-
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-        nvimgcdcsPinnedMallocV2_t pinned_malloc;
-        nvimgcdcsPinnedFreeV2_t pinned_free;
+        nvimgcdcsPinnedMallocExt_t pinned_malloc_ext;
+        nvimgcdcsPinnedFreeExt_t pinned_free_ext;
         void* pinned_ctx;
-    } nvimgcdcsPinnedAllocatorV2_t;
+        size_t pinned_mem_padding; // any pinned host memory allocation
+                                   // would be padded to the multiple of specified number of bytes
+    } nvimgcdcsPinnedAllocator_t;
 
     typedef enum
     {
@@ -754,6 +750,10 @@ extern "C"
         const char* id; // famework named identifier e.g. nvImageCodecs
         uint32_t version;
         void* instance;
+
+        nvimgcdcsDeviceAllocator_t* device_allocator;
+        nvimgcdcsPinnedAllocator_t* pinned_allocator;
+
         nvimgcdcsStatus_t (*registerEncoder)(
             void* instance, const struct nvimgcdcsEncoderDesc* desc);
         nvimgcdcsStatus_t (*registerDecoder)(
@@ -791,16 +791,12 @@ extern "C"
         nvimgcdcsStructureType_t type;
         void* next;
 
-        nvimgcdcsDeviceAllocator_t* device_allocator; //TODO
-        nvimgcdcsPinnedAllocator_t* pinned_allocator; //TODO
-        size_t deviceMemPadding;                      //TODO any device memory allocation
-        size_t pinnedMemPadding;                      //TODO any pinned host memory allocation
-        // would be padded to the multiple of specified number of bytes
+        nvimgcdcsDeviceAllocator_t* device_allocator;
+        nvimgcdcsPinnedAllocator_t* pinned_allocator;
         bool load_extension_modules;  //Discover and load extension modules on start
         bool default_debug_messenger; //Create default debug messenger
         uint32_t message_severity;    //severity for default debug messenger
         uint32_t message_type;        //message type for default debug messenger
-        // would be padded to the multiple of specified number of bytes.
         int num_cpu_threads;
     } nvimgcdcsInstanceCreateInfo_t;
 

@@ -26,10 +26,11 @@ class ICodec;
 class PluginFramework
 {
   public:
-    explicit PluginFramework(ICodecRegistry* codec_registry,
-        std::unique_ptr<IDirectoryScaner> directory_scaner,
+    explicit PluginFramework(
+        ICodecRegistry* codec_registry, std::unique_ptr<IDirectoryScaner> directory_scaner,
         std::unique_ptr<ILibraryLoader> library_loader,
-        std::unique_ptr<IExecutor> executor);
+        std::unique_ptr<IExecutor> executor, nvimgcdcsDeviceAllocator_t* device_allocator,
+        nvimgcdcsPinnedAllocator_t * pinned_allocator);
     ~PluginFramework();
     nvimgcdcsStatus_t registerExtension(
         nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc);

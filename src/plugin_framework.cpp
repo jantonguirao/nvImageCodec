@@ -35,13 +35,14 @@ constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plug
 
 PluginFramework::PluginFramework(ICodecRegistry* codec_registry,
     std::unique_ptr<IDirectoryScaner> directory_scaner,
-    std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor)
+    std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
+    nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator)
     : directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
     , executor_(std::move(executor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100,
-          this, &static_register_encoder, &static_register_decoder, &static_register_parser,
-          &static_get_executor, &static_log}
+          this, device_allocator, pinned_allocator, &static_register_encoder,
+          &static_register_decoder, &static_register_parser, &static_get_executor, &static_log}
     , codec_registry_(codec_registry)
     , plugin_dirs_{defaultModuleDir}
 {
