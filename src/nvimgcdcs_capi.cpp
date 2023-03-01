@@ -1058,7 +1058,12 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                 }
             }
             nvimgcdcsImageCreate(instance, image);
-            //TODO define image_info for requested output
+            // Define image_info for requested output
+            image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+            for (uint32_t c = 0; c < image_info.num_components; ++c) {
+                image_info.component_info[c].component_height = image_info.image_height;
+                image_info.component_info[c].component_width = image_info.image_width;
+            }
 
             nvimgcdcsDecoder_t decoder;
             nvimgcdcsDecoderCreate(instance, &decoder, code_stream, *image, &decode_params);

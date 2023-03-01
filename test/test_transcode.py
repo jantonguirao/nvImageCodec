@@ -43,6 +43,32 @@ def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, oupu
     ("base/4k_lossless.bmp", "jpeg",  "4k_lossless-bmp-420.jpg","--chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
     ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-420.jpg","--chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
     ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-422.jpg","--chroma_subsampling 422", "288ea71d08e74876d90c89c33284c56f"),
+    
+    #jpeg variouse input chroma subsampling
+    ("base/rgb_25_410.jpg", "bmp",    "rgb_25_410-jpg.bmp", "", "09a9dbb7b75278197c58e7ddcb93c4cb"),
+    ("base/rgb_25_410.jpg", "jpeg",   "rgb_25_410-jpg.jpg", "", "d2b17165ebdc89d84d8db39d71524bf5"),
+    ("base/rgb_25_410.jpg", "jpeg2k", "rgb_25_410-jpg.jp2", "", "6562455982c8d6a1ee6484cb8c635cb0"),
+    
+    ("base/rgb_25_411.jpg", "bmp",    "rgb_25_411-jpg.bmp", "", "e9e7261b325d3f2895f0281147f61e0b"),
+    ("base/rgb_25_411.jpg", "jpeg",   "rgb_25_411-jpg.jpg", "", "46cc411a9770d1e19e3015cf97c97db5"),
+    ("base/rgb_25_411.jpg", "jpeg2k", "rgb_25_411-jpg.jp2", "", "f16e98162f7cd444abae48452cfd8f87"),
+    
+    ("base/rgb_25_420.jpg", "bmp",    "rgb_25_420-jpg.bmp", "", "4be980aed1726182b873a55611574303"),
+    ("base/rgb_25_420.jpg", "jpeg",   "rgb_25_420-jpg.jpg", "", "35893dc324cd29042c13aa8d9ac3374d"),
+    ("base/rgb_25_420.jpg", "jpeg2k", "rgb_25_420-jpg.jp2", "", "4e7a8881fe9c4ebaddf8855a43794080"),
+
+    ("base/rgb_25_422.jpg", "bmp",    "rgb_25_422-jpg.bmp", "", "9ab1754b7c192e03090863285dba68ed"),
+    ("base/rgb_25_422.jpg", "jpeg",   "rgb_25_422-jpg.jpg", "", "7b71fa9f5359840e004ebee7921fe554"),
+    ("base/rgb_25_422.jpg", "jpeg2k", "rgb_25_422-jpg.jp2", "", "80aad59a2e0e1025afeea235daa34559"),
+
+    ("base/rgb_25_440.jpg", "bmp",    "rgb_25_440-jpg.bmp", "", "ba863e3f78be2238300cf2ef5c2d60e9"),
+    ("base/rgb_25_440.jpg", "jpeg",   "rgb_25_440-jpg.jpg", "", "57249544fdace822002cbbfaa5988345"),
+    ("base/rgb_25_440.jpg", "jpeg2k", "rgb_25_440-jpg.jp2", "", "6c7b06b6bcc03360e05efe2ad8995d66"),
+
+    ("base/rgb_25_444.jpg", "bmp",    "rgb_25_444-jpg.bmp", "", "49f3b3f8ef8c792520bd43436ff76153"),
+    ("base/rgb_25_444.jpg", "jpeg",   "rgb_25_444-jpg.jpg", "", "9f9a2c181e981be66d7f0f2a0139935e"),
+    ("base/rgb_25_444.jpg", "jpeg2k", "rgb_25_444-jpg.jp2", "", "dda34d8944767382cc532cf334b9abbb"),
+
     ]
 )
 def test_imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, ouput_img_file, params, check_sum):

@@ -178,8 +178,13 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
         }
     }
     int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+    // Preparing output image_info
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
+    for (auto c = 0; c < image_info.num_components; ++c) {
+        image_info.component_info[c].component_height = image_info.image_height;
+        image_info.component_info[c].component_width = image_info.image_width;
+    }
 
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image);
@@ -484,7 +489,11 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         //Decode to format
         image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
         image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
-
+        for (auto c = 0; c < image_info.num_components; ++c) {
+            image_info.component_info[c].component_height = image_info.image_height;
+            image_info.component_info[c].component_width = image_info.image_width;
+        }
+        
         CHECK_NVIMGCDCS(nvimgcdcsImageSetImageInfo(images[i], &image_info));
 
         if (decoder == nullptr) {
