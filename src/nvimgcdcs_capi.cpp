@@ -674,51 +674,6 @@ nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsImageSetHostBuffer(nvimgcdcsImage_t image, void* buffer, size_t size)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            image->image_.setHostBuffer(buffer, size);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsImageGetHostBuffer(nvimgcdcsImage_t image, void** buffer, size_t* size)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            image->image_.getHostBuffer(buffer, size);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-nvimgcdcsStatus_t nvimgcdcsImageSetDeviceBuffer(nvimgcdcsImage_t image, void* buffer, size_t size)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            image->image_.setDeviceBuffer(buffer, size);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-nvimgcdcsStatus_t nvimgcdcsImageGetDeviceBuffer(nvimgcdcsImage_t image, void** buffer, size_t* size)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            image->image_.getDeviceBuffer(buffer, size);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
 nvimgcdcsStatus_t nvimgcdcsImageSetImageInfo(
     nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info)
 {
@@ -1103,14 +1058,16 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                     device_pitch_in_bytes * image_info.image_height * image_info.num_components;
                 (*image)->dev_image_buffer_ = device_buffer;
                 (*image)->dev_image_buffer_size_ = device_buffer_size;
-                nvimgcdcsImageSetDeviceBuffer(*image, device_buffer, device_buffer_size);
+
+                image_info.device_buffer = device_buffer;
+                image_info.device_buffer_size = device_buffer_size;
             }
 
             if (is_host_output) {
                 (*image)->host_image_buffer_.resize(
                     image_info.image_width * image_info.image_height * image_info.num_components);
-                nvimgcdcsImageSetHostBuffer(*image, (*image)->host_image_buffer_.data(),
-                    (*image)->host_image_buffer_.size());
+                image_info.host_buffer = (*image)->host_image_buffer_.data();
+                image_info.host_buffer_size = (*image)->host_image_buffer_.size();
                 image_info.component_info[0].host_pitch_in_bytes =
                     image_info.image_width * (is_interleaved ? image_info.num_components : 1);
                 image_info.component_info[1].host_pitch_in_bytes =
@@ -1336,13 +1293,9 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                     NVIMGCDCS_CAPABILITY_DEVICE_INPUT) !=
                 capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
 #endif
-            void* device_buffer = nullptr;
-            size_t device_buffer_size = 0;
-            nvimgcdcsImageGetDeviceBuffer(image, &device_buffer, &device_buffer_size);
+            void* device_buffer = image_info.device_buffer;
+            void* host_buffer = image_info.host_buffer;
 
-            void* host_buffer = nullptr;
-            size_t host_buffer_size = 0;
-            nvimgcdcsImageGetHostBuffer(image, &host_buffer, &host_buffer_size);
             bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
             if (is_device_input && device_buffer == nullptr) {
                 //TODO use custom allocators
@@ -1355,9 +1308,10 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                 image_info.component_info[0].device_pitch_in_bytes = device_pitch_in_bytes;
                 image_info.component_info[1].device_pitch_in_bytes = device_pitch_in_bytes;
                 image_info.component_info[2].device_pitch_in_bytes = device_pitch_in_bytes;
-                device_buffer_size =
+                image_info.device_buffer = device_buffer;
+                image_info.device_buffer_size =
                     device_pitch_in_bytes * image_info.image_height * image_info.num_components;
-                nvimgcdcsImageSetDeviceBuffer(image, device_buffer, device_buffer_size);
+                
                 nvimgcdcsImageSetImageInfo(image, &image_info);
 
                 if (host_buffer) {
@@ -1385,8 +1339,9 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                     image_info.image_width * (is_interleaved ? image_info.num_components : 1);
                 image_info.component_info[2].host_pitch_in_bytes =
                     image_info.image_width * (is_interleaved ? image_info.num_components : 1);
-                nvimgcdcsImageSetHostBuffer(
-                    image, image->host_image_buffer_.data(), image->host_image_buffer_.size());
+                image_info.host_buffer = image->host_image_buffer_.data();
+                image_info.host_buffer_size = image->host_image_buffer_.size();
+                    
                 nvimgcdcsImageSetImageInfo(image, &image_info);
                 if (device_buffer) {
                     CHECK_CUDA(cudaMemcpy2D(image->host_image_buffer_.data(),

@@ -24,10 +24,6 @@ class Image : public IImage
   public:
     explicit Image();
     ~Image() override;
-    void setHostBuffer(void* buffer, size_t size) override;
-    void getHostBuffer(void** buffer, size_t* size) override;
-    void setDeviceBuffer(void* buffer, size_t size) override;
-    void getDeviceBuffer(void** buffer, size_t* size) override;
     void setIndex(int index) override;
     void setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
     void getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
@@ -46,8 +42,6 @@ class Image : public IImage
     nvimgcdcsStatus_t imageReady(nvimgcdcsProcessingStatus_t processing_status);
 
     static nvimgcdcsStatus_t static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result);
-    static nvimgcdcsStatus_t static_get_device_buffer(void* instance, void** buffer, size_t* size);
-    static nvimgcdcsStatus_t static_get_host_buffer(void* instance, void** buffer, size_t* size);
     static nvimgcdcsStatus_t static_image_ready(
         void* instance, nvimgcdcsProcessingStatus_t processing_status);
 

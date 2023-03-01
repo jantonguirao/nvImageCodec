@@ -22,10 +22,6 @@ class IImage
 {
   public:
     virtual ~IImage() = default;
-    virtual void setHostBuffer(void* buffer, size_t size) = 0;
-    virtual void getHostBuffer(void** buffer, size_t* size) = 0;
-    virtual void setDeviceBuffer(void* buffer, size_t size) = 0;
-    virtual void getDeviceBuffer(void** buffer, size_t* size) = 0;
     virtual void setIndex(int index) = 0;
     virtual void setImageInfo(const nvimgcdcsImageInfo_t* image_info) = 0;
     virtual void getImageInfo(nvimgcdcsImageInfo_t* image_info) = 0;

@@ -104,9 +104,7 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder,
     }
 
     static constexpr int kHeaderStart = 14;
-    unsigned char* host_buffer;
-    size_t host_buffer_size;
-    image->getHostBuffer(image->instance, (void**)&host_buffer, &host_buffer_size);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.host_buffer);
     for (size_t c = 0; c < image_info.num_components; c++) {
         for (size_t y = 0; y < image_info.image_height; y++) {
             for (size_t x = 0; x < image_info.image_width; x++) {

@@ -108,11 +108,10 @@ struct IWorkManager::Work
     {
         host_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            void* d_buffer;
-            size_t d_size;
-            images_[i]->getDeviceBuffer(&d_buffer, &d_size);
+            nvimgcdcsImageInfo_t image_info;
+            images_[i]->getImageInfo(&image_info);
             void* h_pinned = nullptr;
-            CHECK_CUDA(cudaMallocHost(&h_pinned, d_size));
+            CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.device_buffer_size));
             std::unique_ptr<void, decltype(&cudaFreeHost)> h_ptr(h_pinned, &cudaFreeHost);
             host_temp_buffers_.push_back(std::move(h_ptr));
         }
@@ -122,11 +121,10 @@ struct IWorkManager::Work
     {
         device_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            void* h_buffer;
-            size_t h_size;
-            images_[i]->getHostBuffer(&h_buffer, &h_size);
+            nvimgcdcsImageInfo_t image_info;
+            images_[i]->getImageInfo(&image_info);
             void* device_buffer = nullptr;
-            CHECK_CUDA(cudaMalloc(&device_buffer, h_size));
+            CHECK_CUDA(cudaMalloc(&device_buffer, image_info.host_buffer_size));
             std::unique_ptr<void, decltype(&cudaFree)> d_ptr(device_buffer, &cudaFree);
             device_temp_buffers_.push_back(std::move(d_ptr));
         }
@@ -138,49 +136,46 @@ struct IWorkManager::Work
         CHECK_CUDA(cudaEventCreate(&event));
 
         for (size_t i = 0; i < images_.size(); ++i) {
-            void* h_buffer;
-            size_t h_size;
-            images_[i]->getHostBuffer(&h_buffer, &h_size);
-            void* d_buffer;
-            size_t d_size;
-            images_[i]->getDeviceBuffer(&d_buffer, &d_size);
             nvimgcdcsImageInfo_t image_info;
             images_[i]->getImageInfo(&image_info);
-            bool is_device_input = d_buffer != nullptr;
-            bool is_host_input = h_buffer != nullptr;
+
+            bool is_device_input = image_info.device_buffer != nullptr;
+            bool is_host_input = image_info.host_buffer != nullptr;
 
             if (!is_input_expected_in_device && is_device_input) {
                 if (host_temp_buffers_.empty()) {
                     alloc_host_temp_inputs();
                 }
-                h_buffer = host_temp_buffers_[i].get();
-                images_[i]->setHostBuffer(h_buffer, d_size);
+                image_info.host_buffer = host_temp_buffers_[i].get();
+                image_info.host_buffer_size = image_info.device_buffer_size;
+                images_[i]->setImageInfo(&image_info);
 
-                for (uint32_t c = 0; c < image_info.num_components; ++c)
-                {
+                for (uint32_t c = 0; c < image_info.num_components; ++c) {
                     image_info.component_info[c].host_pitch_in_bytes =
                         image_info.component_info[c].device_pitch_in_bytes;
                 }
-                CHECK_CUDA(cudaMemcpyAsync(h_buffer, d_buffer, d_size, cudaMemcpyDeviceToHost));
+                CHECK_CUDA(cudaMemcpyAsync(image_info.host_buffer, image_info.device_buffer,
+                    image_info.device_buffer_size, cudaMemcpyDeviceToHost));
             }
             if (is_input_expected_in_device && is_host_input) {
                 if (device_temp_buffers_.empty()) {
                     alloc_device_temp_inputs();
                 }
-                d_buffer = device_temp_buffers_[i].get();
-                images_[i]->setDeviceBuffer(d_buffer, h_size);
+                image_info.device_buffer = device_temp_buffers_[i].get();
+                image_info.device_buffer_size = image_info.host_buffer_size;
+                images_[i]->setImageInfo(&image_info);
 
                 for (uint32_t c = 0; c < image_info.num_components; ++c) {
                     image_info.component_info[c].device_pitch_in_bytes =
                         image_info.component_info[c].host_pitch_in_bytes;
                 }
 
-                CHECK_CUDA(cudaMemcpyAsync(
-                    d_buffer, h_buffer, h_size, cudaMemcpyHostToDevice));
+                CHECK_CUDA(cudaMemcpyAsync(image_info.device_buffer, image_info.host_buffer,
+                    image_info.device_buffer_size, cudaMemcpyHostToDevice));
             }
             images_[i]->setImageInfo(&image_info);
         }
-     
+
         CHECK_CUDA(cudaEventRecord(event));
         CHECK_CUDA(cudaEventSynchronize(event));
         CHECK_CUDA(cudaEventDestroy(event));
@@ -188,17 +183,17 @@ struct IWorkManager::Work
 
     void clean_after_encoding(bool is_input_expected_in_device, int sub_idx, ProcessingResult* r)
     {
-        void* h_buffer;
-        size_t h_size;
-        images_[sub_idx]->getHostBuffer(&h_buffer, &h_size);
-        void* d_buffer;
-        size_t d_size;
-        images_[sub_idx]->getDeviceBuffer(&d_buffer, &d_size);
+        nvimgcdcsImageInfo_t image_info;
+        images_[sub_idx]->getImageInfo(&image_info);
         try {
-            if (is_input_expected_in_device && h_buffer != nullptr) {
-                images_[sub_idx]->setDeviceBuffer(nullptr, 0);
-            } else if (!is_input_expected_in_device && d_buffer != nullptr) {
-                images_[sub_idx]->setHostBuffer(nullptr, 0);
+            if (is_input_expected_in_device && image_info.host_buffer != nullptr) {
+                image_info.device_buffer = nullptr;
+                image_info.device_buffer_size = 0;
+                images_[sub_idx]->setImageInfo(&image_info);
+            } else if (!is_input_expected_in_device && image_info.device_buffer != nullptr) {
+                image_info.host_buffer = nullptr;
+                image_info.host_buffer_size = 0;
+                images_[sub_idx]->setImageInfo(&image_info);
             }
         } catch (...) {
             *r = ProcessingResult::failure(std::current_exception());
@@ -590,7 +585,8 @@ std::unique_ptr<ImageGenericEncoder::Work> ImageGenericEncoder::createNewWork(
         }
     }
 
-    return std::make_unique<Work>(std::move(results), reinterpret_cast<const nvimgcdcsEncodeParams_t*>(params));
+    return std::make_unique<Work>(
+        std::move(results), reinterpret_cast<const nvimgcdcsEncodeParams_t*>(params));
 }
 
 void ImageGenericEncoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)

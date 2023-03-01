@@ -210,8 +210,13 @@ extern "C"
 
         uint32_t image_width;
         uint32_t image_height;
-
         uint32_t num_components;
+
+        void* host_buffer;
+        size_t host_buffer_size;
+        void* device_buffer;
+        size_t device_buffer_size;
+
         nvimgcdcsImageComponentInfo_t component_info[NVIMGCDCS_MAX_NUM_COMPONENTS];
         nvimgcdcsColorSpace_t color_space;
         nvimgcdcsSampleFormat_t sample_format;
@@ -599,8 +604,6 @@ extern "C"
 
         void* instance;
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
-        nvimgcdcsStatus_t (*getDeviceBuffer)(void* instance, void** buffer, size_t* size);
-        nvimgcdcsStatus_t (*getHostBuffer)(void* instance, void** buffer, size_t* size);
         nvimgcdcsStatus_t (*imageReady)(
             void* instance, nvimgcdcsProcessingStatus_t processing_status);
     };
@@ -844,14 +847,6 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetHostBuffer(
-        nvimgcdcsImage_t image, void* buffer, size_t size); //TODO move to ImageInfo
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetHostBuffer(
-        nvimgcdcsImage_t image, void** buffer, size_t* size);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetDeviceBuffer(
-        nvimgcdcsImage_t image, void* buffer, size_t size); //TODO move to ImageInfo
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetDeviceBuffer(
-        nvimgcdcsImage_t image, void** buffer, size_t* size);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetImageInfo(nvimgcdcsImage_t image,
         nvimgcdcsImageInfo_t* image_info); //TODO set ImageInfo during createImage
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(

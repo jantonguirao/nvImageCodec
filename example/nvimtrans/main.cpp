@@ -254,7 +254,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
             image_info.component_info[c].host_pitch_in_bytes =
                 image_info.image_width * (is_interleaved ? image_info.num_components : 1);
         }
-        nvimgcdcsImageSetHostBuffer(image, host_buffer.data(), host_buffer.size());
+        image_info.host_buffer = host_buffer.data();
+        image_info.host_buffer_size = host_buffer.size();
     }
     if (is_device_output || is_device_input) {
         size_t device_pitch_in_bytes = 0;
@@ -265,9 +266,9 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
         for (auto c = 0; c < image_info.num_components; ++c) {
             image_info.component_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
         }
-        size_t image_buffer_size =
+        image_info.device_buffer_size =
             device_pitch_in_bytes * image_info.image_height * image_info.num_components;
-        nvimgcdcsImageSetDeviceBuffer(image, device_buffer, image_buffer_size);
+        image_info.device_buffer = device_buffer;
     }
 
     nvimgcdcsImageSetImageInfo(image, &image_info);
@@ -493,7 +494,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
             image_info.component_info[c].component_height = image_info.image_height;
             image_info.component_info[c].component_width = image_info.image_width;
         }
-        
+
         CHECK_NVIMGCDCS(nvimgcdcsImageSetImageInfo(images[i], &image_info));
 
         if (decoder == nullptr) {
@@ -525,9 +526,8 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         for (uint32_t c = 0; c < image_info.num_components; ++c) {
             image_info.component_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
         }
-        unsigned char* device_buffer = ibuf[i].data;
-
-        CHECK_NVIMGCDCS(nvimgcdcsImageSetDeviceBuffer(images[i], device_buffer, image_buffer_size));
+        image_info.device_buffer = ibuf[i].data;
+        image_info.device_buffer_size = image_buffer_size;
         CHECK_NVIMGCDCS(nvimgcdcsImageSetImageInfo(images[i], &image_info));
 
         if (decode_states[i] == nullptr) {

@@ -214,21 +214,19 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_encode");
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
-    unsigned char* host_image_buffer;
-    size_t size;
-    image->getHostBuffer(image->instance, reinterpret_cast<void**>(&host_image_buffer), &size);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.host_buffer);
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
-        writeBMP<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream,
-            (unsigned char*)host_image_buffer, image_info.component_info[0].host_pitch_in_bytes,
-            NULL, 0, NULL, 0, image_info.image_width, image_info.image_height, 8, true);
+        writeBMP<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer,
+            image_info.component_info[0].host_pitch_in_bytes, NULL, 0, NULL, 0,
+            image_info.image_width, image_info.image_height, 8, true);
     } else {
-        writeBMP<unsigned char>(code_stream->io_stream, (unsigned char*)host_image_buffer,
+        writeBMP<unsigned char>(code_stream->io_stream, host_buffer,
             image_info.component_info[0].host_pitch_in_bytes,
-            (unsigned char*)host_image_buffer +
+            host_buffer +
                 image_info.component_info[0].host_pitch_in_bytes * image_info.image_height,
             image_info.component_info[1].host_pitch_in_bytes,
-            (unsigned char*)host_image_buffer +
+            host_buffer +
                 +image_info.component_info[0].host_pitch_in_bytes * image_info.image_height +
                 image_info.component_info[1].host_pitch_in_bytes * image_info.image_height,
             image_info.component_info[2].host_pitch_in_bytes, image_info.image_width,

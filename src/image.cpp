@@ -20,14 +20,10 @@ namespace nvimgcdcs {
 Image::Image()
     : index_(0)
     , image_info_()
-    , host_buffer_(nullptr)
-    , host_buffer_size_(0)
-    , device_buffer_(nullptr)
-    , device_buffer_size_(0)
     , decode_state_(nullptr)
     , encode_state_(nullptr)
     , image_desc_{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
-          Image::static_get_device_buffer, Image::static_get_host_buffer, Image::static_image_ready}
+          Image::static_image_ready}
     , promise_(nullptr)
     , processing_status_(NVIMGCDCS_PROCESSING_STATUS_UNKNOWN)
 {
@@ -36,26 +32,6 @@ Image::Image()
 
 Image::~Image()
 {
-}
-void Image::setHostBuffer(void* buffer, size_t size)
-{
-    host_buffer_ = buffer;
-    host_buffer_size_ = size;
-}
-void Image::getHostBuffer(void** buffer, size_t* size)
-{
-    *buffer = host_buffer_;
-    *size = host_buffer_size_;
-}
-void Image::setDeviceBuffer(void* buffer, size_t size)
-{
-    device_buffer_ = buffer;
-    device_buffer_size_ = size;
-}
-void Image::getDeviceBuffer(void** buffer, size_t* size)
-{
-    *buffer = device_buffer_;
-    *size = device_buffer_size_;
 }
 
 void Image::setIndex(int index)
@@ -123,8 +99,8 @@ nvimgcdcsStatus_t Image::imageReady(nvimgcdcsProcessingStatus_t processing_statu
     setProcessingStatus(processing_status);
     assert(promise_);
     ProcessingResult res = NVIMGCDCS_PROCESSING_STATUS_SUCCESS == processing_status
-        ? ProcessingResult::success()
-        : ProcessingResult::failure(nullptr);
+                               ? ProcessingResult::success()
+                               : ProcessingResult::failure(nullptr);
     promise_->set(index_, res);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -134,22 +110,6 @@ nvimgcdcsStatus_t Image::static_get_image_info(void* instance, nvimgcdcsImageInf
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
     handle->getImageInfo(result);
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t Image::static_get_device_buffer(void* instance, void** buffer, size_t* size)
-{
-    assert(instance);
-    Image* handle = reinterpret_cast<Image*>(instance);
-    handle->getDeviceBuffer(buffer, size);
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t Image::static_get_host_buffer(void* instance, void** buffer, size_t* size)
-{
-    assert(instance);
-    Image* handle = reinterpret_cast<Image*>(instance);
-    handle->getHostBuffer(buffer, size);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

@@ -108,11 +108,10 @@ struct IWorkManager::Work
     {
         host_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            void* d_buffer;
-            size_t d_size;
-            images_[i]->getDeviceBuffer(&d_buffer, &d_size);
+            nvimgcdcsImageInfo_t image_info;
+            images_[i]->getImageInfo(&image_info);
             void* h_pinned = nullptr;
-            CHECK_CUDA(cudaMallocHost(&h_pinned, d_size));
+            CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.device_buffer_size));
             std::unique_ptr<void, decltype(&cudaFreeHost)> h_ptr(h_pinned, &cudaFreeHost);
             host_temp_buffers_.push_back(std::move(h_ptr));
         }
@@ -122,11 +121,10 @@ struct IWorkManager::Work
     {
         device_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            void* h_buffer;
-            size_t h_size;
-            images_[i]->getHostBuffer(&h_buffer, &h_size);
+            nvimgcdcsImageInfo_t image_info;
+            images_[i]->getImageInfo(&image_info);
             void* device_buffer = nullptr;
-            CHECK_CUDA(cudaMalloc(&device_buffer, h_size));
+            CHECK_CUDA(cudaMalloc(&device_buffer, image_info.host_buffer_size));
             std::unique_ptr<void, decltype(&cudaFree)> d_ptr(device_buffer, &cudaFree);
             device_temp_buffers_.push_back(std::move(d_ptr));
         }
@@ -135,50 +133,48 @@ struct IWorkManager::Work
     void ensure_expected_buffer_for_each_image(bool is_device_output)
     {
         for (size_t i = 0; i < images_.size(); ++i) {
-            void* h_buffer;
-            size_t h_size;
-            images_[i]->getHostBuffer(&h_buffer, &h_size);
-            void* d_buffer;
-            size_t d_size;
-            images_[i]->getDeviceBuffer(&d_buffer, &d_size);
+            nvimgcdcsImageInfo_t image_info;
+            images_[i]->getImageInfo(&image_info);
 
-            bool is_output_expected_in_device = d_buffer != nullptr;
-            bool is_output_expected_in_host = h_buffer != nullptr;
+            bool is_output_expected_in_device = image_info.device_buffer != nullptr;
+            bool is_output_expected_in_host = image_info.host_buffer != nullptr;
 
             if (!is_device_output && is_output_expected_in_device) {
                 if (host_temp_buffers_.empty()) {
                     alloc_host_temp_outputs();
                 }
-                images_[i]->setHostBuffer(host_temp_buffers_[i].get(), d_size);
+                image_info.host_buffer = host_temp_buffers_[i].get();
+                image_info.host_buffer_size = image_info.device_buffer_size;
+                images_[i]->setImageInfo(&image_info);
             }
             if (is_device_output && is_output_expected_in_host) {
                 if (device_temp_buffers_.empty()) {
                     alloc_device_temp_outputs();
                 }
-                images_[i]->setDeviceBuffer(device_temp_buffers_[i].get(), h_size);
+                image_info.device_buffer = device_temp_buffers_[i].get();
+                image_info.device_buffer_size = image_info.host_buffer_size;
+                images_[i]->setImageInfo(&image_info);
             }
         }
     }
 
     void copy_buffer_if_necessery(bool is_device_output, int sub_idx, ProcessingResult* r)
     {
-        void* h_buffer;
-        size_t h_size;
-        images_[sub_idx]->getHostBuffer(&h_buffer, &h_size);
-        void* d_buffer;
-        size_t d_size;
-        images_[sub_idx]->getDeviceBuffer(&d_buffer, &d_size);
         nvimgcdcsImageInfo_t image_info;
         images_[sub_idx]->getImageInfo(&image_info);
         try {
-            if (is_device_output && h_buffer != nullptr) {
-                CHECK_CUDA(cudaMemcpyAsync(
-                    h_buffer, d_buffer, d_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
-                images_[sub_idx]->setDeviceBuffer(nullptr, 0);
-            } else if (!is_device_output && d_buffer != nullptr) {
-                CHECK_CUDA(cudaMemcpyAsync(
-                    d_buffer, h_buffer, h_size, cudaMemcpyHostToDevice, image_info.cuda_stream));
-                images_[sub_idx]->setHostBuffer(nullptr, 0);
+            if (is_device_output && image_info.host_buffer != nullptr) {
+                CHECK_CUDA(cudaMemcpyAsync(image_info.host_buffer, image_info.device_buffer,
+                    image_info.device_buffer_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
+                image_info.device_buffer = nullptr;
+                image_info.device_buffer_size = 0;
+                images_[sub_idx]->setImageInfo(&image_info);
+            } else if (!is_device_output && image_info.device_buffer != nullptr) {
+                CHECK_CUDA(cudaMemcpyAsync(image_info.device_buffer, image_info.host_buffer,
+                    image_info.host_buffer_size, cudaMemcpyHostToDevice, image_info.cuda_stream));
+                image_info.host_buffer = nullptr;
+                image_info.host_buffer_size = 0;
+                images_[sub_idx]->setImageInfo(&image_info);
             }
         } catch (...) {
             *r = ProcessingResult::failure(std::current_exception());

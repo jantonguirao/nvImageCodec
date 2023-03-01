@@ -223,23 +223,20 @@ static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeS
     NVIMGCDCS_E_LOG_TRACE("pxm_encode");
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
-    unsigned char* host_image_buffer;
-    size_t size;
-    image->getHostBuffer(image->instance, reinterpret_cast<void**>(&host_image_buffer), &size);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.host_buffer);
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
-        write_pxm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream,
-            (unsigned char*)host_image_buffer, image_info.component_info[0].host_pitch_in_bytes,
-            NULL, 0, NULL, 0, NULL, 0, image_info.image_width, image_info.image_height,
-            image_info.num_components,
+        write_pxm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer,
+            image_info.component_info[0].host_pitch_in_bytes, NULL, 0, NULL, 0, NULL, 0,
+            image_info.image_width, image_info.image_height, image_info.num_components,
             image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     } else {
-        write_pxm<unsigned char>(code_stream->io_stream, (unsigned char*)host_image_buffer,
+        write_pxm<unsigned char>(code_stream->io_stream, host_buffer,
             image_info.component_info[0].host_pitch_in_bytes,
-            (unsigned char*)host_image_buffer +
+            host_buffer +
                 image_info.component_info[0].host_pitch_in_bytes * image_info.image_height,
             image_info.component_info[1].host_pitch_in_bytes,
-            (unsigned char*)host_image_buffer +
+            host_buffer +
                 +image_info.component_info[0].host_pitch_in_bytes * image_info.image_height +
                 image_info.component_info[1].host_pitch_in_bytes * image_info.image_height,
             image_info.component_info[2].host_pitch_in_bytes, NULL, 0, image_info.image_width,

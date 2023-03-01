@@ -123,13 +123,9 @@ class Image
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        void* buffer;
-        size_t buf_size;
-
-        nvimgcdcsImageGetDeviceBuffer(image_, &buffer, &buf_size);
-
+        void* buffer =  image_info.device_buffer;
         ssize_t itemsize   = 1; //TODO
-        ssize_t size       = buf_size;
+        ssize_t size = image_info.device_buffer_size;
         std::string format = format_str_from_type(image_info.sample_type);
         ssize_t ndim       = 3; //TODO
         std::vector<ssize_t> shape{
@@ -270,8 +266,9 @@ class Image
 
                 nvimgcdcsImage_t image;
                 nvimgcdcsImageCreate(instance, &image);
+                image_info.device_buffer = buffer;
+                image_info.device_buffer_size = buffer_size;
                 nvimgcdcsImageSetImageInfo(image, &image_info);
-                nvimgcdcsImageSetDeviceBuffer(image, buffer, buffer_size);
                 return new Image(image);
             } else {
                 return nullptr;
