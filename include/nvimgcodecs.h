@@ -845,10 +845,8 @@ extern "C"
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
-        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image);
+        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageSetImageInfo(nvimgcdcsImage_t image,
-        nvimgcdcsImageInfo_t* image_info); //TODO set ImageInfo during createImage
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(
         nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetProcessingStatus(

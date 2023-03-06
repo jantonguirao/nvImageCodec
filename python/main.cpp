@@ -27,7 +27,7 @@ static void check_cuda_buffer(const void* ptr)
     }
 
     cudaPointerAttributes attrs = {};
-    cudaError_t err             = cudaPointerGetAttributes(&attrs, ptr);
+    cudaError_t err = cudaPointerGetAttributes(&attrs, ptr);
     cudaGetLastError(); // reset the cuda error (if any)
     if (err != cudaSuccess || attrs.type == cudaMemoryTypeUnregistered) {
         throw std::runtime_error("Buffer is not CUDA-accessible");
@@ -40,13 +40,13 @@ class Module
     Module()
     {
         nvimgcdcsInstanceCreateInfo_t instance_create_info;
-        instance_create_info.type             = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        instance_create_info.next             = NULL;
+        instance_create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        instance_create_info.next = NULL;
         instance_create_info.pinned_allocator = NULL;
         instance_create_info.device_allocator = NULL;
-        instance_create_info.load_extension_modules  = true;
+        instance_create_info.load_extension_modules = true;
         instance_create_info.default_debug_messenger = true;
-        instance_create_info.message_severity        = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL |
+        instance_create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL |
                                                 NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR |
                                                 NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING;
         instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
@@ -123,11 +123,11 @@ class Image
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        void* buffer =  image_info.device_buffer;
-        ssize_t itemsize   = 1; //TODO
+        void* buffer = image_info.device_buffer;
+        ssize_t itemsize = 1; //TODO
         ssize_t size = image_info.device_buffer_size;
         std::string format = format_str_from_type(image_info.sample_type);
-        ssize_t ndim       = 3; //TODO
+        ssize_t ndim = 3; //TODO
         std::vector<ssize_t> shape{
             image_info.num_components, image_info.image_height, image_info.image_width};
         bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
@@ -223,7 +223,7 @@ class Image
                 return nullptr;
             }
             py::tuple tdata = iface["data"].cast<py::tuple>();
-            void* buffer    = PyLong_AsVoidPtr(tdata[0].ptr());
+            void* buffer = PyLong_AsVoidPtr(tdata[0].ptr());
             check_cuda_buffer(buffer);
             std::vector<long> vshape;
             py::tuple shape = iface["shape"].cast<py::tuple>();
@@ -243,32 +243,32 @@ class Image
             if (vshape.size() >= 3) {
                 nvimgcdcsImageInfo_t image_info;
                 image_info.num_components = vshape[0];
-                image_info.image_height   = vshape[1];
-                image_info.image_width    = vshape[2];
-                std::string typestr       = iface["typestr"].cast<std::string>();
-                image_info.sample_type    = type_from_format_str(typestr);
-                size_t buffer_size        = 0;
-                image_info.color_space    = NVIMGCDCS_COLORSPACE_SRGB;
+                image_info.image_height = vshape[1];
+                image_info.image_width = vshape[2];
+                std::string typestr = iface["typestr"].cast<std::string>();
+                image_info.sample_type = type_from_format_str(typestr);
+                size_t buffer_size = 0;
+                image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
                 image_info.sample_format =
                     NVIMGCDCS_SAMPLEFORMAT_P_RGB; //NVIMGCDCS_SAMPLEFORMAT_I_RGB; //TODO add support for various formats
                 image_info.sampling = NVIMGCDCS_SAMPLING_444;
-                int pitch_in_bytes  = vstrides.size() > 1
-                                          ? vstrides[1]
-                                          : image_info.image_width; //*image_info.num_components;
+                int pitch_in_bytes = vstrides.size() > 1
+                                         ? vstrides[1]
+                                         : image_info.image_width; //*image_info.num_components;
                 for (size_t c = 0; c < image_info.num_components; c++) {
-                    image_info.component_info[c].component_width       = image_info.image_width;
-                    image_info.component_info[c].component_height      = image_info.image_height;
+                    image_info.component_info[c].component_width = image_info.image_width;
+                    image_info.component_info[c].component_height = image_info.image_height;
                     image_info.component_info[c].device_pitch_in_bytes = pitch_in_bytes;
-                    image_info.component_info[c].sample_type           = image_info.sample_type;
+                    image_info.component_info[c].sample_type = image_info.sample_type;
                     buffer_size += image_info.component_info[c].device_pitch_in_bytes *
                                    image_info.image_height;
                 }
-
-                nvimgcdcsImage_t image;
-                nvimgcdcsImageCreate(instance, &image);
                 image_info.device_buffer = buffer;
                 image_info.device_buffer_size = buffer_size;
-                nvimgcdcsImageSetImageInfo(image, &image_info);
+
+                nvimgcdcsImage_t image;
+                nvimgcdcsImageCreate(instance, &image, &image_info);
+
                 return new Image(image);
             } else {
                 return nullptr;

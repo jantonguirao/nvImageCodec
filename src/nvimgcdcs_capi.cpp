@@ -620,7 +620,8 @@ nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_stat
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsImageCreate(nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image)
+nvimgcdcsStatus_t nvimgcdcsImageCreate(
+    nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -630,6 +631,7 @@ nvimgcdcsStatus_t nvimgcdcsImageCreate(nvimgcdcsInstance_t instance, nvimgcdcsIm
             CHECK_NULL(instance)
 
             *image = new nvimgcdcsImage();
+            (*image)->image_.setImageInfo(image_info);
             (*image)->nvimgcdcs_instance_ = instance;
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -648,18 +650,6 @@ nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsImageSetImageInfo(
-    nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            image->image_.setImageInfo(image_info);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
 nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(
     nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info)
 {
@@ -976,11 +966,10 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
 
             image_info.host_buffer = nullptr;
 
-            nvimgcdcsImageCreate(instance, image);
+            nvimgcdcsImageCreate(instance, image, &image_info);
             (*image)->dev_image_buffer_ = image_info.device_buffer;
             (*image)->dev_image_buffer_size_ = image_info.device_buffer_size;
-            nvimgcdcsImageSetImageInfo(*image, &image_info);
-
+            
             nvimgcdcsDecoder_t decoder;
             nvimgcdcsDecoderCreate(instance, &decoder);
 
@@ -1168,7 +1157,6 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             nvimgcdcsCodeStreamCreateToFile(
                 instance, &output_code_stream, file_name, codec_name.c_str());
             nvimgcdcsCodeStreamSetImageInfo(output_code_stream, &out_image_info);
-            nvimgcdcsImageSetImageInfo(image, &image_info);
 
             nvimgcdcsEncoder_t encoder;
             nvimgcdcsEncoderCreate(instance, &encoder);

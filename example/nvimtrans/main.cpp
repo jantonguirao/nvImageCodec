@@ -190,8 +190,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     image_info.host_buffer = nullptr;
 
     nvimgcdcsImage_t image;
-    nvimgcdcsImageCreate(instance, &image);
-    nvimgcdcsImageSetImageInfo(image, &image_info);
+    nvimgcdcsImageCreate(instance, &image, &image_info);
 
     nvimgcdcsDecoder_t decoder;
     nvimgcdcsDecoderCreate(instance, &decoder);
@@ -398,9 +397,6 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetCodecName(code_streams[i], codec_name));
 
-        if (images[i] == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &images[i]));
-        }
         //TODO orientation
         /* 
         if (decode_params.enable_orientation) {
@@ -425,21 +421,6 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
             image_info.component_info[c].component_width = image_info.image_width;
         }
 
-        CHECK_NVIMGCDCS(nvimgcdcsImageSetImageInfo(images[i], &image_info));
-
-        if (decoder == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder));
-            CHECK_NVIMGCDCS(nvimgcdcsDecodeStateBatchCreate(decoder, &decode_state_batch, nullptr));
-        } else {
-            bool can_decode;
-            CHECK_NVIMGCDCS(nvimgcdcsDecoderCanDecode(
-                decoder, &can_decode, code_streams[i], images[i], &decode_params));
-            if (!can_decode) {
-                std::cerr << "skipping this image since it can be decoded in this batch"
-                          << std::endl;
-            }
-        }
-
         size_t device_pitch_in_bytes = bytes_per_element * image_info.image_width;
         size_t image_buffer_size =
             device_pitch_in_bytes * image_info.image_height * image_info.num_components;
@@ -458,7 +439,21 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         }
         image_info.device_buffer = ibuf[i].data;
         image_info.device_buffer_size = image_buffer_size;
-        CHECK_NVIMGCDCS(nvimgcdcsImageSetImageInfo(images[i], &image_info));
+        
+        CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &images[i], &image_info));
+
+        if (decoder == nullptr) {
+            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder));
+            CHECK_NVIMGCDCS(nvimgcdcsDecodeStateBatchCreate(decoder, &decode_state_batch, nullptr));
+        } else {
+            bool can_decode;
+            CHECK_NVIMGCDCS(nvimgcdcsDecoderCanDecode(
+                decoder, &can_decode, code_streams[i], images[i], &decode_params));
+            if (!can_decode) {
+                std::cerr << "skipping this image since it can be decoded in this batch"
+                          << std::endl;
+            }
+        }
 
         if (decode_states[i] == nullptr) {
             CHECK_NVIMGCDCS(nvimgcdcsDecodeStateCreate(decoder, &decode_states[i], nullptr));
@@ -602,7 +597,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
         CHECK_NVIMGCDCS(nvimgcdcsEncoderEncodeBatch(encoder, encode_state_batch, images.data(),
             out_code_streams.data(), params.batch_size, &encode_params, nullptr, true));
         double encode_time = wtime() - start_encoding_time;
-
+        
         if (warmup < params.warmup) {
             warmup++;
         } else {
@@ -620,12 +615,14 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
         for (auto& cs : out_code_streams) {
             nvimgcdcsCodeStreamDestroy(cs);
         }
+        for (auto& img : images) {
+            nvimgcdcsImageDestroy(img);
+        }
     }
 
     for (int i = 0; i < params.batch_size; ++i) {
         nvimgcdcsImageDetachDecodeState(images[i]);
         nvimgcdcsImageDetachEncodeState(images[i]);
-        nvimgcdcsImageDestroy(images[i]);
         nvimgcdcsDecodeStateDestroy(decode_states[i]);
         nvimgcdcsEncodeStateDestroy(encode_states[i]);
         if (image_buffers[i].data) {
