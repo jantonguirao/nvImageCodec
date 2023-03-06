@@ -210,13 +210,13 @@ extern "C"
         nvimgcdcsStructureType_t type;
         void* next;
 
-        uint32_t width;
-        uint32_t height;
-        uint32_t num_components;
         void* host_buffer;
         size_t host_buffer_size;
         void* device_buffer;
         size_t device_buffer_size;
+        uint32_t width;
+        uint32_t height;
+        uint32_t num_components;
         uint32_t num_planes;
         nvimgcdcsImagePlaneInfo_t plane_info[NVIMGCDCS_MAX_NUM_PLANES];
         nvimgcdcsColorSpec_t color_spec;
