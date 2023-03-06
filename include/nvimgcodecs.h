@@ -860,8 +860,6 @@ extern "C"
         nvimgcdcsDecodeState_t decode_state_batch, nvimgcdcsCodeStream_t* streams,
         nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params,
         nvimgcdcsFuture_t* future, bool blocking);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(
-        nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
 
     //DecodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
@@ -881,8 +879,6 @@ extern "C"
         nvimgcdcsEncodeState_t encode_state_batch, nvimgcdcsImage_t* images,
         nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params,
         nvimgcdcsFuture_t* future, bool blocking);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(
-        nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
 
     //EncodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(

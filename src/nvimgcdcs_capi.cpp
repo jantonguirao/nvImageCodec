@@ -519,20 +519,6 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder,
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsDecoderGetCapabilities(
-    nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(decoder)
-            CHECK_NULL(size)
-            decoder->image_decoder_->getCapabilities(capabilities, size);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
 nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(
     nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decodeState, bool* canUse)
 {
@@ -802,21 +788,6 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder,
                 *future = new nvimgcdcsFuture();
                 (*future)->handle_ = std::move(int_future);
             }
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsEncoderGetCapabilities(
-    nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(encoder)
-            CHECK_NULL(size)
-            encoder->image_encoder_->getCapabilities(capabilities, size);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
