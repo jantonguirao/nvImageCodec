@@ -456,25 +456,6 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, bool* result,
-    nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image, const nvimgcdcsDecodeParams_t* params)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(decoder)
-            CHECK_NULL(result)
-            CHECK_NULL(stream)
-            CHECK_NULL(image)
-            CHECK_NULL(params)
-            *result = decoder->image_decoder_->canDecode(
-                stream->code_stream_.getCodeStreamDesc(), image->image_.getImageDesc(), params);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
 nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t stream,
     nvimgcdcsImage_t image, const nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future,
     bool blocking)
@@ -757,24 +738,6 @@ nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder)
         {
             CHECK_NULL(encoder)
             delete encoder;
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, bool* result,
-    nvimgcdcsImage_t image, nvimgcdcsCodeStream_t stream, const nvimgcdcsEncodeParams_t* params)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(encoder)
-            CHECK_NULL(result)
-            CHECK_NULL(image)
-            CHECK_NULL(stream)
-            *result = encoder->image_encoder_->canEncode(
-                image->image_.getImageDesc(), stream->code_stream_.getCodeStreamDesc(), params);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;

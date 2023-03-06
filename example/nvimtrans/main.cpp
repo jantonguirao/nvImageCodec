@@ -443,16 +443,8 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         if (decoder == nullptr) {
             CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder));
             CHECK_NVIMGCDCS(nvimgcdcsDecodeStateBatchCreate(decoder, &decode_state_batch, nullptr));
-        } else {
-            bool can_decode;
-            CHECK_NVIMGCDCS(nvimgcdcsDecoderCanDecode(
-                decoder, &can_decode, code_streams[i], images[i], &decode_params));
-            if (!can_decode) {
-                std::cerr << "skipping this image since it can be decoded in this batch"
-                          << std::endl;
-            }
-        }
-
+        } 
+        
         if (decode_states[i] == nullptr) {
             CHECK_NVIMGCDCS(nvimgcdcsDecodeStateCreate(decoder, &decode_states[i], nullptr));
             CHECK_NVIMGCDCS(nvimgcdcsImageAttachDecodeState(images[i], decode_states[i]));
