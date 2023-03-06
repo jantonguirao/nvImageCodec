@@ -947,23 +947,23 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
                         ? 270
                         : (image_info.orientation.rotated == 270 ? 90 : 0);
                 if (decode_params.orientation.rotated) {
-                    auto tmp = image_info.image_width;
-                    image_info.image_width = image_info.image_height;
-                    image_info.image_height = tmp;
+                    auto tmp = image_info.width;
+                    image_info.width = image_info.height;
+                    image_info.height = tmp;
                 }
             }
 
             // Define  requested output
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-            image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
-            size_t device_pitch_in_bytes = image_info.image_width * bytes_per_element;
+            image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+            size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
             image_info.device_buffer_size =
-                device_pitch_in_bytes * image_info.image_height * image_info.num_components;
+                device_pitch_in_bytes * image_info.height * image_info.num_components;
             CHECK_CUDA(cudaMalloc(&image_info.device_buffer, image_info.device_buffer_size));
-            for (uint32_t c = 0; c < image_info.num_components; ++c) {
-                image_info.component_info[c].component_height = image_info.image_height;
-                image_info.component_info[c].component_width = image_info.image_width;
-                image_info.component_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
+            for (uint32_t c = 0; c < image_info.num_planes; ++c) {
+                image_info.plane_info[c].height = image_info.height;
+                image_info.plane_info[c].width = image_info.width;
+                image_info.plane_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
             }
 
             image_info.host_buffer = nullptr;

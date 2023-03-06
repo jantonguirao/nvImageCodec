@@ -153,8 +153,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
 
     std::cout << "Input image info: " << std::endl;
-    std::cout << "\t - width:" << image_info.image_width << std::endl;
-    std::cout << "\t - height:" << image_info.image_height << std::endl;
+    std::cout << "\t - width:" << image_info.width << std::endl;
+    std::cout << "\t - height:" << image_info.height << std::endl;
     std::cout << "\t - components:" << image_info.num_components << std::endl;
     std::cout << "\t - codec:" << codec_name << std::endl;
 
@@ -168,24 +168,24 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
                                                 ? 270
                                                 : (image_info.orientation.rotated == 270 ? 90 : 0);
         if (decode_params.orientation.rotated) {
-            auto tmp = image_info.image_width;
-            image_info.image_width = image_info.image_height;
-            image_info.image_height = tmp;
+            auto tmp = image_info.width;
+            image_info.width = image_info.height;
+            image_info.height = tmp;
         }
     }
     int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
     // Preparing output image_info
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-    image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
+    image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
 
-    size_t device_pitch_in_bytes = image_info.image_width * bytes_per_element;
+    size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
     image_info.device_buffer_size =
-        device_pitch_in_bytes * image_info.image_height * image_info.num_components;
+        device_pitch_in_bytes * image_info.height * image_info.num_components;
     CHECK_CUDA(cudaMalloc(&image_info.device_buffer, image_info.device_buffer_size));
-    for (auto c = 0; c < image_info.num_components; ++c) {
-        image_info.component_info[c].component_height = image_info.image_height;
-        image_info.component_info[c].component_width = image_info.image_width;
-        image_info.component_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
+    for (auto c = 0; c < image_info.num_planes; ++c) {
+        image_info.plane_info[c].height = image_info.height;
+        image_info.plane_info[c].width = image_info.width;
+        image_info.plane_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
     }
     image_info.host_buffer = nullptr;
 
@@ -354,7 +354,7 @@ int read_next_batch(FileNames& image_names, int batch_size, FileNames::iterator&
     return EXIT_SUCCESS;
 }
 
-constexpr int NUM_COMPONENTS = 4;
+constexpr int MAX_NUM_COMPONENTS = 4;
 struct ImageBuffer
 {
     unsigned char* data;
@@ -379,14 +379,14 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetImageInfo(code_streams[i], &image_info));
         parse_time += wtime() - time;
 
-        if (image_info.num_components > NUM_COMPONENTS) {
-            std::cout << "Num Components > " << NUM_COMPONENTS << "not supported by this sample"
+        if (image_info.num_components > MAX_NUM_COMPONENTS) {
+            std::cout << "Num Components > " << MAX_NUM_COMPONENTS << "not supported by this sample"
                       << std::endl;
             return EXIT_FAILURE;
         }
 
-        for (uint32_t c = 0; c < image_info.num_components; ++c) {
-            if (image_info.component_info[c].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
+        for (uint32_t c = 0; c < image_info.num_planes; ++c) {
+            if (image_info.plane_info[c].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
                 std::cout << "Precision not supported by this sample" << std::endl;
                 return EXIT_FAILURE;
             }
@@ -413,15 +413,15 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
 
         //Decode to format
         image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-        image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
-        for (auto c = 0; c < image_info.num_components; ++c) {
-            image_info.component_info[c].component_height = image_info.image_height;
-            image_info.component_info[c].component_width = image_info.image_width;
+        image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        for (auto c = 0; c < image_info.num_planes; ++c) {
+            image_info.plane_info[c].height = image_info.height;
+            image_info.plane_info[c].width = image_info.width;
         }
 
-        size_t device_pitch_in_bytes = bytes_per_element * image_info.image_width;
+        size_t device_pitch_in_bytes = bytes_per_element * image_info.width;
         size_t image_buffer_size =
-            device_pitch_in_bytes * image_info.image_height * image_info.num_components;
+            device_pitch_in_bytes * image_info.height * image_info.num_components;
 
         if (image_buffer_size > ibuf[i].size) {
             if (ibuf[i].data) {
@@ -432,8 +432,8 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         ibuf[i].pitch_in_bytes = device_pitch_in_bytes;
         ibuf[i].size = image_buffer_size;
 
-        for (uint32_t c = 0; c < image_info.num_components; ++c) {
-            image_info.component_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
+        for (uint32_t c = 0; c < image_info.num_planes; ++c) {
+            image_info.plane_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
         }
         image_info.device_buffer = ibuf[i].data;
         image_info.device_buffer_size = image_buffer_size;

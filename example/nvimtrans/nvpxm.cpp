@@ -227,20 +227,20 @@ static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeS
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
         write_pxm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer,
-            image_info.component_info[0].host_pitch_in_bytes, NULL, 0, NULL, 0, NULL, 0,
-            image_info.image_width, image_info.image_height, image_info.num_components,
+            image_info.plane_info[0].host_pitch_in_bytes, NULL, 0, NULL, 0, NULL, 0,
+            image_info.width, image_info.height, image_info.num_components,
             image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     } else {
         write_pxm<unsigned char>(code_stream->io_stream, host_buffer,
-            image_info.component_info[0].host_pitch_in_bytes,
+            image_info.plane_info[0].host_pitch_in_bytes,
             host_buffer +
-                image_info.component_info[0].host_pitch_in_bytes * image_info.image_height,
-            image_info.component_info[1].host_pitch_in_bytes,
+                image_info.plane_info[0].host_pitch_in_bytes * image_info.height,
+            image_info.plane_info[1].host_pitch_in_bytes,
             host_buffer +
-                +image_info.component_info[0].host_pitch_in_bytes * image_info.image_height +
-                image_info.component_info[1].host_pitch_in_bytes * image_info.image_height,
-            image_info.component_info[2].host_pitch_in_bytes, NULL, 0, image_info.image_width,
-            image_info.image_height, image_info.num_components,
+                +image_info.plane_info[0].host_pitch_in_bytes * image_info.height +
+                image_info.plane_info[1].host_pitch_in_bytes * image_info.height,
+            image_info.plane_info[2].host_pitch_in_bytes, NULL, 0, image_info.width,
+            image_info.height, image_info.num_components,
             image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     }
     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);

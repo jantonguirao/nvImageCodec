@@ -43,6 +43,8 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION,
         NVIMGCDCS_STRUCTURE_TYPE_REGION,
+        NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_IMAGE_PLANE_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODING,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO,
@@ -163,15 +165,15 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_COLORSPACE_UNKNOWN = -1,
-        NVIMGCDCS_COLORSPACE_NOT_SUPPORTED = 0,
-        NVIMGCDCS_COLORSPACE_SRGB = 1,
-        NVIMGCDCS_COLORSPACE_GRAY = 2,
-        NVIMGCDCS_COLORSPACE_SYCC = 3,
-        NVIMGCDCS_COLORSPACE_CMYK = 4,
-        NVIMGCDCS_COLORSPACE_YCCK = 5,
-        NVIMGCDCS_COLORSPACE_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsColorSpace_t;
+        NVIMGCDCS_COLORSPEC_UNKNOWN = -1,
+        NVIMGCDCS_COLORSPEC_NOT_SUPPORTED = 0,
+        NVIMGCDCS_COLORSPEC_SRGB = 1,
+        NVIMGCDCS_COLORSPEC_GRAY = 2,
+        NVIMGCDCS_COLORSPEC_SYCC = 3,
+        NVIMGCDCS_COLORSPEC_CMYK = 4,
+        NVIMGCDCS_COLORSPEC_YCCK = 5,
+        NVIMGCDCS_COLORSPEC_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsColorSpec_t;
 
     typedef enum
     {
@@ -195,30 +197,29 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        uint32_t component_width;
-        uint32_t component_height;
+        uint32_t width;
+        uint32_t height;
         size_t host_pitch_in_bytes;
         size_t device_pitch_in_bytes;
         nvimgcdcsSampleDataType_t sample_type;
-    } nvimgcdcsImageComponentInfo_t;
+    } nvimgcdcsImagePlaneInfo_t;
 
-#define NVIMGCDCS_MAX_NUM_COMPONENTS 32
+#define NVIMGCDCS_MAX_NUM_PLANES 32
     typedef struct
     {
         nvimgcdcsStructureType_t type;
         void* next;
 
-        uint32_t image_width;
-        uint32_t image_height;
+        uint32_t width;
+        uint32_t height;
         uint32_t num_components;
-
         void* host_buffer;
         size_t host_buffer_size;
         void* device_buffer;
         size_t device_buffer_size;
-
-        nvimgcdcsImageComponentInfo_t component_info[NVIMGCDCS_MAX_NUM_COMPONENTS];
-        nvimgcdcsColorSpace_t color_space;
+        uint32_t num_planes;
+        nvimgcdcsImagePlaneInfo_t plane_info[NVIMGCDCS_MAX_NUM_PLANES];
+        nvimgcdcsColorSpec_t color_spec;
         nvimgcdcsSampleFormat_t sample_format;
         nvimgcdcsChromaSubsampling_t sampling;
         nvimgcdcsSampleDataType_t sample_type;
@@ -267,7 +268,7 @@ extern "C"
         void* next;
 
         uint32_t num_resolutions;
-        nvimgcdcsJpeg2kTileComponentInfo_t component_info[NVIMGCDCS_MAX_NUM_COMPONENTS];
+        nvimgcdcsJpeg2kTileComponentInfo_t component_info[NVIMGCDCS_MAX_NUM_PLANES];
     } nvimgcdcsJpeg2kTileInfo_t;
 
     //TODO fill with data in nvJpeg2k

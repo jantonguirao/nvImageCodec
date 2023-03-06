@@ -129,19 +129,19 @@ class Image
         std::string format = format_str_from_type(image_info.sample_type);
         ssize_t ndim = 3; //TODO
         std::vector<ssize_t> shape{
-            image_info.num_components, image_info.image_height, image_info.image_width};
+            image_info.num_components, image_info.height, image_info.width};
         bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
 
         py::tuple strides_tuple = py::make_tuple(
             is_interleaved
                 ? 1
-                : image_info.component_info[0].device_pitch_in_bytes * image_info.image_height,
-            image_info.component_info[0].device_pitch_in_bytes, is_interleaved ? 3 : 1);
+                : image_info.plane_info[0].device_pitch_in_bytes * image_info.height,
+            image_info.plane_info[0].device_pitch_in_bytes, is_interleaved ? 3 : 1);
 
         try {
             //TODO interleaved
             py::tuple shape_tuple = py::make_tuple(
-                image_info.num_components, image_info.image_height, image_info.image_width);
+                image_info.num_components, image_info.height, image_info.width);
 
             // clang-format off
             // TODO when strides none
@@ -175,13 +175,13 @@ class Image
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        return image_info.image_width;
+        return image_info.width;
     }
     int getHeight() const
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        return image_info.image_height;
+        return image_info.height;
     }
     int getNdim() const { return 3; } //TODO
 
@@ -243,25 +243,26 @@ class Image
             if (vshape.size() >= 3) {
                 nvimgcdcsImageInfo_t image_info;
                 image_info.num_components = vshape[0];
-                image_info.image_height = vshape[1];
-                image_info.image_width = vshape[2];
+                image_info.num_planes = image_info.num_components;
+                image_info.height = vshape[1];
+                image_info.width = vshape[2];
                 std::string typestr = iface["typestr"].cast<std::string>();
                 image_info.sample_type = type_from_format_str(typestr);
                 size_t buffer_size = 0;
-                image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
+                image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
                 image_info.sample_format =
                     NVIMGCDCS_SAMPLEFORMAT_P_RGB; //NVIMGCDCS_SAMPLEFORMAT_I_RGB; //TODO add support for various formats
                 image_info.sampling = NVIMGCDCS_SAMPLING_444;
                 int pitch_in_bytes = vstrides.size() > 1
                                          ? vstrides[1]
-                                         : image_info.image_width; //*image_info.num_components;
-                for (size_t c = 0; c < image_info.num_components; c++) {
-                    image_info.component_info[c].component_width = image_info.image_width;
-                    image_info.component_info[c].component_height = image_info.image_height;
-                    image_info.component_info[c].device_pitch_in_bytes = pitch_in_bytes;
-                    image_info.component_info[c].sample_type = image_info.sample_type;
-                    buffer_size += image_info.component_info[c].device_pitch_in_bytes *
-                                   image_info.image_height;
+                                         : image_info.width; //*image_info.num_components;
+                for (size_t c = 0; c < image_info.num_planes; c++) {
+                    image_info.plane_info[c].width = image_info.width;
+                    image_info.plane_info[c].height = image_info.height;
+                    image_info.plane_info[c].device_pitch_in_bytes = pitch_in_bytes;
+                    image_info.plane_info[c].sample_type = image_info.sample_type;
+                    buffer_size += image_info.plane_info[c].device_pitch_in_bytes *
+                                   image_info.height;
                 }
                 image_info.device_buffer = buffer;
                 image_info.device_buffer_size = buffer_size;

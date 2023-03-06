@@ -163,8 +163,8 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
     if (length >= 26 && code_stream->parse_state->header_size == 12) {
         BitmapCoreHeader header = {};
         io_stream->read(io_stream->instance, &output_size, &header, sizeof(header));
-        image_info->image_width = header.width;
-        image_info->image_height = header.heigth;
+        image_info->width = header.width;
+        image_info->height = header.heigth;
         bpp = header.bpp;
         if (bpp <= 8) {
             io_stream->tell(io_stream->instance, &palette_start);
@@ -176,8 +176,8 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
         io_stream->read(io_stream->instance, &output_size, &header, sizeof(header));
         io_stream->skip(
             io_stream->instance, code_stream->parse_state->header_size - sizeof(header));
-        image_info->image_width = abs(header.width);
-        image_info->image_height = abs(header.heigth);
+        image_info->width = abs(header.width);
+        image_info->height = abs(header.heigth);
         bpp = header.bpp;
         compression_type = header.compression;
         ncolors = header.colors_used;
@@ -199,11 +199,11 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
 
     image_info->num_components =
         number_of_channels(io_stream, bpp, compression_type, ncolors, palette_entry_size);
-
-    for (size_t i = 0; i < image_info->num_components; i++) {
-        image_info->component_info[i].component_height = image_info->image_height;
-        image_info->component_info[i].component_width = image_info->image_width;
-        image_info->component_info[i].sample_type =
+    image_info->num_planes = image_info->num_components;
+    for (size_t i = 0; i < image_info->num_planes; i++) {
+        image_info->plane_info[i].height = image_info->height;
+        image_info->plane_info[i].width = image_info->width;
+        image_info->plane_info[i].sample_type =
             NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; // TODO Allow other sample data types
     }
     image_info->sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;

@@ -18,9 +18,9 @@ namespace nvimgcdcs {
 template <typename Out, typename In>
 __global__ void nvimgcdcsImageProcessorConvert(Out* out_ptr, int64_t out_stride_y,
     int64_t out_stride_x, int64_t out_stride_c, int out_nchannels,
-    nvimgcdcsColorSpace_t out_colorspace, const In* in_roi_start_ptr, int64_t roi_size_y,
+    nvimgcdcsColorSpec_t out_colorspace, const In* in_roi_start_ptr, int64_t roi_size_y,
     int64_t roi_size_x, int64_t in_stride_y, int64_t in_stride_x, int64_t in_stride_c,
-    nvimgcdcsColorSpace_t in_colorspace, bool flip_y, bool flip_x)
+    nvimgcdcsColorSpec_t in_colorspace, bool flip_y, bool flip_x)
 {
     int out_x = threadIdx.x + blockIdx.x * blockDim.x;
     int out_y = threadIdx.y + blockIdx.y * blockDim.y;
@@ -29,7 +29,7 @@ __global__ void nvimgcdcsImageProcessorConvert(Out* out_ptr, int64_t out_stride_
     int in_x = flip_x ? roi_size_x - 1 - out_x : out_x;
     int in_y = flip_y ? roi_size_y - 1 - out_y : out_y;
 
-    // if (out_colorspace == NVIMGCDCS_COLORSPACE_UNKNOWN || in_colorspace == NVIMGCDCS_COLORSPACE_UNKNOWN) {
+    // if (out_colorspace == NVIMGCDCS_COLORSPEC_UNKNOWN || in_colorspace == NVIMGCDCS_COLORSPEC_UNKNOWN) {
     //     const In *in_pixel_ptr = in_roi_start_ptr + new_y * in_stride_y + new_x * in_stride_x;
     //     Out *out_pixel_ptr = out_ptr + cY * out_stride_y + cX * out_stride_x;
     //     for (int c = 0; c < out_nchannels; c++) {
