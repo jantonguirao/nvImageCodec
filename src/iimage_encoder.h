@@ -26,9 +26,8 @@ class IImageEncoder
 {
   public:
     virtual ~IImageEncoder() = default;
-    virtual std::unique_ptr<IEncodeState> createEncodeState(cudaStream_t cuda_stream) const = 0;
-    virtual std::unique_ptr<IEncodeState> createEncodeStateBatch(
-        cudaStream_t cuda_stream) const = 0;
+    virtual std::unique_ptr<IEncodeState> createEncodeState() const = 0;
+    virtual std::unique_ptr<IEncodeState> createEncodeStateBatch() const = 0;
     virtual void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) = 0;
     virtual bool canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
         const nvimgcdcsEncodeParams_t* params) const = 0;

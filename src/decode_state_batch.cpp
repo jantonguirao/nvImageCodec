@@ -12,15 +12,14 @@
 namespace nvimgcdcs {
 
 DecodeStateBatch::DecodeStateBatch(const nvimgcdcsDecoderDesc_t decoder_desc,
-    nvimgcdcsDecoder_t decoder, cudaStream_t cuda_stream)
+    nvimgcdcsDecoder_t decoder)
     : decoder_desc_(decoder_desc)
     , decoder_(decoder)
     , decode_state_(nullptr)
-    , cuda_stream_(cuda_stream)
 {
     if (decoder_desc_)
         if (decoder_desc_->createDecodeStateBatch) {
-            decoder_desc_->createDecodeStateBatch(decoder_, &decode_state_, cuda_stream);
+            decoder_desc_->createDecodeStateBatch(decoder_, &decode_state_);
         }
 }
 

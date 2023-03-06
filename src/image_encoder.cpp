@@ -29,14 +29,14 @@ ImageEncoder::~ImageEncoder()
     encoder_desc_->destroy(encoder_);
 }
 
-std::unique_ptr<IEncodeState> ImageEncoder::createEncodeState(cudaStream_t cuda_stream) const
+std::unique_ptr<IEncodeState> ImageEncoder::createEncodeState() const
 {
-    return std::make_unique<EncodeState>(encoder_desc_, encoder_, cuda_stream);
+    return std::make_unique<EncodeState>(encoder_desc_, encoder_);
 }
 
-std::unique_ptr<IEncodeState> ImageEncoder::createEncodeStateBatch(cudaStream_t cuda_stream) const
+std::unique_ptr<IEncodeState> ImageEncoder::createEncodeStateBatch() const
 {
-    return std::make_unique<EncodeStateBatch>(encoder_desc_, encoder_, cuda_stream);
+    return std::make_unique<EncodeStateBatch>(encoder_desc_, encoder_);
 }
 
 void ImageEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)

@@ -213,6 +213,7 @@ extern "C"
         size_t host_buffer_size;
         void* device_buffer;
         size_t device_buffer_size;
+
         uint32_t width;
         uint32_t height;
         uint32_t num_components;
@@ -223,7 +224,6 @@ extern "C"
         nvimgcdcsChromaSubsampling_t sampling;
         nvimgcdcsSampleDataType_t sample_type;
         nvimgcdcsOrientation_t orientation;
-        cudaStream_t cuda_stream;  // TODO(janton) : remove
     } nvimgcdcsImageInfo_t;
 
     // Currently parseable JPEG encodings (SOF markers)
@@ -329,10 +329,9 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        int* start;
-        int* end;
-        int num_dim;
-        bool align_to_tile;
+        bool use_region;
+        int start[2];
+        int end[2];
     } nvimgcdcsRegion_t;
 
     typedef struct
@@ -346,11 +345,13 @@ extern "C"
         nvimgcdcsScaleFactor_t scale;
         bool enable_roi;
         int num_rois;
-        nvimgcdcsRegion_t* region;
+        nvimgcdcsRegion_t region;
         //For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
         //For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.
         bool enable_color_conversion;
-        int num_backends; //Zero means that all backends are allowed.
+
+        cudaStream_t cuda_stream;  // CUDA stream to synchronize with
+        int num_backends; // Zero means that all backends are allowed.
         nvimgcdcsBackend_t* backends;
     } nvimgcdcsDecodeParams_t;
 
@@ -626,9 +627,9 @@ extern "C"
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
         nvimgcdcsStatus_t (*createEncodeState)(nvimgcdcsEncoder_t encoder,
-            nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
+            nvimgcdcsEncodeState_t* encode_state);
         nvimgcdcsStatus_t (*createEncodeStateBatch)(nvimgcdcsEncoder_t encoder,
-            nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
+            nvimgcdcsEncodeState_t* encode_state);
         nvimgcdcsStatus_t (*destroyEncodeState)(nvimgcdcsEncodeState_t encode_state);
 
         nvimgcdcsStatus_t (*getCapabilities)(
@@ -665,9 +666,9 @@ extern "C"
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
         nvimgcdcsStatus_t (*createDecodeState)(nvimgcdcsDecoder_t decoder,
-            nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
+            nvimgcdcsDecodeState_t* decode_state);
         nvimgcdcsStatus_t (*createDecodeStateBatch)(nvimgcdcsDecoder_t decoder,
-            nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
+            nvimgcdcsDecodeState_t* decode_state);
         nvimgcdcsStatus_t (*destroyDecodeState)(nvimgcdcsDecodeState_t decode_state);
 
         nvimgcdcsStatus_t (*getCapabilities)(
@@ -709,8 +710,14 @@ extern "C"
         void* in_buffer;
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsRegion_t region;
+
+        bool flip_y;
+        bool flip_x;
+        bool swap_xy;
+
         float multiplier;  // used to adjust dynamic range
     } nvimgcdcsImageProcessorConvertParams_t;
+
     struct nvimgcdcsImageProcessorDesc
     {
         nvimgcdcsStructureType_t type;
@@ -860,9 +867,9 @@ extern "C"
 
     //DecodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
-        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
+        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateBatchCreate(
-        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream);
+        nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_state);
 
     //Encoder
@@ -870,8 +877,8 @@ extern "C"
         nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder,
-        nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t input_image,
-        const nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
+        nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t input_image, const nvimgcdcsEncodeParams_t* params,
+        nvimgcdcsFuture_t* future, bool blocking);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder,
         nvimgcdcsEncodeState_t encode_state_batch, nvimgcdcsImage_t* images,
         nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params,
@@ -879,9 +886,9 @@ extern "C"
 
     //EncodeState
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
-        nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream);
+        nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateBatchCreate(nvimgcdcsEncoder_t encoder,
-        nvimgcdcsEncodeState_t* encode_state_batch, cudaStream_t cuda_stream);
+        nvimgcdcsEncodeState_t* encode_state_batch);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_state);
 
     //High-level API

@@ -26,8 +26,8 @@ class IImageDecoder
 {
   public:
     virtual ~IImageDecoder() = default;
-    virtual std::unique_ptr<IDecodeState> createDecodeState(cudaStream_t cuda_stream) const = 0;
-    virtual std::unique_ptr<IDecodeState> createDecodeStateBatch(cudaStream_t cuda_stream) const = 0;
+    virtual std::unique_ptr<IDecodeState> createDecodeState() const = 0;
+    virtual std::unique_ptr<IDecodeState> createDecodeStateBatch() const = 0;
     virtual void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) = 0;
     virtual bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
        const  nvimgcdcsDecodeParams_t* params) const = 0;

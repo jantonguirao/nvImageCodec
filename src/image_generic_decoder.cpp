@@ -158,20 +158,20 @@ struct IWorkManager::Work
         }
     }
 
-    void copy_buffer_if_necessery(bool is_device_output, int sub_idx, ProcessingResult* r)
+    void copy_buffer_if_necessary(bool is_device_output, int sub_idx, cudaStream_t stream, ProcessingResult* r)
     {
         nvimgcdcsImageInfo_t image_info;
         images_[sub_idx]->getImageInfo(&image_info);
         try {
             if (is_device_output && image_info.host_buffer != nullptr) {
                 CHECK_CUDA(cudaMemcpyAsync(image_info.host_buffer, image_info.device_buffer,
-                    image_info.device_buffer_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
+                    image_info.device_buffer_size, cudaMemcpyDeviceToHost, stream));
                 image_info.device_buffer = nullptr;
                 image_info.device_buffer_size = 0;
                 images_[sub_idx]->setImageInfo(&image_info);
             } else if (!is_device_output && image_info.device_buffer != nullptr) {
                 CHECK_CUDA(cudaMemcpyAsync(image_info.device_buffer, image_info.host_buffer,
-                    image_info.host_buffer_size, cudaMemcpyHostToDevice, image_info.cuda_stream));
+                    image_info.host_buffer_size, cudaMemcpyHostToDevice, stream));
                 image_info.host_buffer = nullptr;
                 image_info.host_buffer_size = 0;
                 images_[sub_idx]->setImageInfo(&image_info);
@@ -290,7 +290,7 @@ IImageDecoder* ImageGenericDecoder::Worker::getDecoder(const nvimgcdcsDecodePara
     if (!decoder_) {
         decoder_ = codec_->createDecoder(index_, params);
         if (decoder_) {
-            decode_state_batch_ = decoder_->createDecodeStateBatch(nullptr);
+            decode_state_batch_ = decoder_->createDecodeStateBatch();
             size_t capabilities_size;
             decoder_->getCapabilities(nullptr, &capabilities_size);
             const nvimgcdcsCapability_t* capabilities_ptr;
@@ -425,7 +425,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
         work->ensure_expected_buffer_for_each_image(is_device_output_);
         for (size_t i = 0; i < work->images_.size(); ++i) {
             if (decode_states_.size() == i) {
-                decode_states_.push_back(decoder_->createDecodeState(nullptr));
+                decode_states_.push_back(decoder_->createDecodeState());
             }
 
             work->images_[i]->attachDecodeState(decode_states_[i].get());
@@ -443,7 +443,8 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
                 work->images_[i]->detachDecodeState();
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.success) {
-                    work->copy_buffer_if_necessery(is_device_output_, sub_idx, &r);
+                    work->copy_buffer_if_necessary(
+                        is_device_output_, sub_idx, work->params_->cuda_stream, &r);
                     work->results_.set(work->indices_[sub_idx], r);
                 } else { // failed to decode
                     if (fallback_worker) {
@@ -479,16 +480,14 @@ ImageGenericDecoder::~ImageGenericDecoder()
 {
 }
 
-std::unique_ptr<IDecodeState> ImageGenericDecoder::createDecodeState(
-    [[maybe_unused]] cudaStream_t cuda_stream) const
+std::unique_ptr<IDecodeState> ImageGenericDecoder::createDecodeState() const
 {
-    return createDecodeStateBatch(cuda_stream);
+    return createDecodeStateBatch();
 }
 
-std::unique_ptr<IDecodeState> ImageGenericDecoder::createDecodeStateBatch(
-    [[maybe_unused]] cudaStream_t cuda_stream) const
+std::unique_ptr<IDecodeState> ImageGenericDecoder::createDecodeStateBatch() const
 {
-    return std::make_unique<DecodeStateBatch>(nullptr, nullptr, nullptr);
+    return std::make_unique<DecodeStateBatch>(nullptr, nullptr);
 }
 
 void ImageGenericDecoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)

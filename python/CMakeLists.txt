@@ -48,7 +48,7 @@ find_library(CUDA_LIB
 
 target_link_libraries(nvimgcodecs_python
     PRIVATE
-    nvimgcodecs_static
+    nvimgcodecs
     CUDA::cudart_static
     -static-libstdc++
     ${CUDA_LIB}

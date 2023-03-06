@@ -309,7 +309,7 @@ IImageEncoder* ImageGenericEncoder::Worker::getEncoder(const nvimgcdcsEncodePara
     if (!encoder_) {
         encoder_ = codec_->createEncoder(index_, params);
         if (encoder_) {
-            encode_state_batch_ = encoder_->createEncodeStateBatch(nullptr);
+            encode_state_batch_ = encoder_->createEncodeStateBatch();
             size_t capabilities_size;
             encoder_->getCapabilities(nullptr, &capabilities_size);
             const nvimgcdcsCapability_t* capabilities_ptr;
@@ -445,7 +445,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
         work->ensure_expected_buffer_for_each_image(is_input_expected_in_device_);
         for (size_t i = 0; i < work->images_.size(); ++i) {
             if (encode_states_.size() == i) {
-                encode_states_.push_back(encoder_->createEncodeState(nullptr));
+                encode_states_.push_back(encoder_->createEncodeState());
             }
 
             work->images_[i]->attachEncodeState(encode_states_[i].get());
@@ -499,16 +499,14 @@ ImageGenericEncoder::~ImageGenericEncoder()
 {
 }
 
-std::unique_ptr<IEncodeState> ImageGenericEncoder::createEncodeState(
-    [[maybe_unused]] cudaStream_t cuda_stream) const
+std::unique_ptr<IEncodeState> ImageGenericEncoder::createEncodeState() const
 {
-    return createEncodeStateBatch(cuda_stream);
+    return createEncodeStateBatch();
 }
 
-std::unique_ptr<IEncodeState> ImageGenericEncoder::createEncodeStateBatch(
-    [[maybe_unused]] cudaStream_t cuda_stream) const
+std::unique_ptr<IEncodeState> ImageGenericEncoder::createEncodeStateBatch() const
 {
-    return std::make_unique<EncodeStateBatch>(nullptr, nullptr, nullptr);
+    return std::make_unique<EncodeStateBatch>(nullptr, nullptr);
 }
 
 void ImageGenericEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)

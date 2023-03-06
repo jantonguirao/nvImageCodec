@@ -174,7 +174,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_destroy(nvimgcdcsEncoder_t encoder)
 }
 
 static nvimgcdcsStatus_t nvbmp_create_encode_state(
-    nvimgcdcsEncoder_t decoder, nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream)
+    nvimgcdcsEncoder_t decoder, nvimgcdcsEncodeState_t* encode_state)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_create_encode_state");
     *encode_state = new nvimgcdcsEncodeState();
