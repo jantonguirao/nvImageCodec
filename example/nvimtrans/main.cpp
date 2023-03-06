@@ -226,13 +226,11 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     }
     
     std::cout << "Saving to " << output_path.string() << " file" << std::endl;
-
-    nvimgcdcsCodeStream_t output_code_stream;
-    nvimgcdcsCodeStreamCreateToFile(
-        instance, &output_code_stream, output_path.string().c_str(), params.output_codec.data());
     nvimgcdcsImageInfo_t out_image_info(image_info);
     out_image_info.sampling = params.chroma_subsampling;
-    nvimgcdcsCodeStreamSetImageInfo(output_code_stream, &out_image_info);
+    nvimgcdcsCodeStream_t output_code_stream;
+    nvimgcdcsCodeStreamCreateToFile(instance, &output_code_stream, output_path.string().c_str(),
+        params.output_codec.data(), &out_image_info);
 
     nvimgcdcsEncodeParams_t encode_params;
     memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
@@ -485,13 +483,13 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         filename = filename.replace_extension(ext);
         fs::path output_filename = output_path / filename;
 
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(instance, &out_code_streams[i],
-            output_filename.string().c_str(), params.output_codec.c_str()));
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(images[i], &image_info);
         nvimgcdcsImageInfo_t out_image_info(image_info);
         out_image_info.sampling = params.chroma_subsampling;
-        nvimgcdcsCodeStreamSetImageInfo(out_code_streams[i], &out_image_info);
+
+        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(instance, &out_code_streams[i],
+            output_filename.string().c_str(), params.output_codec.c_str(), &out_image_info));
 
         if (encoder == nullptr) {
             CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder));

@@ -868,16 +868,14 @@ extern "C"
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle,
         nvimgcdcsIoStreamDesc_t io_stream); //TODO
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance,
-        nvimgcdcsCodeStream_t* stream_handle, const char* file_name, const char* codec_name);
+        nvimgcdcsCodeStream_t* stream_handle, const char* file_name, const char* codec_name,
+        const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance,
         nvimgcdcsCodeStream_t* stream_handle, unsigned char* output_buffer, size_t length,
-        const char* codec_name);
+        const char* codec_name, const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t stream_handle);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(
         nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(
-        nvimgcdcsCodeStream_t stream_handle,
-        nvimgcdcsImageInfo_t* image_info); //TODO move to Create
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(
         nvimgcdcsCodeStream_t stream_handle, char* codec_name);
 

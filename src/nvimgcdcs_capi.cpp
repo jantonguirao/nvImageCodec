@@ -330,7 +330,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(nvimgcdcsInstance_t insta
 }
 
 nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance,
-    nvimgcdcsCodeStream_t* stream_handle, const char* file_name, const char* codec_name)
+    nvimgcdcsCodeStream_t* stream_handle, const char* file_name, const char* codec_name, const nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, stream_handle);
     NVIMGCDCSAPI_TRY
@@ -339,6 +339,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance,
             CHECK_NULL(file_name)
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
                 (*stream_handle)->code_stream_.setOutputToFile(file_name, codec_name);
+                (*stream_handle)->code_stream_.setImageInfo(image_info);
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -347,7 +348,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance,
 
 nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance,
     nvimgcdcsCodeStream_t* stream_handle, unsigned char* output_buffer, size_t length,
-    const char* codec_name)
+    const char* codec_name, const nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, stream_handle);
     NVIMGCDCSAPI_TRY
@@ -358,6 +359,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instanc
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
                 (*stream_handle)
                     ->code_stream_.setOutputToHostMem(output_buffer, length, codec_name);
+                (*stream_handle)->code_stream_.setImageInfo(image_info);
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -969,7 +971,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             nvimgcdcsImageCreate(instance, image, &image_info);
             (*image)->dev_image_buffer_ = image_info.device_buffer;
             (*image)->dev_image_buffer_size_ = image_info.device_buffer_size;
-            
+
             nvimgcdcsDecoder_t decoder;
             nvimgcdcsDecoderCreate(instance, &decoder);
 
@@ -1155,8 +1157,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
 
             nvimgcdcsCodeStream_t output_code_stream;
             nvimgcdcsCodeStreamCreateToFile(
-                instance, &output_code_stream, file_name, codec_name.c_str());
-            nvimgcdcsCodeStreamSetImageInfo(output_code_stream, &out_image_info);
+                instance, &output_code_stream, file_name, codec_name.c_str(), &out_image_info);
 
             nvimgcdcsEncoder_t encoder;
             nvimgcdcsEncoderCreate(instance, &encoder);
