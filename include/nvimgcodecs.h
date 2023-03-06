@@ -884,11 +884,8 @@ extern "C"
         nvimgcdcsCodeStream_t stream_handle, char* codec_name);
 
     //Decoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderGenericCreate(
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
         nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance,
-        nvimgcdcsDecoder_t* decoder, nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image,
-        const nvimgcdcsDecodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder,
         bool* result, nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image,
@@ -911,11 +908,8 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_state);
 
     //Encoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderGenericCreate(
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(
         nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance,
-        nvimgcdcsEncoder_t* encoder, nvimgcdcsImage_t image, nvimgcdcsCodeStream_t stream,
-        const nvimgcdcsEncodeParams_t* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder,
         bool* result, nvimgcdcsImage_t image, nvimgcdcsCodeStream_t stream,

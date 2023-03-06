@@ -135,13 +135,8 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path,
 int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::path output_path,
     const CommandLineParams& params)
 {
-    double total_time = 0.;
-    double parse_time = 0.;
-    double decode_time = 0.;
-    int total_images = 1;
-    nvimgcdcsCodeStream_t code_stream;
-
     std::cout << "Loading " << input_path.string() << " file" << std::endl;
+    nvimgcdcsCodeStream_t code_stream;
     std::ifstream file(input_path.string(), std::ios::binary);
     std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(file), {});
     if (0) {
@@ -150,7 +145,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
         nvimgcdcsCodeStreamCreateFromHostMem(instance, &code_stream, buffer.data(), buffer.size());
     }
 
-    parse_time = wtime();
+    double parse_time = wtime();
     nvimgcdcsImageInfo_t image_info;
     nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
     parse_time = wtime() - parse_time;
@@ -163,6 +158,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     std::cout << "\t - components:" << image_info.num_components << std::endl;
     std::cout << "\t - codec:" << codec_name << std::endl;
 
+    // Prepare decode parameters
     nvimgcdcsDecodeParams_t decode_params;
     memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
     decode_params.enable_color_conversion = params.dec_color_trans;
@@ -181,97 +177,27 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     // Preparing output image_info
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     image_info.color_space = NVIMGCDCS_COLORSPACE_SRGB;
+
+    size_t device_pitch_in_bytes = image_info.image_width * bytes_per_element;
+    image_info.device_buffer_size =
+        device_pitch_in_bytes * image_info.image_height * image_info.num_components;
+    CHECK_CUDA(cudaMalloc(&image_info.device_buffer, image_info.device_buffer_size));
     for (auto c = 0; c < image_info.num_components; ++c) {
         image_info.component_info[c].component_height = image_info.image_height;
         image_info.component_info[c].component_width = image_info.image_width;
+        image_info.component_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
     }
+    image_info.host_buffer = nullptr;
 
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image);
+    nvimgcdcsImageSetImageInfo(image, &image_info);
 
     nvimgcdcsDecoder_t decoder;
-    nvimgcdcsDecoderCreate(instance, &decoder, code_stream, image, &decode_params);
+    nvimgcdcsDecoderCreate(instance, &decoder);
 
     nvimgcdcsDecodeState_t decode_state;
     nvimgcdcsDecodeStateCreate(decoder, &decode_state, nullptr);
-
-    size_t capabilities_size;
-    nvimgcdcsDecoderGetCapabilities(decoder, nullptr, &capabilities_size);
-    const nvimgcdcsCapability_t* capabilities_ptr;
-    nvimgcdcsDecoderGetCapabilities(decoder, &capabilities_ptr, &capabilities_size);
-
-    bool is_host_output = std::find(capabilities_ptr,
-                              capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-                              NVIMGCDCS_CAPABILITY_HOST_OUTPUT) !=
-                          capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-    bool is_device_output =
-        std::find(capabilities_ptr,
-            capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-            NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) !=
-        capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-
-    std::cout << "Saving to " << output_path.string() << " file" << std::endl;
-
-    nvimgcdcsCodeStream_t output_code_stream;
-    nvimgcdcsCodeStreamCreateToFile(
-        instance, &output_code_stream, output_path.string().c_str(), params.output_codec.data());
-    nvimgcdcsImageInfo_t out_image_info(image_info);
-    out_image_info.sampling = params.chroma_subsampling;
-    nvimgcdcsCodeStreamSetImageInfo(output_code_stream, &out_image_info);
-
-    nvimgcdcsEncodeParams_t encode_params;
-    memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
-    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
-    nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
-    fill_encode_params(
-        params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
-
-    nvimgcdcsImageSetImageInfo(image, &image_info);
-    nvimgcdcsEncoder_t encoder = nullptr;
-    nvimgcdcsEncoderCreate(instance, &encoder, image, output_code_stream, &encode_params);
-
-    nvimgcdcsEncoderGetCapabilities(encoder, nullptr, &capabilities_size);
-    nvimgcdcsEncoderGetCapabilities(encoder, &capabilities_ptr, &capabilities_size);
-
-    bool is_host_input = std::find(capabilities_ptr,
-                             capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-                             NVIMGCDCS_CAPABILITY_HOST_INPUT) !=
-                         capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-    bool is_device_input = std::find(capabilities_ptr,
-                               capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-                               NVIMGCDCS_CAPABILITY_DEVICE_INPUT) !=
-                           capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-
-    bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
-
-    unsigned char* device_buffer = nullptr;
-    std::vector<unsigned char> host_buffer;
-
-    if (is_host_output || is_host_input) {
-        host_buffer.resize(image_info.image_width * image_info.image_height *
-                           image_info.num_components * bytes_per_element);
-        for (auto c = 0; c < image_info.num_components; ++c) {
-            image_info.component_info[c].host_pitch_in_bytes =
-                image_info.image_width * (is_interleaved ? image_info.num_components : 1);
-        }
-        image_info.host_buffer = host_buffer.data();
-        image_info.host_buffer_size = host_buffer.size();
-    }
-    if (is_device_output || is_device_input) {
-        size_t device_pitch_in_bytes = 0;
-        CHECK_CUDA(cudaMallocPitch((void**)&device_buffer, &device_pitch_in_bytes,
-            image_info.image_width * bytes_per_element *
-                (is_interleaved ? image_info.num_components : 1),
-            image_info.image_height * (is_interleaved ? 1 : image_info.num_components)));
-        for (auto c = 0; c < image_info.num_components; ++c) {
-            image_info.component_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
-        }
-        image_info.device_buffer_size =
-            device_pitch_in_bytes * image_info.image_height * image_info.num_components;
-        image_info.device_buffer = device_buffer;
-    }
-
-    nvimgcdcsImageSetImageInfo(image, &image_info);
     nvimgcdcsImageAttachDecodeState(image, decode_state);
 
     // warm up
@@ -289,50 +215,55 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
             std::cout << "Warmup done!" << std::endl;
         }
     }
-    decode_time = wtime();
+
+    double decode_time = wtime();
     nvimgcdcsDecoderDecode(decoder, code_stream, image, &decode_params, nullptr, true);
+    decode_time = wtime() - decode_time;
 
     nvimgcdcsProcessingStatus_t decode_status;
     nvimgcdcsImageGetProcessingStatus(image, &decode_status);
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during decoding" << std::endl;
     }
+    
+    std::cout << "Saving to " << output_path.string() << " file" << std::endl;
 
-    decode_time = wtime() - decode_time;
+    nvimgcdcsCodeStream_t output_code_stream;
+    nvimgcdcsCodeStreamCreateToFile(
+        instance, &output_code_stream, output_path.string().c_str(), params.output_codec.data());
+    nvimgcdcsImageInfo_t out_image_info(image_info);
+    out_image_info.sampling = params.chroma_subsampling;
+    nvimgcdcsCodeStreamSetImageInfo(output_code_stream, &out_image_info);
 
-    // assert(ready_decoded_image == image); //we sent only one image to decoder
+    nvimgcdcsEncodeParams_t encode_params;
+    memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
+    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
+    nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
+    fill_encode_params(
+        params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
 
-    total_time = parse_time + decode_time;
-    std::cout << "Total images processed: " << total_images << std::endl;
-    std::cout << "Total time spent on decoding: " << total_time << std::endl;
-    std::cout << "Avg time/image: " << total_time / total_images << std::endl;
-
-    if (is_host_output && is_device_input) {
-        CHECK_CUDA(cudaMemcpy2D(device_buffer,
-            (size_t)image_info.component_info[0].device_pitch_in_bytes, host_buffer.data(),
-            (size_t)image_info.component_info[0].host_pitch_in_bytes, image_info.image_width,
-            image_info.image_height * (is_interleaved ? 1 : image_info.num_components),
-            cudaMemcpyHostToDevice));
-    } else if (is_device_output && is_host_input) {
-        CHECK_CUDA(cudaMemcpy2D(host_buffer.data(),
-            (size_t)image_info.component_info[0].host_pitch_in_bytes, device_buffer,
-            (size_t)image_info.component_info[0].device_pitch_in_bytes,
-            (size_t)image_info.component_info[0].host_pitch_in_bytes,
-            image_info.image_height * (is_interleaved ? 1 : image_info.num_components),
-            cudaMemcpyDeviceToHost));
-        nvimgcdcsImageSetImageInfo(image, &image_info);
-    }
+    nvimgcdcsEncoder_t encoder = nullptr;
+    nvimgcdcsEncoderCreate(instance, &encoder);
 
     nvimgcdcsEncodeState_t encode_state;
     nvimgcdcsEncodeStateCreate(encoder, &encode_state, nullptr);
     nvimgcdcsImageAttachEncodeState(image, encode_state);
+
+    double encode_time = wtime();
     nvimgcdcsEncoderEncode(encoder, output_code_stream, image, &encode_params, nullptr, true);
+    encode_time = wtime() - encode_time;
 
     nvimgcdcsProcessingStatus_t encode_status;
     nvimgcdcsImageGetProcessingStatus(image, &encode_status);
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during encoding" << std::endl;
     }
+
+    double total_time = parse_time + decode_time + encode_time;
+    std::cout << "Total time spent on transcoding: " << total_time << std::endl;
+    std::cout << " - time spent on parsing: " << parse_time << std::endl;
+    std::cout << " - time spent on decoding: " << decode_time << std::endl;
+    std::cout << " - time spent on encoding (including writting): " << encode_time << std::endl;
 
     nvimgcdcsImageDetachEncodeState(image);
     nvimgcdcsImageDetachDecodeState(image);
@@ -341,13 +272,12 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsEncoderDestroy(encoder);
     nvimgcdcsCodeStreamDestroy(output_code_stream);
 
-    if (device_buffer) {
-        CHECK_CUDA(cudaFree(device_buffer));
-    }
     nvimgcdcsImageDestroy(image);
     nvimgcdcsDecodeStateDestroy(decode_state);
     nvimgcdcsDecoderDestroy(decoder);
     nvimgcdcsCodeStreamDestroy(code_stream);
+
+    CHECK_CUDA(cudaFree(image_info.device_buffer));
 
     return EXIT_SUCCESS;
 }
@@ -498,7 +428,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         CHECK_NVIMGCDCS(nvimgcdcsImageSetImageInfo(images[i], &image_info));
 
         if (decoder == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsDecoderGenericCreate(instance, &decoder));
+            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder));
             CHECK_NVIMGCDCS(nvimgcdcsDecodeStateBatchCreate(decoder, &decode_state_batch, nullptr));
         } else {
             bool can_decode;
@@ -569,15 +499,9 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         nvimgcdcsCodeStreamSetImageInfo(out_code_streams[i], &out_image_info);
 
         if (encoder == nullptr) {
-            //CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(
-            //    instance, &encoder, images[i], out_code_streams[i], &encode_params))
-            CHECK_NVIMGCDCS(nvimgcdcsEncoderGenericCreate(instance, &encoder));
+            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder));
             CHECK_NVIMGCDCS(nvimgcdcsEncodeStateBatchCreate(encoder, &encode_state_batch, nullptr));
         }
-        // if (encode_states[i] == nullptr) {
-        //     CHECK_NVIMGCDCS(nvimgcdcsEncodeStateCreate(encoder, &encode_states[i], NULL));
-        // }
-        // CHECK_NVIMGCDCS(nvimgcdcsImageAttachEncodeState(images[i], encode_states[i]));
     }
     return EXIT_SUCCESS;
 }
