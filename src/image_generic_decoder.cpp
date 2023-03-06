@@ -634,8 +634,8 @@ void ImageGenericDecoder::distributeWork(std::unique_ptr<IWorkManager::Work> wor
 
     int device_id = 0;
     for (int i = 0; i < work->params_->num_backends; ++i) {
-        if (work->params_->backends->useGPU) {
-            device_id = work->params_->backends->cudaDeviceId;
+        if (work->params_->backends->use_gpu) {
+            device_id = work->params_->backends->cuda_device_id;
             break;
         }
     }

@@ -14,7 +14,6 @@
 #include <cuda_runtime_api.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include "nvimgcdcs_data.h"
 #include "nvimgcdcs_version.h"
 
 #ifndef NVIMGCDCSAPI
@@ -296,16 +295,15 @@ extern "C"
     struct nvimgcdcsImage;
     typedef struct nvimgcdcsImage* nvimgcdcsImage_t;
 
-    //TODO formating _
     typedef struct
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        bool useCPU;
-        bool useGPU;
-        bool useHwEng;
+        bool use_cpu;
+        bool use_gpu;
+        bool use_hw_eng;
         int variant;
-        int cudaDeviceId;
+        int cuda_device_id;
     } nvimgcdcsBackend_t;
 
     typedef enum
@@ -327,27 +325,6 @@ extern "C"
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsProcessingStatus_t;
 
-    typedef enum
-    {
-        NVIMGCDCS_DECODE_PHASE_ALL = 0,
-        NVIMGCDCS_DECODE_PHASE_HOST = 1,
-        NVIMGCDCS_DECODE_PHASE_MIXED = 2,
-        NVIMGCDCS_DECODE_PHASE_DEVICE = 3,
-        NVIMGCDCS_DECODE_PHASE_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsDecodePhase_t;
-
-    typedef enum
-    {
-        NVIMGCDCS_DECODE_STEP_ALL = 0,
-        NVIMGCDCS_DECODE_STEP_COLOR_TRANSFORM = 1,
-        NVIMGCDCS_DECODE_STEP_DOMAIN_TRANSFORM = 2,
-        NVIMGCDCS_DECODE_STEP_QUANTIZATION = 3,
-        NVIMGCDCS_DECODE_STEP_PRE_ENTROPY = 4,
-        NVIMGCDCS_DECODE_STEP_ENTROPY = 5,
-        NVIMGCDCS_DECODE_STEP_PACKAGING = 6,
-        NVIMGCDCS_DECODE_STEP_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsDecodeStep_t;
-
     typedef struct
     {
         nvimgcdcsStructureType_t type;
@@ -356,7 +333,6 @@ extern "C"
         int* end;
         int num_dim;
         bool align_to_tile;
-        nvimgcdcsDataDict_t config;
     } nvimgcdcsRegion_t;
 
     typedef struct
@@ -364,8 +340,6 @@ extern "C"
         nvimgcdcsStructureType_t type;
         void* next;
 
-        nvimgcdcsDecodeStep_t decode_step;
-        nvimgcdcsDecodePhase_t decode_phase;
         bool enable_orientation;
         nvimgcdcsOrientation_t orientation;
         bool enable_scaling;
@@ -378,7 +352,6 @@ extern "C"
         bool enable_color_conversion;
         int num_backends; //Zero means that all backends are allowed.
         nvimgcdcsBackend_t* backends;
-        nvimgcdcsDataDict_t config;
     } nvimgcdcsDecodeParams_t;
 
     typedef struct
@@ -405,9 +378,8 @@ extern "C"
         float target_psnr;
         nvimgcdcsMctMode_t mct_mode;
 
-        int num_backends; //Zero means that all backendsa re allowed.
+        int num_backends; //Zero means that all backends are allowed.
         nvimgcdcsBackend_t* backends;
-        nvimgcdcsDataDict_t config;
     } nvimgcdcsEncodeParams_t;
 
 #define NVIMGCDCS_JPEG2K_MAXRES 33

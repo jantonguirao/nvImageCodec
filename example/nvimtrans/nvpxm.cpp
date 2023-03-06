@@ -63,7 +63,7 @@ static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsI
     if (params->backends != nullptr) {
         *result = false;
         for (int b = 0; b < params->num_backends; ++b) {
-            if (params->backends[b].useCPU) {
+            if (params->backends[b].use_cpu) {
                 *result = true;
             }
         }
