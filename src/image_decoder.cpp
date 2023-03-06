@@ -31,14 +31,14 @@ ImageDecoder::~ImageDecoder()
     decoder_desc_->destroy(decoder_);
 }
 
-std::unique_ptr<IDecodeState> ImageDecoder::createDecodeState(cudaStream_t cuda_stream) const
+std::unique_ptr<IDecodeState> ImageDecoder::createDecodeState() const
 {
-    return std::make_unique<DecodeState>(decoder_desc_, decoder_, cuda_stream);
+    return std::make_unique<DecodeState>(decoder_desc_, decoder_);
 }
 
-std::unique_ptr<IDecodeState> ImageDecoder::createDecodeStateBatch(cudaStream_t cuda_stream) const
+std::unique_ptr<IDecodeState> ImageDecoder::createDecodeStateBatch() const
 {
-    return std::make_unique<DecodeStateBatch>(decoder_desc_, decoder_, cuda_stream);
+    return std::make_unique<DecodeStateBatch>(decoder_desc_, decoder_);
 }
 
 void ImageDecoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)

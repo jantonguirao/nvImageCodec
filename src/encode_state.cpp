@@ -12,12 +12,11 @@
 namespace nvimgcdcs {
 
 EncodeState::EncodeState(const nvimgcdcsEncoderDesc_t encoder_desc,
-    nvimgcdcsEncoder_t encoder, cudaStream_t cuda_stream)
+    nvimgcdcsEncoder_t encoder)
     : encoder_desc_(encoder_desc)
     , encoder_(encoder)
-    , cuda_stream_(cuda_stream)
 {
-    encoder_desc_->createEncodeState(encoder_, &encode_state_, cuda_stream);
+    encoder_desc_->createEncodeState(encoder_, &encode_state_);
 }
 
 EncodeState::~EncodeState()

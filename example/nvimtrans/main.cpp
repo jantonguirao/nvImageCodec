@@ -196,7 +196,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsDecoderCreate(instance, &decoder);
 
     nvimgcdcsDecodeState_t decode_state;
-    nvimgcdcsDecodeStateCreate(decoder, &decode_state, nullptr);
+    nvimgcdcsDecodeStateCreate(decoder, &decode_state);
     nvimgcdcsImageAttachDecodeState(image, decode_state);
 
     // warm up
@@ -243,7 +243,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsEncoderCreate(instance, &encoder);
 
     nvimgcdcsEncodeState_t encode_state;
-    nvimgcdcsEncodeStateCreate(encoder, &encode_state, nullptr);
+    nvimgcdcsEncodeStateCreate(encoder, &encode_state);
     nvimgcdcsImageAttachEncodeState(image, encode_state);
 
     double encode_time = wtime();
@@ -442,11 +442,11 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
 
         if (decoder == nullptr) {
             CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder));
-            CHECK_NVIMGCDCS(nvimgcdcsDecodeStateBatchCreate(decoder, &decode_state_batch, nullptr));
+            CHECK_NVIMGCDCS(nvimgcdcsDecodeStateBatchCreate(decoder, &decode_state_batch));
         } 
         
         if (decode_states[i] == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsDecodeStateCreate(decoder, &decode_states[i], nullptr));
+            CHECK_NVIMGCDCS(nvimgcdcsDecodeStateCreate(decoder, &decode_states[i]));
             CHECK_NVIMGCDCS(nvimgcdcsImageAttachDecodeState(images[i], decode_states[i]));
         }
     }
@@ -485,7 +485,7 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
 
         if (encoder == nullptr) {
             CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder));
-            CHECK_NVIMGCDCS(nvimgcdcsEncodeStateBatchCreate(encoder, &encode_state_batch, nullptr));
+            CHECK_NVIMGCDCS(nvimgcdcsEncodeStateBatchCreate(encoder, &encode_state_batch));
         }
     }
     return EXIT_SUCCESS;

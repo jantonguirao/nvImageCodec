@@ -16,8 +16,7 @@ namespace nvimgcdcs {
 class DecodeState : public IDecodeState
 {
   public:
-    DecodeState(const nvimgcdcsDecoderDesc_t decoder_desc, nvimgcdcsDecoder_t decoder,
-        cudaStream_t cuda_stream);
+    DecodeState(const nvimgcdcsDecoderDesc_t decoder_desc, nvimgcdcsDecoder_t decoder);
     ~DecodeState() override;
     void setPromise(const ProcessingResultsPromise& promise) override;
     const ProcessingResultsPromise& getPromise() override;
@@ -27,7 +26,6 @@ class DecodeState : public IDecodeState
     const nvimgcdcsDecoderDesc_t decoder_desc_;
     nvimgcdcsDecoder_t decoder_;
     nvimgcdcsDecodeState_t decode_state_;
-    cudaStream_t cuda_stream_;
     std::unique_ptr<ProcessingResultsPromise> promise_;
 };
 } // namespace nvimgcdcs

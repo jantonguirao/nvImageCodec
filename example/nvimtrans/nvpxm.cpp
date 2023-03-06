@@ -90,7 +90,7 @@ static nvimgcdcsStatus_t pxm_destroy(nvimgcdcsEncoder_t encoder)
 }
 
 static nvimgcdcsStatus_t pxm_create_encode_state(
-    nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream)
+    nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_create_encode_state");
     *encode_state = new nvimgcdcsEncodeState();

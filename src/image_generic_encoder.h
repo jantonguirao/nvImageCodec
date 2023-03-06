@@ -34,8 +34,8 @@ class ImageGenericEncoder : public IImageEncoder, public IWorkManager
   public:
     explicit ImageGenericEncoder(ICodecRegistry* codec_registry);
     ~ImageGenericEncoder() override;
-    std::unique_ptr<IEncodeState> createEncodeState(cudaStream_t cuda_stream) const override;
-    std::unique_ptr<IEncodeState> createEncodeStateBatch(cudaStream_t cuda_stream) const override;
+    std::unique_ptr<IEncodeState> createEncodeState() const override;
+    std::unique_ptr<IEncodeState> createEncodeStateBatch() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
     bool canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
         const nvimgcdcsEncodeParams_t* params) const override;

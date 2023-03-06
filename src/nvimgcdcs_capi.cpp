@@ -533,7 +533,7 @@ nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(
 }
 
 nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
-    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream)
+    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -542,7 +542,7 @@ nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
             CHECK_NULL(decoder)
             CHECK_NULL(decode_state)
             std::unique_ptr<IDecodeState> decode_state_ =
-                decoder->image_decoder_->createDecodeState(cuda_stream);
+                decoder->image_decoder_->createDecodeState();
             if (decode_state_) {
                 *decode_state = new nvimgcdcsDecodeState();
                 (*decode_state)->decode_state_ = std::move(decode_state_);
@@ -555,7 +555,7 @@ nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(
 }
 
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateBatchCreate(
-    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state, cudaStream_t cuda_stream)
+    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -565,7 +565,7 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateBatchCreate(
             CHECK_NULL(decode_state)
 
             std::unique_ptr<IDecodeState> decode_state_ =
-                decoder->image_decoder_->createDecodeStateBatch(cuda_stream);
+                decoder->image_decoder_->createDecodeStateBatch();
             if (decode_state_) {
                 *decode_state = new nvimgcdcsDecodeState();
                 (*decode_state)->decode_state_ = std::move(decode_state_);
@@ -794,7 +794,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder,
 }
 
 nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
-    nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state, cudaStream_t cuda_stream)
+    nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -803,7 +803,7 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
             CHECK_NULL(encoder)
             CHECK_NULL(encode_state)
             std::unique_ptr<IEncodeState> encode_state_ =
-                encoder->image_encoder_->createEncodeState(cuda_stream);
+                encoder->image_encoder_->createEncodeState();
             if (encode_state_) {
                 *encode_state = new nvimgcdcsEncodeState();
                 (*encode_state)->encode_state_ = std::move(encode_state_);
@@ -816,7 +816,7 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(
 }
 
 nvimgcdcsStatus_t nvimgcdcsEncodeStateBatchCreate(nvimgcdcsEncoder_t encoder,
-    nvimgcdcsEncodeState_t* encode_state_batch, cudaStream_t cuda_stream)
+    nvimgcdcsEncodeState_t* encode_state_batch)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -826,7 +826,7 @@ nvimgcdcsStatus_t nvimgcdcsEncodeStateBatchCreate(nvimgcdcsEncoder_t encoder,
             CHECK_NULL(encode_state_batch)
 
             std::unique_ptr<IEncodeState> encode_state_ =
-                encoder->image_encoder_->createEncodeStateBatch(cuda_stream);
+                encoder->image_encoder_->createEncodeStateBatch();
 
             if (encode_state_) {
                 *encode_state_batch = new nvimgcdcsEncodeState();
@@ -910,7 +910,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             nvimgcdcsDecoderCreate(instance, &decoder);
 
             nvimgcdcsDecodeState_t decode_state;
-            nvimgcdcsDecodeStateCreate(decoder, &decode_state, nullptr);
+            nvimgcdcsDecodeStateCreate(decoder, &decode_state);
 
             nvimgcdcsImageAttachDecodeState(*image, decode_state);
 
@@ -1096,7 +1096,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             nvimgcdcsEncoder_t encoder;
             nvimgcdcsEncoderCreate(instance, &encoder);
             nvimgcdcsEncodeState_t encode_state;
-            nvimgcdcsEncodeStateCreate(encoder, &encode_state, nullptr);
+            nvimgcdcsEncodeStateCreate(encoder, &encode_state);
             nvimgcdcsImageAttachEncodeState(image, encode_state);
 
             nvimgcdcsEncoderEncode(

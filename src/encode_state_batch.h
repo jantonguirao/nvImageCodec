@@ -18,8 +18,7 @@ namespace nvimgcdcs {
 class EncodeStateBatch : public IEncodeState
 {
   public:
-    EncodeStateBatch(const nvimgcdcsEncoderDesc_t encoder_desc, nvimgcdcsEncoder_t encoder,
-        cudaStream_t cuda_stream);
+    EncodeStateBatch(const nvimgcdcsEncoderDesc_t encoder_desc, nvimgcdcsEncoder_t encoder);
     ~EncodeStateBatch() override;
     void setPromise(const ProcessingResultsPromise& promise) override;
     const ProcessingResultsPromise& getPromise() override;
@@ -29,7 +28,6 @@ class EncodeStateBatch : public IEncodeState
     const nvimgcdcsEncoderDesc_t encoder_desc_;
     nvimgcdcsEncoder_t encoder_;
     nvimgcdcsEncodeState_t encode_state_;
-    cudaStream_t cuda_stream_;
     std::unique_ptr<ProcessingResultsPromise> promise_;
 };
 

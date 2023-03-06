@@ -68,6 +68,7 @@ if(UNIX)
     target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PRIVATE dl)
 endif()
 
+
 # Configure library version
 include(ConfigureVersion)
 configure_library_version(NVIMGCDCS_LIBRARY_NAME
