@@ -24,7 +24,7 @@ class ICodeStream;
 class ImageDecoder : public IImageDecoder
 {
   public:
-    ImageDecoder(const struct nvimgcdcsDecoderDesc* desc, const nvimgcdcsDecodeParams_t* params);
+    ImageDecoder(const nvimgcdcsDecoderDesc_t desc, const nvimgcdcsDecodeParams_t* params);
     ~ImageDecoder() override;
     std::unique_ptr<IDecodeState> createDecodeState(cudaStream_t cuda_stream) const override;
     std::unique_ptr<IDecodeState> createDecodeStateBatch(cudaStream_t cuda_stream) const override;
@@ -41,7 +41,7 @@ class ImageDecoder : public IImageDecoder
         const nvimgcdcsDecodeParams_t* params) override;
 
   private:
-    const struct nvimgcdcsDecoderDesc* decoder_desc_;
+    const nvimgcdcsDecoderDesc_t decoder_desc_;
     nvimgcdcsDecoder_t decoder_;
 };
 

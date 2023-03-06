@@ -63,8 +63,8 @@ class PluginFramework
 
     ICodec* ensureExistsAndRetrieveCodec(const char* codec_name);
 
-    nvimgcdcsStatus_t registerEncoder(const struct nvimgcdcsEncoderDesc* desc);
-    nvimgcdcsStatus_t registerDecoder(const struct nvimgcdcsDecoderDesc* desc);
+    nvimgcdcsStatus_t registerEncoder(const nvimgcdcsEncoderDesc_t desc);
+    nvimgcdcsStatus_t registerDecoder(const nvimgcdcsDecoderDesc_t desc);
     nvimgcdcsStatus_t registerParser(const struct nvimgcdcsParserDesc* desc);
     nvimgcdcsStatus_t getExecutor(nvimgcdcsExecutorDesc_t* result);
     nvimgcdcsStatus_t getImageProcessor(nvimgcdcsImageProcessorDesc_t* result);
@@ -74,9 +74,9 @@ class PluginFramework
 
     //TODO define statics with macro
     static nvimgcdcsStatus_t static_register_encoder(
-        void* instance, const struct nvimgcdcsEncoderDesc* desc);
+        void* instance, const nvimgcdcsEncoderDesc_t desc);
     static nvimgcdcsStatus_t static_register_decoder(
-        void* instance, const struct nvimgcdcsDecoderDesc* desc);
+        void* instance, const nvimgcdcsDecoderDesc_t desc);
     static nvimgcdcsStatus_t static_register_parser(
         void* instance, const struct nvimgcdcsParserDesc* desc);
     static nvimgcdcsStatus_t static_get_executor(void* instance, nvimgcdcsExecutorDesc_t* result);

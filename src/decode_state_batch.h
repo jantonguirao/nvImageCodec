@@ -17,7 +17,7 @@ namespace nvimgcdcs {
 class DecodeStateBatch : public IDecodeState
 {
   public:
-    DecodeStateBatch(const struct nvimgcdcsDecoderDesc* decoder_desc, nvimgcdcsDecoder_t decoder,
+    DecodeStateBatch(const nvimgcdcsDecoderDesc_t decoder_desc, nvimgcdcsDecoder_t decoder,
         cudaStream_t cuda_stream);
     ~DecodeStateBatch() override;
     void setPromise(const ProcessingResultsPromise& promise) override;
@@ -25,7 +25,7 @@ class DecodeStateBatch : public IDecodeState
     nvimgcdcsDecodeState_t getInternalDecodeState() override;
 
   private:
-    const struct nvimgcdcsDecoderDesc* decoder_desc_;
+    const nvimgcdcsDecoderDesc_t decoder_desc_;
     nvimgcdcsDecoder_t decoder_;
     nvimgcdcsDecodeState_t decode_state_;
     cudaStream_t cuda_stream_;

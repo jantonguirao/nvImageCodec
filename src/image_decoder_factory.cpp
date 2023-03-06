@@ -17,7 +17,7 @@
 
 namespace nvimgcdcs {
 
-ImageDecoderFactory::ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc)
+ImageDecoderFactory::ImageDecoderFactory(const nvimgcdcsDecoderDesc_t desc)
     : decoder_desc_(desc)
 {
 }

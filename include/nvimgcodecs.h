@@ -644,7 +644,7 @@ extern "C"
             const nvimgcdcsEncodeParams_t* params);
     };
 
-    typedef struct nvimgcdcsEncoderDesc nvimgcdcsEncoderDesc_t;
+    typedef struct nvimgcdcsEncoderDesc* nvimgcdcsEncoderDesc_t;
 
     struct nvimgcdcsDecoderDesc
     {
@@ -682,7 +682,7 @@ extern "C"
             nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
     };
 
-    typedef struct nvimgcdcsDecoderDesc nvimgcdcsDecoderDesc_t;
+    typedef struct nvimgcdcsDecoderDesc* nvimgcdcsDecoderDesc_t;
 
     struct nvimgcdcsExecutorDesc
     {
@@ -746,9 +746,9 @@ extern "C"
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
 
         nvimgcdcsStatus_t (*registerEncoder)(
-            void* instance, const struct nvimgcdcsEncoderDesc* desc);
+            void* instance, const nvimgcdcsEncoderDesc_t desc);
         nvimgcdcsStatus_t (*registerDecoder)(
-            void* instance, const struct nvimgcdcsDecoderDesc* desc);
+            void* instance, const nvimgcdcsDecoderDesc_t desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
         nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t* result);
         nvimgcdcsStatus_t (*getImageProcessor)(void* instance, nvimgcdcsImageProcessorDesc_t* result);

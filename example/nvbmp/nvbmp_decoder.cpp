@@ -122,7 +122,7 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder,
 }
 
 // clang-format off
-nvimgcdcsDecoderDesc_t nvbmp_decoder = {
+nvimgcdcsDecoderDesc nvbmp_decoder = {
     NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
     NULL,
     NULL,               // instance    

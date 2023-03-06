@@ -23,7 +23,7 @@ class IImageDecoder;
 class ImageDecoderFactory : public IImageDecoderFactory
 {
   public:
-    explicit ImageDecoderFactory(const struct nvimgcdcsDecoderDesc* desc);
+    explicit ImageDecoderFactory(const nvimgcdcsDecoderDesc_t desc);
     std::string getDecoderId() const override;
     std::string getCodecName() const override;
     bool canDecode(
@@ -31,6 +31,6 @@ class ImageDecoderFactory : public IImageDecoderFactory
     std::unique_ptr<IImageDecoder> createDecoder(const nvimgcdcsDecodeParams_t* params) const override;
 
   private:
-    const struct nvimgcdcsDecoderDesc* decoder_desc_;
+    const nvimgcdcsDecoderDesc_t decoder_desc_;
 };
 } // namespace nvimgcdcs

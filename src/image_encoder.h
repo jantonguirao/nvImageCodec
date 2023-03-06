@@ -24,7 +24,7 @@ class ICodeStream;
 class ImageEncoder : public IImageEncoder
 {
   public:
-    ImageEncoder(const struct nvimgcdcsEncoderDesc* desc,
+    ImageEncoder(const nvimgcdcsEncoderDesc_t desc,
         const nvimgcdcsEncodeParams_t* params);
     ~ImageEncoder() override;
     std::unique_ptr<IEncodeState> createEncodeState(cudaStream_t cuda_stream) const override;
@@ -43,7 +43,7 @@ class ImageEncoder : public IImageEncoder
         const nvimgcdcsEncodeParams_t* params) override;
 
   private:
-    const struct nvimgcdcsEncoderDesc* encoder_desc_;
+    const nvimgcdcsEncoderDesc_t encoder_desc_;
     nvimgcdcsEncoder_t encoder_;
 };
 

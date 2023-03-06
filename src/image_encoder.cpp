@@ -18,7 +18,7 @@
 namespace nvimgcdcs {
 
 ImageEncoder::ImageEncoder(
-    const struct nvimgcdcsEncoderDesc* desc, const nvimgcdcsEncodeParams_t* params)
+    const nvimgcdcsEncoderDesc_t desc, const nvimgcdcsEncodeParams_t* params)
     : encoder_desc_(desc)
 {
     encoder_desc_->create(encoder_desc_->instance, &encoder_, params);

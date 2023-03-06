@@ -19,7 +19,7 @@ namespace nvimgcdcs {
 class EncodeState : public IEncodeState
 {
   public:
-    EncodeState(const struct nvimgcdcsEncoderDesc* encoder_desc, nvimgcdcsEncoder_t encoder,
+    EncodeState(const nvimgcdcsEncoderDesc_t encoder_desc, nvimgcdcsEncoder_t encoder,
         cudaStream_t cuda_stream);
     ~EncodeState() override;
     void setPromise(const ProcessingResultsPromise& promise) override;
@@ -27,7 +27,7 @@ class EncodeState : public IEncodeState
     nvimgcdcsEncodeState_t getInternalEncodeState() override;
 
   private:
-    const struct nvimgcdcsEncoderDesc* encoder_desc_;
+    const nvimgcdcsEncoderDesc_t encoder_desc_;
     nvimgcdcsEncoder_t encoder_;
     nvimgcdcsEncodeState_t encode_state_;
     cudaStream_t cuda_stream_;

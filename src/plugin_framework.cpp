@@ -57,14 +57,14 @@ PluginFramework::~PluginFramework()
 }
 
 nvimgcdcsStatus_t PluginFramework::static_register_encoder(
-    void* instance, const struct nvimgcdcsEncoderDesc* desc)
+    void* instance, const nvimgcdcsEncoderDesc_t desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerEncoder(desc);
 }
 
 nvimgcdcsStatus_t PluginFramework::static_register_decoder(
-    void* instance, const struct nvimgcdcsDecoderDesc* desc)
+    void* instance, const nvimgcdcsDecoderDesc_t desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerDecoder(desc);
@@ -252,7 +252,7 @@ ICodec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
     return codec;
 }
 
-nvimgcdcsStatus_t PluginFramework::registerEncoder(const struct nvimgcdcsEncoderDesc* desc)
+nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t desc)
 {
     NVIMGCDCS_LOG_INFO("Framework is registering encoder");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
@@ -265,7 +265,7 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const struct nvimgcdcsEncoder
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::registerDecoder(const struct nvimgcdcsDecoderDesc* desc)
+nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t desc)
 {
     NVIMGCDCS_LOG_INFO("Framework is regisering decoder");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);

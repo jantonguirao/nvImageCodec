@@ -23,12 +23,12 @@ class IImageEncoder;
 class ImageEncoderFactory : public IImageEncoderFactory
 {
   public:
-    explicit ImageEncoderFactory(const struct nvimgcdcsEncoderDesc* desc);
+    explicit ImageEncoderFactory(const nvimgcdcsEncoderDesc_t desc);
     std::string getEncoderId() const override;
     std::string getCodecName() const override;
     bool canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params) override;
     std::unique_ptr<IImageEncoder> createEncoder(const nvimgcdcsEncodeParams_t* params) const override;
   private:
-    const struct nvimgcdcsEncoderDesc* encoder_desc_;
+    const nvimgcdcsEncoderDesc_t encoder_desc_;
 };
 } // namespace nvimgcdcs

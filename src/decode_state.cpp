@@ -11,7 +11,7 @@
 
 namespace nvimgcdcs {
 
-DecodeState::DecodeState(const struct nvimgcdcsDecoderDesc* decoder_desc,
+DecodeState::DecodeState(const nvimgcdcsDecoderDesc_t decoder_desc,
     nvimgcdcsDecoder_t decoder, cudaStream_t cuda_stream)
     : decoder_desc_(decoder_desc)
     , decoder_(decoder)

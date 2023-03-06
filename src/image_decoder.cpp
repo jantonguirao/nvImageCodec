@@ -20,7 +20,7 @@
 namespace nvimgcdcs {
 
 ImageDecoder::ImageDecoder(
-    const struct nvimgcdcsDecoderDesc* desc, const nvimgcdcsDecodeParams_t* params)
+    const nvimgcdcsDecoderDesc_t desc, const nvimgcdcsDecodeParams_t* params)
     : decoder_desc_(desc)
 {
     decoder_desc_->create(decoder_desc_->instance, &decoder_, params);

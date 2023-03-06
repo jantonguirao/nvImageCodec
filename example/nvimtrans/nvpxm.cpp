@@ -267,8 +267,6 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
 };
 // clang-format on
 
-//extern nvimgcdcsEncoderDesc_t ppm_encoder;
-
 nvimgcdcsStatus_t extension_create(
     const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
 {

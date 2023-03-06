@@ -13,7 +13,7 @@
 
 namespace nvimgcdcs {
 
-EncodeStateBatch::EncodeStateBatch(const struct nvimgcdcsEncoderDesc* encoder_desc,
+EncodeStateBatch::EncodeStateBatch(const nvimgcdcsEncoderDesc_t encoder_desc,
     nvimgcdcsEncoder_t encoder, cudaStream_t cuda_stream)
     : encoder_desc_(encoder_desc)
     , encoder_(encoder)
