@@ -267,7 +267,7 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t 
 
 nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t desc)
 {
-    NVIMGCDCS_LOG_INFO("Framework is regisering decoder");
+    NVIMGCDCS_LOG_INFO("Framework is registering decoder");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
     NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);

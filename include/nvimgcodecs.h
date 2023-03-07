@@ -203,27 +203,40 @@ extern "C"
         nvimgcdcsSampleDataType_t sample_type;
     } nvimgcdcsImagePlaneInfo_t;
 
+#define NVIMGCDCS_MAX_NUM_DIM 5
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+        int ndim;  // number of dimensions, 0 means no region
+        int start[NVIMGCDCS_MAX_NUM_DIM];
+        int end[NVIMGCDCS_MAX_NUM_DIM];
+    } nvimgcdcsRegion_t;
+
 #define NVIMGCDCS_MAX_NUM_PLANES 32
     typedef struct
     {
         nvimgcdcsStructureType_t type;
         void* next;
 
+        uint32_t width;
+        uint32_t height;
+        uint32_t num_components;
+        nvimgcdcsColorSpec_t color_spec;
+        nvimgcdcsChromaSubsampling_t sampling;
+        nvimgcdcsSampleDataType_t sample_type;
+        nvimgcdcsOrientation_t orientation;
+
+        // those is user-provided
         void* host_buffer;
         size_t host_buffer_size;
         void* device_buffer;
         size_t device_buffer_size;
-
-        uint32_t width;
-        uint32_t height;
-        uint32_t num_components;
+        cudaStream_t cuda_stream;  // stream to synchronize with
         uint32_t num_planes;
         nvimgcdcsImagePlaneInfo_t plane_info[NVIMGCDCS_MAX_NUM_PLANES];
-        nvimgcdcsColorSpec_t color_spec;
         nvimgcdcsSampleFormat_t sample_format;
-        nvimgcdcsChromaSubsampling_t sampling;
-        nvimgcdcsSampleDataType_t sample_type;
-        nvimgcdcsOrientation_t orientation;
+        nvimgcdcsRegion_t region;
     } nvimgcdcsImageInfo_t;
 
     // Currently parseable JPEG encodings (SOF markers)
@@ -329,28 +342,15 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        bool use_region;
-        int start[2];
-        int end[2];
-    } nvimgcdcsRegion_t;
-
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
 
         bool enable_orientation;
-        nvimgcdcsOrientation_t orientation;
         bool enable_scaling;
         nvimgcdcsScaleFactor_t scale;
         bool enable_roi;
-        int num_rois;
-        nvimgcdcsRegion_t region;
         //For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
         //For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.
         bool enable_color_conversion;
 
-        cudaStream_t cuda_stream;  // CUDA stream to synchronize with
         int num_backends; // Zero means that all backends are allowed.
         nvimgcdcsBackend_t* backends;
     } nvimgcdcsDecodeParams_t;

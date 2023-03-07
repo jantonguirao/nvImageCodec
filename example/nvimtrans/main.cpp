@@ -163,16 +163,6 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
-    if (decode_params.enable_orientation) {
-        decode_params.orientation.rotated = image_info.orientation.rotated == 90
-                                                ? 270
-                                                : (image_info.orientation.rotated == 270 ? 90 : 0);
-        if (decode_params.orientation.rotated) {
-            auto tmp = image_info.width;
-            image_info.width = image_info.height;
-            image_info.height = tmp;
-        }
-    }
     int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
     // Preparing output image_info
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
@@ -395,20 +385,6 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetCodecName(code_streams[i], codec_name));
 
-        //TODO orientation
-        /* 
-        if (decode_params.enable_orientation) {
-            decode_params.orientation.rotated =
-                image_info.orientation.rotated == 90
-                    ? 270
-                    : (image_info.orientation.rotated == 270 ? 90 : 0);
-            if (decode_params.orientation.rotated) {
-                auto tmp                = image_info.image_width;
-                image_info.image_width  = image_info.image_height;
-                image_info.image_height = tmp;
-            }
-        }
-        */
         int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
 
         //Decode to format

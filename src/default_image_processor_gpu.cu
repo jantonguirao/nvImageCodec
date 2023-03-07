@@ -90,11 +90,11 @@ nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* p
 {
     int64_t region_size_y = params->image_info.height;
     int64_t region_size_x = params->image_info.width;
-    if (params->region.use_region) {
-        int64_t roi_start_y = params->region.start[0];
-        int64_t roi_start_x = params->region.start[1];
-        int64_t roi_end_y = params->region.end[0];
-        int64_t roi_end_x = params->region.end[1];
+    if (params->image_info.region.ndim > 0) {
+        int64_t roi_start_y = params->image_info.region.start[0];
+        int64_t roi_start_x = params->image_info.region.start[1];
+        int64_t roi_end_y = params->image_info.region.end[0];
+        int64_t roi_end_x = params->image_info.region.end[1];
         region_size_y = roi_end_y - roi_start_y;
         region_size_x = roi_end_x - roi_start_x;
     }
@@ -125,9 +125,9 @@ nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* p
 
     Out* out_ptr = static_cast<Out*>(params->out_buffer);
     const In* in_ptr = static_cast<In*>(params->in_buffer);
-    if (params->region.use_region) {
-        int64_t roi_start_y = params->region.start[0];
-        int64_t roi_start_x = params->region.start[1];
+    if (params->image_info.region.ndim > 0) {
+        int64_t roi_start_y = params->image_info.region.start[0];
+        int64_t roi_start_x = params->image_info.region.start[1];
         in_ptr += roi_start_y * in_stride_y;
         in_ptr += roi_start_x * in_stride_x;
     }
