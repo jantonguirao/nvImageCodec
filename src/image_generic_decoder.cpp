@@ -443,8 +443,10 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
                 work->images_[i]->detachDecodeState();
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.success) {
+                    nvimgcdcsImageInfo_t image_info;
+                    work->images_[i]->getImageInfo(&image_info);
                     work->copy_buffer_if_necessary(
-                        is_device_output_, sub_idx, work->params_->cuda_stream, &r);
+                        is_device_output_, sub_idx, image_info.cuda_stream, &r);
                     work->results_.set(work->indices_[sub_idx], r);
                 } else { // failed to decode
                     if (fallback_worker) {

@@ -875,17 +875,6 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
             decode_params.enable_color_conversion = flags & NVIMGCDCS_IMREAD_COLOR;
             decode_params.enable_orientation = !(flags & NVIMGCDCS_IMREAD_IGNORE_ORIENTATION);
-            if (decode_params.enable_orientation) {
-                decode_params.orientation.rotated =
-                    image_info.orientation.rotated == 90
-                        ? 270
-                        : (image_info.orientation.rotated == 270 ? 90 : 0);
-                if (decode_params.orientation.rotated) {
-                    auto tmp = image_info.width;
-                    image_info.width = image_info.height;
-                    image_info.height = tmp;
-                }
-            }
 
             // Define  requested output
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
