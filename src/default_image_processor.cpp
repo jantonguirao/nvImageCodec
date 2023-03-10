@@ -32,14 +32,14 @@ nvimgcdcsStatus_t DefaultImageProcessor::convert_cpu(
     const nvimgcdcsImageProcessorConvertParams_t* params,
     nvimgcdcsPinnedAllocator_t* pinned_allocator)
 {
-    return NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
+    return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
 }
 
 nvimgcdcsStatus_t DefaultImageProcessor::static_convert_cpu(void* instance,
     const nvimgcdcsImageProcessorConvertParams_t* params,
     nvimgcdcsPinnedAllocator_t* pinned_allocator)
 {
-    return NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
+    return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
 }
 
 } // namespace nvimgcdcs

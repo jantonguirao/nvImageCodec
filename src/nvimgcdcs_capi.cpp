@@ -47,7 +47,7 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
         code = NVIMGCDCS_STATUS_BAD_CODESTREAM;
         break;
     case UNSUPPORTED_FORMAT_STATUS:
-        code = NVIMGCDCS_STATUS_CODESTREAM_NOT_SUPPORTED;
+        code = NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
         break;
     case CUDA_CALL_ERROR:
         code = NVIMGCDCS_STATUS_EXECUTION_FAILED;
@@ -868,8 +868,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
             nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
 
-            int bytes_per_element =
-                image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+            int bytes_per_element = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
 
             nvimgcdcsDecodeParams_t decode_params;
             memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
@@ -1036,7 +1035,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
             }
 
             if (image_info.sampling == NVIMGCDCS_SAMPLING_UNKNOWN ||
-                image_info.sampling == NVIMGCDCS_SAMPLING_NOT_SUPPORTED)
+                image_info.sampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
                 image_info.sampling = NVIMGCDCS_SAMPLING_444;
             nvimgcdcsEncodeParams_t encode_params;
             memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
