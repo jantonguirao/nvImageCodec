@@ -165,9 +165,9 @@ struct IWorkManager::Work
                 image_info.device_buffer_size = image_info.host_buffer_size;
                 images_[i]->setImageInfo(&image_info);
 
-                for (uint32_t c = 0; c < image_info.num_components; ++c) {
-                    image_info.plane_info[c].device_pitch_in_bytes =
-                        image_info.plane_info[c].host_pitch_in_bytes;
+                for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+                    image_info.plane_info[p].device_pitch_in_bytes =
+                        image_info.plane_info[p].host_pitch_in_bytes;
                 }
 
                 CHECK_CUDA(cudaMemcpyAsync(image_info.device_buffer, image_info.host_buffer,

@@ -155,7 +155,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     std::cout << "Input image info: " << std::endl;
     std::cout << "\t - width:" << image_info.width << std::endl;
     std::cout << "\t - height:" << image_info.height << std::endl;
-    std::cout << "\t - components:" << image_info.num_components << std::endl;
+    std::cout << "\t - components:" << image_info.num_planes << std::endl;
     std::cout << "\t - codec:" << codec_name << std::endl;
 
     // Prepare decode parameters
@@ -170,7 +170,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
     image_info.device_buffer_size =
-        device_pitch_in_bytes * image_info.height * image_info.num_components;
+        device_pitch_in_bytes * image_info.height * image_info.num_planes;
     CHECK_CUDA(cudaMalloc(&image_info.device_buffer, image_info.device_buffer_size));
     for (auto c = 0; c < image_info.num_planes; ++c) {
         image_info.plane_info[c].height = image_info.height;
@@ -369,7 +369,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetImageInfo(code_streams[i], &image_info));
         parse_time += wtime() - time;
 
-        if (image_info.num_components > MAX_NUM_COMPONENTS) {
+        if (image_info.num_planes > MAX_NUM_COMPONENTS) {
             std::cout << "Num Components > " << MAX_NUM_COMPONENTS << "not supported by this sample"
                       << std::endl;
             return EXIT_FAILURE;
@@ -397,7 +397,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
 
         size_t device_pitch_in_bytes = bytes_per_element * image_info.width;
         size_t image_buffer_size =
-            device_pitch_in_bytes * image_info.height * image_info.num_components;
+            device_pitch_in_bytes * image_info.height * image_info.num_planes;
 
         if (image_buffer_size > ibuf[i].size) {
             if (ibuf[i].data) {

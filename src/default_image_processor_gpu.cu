@@ -100,7 +100,8 @@ nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* p
     }
 
     int64_t out_stride_y, out_stride_x, out_stride_c;
-    int num_channels = params->image_info.num_components;
+    int num_channels = is_planar(params->out_sample_format)?params->image_info.num_planes
+                                                           :params->image_info.plane_info[0].num_channels;
 
     if (is_planar(params->out_sample_format)) {
         out_stride_c = region_size_y * region_size_x;

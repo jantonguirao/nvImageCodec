@@ -129,7 +129,7 @@ class Image
         std::string format = format_str_from_type(image_info.sample_type);
         ssize_t ndim = 3; //TODO
         std::vector<ssize_t> shape{
-            image_info.num_components, image_info.height, image_info.width};
+            image_info.num_planes, image_info.height, image_info.width};
         bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
 
         py::tuple strides_tuple = py::make_tuple(
@@ -141,7 +141,7 @@ class Image
         try {
             //TODO interleaved
             py::tuple shape_tuple = py::make_tuple(
-                image_info.num_components, image_info.height, image_info.width);
+                image_info.num_planes, image_info.height, image_info.width);
 
             // clang-format off
             // TODO when strides none
@@ -242,8 +242,7 @@ class Image
             }
             if (vshape.size() >= 3) {
                 nvimgcdcsImageInfo_t image_info;
-                image_info.num_components = vshape[0];
-                image_info.num_planes = image_info.num_components;
+                image_info.num_planes = vshape[0];
                 image_info.height = vshape[1];
                 image_info.width = vshape[2];
                 std::string typestr = iface["typestr"].cast<std::string>();
@@ -255,7 +254,7 @@ class Image
                 image_info.sampling = NVIMGCDCS_SAMPLING_444;
                 int pitch_in_bytes = vstrides.size() > 1
                                          ? vstrides[1]
-                                         : image_info.width; //*image_info.num_components;
+                                         : image_info.width; 
                 for (size_t c = 0; c < image_info.num_planes; c++) {
                     image_info.plane_info[c].width = image_info.width;
                     image_info.plane_info[c].height = image_info.height;

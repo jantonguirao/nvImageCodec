@@ -880,7 +880,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
             size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
             image_info.device_buffer_size =
-                device_pitch_in_bytes * image_info.height * image_info.num_components;
+                device_pitch_in_bytes * image_info.height * image_info.num_planes;
             CHECK_CUDA(cudaMalloc(&image_info.device_buffer, image_info.device_buffer_size));
             for (uint32_t c = 0; c < image_info.num_planes; ++c) {
                 image_info.plane_info[c].height = image_info.height;
@@ -1034,7 +1034,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                 }
             }
 
-            if (image_info.sampling == NVIMGCDCS_SAMPLING_UNKNOWN ||
+            if (image_info.sampling == NVIMGCDCS_SAMPLING_NONE ||
                 image_info.sampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
                 image_info.sampling = NVIMGCDCS_SAMPLING_444;
             nvimgcdcsEncodeParams_t encode_params;

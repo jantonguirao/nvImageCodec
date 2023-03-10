@@ -130,8 +130,8 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_SAMPLING_UNKNOWN = 0,
-        NVIMGCDCS_SAMPLING_444 = 1,
+        NVIMGCDCS_SAMPLING_NONE = 0,
+        NVIMGCDCS_SAMPLING_444 = NVIMGCDCS_SAMPLING_NONE,
         NVIMGCDCS_SAMPLING_422 = 2,
         NVIMGCDCS_SAMPLING_420 = 3,
         NVIMGCDCS_SAMPLING_440 = 4,
@@ -143,12 +143,11 @@ extern "C"
         NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsChromaSubsampling_t;
 
-    //Interleave - even Planar - odd
-    typedef enum
+     typedef enum
     {
         NVIMGCDCS_SAMPLEFORMAT_UNKNOWN = 0,
         NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED = 1, //unchanged planar
-        NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED = 2, //unchanged interleave
+        NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED = 2, //unchanged interleaved
         NVIMGCDCS_SAMPLEFORMAT_P_RGB = 3,       //planar RGB
         NVIMGCDCS_SAMPLEFORMAT_I_RGB = 4,       //interleaved RGB
         NVIMGCDCS_SAMPLEFORMAT_P_BGR = 5,       //planar BGR
@@ -197,6 +196,7 @@ extern "C"
         uint32_t height;
         size_t host_pitch_in_bytes;
         size_t device_pitch_in_bytes;
+        uint32_t num_channels;
         nvimgcdcsSampleDataType_t sample_type;
     } nvimgcdcsImagePlaneInfo_t;
 
@@ -218,11 +218,13 @@ extern "C"
 
         uint32_t width;
         uint32_t height;
-        uint32_t num_components;
+
         nvimgcdcsColorSpec_t color_spec;
         nvimgcdcsChromaSubsampling_t sampling;
         nvimgcdcsSampleDataType_t sample_type;
         nvimgcdcsOrientation_t orientation;
+        nvimgcdcsSampleFormat_t sample_format;
+        nvimgcdcsRegion_t region;
 
         void* host_buffer;
         size_t host_buffer_size;
@@ -231,8 +233,6 @@ extern "C"
         cudaStream_t cuda_stream; // stream to synchronize with
         uint32_t num_planes;
         nvimgcdcsImagePlaneInfo_t plane_info[NVIMGCDCS_MAX_NUM_PLANES];
-        nvimgcdcsSampleFormat_t sample_format;
-        nvimgcdcsRegion_t region;
     } nvimgcdcsImageInfo_t;
 
     // Currently parseable JPEG encodings (SOF markers)
