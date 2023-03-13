@@ -49,6 +49,7 @@ struct IWorkManager::Work
         images_.clear();
         host_temp_buffers_.clear();
         device_temp_buffers_.clear();
+        idx2orig_buffer_.clear();
     }
 
     int getSamplesNum() const { return indices_.size(); }
@@ -63,8 +64,7 @@ struct IWorkManager::Work
             images_.resize(num_samples);
     }
 
-    void init(IEncodeState* encode_state_batch, const std::vector<ICodeStream*>& code_streams,
-        const std::vector<IImage*>& images)
+    void init(IEncodeState* encode_state_batch, const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images)
     {
         int N = images.size();
 
@@ -96,6 +96,10 @@ struct IWorkManager::Work
             host_temp_buffers_.push_back(std::move(from->host_temp_buffers_[which]));
         if (!from->device_temp_buffers_.empty())
             device_temp_buffers_.push_back(std::move(from->device_temp_buffers_[which]));
+        if (from->idx2orig_buffer_.find(which) != from->idx2orig_buffer_.end()) {
+            auto entry = from->idx2orig_buffer_.extract(which);
+            idx2orig_buffer_.insert(std::move(entry));
+        }
     }
 
     /**
@@ -111,7 +115,7 @@ struct IWorkManager::Work
             nvimgcdcsImageInfo_t image_info;
             images_[i]->getImageInfo(&image_info);
             void* h_pinned = nullptr;
-            CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.device_buffer_size));
+            CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.buffer_size));
             std::unique_ptr<void, decltype(&cudaFreeHost)> h_ptr(h_pinned, &cudaFreeHost);
             host_temp_buffers_.push_back(std::move(h_ptr));
         }
@@ -124,7 +128,7 @@ struct IWorkManager::Work
             nvimgcdcsImageInfo_t image_info;
             images_[i]->getImageInfo(&image_info);
             void* device_buffer = nullptr;
-            CHECK_CUDA(cudaMalloc(&device_buffer, image_info.host_buffer_size));
+            CHECK_CUDA(cudaMalloc(&device_buffer, image_info.buffer_size));
             std::unique_ptr<void, decltype(&cudaFree)> d_ptr(device_buffer, &cudaFree);
             device_temp_buffers_.push_back(std::move(d_ptr));
         }
@@ -139,39 +143,27 @@ struct IWorkManager::Work
             nvimgcdcsImageInfo_t image_info;
             images_[i]->getImageInfo(&image_info);
 
-            bool is_device_input = image_info.device_buffer != nullptr;
-            bool is_host_input = image_info.host_buffer != nullptr;
-
-            if (!is_input_expected_in_device && is_device_input) {
+            if (!is_input_expected_in_device && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
                 if (host_temp_buffers_.empty()) {
                     alloc_host_temp_inputs();
                 }
-                image_info.host_buffer = host_temp_buffers_[i].get();
-                image_info.host_buffer_size = image_info.device_buffer_size;
+                idx2orig_buffer_[i] = image_info.buffer;
+                image_info.buffer = host_temp_buffers_[i].get();
+                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
                 images_[i]->setImageInfo(&image_info);
 
-                for (uint32_t c = 0; c < image_info.num_planes; ++c) {
-                    image_info.plane_info[c].host_pitch_in_bytes =
-                        image_info.plane_info[c].device_pitch_in_bytes;
-                }
-                CHECK_CUDA(cudaMemcpyAsync(image_info.host_buffer, image_info.device_buffer,
-                    image_info.device_buffer_size, cudaMemcpyDeviceToHost));
+                CHECK_CUDA(cudaMemcpyAsync(image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyDeviceToHost));
             }
-            if (is_input_expected_in_device && is_host_input) {
+            if (is_input_expected_in_device && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
                 if (device_temp_buffers_.empty()) {
                     alloc_device_temp_inputs();
                 }
-                image_info.device_buffer = device_temp_buffers_[i].get();
-                image_info.device_buffer_size = image_info.host_buffer_size;
+                idx2orig_buffer_[i] = image_info.buffer;
+                image_info.buffer = device_temp_buffers_[i].get();
+                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                 images_[i]->setImageInfo(&image_info);
 
-                for (uint32_t p = 0; p < image_info.num_planes; ++p) {
-                    image_info.plane_info[p].device_pitch_in_bytes =
-                        image_info.plane_info[p].host_pitch_in_bytes;
-                }
-
-                CHECK_CUDA(cudaMemcpyAsync(image_info.device_buffer, image_info.host_buffer,
-                    image_info.device_buffer_size, cudaMemcpyHostToDevice));
+                CHECK_CUDA(cudaMemcpyAsync(image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyHostToDevice));
             }
             images_[i]->setImageInfo(&image_info);
         }
@@ -183,23 +175,23 @@ struct IWorkManager::Work
 
     void clean_after_encoding(bool is_input_expected_in_device, int sub_idx, ProcessingResult* r)
     {
-        nvimgcdcsImageInfo_t image_info;
-        images_[sub_idx]->getImageInfo(&image_info);
-        try {
-            if (is_input_expected_in_device && image_info.host_buffer != nullptr) {
-                image_info.device_buffer = nullptr;
-                image_info.device_buffer_size = 0;
+        auto it = idx2orig_buffer_.find(sub_idx);
+        if (it != idx2orig_buffer_.end()) {
+            try {
+                nvimgcdcsImageInfo_t image_info;
+                images_[sub_idx]->getImageInfo(&image_info);
+                image_info.buffer = it->second;
+                image_info.buffer_kind = image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE
+                                             ? NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST
+                                             : NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                 images_[sub_idx]->setImageInfo(&image_info);
-            } else if (!is_input_expected_in_device && image_info.device_buffer != nullptr) {
-                image_info.host_buffer = nullptr;
-                image_info.host_buffer_size = 0;
-                images_[sub_idx]->setImageInfo(&image_info);
+                idx2orig_buffer_.erase(it);
+            } catch (...) {
+                *r = ProcessingResult::failure(std::current_exception());
             }
-        } catch (...) {
-            *r = ProcessingResult::failure(std::current_exception());
         }
     }
-
+ 
     // The original promise
     ProcessingResultsPromise results_;
     // The indices in the original request
@@ -208,6 +200,7 @@ struct IWorkManager::Work
     std::vector<IImage*> images_;
     std::vector<std::unique_ptr<void, decltype(&cudaFreeHost)>> host_temp_buffers_;
     std::vector<std::unique_ptr<void, decltype(&cudaFree)>> device_temp_buffers_;
+    std::map<int, void*> idx2orig_buffer_;
     const nvimgcdcsEncodeParams_t* params_;
     IEncodeState* encode_state_batch_;
     std::unique_ptr<Work> next_;
@@ -297,8 +290,7 @@ ImageGenericEncoder::Worker* ImageGenericEncoder::Worker::getFallback()
     if (!fallback_) {
         int n = codec_->getEncodersNum();
         if (index_ + 1 < n) {
-            fallback_ = std::make_unique<ImageGenericEncoder::Worker>(
-                work_manager_, device_id_, codec_, index_ + 1);
+            fallback_ = std::make_unique<ImageGenericEncoder::Worker>(work_manager_, device_id_, codec_, index_ + 1);
         }
     }
     return fallback_.get();
@@ -315,10 +307,8 @@ IImageEncoder* ImageGenericEncoder::Worker::getEncoder(const nvimgcdcsEncodePara
             const nvimgcdcsCapability_t* capabilities_ptr;
             encoder_->getCapabilities(&capabilities_ptr, &capabilities_size);
             is_input_expected_in_device_ =
-                std::find(capabilities_ptr,
-                    capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-                    NVIMGCDCS_CAPABILITY_DEVICE_INPUT) !=
-                capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+                std::find(capabilities_ptr, capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                    NVIMGCDCS_CAPABILITY_DEVICE_INPUT) != capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
         }
     }
     return encoder_.get();
@@ -376,8 +366,7 @@ void ImageGenericEncoder::Worker::addWork(std::unique_ptr<Work> work)
     start();
 }
 
-static void move_work_to_fallback(
-    IWorkManager::Work* fb, IWorkManager::Work* work, const std::vector<bool>& keep)
+static void move_work_to_fallback(IWorkManager::Work* fb, IWorkManager::Work* work, const std::vector<bool>& keep)
 {
     int moved = 0;
     size_t n = work->code_streams_.size();
@@ -390,8 +379,9 @@ static void move_work_to_fallback(
                 if (!work->host_temp_buffers_.empty())
                     work->host_temp_buffers_[i - moved] = std::move(work->host_temp_buffers_[i]);
                 if (!work->device_temp_buffers_.empty())
-                    work->device_temp_buffers_[i - moved] =
-                        std::move(work->device_temp_buffers_[i]);
+                    work->device_temp_buffers_[i - moved] = std::move(work->device_temp_buffers_[i]);
+                if (!work->idx2orig_buffer_.empty())
+                    work->idx2orig_buffer_[i - moved] = std::move(work->idx2orig_buffer_[i]);
                 if (!work->code_streams_.empty())
                     work->code_streams_[i - moved] = work->code_streams_[i];
                 work->indices_[i - moved] = work->indices_[i];
@@ -450,8 +440,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 
             work->images_[i]->attachEncodeState(encode_states_[i].get());
         }
-        auto future = encoder_->encodeBatch(
-            encode_state_batch_.get(), work->images_, work->code_streams_, work->params_);
+        auto future = encoder_->encodeBatch(encode_state_batch_.get(), work->images_, work->code_streams_, work->params_);
 
         for (;;) {
             auto indices = future->waitForNew();
@@ -469,8 +458,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
                     if (fallback_worker) {
                         // if there's fallback, we don't set the result, but try to use the fallback first
                         if (!fallback_work)
-                            fallback_work =
-                                work_manager_->createNewWork(work->results_, work->params_);
+                            fallback_work = work_manager_->createNewWork(work->results_, work->params_);
                         fallback_work->moveEntry(work.get(), sub_idx);
                     } else {
                         // no fallback - just propagate the result to the original promise
@@ -489,8 +477,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 //ImageGenericEncoder
 
 ImageGenericEncoder::ImageGenericEncoder(ICodecRegistry* codec_registry)
-    : capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT, NVIMGCDCS_CAPABILITY_DEVICE_INPUT,
-          NVIMGCDCS_CAPABILITY_BATCH}
+    : capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT, NVIMGCDCS_CAPABILITY_DEVICE_INPUT, NVIMGCDCS_CAPABILITY_BATCH}
     , codec_registry_(codec_registry)
 {
 }
@@ -520,20 +507,17 @@ void ImageGenericEncoder::getCapabilities(const nvimgcdcsCapability_t** capabili
     if (size) {
         *size = capabilities_.size();
     } else {
-        throw Exception(
-            INVALID_PARAMETER, "Could not get encoder capabilities since size pointer is null", "");
+        throw Exception(INVALID_PARAMETER, "Could not get encoder capabilities since size pointer is null", "");
     }
 }
 
-bool ImageGenericEncoder::canEncode(nvimgcdcsImageDesc_t image,
-    [[maybe_unused]] nvimgcdcsCodeStreamDesc_t code_stream,
+bool ImageGenericEncoder::canEncode(nvimgcdcsImageDesc_t image, [[maybe_unused]] nvimgcdcsCodeStreamDesc_t code_stream,
     [[maybe_unused]] const nvimgcdcsEncodeParams_t* params) const
 {
     return true;
 }
 
-void ImageGenericEncoder::canEncode([[maybe_unused]] const std::vector<IImage*>& images,
-    const std::vector<ICodeStream*>& code_streams,
+void ImageGenericEncoder::canEncode([[maybe_unused]] const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
     [[maybe_unused]] const nvimgcdcsEncodeParams_t* params, std::vector<bool>* result) const
 {
     result->resize(code_streams.size(), true);
@@ -547,9 +531,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(
     return encodeBatch(image->getAttachedEncodeState(), images, code_streams, params);
 }
 
-std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encodeBatch(
-    IEncodeState* encode_state_batch, const std::vector<IImage*>& images,
-    const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params)
+std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encodeBatch(IEncodeState* encode_state_batch,
+    const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_LOG_TRACE("encodeBatch");
     int N = images.size();
@@ -569,8 +552,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encodeBatch(
     return future;
 }
 
-std::unique_ptr<ImageGenericEncoder::Work> ImageGenericEncoder::createNewWork(
-    const ProcessingResultsPromise& results, const void* params)
+std::unique_ptr<ImageGenericEncoder::Work> ImageGenericEncoder::createNewWork(const ProcessingResultsPromise& results, const void* params)
 {
     if (free_work_items_) {
         std::lock_guard<std::mutex> g(work_mutex_);
@@ -583,8 +565,7 @@ std::unique_ptr<ImageGenericEncoder::Work> ImageGenericEncoder::createNewWork(
         }
     }
 
-    return std::make_unique<Work>(
-        std::move(results), reinterpret_cast<const nvimgcdcsEncodeParams_t*>(params));
+    return std::make_unique<Work>(std::move(results), reinterpret_cast<const nvimgcdcsEncodeParams_t*>(params));
 }
 
 void ImageGenericEncoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)
@@ -595,8 +576,7 @@ void ImageGenericEncoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)
     free_work_items_ = std::move(work);
 }
 
-void ImageGenericEncoder::combineWork(
-    IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source)
+void ImageGenericEncoder::combineWork(IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source)
 {
     //if only one has temporary CPU  storage, allocate it in the other
     if (target->host_temp_buffers_.empty() && !source->host_temp_buffers_.empty())
@@ -620,6 +600,8 @@ void ImageGenericEncoder::combineWork(
     move_append(target->indices_, source->indices_);
     move_append(target->host_temp_buffers_, source->host_temp_buffers_);
     move_append(target->device_temp_buffers_, source->device_temp_buffers_);
+    std::move(source->idx2orig_buffer_.begin(), source->idx2orig_buffer_.end(),
+        std::inserter(target->idx2orig_buffer_, std::end(target->idx2orig_buffer_)));
     recycleWork(std::move(source));
 }
 
@@ -643,8 +625,7 @@ void ImageGenericEncoder::distributeWork(std::unique_ptr<IWorkManager::Work> wor
             std::stringstream msg_ss;
             msg_ss << "Image #" << work->indices_[i] << " not supported";
 
-            work->results_.set(i, ProcessingResult::failure(
-                                      std::make_exception_ptr(std::runtime_error(msg_ss.str()))));
+            work->results_.set(i, ProcessingResult::failure(std::make_exception_ptr(std::runtime_error(msg_ss.str()))));
             continue;
         }
         auto& w = dist[codec];

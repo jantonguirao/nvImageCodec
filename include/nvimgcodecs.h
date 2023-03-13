@@ -194,8 +194,7 @@ extern "C"
         void* next;
         uint32_t width;
         uint32_t height;
-        size_t host_pitch_in_bytes;
-        size_t device_pitch_in_bytes;
+        size_t row_stride;
         uint32_t num_channels;
         nvimgcdcsSampleDataType_t sample_type;
     } nvimgcdcsImagePlaneInfo_t;
@@ -209,6 +208,15 @@ extern "C"
         int start[NVIMGCDCS_MAX_NUM_DIM];
         int end[NVIMGCDCS_MAX_NUM_DIM];
     } nvimgcdcsRegion_t;
+
+    typedef enum
+    {
+        NVIMGCDCS_IMAGE_BUFFER_KIND_UNKNOWN = 0,
+        NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE = 1,
+        NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST = 2,
+        NVIMGCDCS_IMAGE_BUFFER_KIND_UNSUPPORTED = -1,
+        NVIMGCDCS_IMAGE_BUFFER_KIND_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsImageBufferKind_t;
 
 #define NVIMGCDCS_MAX_NUM_PLANES 32
     typedef struct
@@ -226,10 +234,9 @@ extern "C"
         nvimgcdcsSampleFormat_t sample_format;
         nvimgcdcsRegion_t region;
 
-        void* host_buffer;
-        size_t host_buffer_size;
-        void* device_buffer;
-        size_t device_buffer_size;
+        void* buffer;
+        size_t buffer_size;
+        nvimgcdcsImageBufferKind_t buffer_kind;
         cudaStream_t cuda_stream; // stream to synchronize with
         uint32_t num_planes;
         nvimgcdcsImagePlaneInfo_t plane_info[NVIMGCDCS_MAX_NUM_PLANES];

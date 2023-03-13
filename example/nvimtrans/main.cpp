@@ -169,15 +169,15 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
 
     size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
-    image_info.device_buffer_size =
+    image_info.buffer_size =
         device_pitch_in_bytes * image_info.height * image_info.num_planes;
-    CHECK_CUDA(cudaMalloc(&image_info.device_buffer, image_info.device_buffer_size));
+    image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+    CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
     for (auto c = 0; c < image_info.num_planes; ++c) {
         image_info.plane_info[c].height = image_info.height;
         image_info.plane_info[c].width = image_info.width;
-        image_info.plane_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
+        image_info.plane_info[c].row_stride = device_pitch_in_bytes;
     }
-    image_info.host_buffer = nullptr;
 
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
@@ -264,7 +264,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsDecoderDestroy(decoder);
     nvimgcdcsCodeStreamDestroy(code_stream);
 
-    CHECK_CUDA(cudaFree(image_info.device_buffer));
+    CHECK_CUDA(cudaFree(image_info.buffer));
 
     return EXIT_SUCCESS;
 }
@@ -409,11 +409,12 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         ibuf[i].size = image_buffer_size;
 
         for (uint32_t c = 0; c < image_info.num_planes; ++c) {
-            image_info.plane_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
+            image_info.plane_info[c].row_stride = device_pitch_in_bytes;
         }
-        image_info.device_buffer = ibuf[i].data;
-        image_info.device_buffer_size = image_buffer_size;
-        
+        image_info.buffer = ibuf[i].data;
+        image_info.buffer_size = image_buffer_size;
+        image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+
         CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &images[i], &image_info));
 
         if (decoder == nullptr) {

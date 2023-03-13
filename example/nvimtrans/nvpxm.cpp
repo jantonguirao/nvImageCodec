@@ -224,23 +224,23 @@ static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeS
     NVIMGCDCS_E_LOG_TRACE("pxm_encode");
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
-    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.host_buffer);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
         write_pxm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer,
-            image_info.plane_info[0].host_pitch_in_bytes, NULL, 0, NULL, 0, NULL, 0,
+            image_info.plane_info[0].row_stride, NULL, 0, NULL, 0, NULL, 0,
             image_info.width, image_info.height, image_info.plane_info[0].num_channels,
             image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     } else {
         write_pxm<unsigned char>(code_stream->io_stream, host_buffer,
-            image_info.plane_info[0].host_pitch_in_bytes,
+            image_info.plane_info[0].row_stride,
             host_buffer +
-                image_info.plane_info[0].host_pitch_in_bytes * image_info.height,
-            image_info.plane_info[1].host_pitch_in_bytes,
+                image_info.plane_info[0].row_stride * image_info.height,
+            image_info.plane_info[1].row_stride,
             host_buffer +
-                +image_info.plane_info[0].host_pitch_in_bytes * image_info.height +
-                image_info.plane_info[1].host_pitch_in_bytes * image_info.height,
-            image_info.plane_info[2].host_pitch_in_bytes, NULL, 0, image_info.width,
+                +image_info.plane_info[0].row_stride * image_info.height +
+                image_info.plane_info[1].row_stride * image_info.height,
+            image_info.plane_info[2].row_stride, NULL, 0, image_info.width,
             image_info.height, image_info.num_planes,
             image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     }

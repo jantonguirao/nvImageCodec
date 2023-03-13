@@ -598,6 +598,13 @@ nvimgcdcsStatus_t nvimgcdcsImageCreate(
         {
             CHECK_NULL(image)
             CHECK_NULL(instance)
+            CHECK_NULL(image_info)
+            CHECK_NULL(image_info->buffer)
+            if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_UNKNOWN ||
+                image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_UNSUPPORTED) {
+                NVIMGCDCS_LOG_ERROR("Unknown or unsupported buffer kind");
+                return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            }
 
             *image = new nvimgcdcsImage();
             (*image)->image_.setImageInfo(image_info);
@@ -879,20 +886,19 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
             size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
-            image_info.device_buffer_size =
+            image_info.buffer_size =
                 device_pitch_in_bytes * image_info.height * image_info.num_planes;
-            CHECK_CUDA(cudaMalloc(&image_info.device_buffer, image_info.device_buffer_size));
+            image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+            CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
             for (uint32_t c = 0; c < image_info.num_planes; ++c) {
                 image_info.plane_info[c].height = image_info.height;
                 image_info.plane_info[c].width = image_info.width;
-                image_info.plane_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
+                image_info.plane_info[c].row_stride = device_pitch_in_bytes;
             }
-
-            image_info.host_buffer = nullptr;
-
+           
             nvimgcdcsImageCreate(instance, image, &image_info);
-            (*image)->dev_image_buffer_ = image_info.device_buffer;
-            (*image)->dev_image_buffer_size_ = image_info.device_buffer_size;
+            (*image)->dev_image_buffer_ = image_info.buffer;
+            (*image)->dev_image_buffer_size_ = image_info.buffer_size;
 
             nvimgcdcsDecoder_t decoder;
             nvimgcdcsDecoderCreate(instance, &decoder);

@@ -123,9 +123,9 @@ class Image
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        void* buffer = image_info.device_buffer;
+        void* buffer = image_info.buffer;
         ssize_t itemsize = 1; //TODO
-        ssize_t size = image_info.device_buffer_size;
+        ssize_t size = image_info.buffer_size;
         std::string format = format_str_from_type(image_info.sample_type);
         ssize_t ndim = 3; //TODO
         std::vector<ssize_t> shape{
@@ -135,8 +135,8 @@ class Image
         py::tuple strides_tuple = py::make_tuple(
             is_interleaved
                 ? 1
-                : image_info.plane_info[0].device_pitch_in_bytes * image_info.height,
-            image_info.plane_info[0].device_pitch_in_bytes, is_interleaved ? 3 : 1);
+                : image_info.plane_info[0].row_stride * image_info.height,
+            image_info.plane_info[0].row_stride, is_interleaved ? 3 : 1);
 
         try {
             //TODO interleaved
@@ -258,13 +258,14 @@ class Image
                 for (size_t c = 0; c < image_info.num_planes; c++) {
                     image_info.plane_info[c].width = image_info.width;
                     image_info.plane_info[c].height = image_info.height;
-                    image_info.plane_info[c].device_pitch_in_bytes = pitch_in_bytes;
+                    image_info.plane_info[c].row_stride = pitch_in_bytes;
                     image_info.plane_info[c].sample_type = image_info.sample_type;
-                    buffer_size += image_info.plane_info[c].device_pitch_in_bytes *
+                    buffer_size += image_info.plane_info[c].row_stride *
                                    image_info.height;
                 }
-                image_info.device_buffer = buffer;
-                image_info.device_buffer_size = buffer_size;
+                image_info.buffer = buffer;
+                image_info.buffer_size = buffer_size;
+                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
                 nvimgcdcsImage_t image;
                 nvimgcdcsImageCreate(instance, &image, &image_info);
