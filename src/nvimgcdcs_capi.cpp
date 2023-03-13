@@ -47,7 +47,7 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
         code = NVIMGCDCS_STATUS_BAD_CODESTREAM;
         break;
     case UNSUPPORTED_FORMAT_STATUS:
-        code = NVIMGCDCS_STATUS_CODESTREAM_NOT_SUPPORTED;
+        code = NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
         break;
     case CUDA_CALL_ERROR:
         code = NVIMGCDCS_STATUS_EXECUTION_FAILED;
@@ -598,6 +598,13 @@ nvimgcdcsStatus_t nvimgcdcsImageCreate(
         {
             CHECK_NULL(image)
             CHECK_NULL(instance)
+            CHECK_NULL(image_info)
+            CHECK_NULL(image_info->buffer)
+            if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_UNKNOWN ||
+                image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_UNSUPPORTED) {
+                NVIMGCDCS_LOG_ERROR("Unknown or unsupported buffer kind");
+                return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            }
 
             *image = new nvimgcdcsImage();
             (*image)->image_.setImageInfo(image_info);
@@ -868,8 +875,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
             nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
 
-            int bytes_per_element =
-                image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+            int bytes_per_element = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
 
             nvimgcdcsDecodeParams_t decode_params;
             memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
@@ -880,20 +886,19 @@ nvimgcdcsStatus_t nvimgcdcsImRead(
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
             size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
-            image_info.device_buffer_size =
-                device_pitch_in_bytes * image_info.height * image_info.num_components;
-            CHECK_CUDA(cudaMalloc(&image_info.device_buffer, image_info.device_buffer_size));
+            image_info.buffer_size =
+                device_pitch_in_bytes * image_info.height * image_info.num_planes;
+            image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+            CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
             for (uint32_t c = 0; c < image_info.num_planes; ++c) {
                 image_info.plane_info[c].height = image_info.height;
                 image_info.plane_info[c].width = image_info.width;
-                image_info.plane_info[c].device_pitch_in_bytes = device_pitch_in_bytes;
+                image_info.plane_info[c].row_stride = device_pitch_in_bytes;
             }
-
-            image_info.host_buffer = nullptr;
-
+           
             nvimgcdcsImageCreate(instance, image, &image_info);
-            (*image)->dev_image_buffer_ = image_info.device_buffer;
-            (*image)->dev_image_buffer_size_ = image_info.device_buffer_size;
+            (*image)->dev_image_buffer_ = image_info.buffer;
+            (*image)->dev_image_buffer_size_ = image_info.buffer_size;
 
             nvimgcdcsDecoder_t decoder;
             nvimgcdcsDecoderCreate(instance, &decoder);
@@ -1035,8 +1040,8 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(
                 }
             }
 
-            if (image_info.sampling == NVIMGCDCS_SAMPLING_UNKNOWN ||
-                image_info.sampling == NVIMGCDCS_SAMPLING_NOT_SUPPORTED)
+            if (image_info.sampling == NVIMGCDCS_SAMPLING_NONE ||
+                image_info.sampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
                 image_info.sampling = NVIMGCDCS_SAMPLING_444;
             nvimgcdcsEncodeParams_t encode_params;
             memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));

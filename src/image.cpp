@@ -25,7 +25,7 @@ Image::Image()
     , image_desc_{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
           Image::static_image_ready}
     , promise_(nullptr)
-    , processing_status_(NVIMGCDCS_PROCESSING_STATUS_UNKNOWN)
+    , processing_status_(NVIMGCDCS_PROCESSING_STATUS_SUCCESS)
 {
     memset(&image_info_, 0, sizeof(image_info_));
 }

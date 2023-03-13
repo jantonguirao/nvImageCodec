@@ -11,7 +11,6 @@
 #pragma once
 
 #include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
 #include <string>
 #include <memory>
 #include "io_stream.h"

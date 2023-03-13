@@ -214,22 +214,22 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_encode");
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
-    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.host_buffer);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
         writeBMP<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer,
-            image_info.plane_info[0].host_pitch_in_bytes, NULL, 0, NULL, 0,
+            image_info.plane_info[0].row_stride, NULL, 0, NULL, 0,
             image_info.width, image_info.height, 8, true);
     } else {
         writeBMP<unsigned char>(code_stream->io_stream, host_buffer,
-            image_info.plane_info[0].host_pitch_in_bytes,
+            image_info.plane_info[0].row_stride,
             host_buffer +
-                image_info.plane_info[0].host_pitch_in_bytes * image_info.height,
-            image_info.plane_info[1].host_pitch_in_bytes,
+                image_info.plane_info[0].row_stride * image_info.height,
+            image_info.plane_info[1].row_stride,
             host_buffer +
-                +image_info.plane_info[0].host_pitch_in_bytes * image_info.height +
-                image_info.plane_info[1].host_pitch_in_bytes * image_info.height,
-            image_info.plane_info[2].host_pitch_in_bytes, image_info.width,
+                +image_info.plane_info[0].row_stride * image_info.height +
+                image_info.plane_info[1].row_stride * image_info.height,
+            image_info.plane_info[2].row_stride, image_info.width,
             image_info.height, 8, true);
     }
     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);

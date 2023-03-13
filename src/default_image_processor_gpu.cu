@@ -100,7 +100,8 @@ nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* p
     }
 
     int64_t out_stride_y, out_stride_x, out_stride_c;
-    int num_channels = params->image_info.num_components;
+    int num_channels = is_planar(params->out_sample_format)?params->image_info.num_planes
+                                                           :params->image_info.plane_info[0].num_channels;
 
     if (is_planar(params->out_sample_format)) {
         out_stride_c = region_size_y * region_size_x;
@@ -137,7 +138,7 @@ nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* p
 
     // TODO(janton): support colorspace conversion
     if (!is_same_colorspace(params->out_sample_format, params->image_info.sample_format))
-        return NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
+        return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
 
     nvimgcdcsImageProcessorConvert<Out, In><<<grid, block, 0, cuda_stream>>>(out_ptr, out_stride_y,
         out_stride_x, out_stride_c, num_channels, params->out_sample_format, in_ptr, in_stride_y,
@@ -231,7 +232,7 @@ nvimgcdcsStatus_t DefaultImageProcessor::convert_gpu(
              params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
         return ConvertGPUImpl<float, float>(params, dev_allocator, cuda_stream);
     else
-        return NVIMGCDCS_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
+        return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
 }
 
 nvimgcdcsStatus_t DefaultImageProcessor::static_convert_gpu(void* instance,

@@ -197,13 +197,12 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
         assert(palette_start + (ncolors * palette_entry_size) <= length);
     }
 
-    image_info->num_components =
-        number_of_channels(io_stream, bpp, compression_type, ncolors, palette_entry_size);
-    image_info->num_planes = image_info->num_components;
-    for (size_t i = 0; i < image_info->num_planes; i++) {
-        image_info->plane_info[i].height = image_info->height;
-        image_info->plane_info[i].width = image_info->width;
-        image_info->plane_info[i].sample_type =
+    image_info->num_planes = number_of_channels(io_stream, bpp, compression_type, ncolors, palette_entry_size);
+    for (size_t p = 0; p < image_info->num_planes; p++) {
+        image_info->plane_info[p].height = image_info->height;
+        image_info->plane_info[p].width = image_info->width;
+        image_info->plane_info[p].num_channels = 1;
+        image_info->plane_info[p].sample_type =
             NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; // TODO Allow other sample data types
     }
     image_info->sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;

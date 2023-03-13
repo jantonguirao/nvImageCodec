@@ -47,10 +47,6 @@ class Image : public IImage
 
     int index_;
     nvimgcdcsImageInfo_t image_info_;
-    void* host_buffer_;
-    size_t host_buffer_size_;
-    void* device_buffer_;
-    size_t device_buffer_size_;
     IDecodeState* decode_state_;
     IEncodeState* encode_state_;
     nvimgcdcsImageDesc image_desc_;

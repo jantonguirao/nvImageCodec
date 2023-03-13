@@ -45,7 +45,8 @@ static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsI
         nvimgcdcsImageInfo_t image_info;
         image->getImageInfo(image->instance, &image_info);
 
-        if ((image_info.num_components > 4 || image_info.num_components == 2)) {
+        //Assumed planar format
+        if ((image_info.num_planes > 4 || image_info.num_planes == 2)) {
             NVIMGCDCS_E_LOG_INFO("cannot encode because not suppoted number components");
             *result = false;
             return NVIMGCDCS_STATUS_SUCCESS;
@@ -223,24 +224,24 @@ static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeS
     NVIMGCDCS_E_LOG_TRACE("pxm_encode");
     nvimgcdcsImageInfo_t image_info;
     image->getImageInfo(image->instance, &image_info);
-    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.host_buffer);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
         write_pxm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer,
-            image_info.plane_info[0].host_pitch_in_bytes, NULL, 0, NULL, 0, NULL, 0,
-            image_info.width, image_info.height, image_info.num_components,
+            image_info.plane_info[0].row_stride, NULL, 0, NULL, 0, NULL, 0,
+            image_info.width, image_info.height, image_info.plane_info[0].num_channels,
             image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     } else {
         write_pxm<unsigned char>(code_stream->io_stream, host_buffer,
-            image_info.plane_info[0].host_pitch_in_bytes,
+            image_info.plane_info[0].row_stride,
             host_buffer +
-                image_info.plane_info[0].host_pitch_in_bytes * image_info.height,
-            image_info.plane_info[1].host_pitch_in_bytes,
+                image_info.plane_info[0].row_stride * image_info.height,
+            image_info.plane_info[1].row_stride,
             host_buffer +
-                +image_info.plane_info[0].host_pitch_in_bytes * image_info.height +
-                image_info.plane_info[1].host_pitch_in_bytes * image_info.height,
-            image_info.plane_info[2].host_pitch_in_bytes, NULL, 0, image_info.width,
-            image_info.height, image_info.num_components,
+                +image_info.plane_info[0].row_stride * image_info.height +
+                image_info.plane_info[1].row_stride * image_info.height,
+            image_info.plane_info[2].row_stride, NULL, 0, image_info.width,
+            image_info.height, image_info.num_planes,
             image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     }
     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);

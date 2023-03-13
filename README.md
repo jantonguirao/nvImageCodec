@@ -25,8 +25,6 @@ Currently this project is in prototype state  with initial support for:
 There are following known limitation:
 - Only planar RGB format is supported as a input for encoder and output from decoder
 - There is limited set of supported decoder and encoder parameters
-- No custom allocators yet
-- No batch processing yet
 - No ROI support yet
 - No Metadata support yet (appart of EXIF orientation for jpeg)
 
