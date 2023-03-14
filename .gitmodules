@@ -12,3 +12,4 @@
 [submodule "resources/jpeg"]
 	path = resources/jpeg
 	url = ssh://git@gitlab-master.nvidia.com:12051/cuda-hpc-libraries/nvjpeg/nvjpeg_test_images.git
+        branch = main
