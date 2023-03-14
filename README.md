@@ -45,7 +45,6 @@ There are following known limitation:
 ```
 git lfs clone ssh://git@gitlab-master.nvidia.com:12051/cuda-hpc-libraries/nvimagecodec.git
 cd nvimagecodec
-git checkout prototype
 git submodule update --init --recursive --remote
 mkdir build
 cd build
