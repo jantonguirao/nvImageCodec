@@ -1,4 +1,3 @@
 add_subdirectory(nvbmp)
-add_subdirectory(nvimproc)
 add_subdirectory(nvimtrans)
 add_subdirectory(example_high_level_api)
