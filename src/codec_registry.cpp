@@ -15,6 +15,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <nvtx3/nvtx3.hpp>
 
 namespace nvimgcdcs {
 
@@ -26,15 +27,24 @@ void CodecRegistry::registerCodec(std::unique_ptr<ICodec> codec)
 {
     if (by_name_.find(codec->name()) != by_name_.end())
         throw std::invalid_argument("A different codec with the same name already registered.");
+    // TODO(janton): Figure out a way to give JPEG a higher priority without this
+    //               Perhaps codecs should come with a priority too
+    if (codec->name() == "jpeg") {
+        codec_ptrs_.push_front(codec.get());
+    } else {
+        codec_ptrs_.push_back(codec.get());
+    }
     by_name_.insert(std::make_pair(codec->name(), std::move(codec)));
 }
 
 std::unique_ptr<IImageParser> CodecRegistry::getParser(
     nvimgcdcsCodeStreamDesc_t code_stream) const
 {
+    nvtx3::scoped_range marker{"getParser"};
     NVIMGCDCS_LOG_TRACE("CodecRegistry::getParser");
-    for (const auto& entry : by_name_) {
-        std::unique_ptr<IImageParser> parser = entry.second->createParser(code_stream);
+    for (auto* codec : codec_ptrs_) {
+        nvtx3::scoped_range marker{std::string("getParser ") + codec->name()};
+        std::unique_ptr<IImageParser> parser = codec->createParser(code_stream);
         if (parser) {
             return parser;
         }

@@ -88,6 +88,10 @@ class MemIoStream : public IoStream
 
     std::size_t size() const override { return size_; }
 
+    const void* raw_data() const override { 
+        return static_cast<const void*>(start_); 
+    }
+
   private:
     T* start_ = nullptr;
     ptrdiff_t size_ = 0;

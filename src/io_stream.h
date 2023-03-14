@@ -140,6 +140,14 @@ class IoStream
      * @brief Returns the size as a signed integer.
      */
     inline int64_t ssize() const { return size(); }
+
+    /**
+     * @brief Returns the raw pointer to the data in memory, if available,
+     *        otherwise returns nullptr
+     * 
+     * @return const void* 
+     */
+    virtual const void* raw_data() const { return nullptr; };
 };
 
 } // namespace nvimgcdcs
