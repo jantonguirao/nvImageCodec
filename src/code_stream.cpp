@@ -15,7 +15,7 @@
 #include "codec.h"
 #include "codec_registry.h"
 #include "image_parser.h"
-
+#include <nvtx3/nvtx3.hpp>
     namespace nvimgcdcs {
 
 CodeStream::CodeStream(
@@ -26,7 +26,7 @@ CodeStream::CodeStream(
     , io_stream_factory_(std::move(io_stream_factory))
     , io_stream_(nullptr)
     , io_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static,
-          write_static, putc_static, skip_static, seek_static, tell_static, size_static}
+          write_static, putc_static, skip_static, seek_static, tell_static, size_static, raw_data_static}
     , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, &io_stream_desc_, nullptr, static_get_codec_name,
           static_get_image_info}
     , image_info_(nullptr)
@@ -39,6 +39,7 @@ void CodeStream::parse()
     auto parser = codec_registry_->getParser(&code_stream_desc_);
     if (!parser)
         throw std::runtime_error("Could not match parser");
+
     parser_                       = std::move(parser);
     codec_name_                   = parser_->getCodecName();
     parse_state_                  = parser_->createParseState();
@@ -157,6 +158,14 @@ nvimgcdcsStatus_t CodeStream::size(size_t* size)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
+
+nvimgcdcsStatus_t CodeStream::raw_data(const void** raw_data)
+{
+    assert(io_stream_);
+    *raw_data = io_stream_->raw_data();
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
 nvimgcdcsStatus_t CodeStream::read_static(
     void* instance, size_t* output_size, void* buf, size_t bytes)
 {
@@ -206,6 +215,13 @@ nvimgcdcsStatus_t CodeStream::size_static(void* instance, size_t* size)
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->size(size);
+}
+
+nvimgcdcsStatus_t CodeStream::raw_data_static(void* instance, const void** raw_data)
+{
+    assert(instance);
+    CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
+    return handle->raw_data(raw_data);
 }
 
 nvimgcdcsStatus_t CodeStream::static_get_codec_name(void* instance, char* codec_name)

@@ -444,6 +444,8 @@ extern "C"
         NVIMGCDCS_CAPABILITY_HOST_OUTPUT = 6,
         NVIMGCDCS_CAPABILITY_DEVICE_INPUT = 7,
         NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT = 8,
+        NVIMGCDCS_CAPABILITY_LAYOUT_PLANAR = 9,
+        NVIMGCDCS_CAPABILITY_LAYOUT_INTERLEAVED = 10,
         NVIMGCDCS_CAPABILITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsCapability_t;
 
@@ -461,6 +463,7 @@ extern "C"
         nvimgcdcsStatus_t (*seek)(void* instance, size_t offset, int whence);
         nvimgcdcsStatus_t (*tell)(void* instance, size_t* offset);
         nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
+        nvimgcdcsStatus_t (*raw_data)(void* instance, const void**);
     };
     typedef struct nvimgcdcsIOStreamDesc* nvimgcdcsIoStreamDesc_t;
 

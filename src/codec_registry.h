@@ -13,7 +13,7 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <vector>
+#include <deque>
 #include "icodec.h"
 #include "icodec_registry.h"
 
@@ -30,7 +30,7 @@ class CodecRegistry : public ICodecRegistry
         nvimgcdcsCodeStreamDesc_t code_stream) const override;
     ICodec* getCodecByName(const char* name)  override;
   private:
-    std::vector<ICodec*> codec_ptrs_;
+    std::deque<ICodec*> codec_ptrs_;
     std::map<std::string, std::unique_ptr<ICodec>> by_name_;
 };
 } // namespace nvimgcdcs
