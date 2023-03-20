@@ -14,9 +14,19 @@
 #include "image_generic_encoder.h"
 #include "library_loader.h"
 #include "default_executor.h"
+#include "user_executor.h"
 #include "default_image_processor.h"
 
 namespace nvimgcdcs {
+
+static std::unique_ptr<IExecutor> GetExecutor(nvimgcdcsInstanceCreateInfo_t create_info) {
+    std::unique_ptr<IExecutor> exec;
+    if (create_info.executor)
+        exec = std::make_unique<UserExecutor>(create_info.executor);
+    else
+        exec = std::make_unique<DefaultExecutor>(create_info.num_cpu_threads);
+    return exec;
+}
 
 NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_info)
     : device_allocator_(create_info.device_allocator)
@@ -26,7 +36,7 @@ NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_in
     , codec_registry_()
     , plugin_framework_(&codec_registry_, std::move(std::make_unique<DirectoryScaner>()),
           std::move(std::make_unique<LibraryLoader>()),
-          std::move(std::make_unique<DefaultExecutor>(create_info.num_cpu_threads)),
+          std::move(GetExecutor(create_info)),
           std::move(std::make_unique<DefaultImageProcessor>()),
           device_allocator_, pinned_allocator_)
 {

@@ -767,6 +767,7 @@ extern "C"
         uint32_t message_severity;    //severity for default debug messenger
         uint32_t message_type;        //message type for default debug messenger
         int num_cpu_threads;
+        nvimgcdcsExecutorDesc_t executor = nullptr;
     } nvimgcdcsInstanceCreateInfo_t;
 
     // Instance
@@ -778,7 +779,7 @@ extern "C"
         nvimgcdcsInstance_t instance, nvimgcdcsExtension_t* extension, nvimgcdcsExtensionDesc_t* extension_desc);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(nvimgcdcsExtension_t extension);
 
-    // Debug Messanger
+    // Debug Messenger
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessengerCreate(
         nvimgcdcsInstance_t instance, nvimgcdcsDebugMessenger_t* dbg_messenger, const nvimgcdcsDebugMessengerDesc_t* messenger_desc);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessengerDestroy(nvimgcdcsDebugMessenger_t dbg_messenger);
