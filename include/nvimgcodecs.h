@@ -116,14 +116,17 @@ extern "C"
         NVIMGCDCS_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStatus_t;
 
+    // 0     bit  -> 0 - unsigned, 1- signed
+    // 1..7  bits -> type number of bits
+    // 8..15 bits -> precision
     typedef enum
     {
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN = 0,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 = 1,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 = 2,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 = 3,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 = 4,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 5,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 = 0x0808,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 = 0x1010,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 = 0x0809,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 = 0x1011,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 0x2021,
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED = -1,
         NVIMGCDCS_SAMPLE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampleDataType_t;
@@ -229,9 +232,8 @@ extern "C"
 
         nvimgcdcsColorSpec_t color_spec;
         nvimgcdcsChromaSubsampling_t sampling;
-        nvimgcdcsSampleDataType_t sample_type;
-        nvimgcdcsOrientation_t orientation;
         nvimgcdcsSampleFormat_t sample_format;
+        nvimgcdcsOrientation_t orientation;
         nvimgcdcsRegion_t region;
 
         void* buffer;

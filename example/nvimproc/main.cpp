@@ -152,6 +152,11 @@ int collect_input_files(const std::string& sInputPath, std::vector<std::string>&
     return 0;
 }
 
+inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
+{
+    return ((static_cast<unsigned int>(sample_type) & 0b11111110) + 7) / 8;
+}
+
 int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& params, const FileNames& image_names,
     nvimgcdcsSampleFormat_t out_format, NVCVImageData* image_data, NVCVTensorData* tensor_data, cudaStream_t& stream)
 {
@@ -167,7 +172,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
     decode_params.enable_color_conversion = true;
     decode_params.enable_orientation = true;
-    int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+    int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
     // Preparing output image_info
     image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
@@ -276,7 +281,6 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
         std::cout << "\t - height:" << image_info.height << std::endl;
         std::cout << "\t - num_planes:" << image_info.num_planes << std::endl;
         std::cout << "\t - num_channels:" << image_info.plane_info[0].num_channels << std::endl;
-        std::cout << "\t - sample_type:" << image_info.sample_type << std::endl;
         std::cout << "\t - sample_format:" << image_info.sample_format << std::endl;
         std::cout << "\t - row_stride:" << image_info.plane_info[0].row_stride << std::endl;
         std::cout << "\t - codec:" << params.output_codec.data() << std::endl;

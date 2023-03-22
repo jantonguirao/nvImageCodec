@@ -329,33 +329,34 @@ constexpr auto loc2ext_packing(const nvimgcdcsImageInfo_t& image_info)
     case NVIMGCDCS_SAMPLEFORMAT_UNSUPPORTED:
         return std::make_tuple(NVCV_PACKING_0, NVCV_PACKING_0, NVCV_PACKING_0, NVCV_PACKING_0);
     case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED: {
-        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.sample_type), 1));
+        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.plane_info[0].sample_type), 1));
         return std::make_tuple<NVCVPacking, NVCVPacking, NVCVPacking, NVCVPacking>(
             std::move(packing0), NVCV_PACKING_0, NVCV_PACKING_0, NVCV_PACKING_0);
     }
     case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED: {
-        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(
-            loc2ext_bpp(image_info.sample_type) * image_info.plane_info[0].num_channels, image_info.plane_info[0].num_channels));
+        NVCVPacking packing0 = static_cast<NVCVPacking>(
+            NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.plane_info[0].sample_type) * image_info.plane_info[0].num_channels,
+                image_info.plane_info[0].num_channels));
         return std::make_tuple<NVCVPacking, NVCVPacking, NVCVPacking, NVCVPacking>(
             std::move(packing0), NVCV_PACKING_0, NVCV_PACKING_0, NVCV_PACKING_0);
     }
     case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
     case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
     case NVIMGCDCS_SAMPLEFORMAT_P_RGB: {
-        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.sample_type), 1));
-        NVCVPacking packing1 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.sample_type), 1));
-        NVCVPacking packing2 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.sample_type), 1));
+        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.plane_info[0].sample_type), 1));
+        NVCVPacking packing1 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.plane_info[1].sample_type), 1));
+        NVCVPacking packing2 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.plane_info[2].sample_type), 1));
         return std::make_tuple<NVCVPacking, NVCVPacking, NVCVPacking, NVCVPacking>(
             std::move(packing0), std::move(packing1), std::move(packing2), NVCV_PACKING_0);
     }
     case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
     case NVIMGCDCS_SAMPLEFORMAT_I_BGR: {
-        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.sample_type) * 3, 3));
+        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.plane_info[0].sample_type) * 3, 3));
         return std::make_tuple<NVCVPacking, NVCVPacking, NVCVPacking, NVCVPacking>(
             std::move(packing0), NVCV_PACKING_0, NVCV_PACKING_0, NVCV_PACKING_0);
     }
     case NVIMGCDCS_SAMPLEFORMAT_P_Y: {
-        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.sample_type), 1));
+        NVCVPacking packing0 = static_cast<NVCVPacking>(NVCV_DETAIL_BPP_NCH(loc2ext_bpp(image_info.plane_info[0].sample_type), 1));
         return std::make_tuple<NVCVPacking, NVCVPacking, NVCVPacking, NVCVPacking>(
             std::move(packing0), NVCV_PACKING_0, NVCV_PACKING_0, NVCV_PACKING_0);
     }
@@ -450,7 +451,7 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2ImageData(NVCVImageData* image_data, const 
     auto color_model = loc2ext_color_model(image_info.color_spec);
     if (color_model == NVCV_COLOR_MODEL_UNDEFINED)
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    auto data_kind = loc2ext_data_kind(image_info.sample_type);
+    auto data_kind = loc2ext_data_kind(image_info.plane_info[0].sample_type);
     auto swizzle = loc2ext_swizzle(image_info.sample_format);
     if (swizzle == NVCV_SWIZZLE_0000)
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
@@ -478,7 +479,7 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
         image_info->buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
         image_info->color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         image_info->sampling = NVIMGCDCS_SAMPLING_444;
-        image_info->sample_type = ext2loc_sample_type(tensor_data.dtype); //TODO when sample_type removed from image_info save it in planes
+        auto sample_type = ext2loc_sample_type(tensor_data.dtype);
         if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_NHWC) == 0 && tensor_data.shape[3] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
             image_info->height = tensor_data.shape[1]; //TODO remove when removed form image_info
@@ -486,7 +487,7 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
             image_info->plane_info[0].height = tensor_data.shape[1];
             image_info->plane_info[0].width = tensor_data.shape[2];
             image_info->plane_info[0].row_stride = tensor_data.shape[2] *strided.strides[2];
-            image_info->plane_info[0].sample_type = image_info->sample_type;
+            image_info->plane_info[0].sample_type = sample_type;
         } else if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_HWC) == 0 && tensor_data.shape[2] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
             image_info->height = tensor_data.shape[0]; //TODO remove when removed form image_info
@@ -494,7 +495,7 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
             image_info->plane_info[0].height = tensor_data.shape[0];
             image_info->plane_info[0].width = tensor_data.shape[1];
             image_info->plane_info[0].row_stride = tensor_data.shape[1] *strided.strides[1];
-            image_info->plane_info[0].sample_type = image_info->sample_type;
+            image_info->plane_info[0].sample_type = sample_type;
         } else if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_NCHW) == 0 && tensor_data.shape[1] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info->height = tensor_data.shape[2]; //TODO remove when removed form image_info
@@ -522,7 +523,7 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
                 image_info->plane_info[p].width = image_info->width;
                 image_info->plane_info[p].row_stride = image_info->plane_info[0].row_stride;
                 image_info->plane_info[p].num_channels = 1;
-                image_info->plane_info[p].sample_type = image_info->sample_type;
+                image_info->plane_info[p].sample_type = sample_type;
             }
         }
         image_info->buffer_size = image_info->plane_info[0].row_stride * image_info->height * image_info->num_planes;
@@ -542,7 +543,7 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2TensorData(NVCVTensorData* tensor_data, con
         NVCVTensorBufferStrided& strided = tensor_data->buffer.strided;
         strided.basePtr = static_cast<NVCVByte*>(image_info.buffer);
         tensor_data->rank = 4;
-        tensor_data->dtype = loc2ext_dtype(image_info.sample_type);
+        tensor_data->dtype = loc2ext_dtype(image_info.plane_info[0].sample_type);
         if (tensor_data->dtype == NVCV_DATA_TYPE_NONE)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         int32_t bpp;

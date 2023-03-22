@@ -126,7 +126,7 @@ class Image
         void* buffer = image_info.buffer;
         ssize_t itemsize = 1; //TODO
         ssize_t size = image_info.buffer_size;
-        std::string format = format_str_from_type(image_info.sample_type);
+        std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
         ssize_t ndim = 3; //TODO
         std::vector<ssize_t> shape{
             image_info.num_planes, image_info.height, image_info.width};
@@ -192,7 +192,7 @@ class Image
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        std::string format = format_str_from_type(image_info.sample_type);
+        std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
         return py::dtype(format);
     }
 
@@ -246,7 +246,7 @@ class Image
                 image_info.height = vshape[1];
                 image_info.width = vshape[2];
                 std::string typestr = iface["typestr"].cast<std::string>();
-                image_info.sample_type = type_from_format_str(typestr);
+                auto sample_type = type_from_format_str(typestr);
                 size_t buffer_size = 0;
                 image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
                 image_info.sample_format =
@@ -259,7 +259,7 @@ class Image
                     image_info.plane_info[c].width = image_info.width;
                     image_info.plane_info[c].height = image_info.height;
                     image_info.plane_info[c].row_stride = pitch_in_bytes;
-                    image_info.plane_info[c].sample_type = image_info.sample_type;
+                    image_info.plane_info[c].sample_type = sample_type;
                     buffer_size += image_info.plane_info[c].row_stride *
                                    image_info.height;
                 }

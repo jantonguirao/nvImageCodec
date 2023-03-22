@@ -205,7 +205,6 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
         image_info->plane_info[p].sample_type =
             NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; // TODO Allow other sample data types
     }
-    image_info->sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
     image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
