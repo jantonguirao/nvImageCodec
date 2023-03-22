@@ -318,13 +318,11 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
 nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(nvimgcdcsInstance_t instance,
     nvimgcdcsCodeStream_t* stream_handle, const unsigned char* data, size_t size)
 {
-    nvtx3::scoped_range marker{"nvimgcdcsCodeStreamCreateFromHostMem"};
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, stream_handle);
 
     NVIMGCDCSAPI_TRY
         {
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                nvtx3::scoped_range marker{"parseFromMem"};
                 (*stream_handle)->code_stream_.parseFromMem(data, size);
             }
         }
