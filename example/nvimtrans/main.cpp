@@ -163,7 +163,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
-    int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+    int bytes_per_element = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
     // Preparing output image_info
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
@@ -385,7 +385,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetCodecName(code_streams[i], codec_name));
 
-        int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+        int bytes_per_element = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
 
         //Decode to format
         image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
