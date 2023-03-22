@@ -18,6 +18,8 @@
 #include <nvcv/IImageData.hpp>
 #include <nvcv/ImageFormat.hpp>
 
+namespace nvimgcdcs { namespace adapter { namespace nvcv { namespace {
+
 #define CHECK_NVCV(call)                                     \
     {                                                        \
         NVCVStatus _e = (call);                              \
@@ -119,16 +121,16 @@ constexpr auto ext2loc_sample_type(NVCVDataKind data_kind, int32_t bpp)
 constexpr auto ext2loc_sample_type(NVCVDataType data_type)
 {
     switch (data_type) {
-    case NVCV_DATA_TYPE_S8: 
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8;
+    case NVCV_DATA_TYPE_S8:
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8;
     case NVCV_DATA_TYPE_S16:
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16;
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16;
     case NVCV_DATA_TYPE_U8:
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
     case NVCV_DATA_TYPE_U16:
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
     case NVCV_DATA_TYPE_F32:
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
     default:
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
     }
@@ -155,8 +157,7 @@ constexpr auto loc2ext_dtype(nvimgcdcsSampleDataType_t in)
     }
 }
 
-    constexpr auto
-    ext2loc_sample_format(int32_t num_planes, NVCVSwizzle swizzle, NVCVColorSpec color_spec)
+constexpr auto ext2loc_sample_format(int32_t num_planes, NVCVSwizzle swizzle, NVCVColorSpec color_spec)
 {
     if (color_spec == NVCV_COLOR_SPEC_sRGB) {
         if (swizzle == NVCV_SWIZZLE_XYZ0)
@@ -365,7 +366,7 @@ constexpr auto loc2ext_packing(const nvimgcdcsImageInfo_t& image_info)
     }
 }
 
-nvimgcdcsStatus_t nvimgcdcsImageData2Imageinfo(nvimgcdcsImageInfo_t* image_info, const NVCVImageData& image_data)
+nvimgcdcsStatus_t ImageData2Imageinfo(nvimgcdcsImageInfo_t* image_info, const NVCVImageData& image_data)
 {
     try {
         image_info->buffer_kind = ext2loc_buffer_kind(image_data.bufferType);
@@ -427,7 +428,7 @@ nvimgcdcsStatus_t nvimgcdcsImageData2Imageinfo(nvimgcdcsImageInfo_t* image_info,
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvimgcdcsImageInfo2ImageData(NVCVImageData* image_data, const nvimgcdcsImageInfo_t& image_info)
+nvimgcdcsStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcdcsImageInfo_t& image_info)
 {
     image_data->bufferType = loc2ext_buffer_kind(image_info.buffer_kind);
     if (image_data->bufferType == NVCV_IMAGE_BUFFER_NONE) {
@@ -463,7 +464,7 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2ImageData(NVCVImageData* image_data, const 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info, const NVCVTensorData& tensor_data)
+nvimgcdcsStatus_t TensorData2ImageInfo(nvimgcdcsImageInfo_t* image_info, const NVCVTensorData& tensor_data)
 {
     try {
         if (tensor_data.bufferType != NVCV_TENSOR_BUFFER_STRIDED_CUDA)
@@ -484,24 +485,24 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
             image_info->plane_info[0].height = tensor_data.shape[1];
             image_info->plane_info[0].width = tensor_data.shape[2];
-            image_info->plane_info[0].row_stride = tensor_data.shape[2] *strided.strides[2];
+            image_info->plane_info[0].row_stride = tensor_data.shape[2] * strided.strides[2];
             image_info->plane_info[0].sample_type = sample_type;
         } else if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_HWC) == 0 && tensor_data.shape[2] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
             image_info->plane_info[0].height = tensor_data.shape[0];
             image_info->plane_info[0].width = tensor_data.shape[1];
-            image_info->plane_info[0].row_stride = tensor_data.shape[1] *strided.strides[1];
+            image_info->plane_info[0].row_stride = tensor_data.shape[1] * strided.strides[1];
             image_info->plane_info[0].sample_type = sample_type;
         } else if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_NCHW) == 0 && tensor_data.shape[1] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info->plane_info[0].height = tensor_data.shape[2];
             image_info->plane_info[0].width = tensor_data.shape[3];
-            image_info->plane_info[0].row_stride = tensor_data.shape[3] *strided.strides[3];
+            image_info->plane_info[0].row_stride = tensor_data.shape[3] * strided.strides[3];
         } else if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_CHW) == 0 && tensor_data.shape[0] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info->plane_info[0].height = tensor_data.shape[1];
             image_info->plane_info[0].width = tensor_data.shape[2];
-            image_info->plane_info[0].row_stride = tensor_data.shape[2] *strided.strides[2];
+            image_info->plane_info[0].row_stride = tensor_data.shape[2] * strided.strides[2];
         } else
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
@@ -526,7 +527,7 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvimgcdcsImageInfo2TensorData(NVCVTensorData* tensor_data, const nvimgcdcsImageInfo_t& image_info)
+nvimgcdcsStatus_t ImageInfo2TensorData(NVCVTensorData* tensor_data, const nvimgcdcsImageInfo_t& image_info)
 {
     try {
         if (image_info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE)
@@ -550,7 +551,7 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2TensorData(NVCVTensorData* tensor_data, con
             tensor_data->shape[2] = image_info.plane_info[0].height;
             tensor_data->shape[3] = image_info.plane_info[0].width;
 
-            strided.strides[3] = bytes; 
+            strided.strides[3] = bytes;
             strided.strides[2] = image_info.plane_info[0].row_stride;
             strided.strides[1] = strided.strides[2] * tensor_data->shape[2];
             strided.strides[0] = strided.strides[1] * tensor_data->shape[1];
@@ -561,7 +562,7 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2TensorData(NVCVTensorData* tensor_data, con
             tensor_data->shape[2] = image_info.plane_info[0].width;
             tensor_data->shape[3] = 3;
 
-            strided.strides[3] = bytes; 
+            strided.strides[3] = bytes;
             strided.strides[2] = strided.strides[3] * tensor_data->shape[3];
             strided.strides[1] = image_info.plane_info[0].row_stride;
             strided.strides[0] = strided.strides[1] * tensor_data->shape[1];
@@ -574,3 +575,5 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2TensorData(NVCVTensorData* tensor_data, con
 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
+
+}}}} // namespace nvimgcdcs::adapter::nvcv
