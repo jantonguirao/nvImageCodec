@@ -49,7 +49,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_IMAGE_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_INFO,
-        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_COMPOENT_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_COMPONENT_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_RESOLUTION_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_DECODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS,
@@ -228,7 +228,7 @@ extern "C"
         void* next;
 
         nvimgcdcsColorSpec_t color_spec;
-        nvimgcdcsChromaSubsampling_t sampling;
+        nvimgcdcsChromaSubsampling_t chroma_subsampling;
         nvimgcdcsSampleFormat_t sample_format;
         nvimgcdcsOrientation_t orientation;
         nvimgcdcsRegion_t region;
@@ -496,7 +496,7 @@ extern "C"
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING =
             8, // Message about behavior that is not necessarily an error, but very likely a bug in your application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR =
-            16, // Message about behavior that is invalid and may cause impropare execution or result of operation (e.g. can't open file) but not application
+            16, // Message about behavior that is invalid and may cause improper execution or result of operation (e.g. can't open file) but not application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL =
             24, // Message about behavior that is invalid and may cause crashes and forcing to shutdown application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL = 0x0FFFFFFF, //Used in case filtering out by message severity
