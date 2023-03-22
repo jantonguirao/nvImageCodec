@@ -937,7 +937,7 @@ static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encod
 
             auto it = sf2css.find(sampling_factor);
             if (it != sf2css.end()) {
-                image_info->sampling = it->second;
+                image_info->chroma_subsampling = it->second;
             } else {
                 assert(!"MISSING CHROMA SUBSAMPLING VALUE");
             }
@@ -999,8 +999,8 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
                 }
             }
 
-            if (image_info.sampling == NVIMGCDCS_SAMPLING_NONE || image_info.sampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
-                image_info.sampling = NVIMGCDCS_SAMPLING_444;
+            if (image_info.chroma_subsampling == NVIMGCDCS_SAMPLING_NONE || image_info.chroma_subsampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
+                image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
             nvimgcdcsEncodeParams_t encode_params;
             memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
             //Defaults

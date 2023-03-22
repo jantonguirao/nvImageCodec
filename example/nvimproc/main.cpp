@@ -176,7 +176,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
 
     // Preparing output image_info
     image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-    image_info.sampling = NVIMGCDCS_SAMPLING_444;
+    image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
     image_info.sample_format = out_format;
     if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
         image_info.num_planes = 1;

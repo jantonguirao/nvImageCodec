@@ -246,7 +246,7 @@ class Image
                 image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
                 image_info.sample_format =
                     NVIMGCDCS_SAMPLEFORMAT_P_RGB; //NVIMGCDCS_SAMPLEFORMAT_I_RGB; //TODO add support for various formats
-                image_info.sampling = NVIMGCDCS_SAMPLING_444;
+                image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
                 int pitch_in_bytes = vstrides.size() > 1 ? vstrides[1] : image_info.plane_info[0].width;
                 for (size_t c = 0; c < image_info.num_planes; c++) {
                     image_info.plane_info[c].width = image_info.plane_info[0].width;

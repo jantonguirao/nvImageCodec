@@ -413,8 +413,8 @@ nvimgcdcsStatus_t nvimgcdcsImageData2Imageinfo(nvimgcdcsImageInfo_t* image_info,
 
         NVCVChromaSubsampling css;
         CHECK_NVCV(nvcvImageFormatGetChromaSubsampling(image_data.format, &css));
-        image_info->sampling = ext2loc_css(css);
-        if (image_info->sampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
+        image_info->chroma_subsampling = ext2loc_css(css);
+        if (image_info->chroma_subsampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
         image_info->sample_format = ext2loc_sample_format(strided.numPlanes, swizzle, color_spec);
@@ -447,7 +447,7 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2ImageData(NVCVImageData* image_data, const 
     auto color_spec = loc2ext_color_spec(image_info.color_spec);
     if (color_spec == NVCV_COLOR_SPEC_UNDEFINED)
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    auto css = loc2ext_css(image_info.sampling);
+    auto css = loc2ext_css(image_info.chroma_subsampling);
     auto color_model = loc2ext_color_model(image_info.color_spec);
     if (color_model == NVCV_COLOR_MODEL_UNDEFINED)
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
@@ -478,7 +478,7 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
         image_info->buffer = static_cast<void*>(strided.basePtr);
         image_info->buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
         image_info->color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-        image_info->sampling = NVIMGCDCS_SAMPLING_444;
+        image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_444;
         auto sample_type = ext2loc_sample_type(tensor_data.dtype);
         if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_NHWC) == 0 && tensor_data.shape[3] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
