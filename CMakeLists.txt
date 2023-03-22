@@ -21,7 +21,8 @@ endif()
 
 option(BUILD_LIBRARY "Build library" ON)
 option(BUILD_TEST "Build tests" ON)
-option(BUILD_EXAMPLE "Build example" ON)
+option(BUILD_SAMPLES "Build samples" ON)
+option(BUILD_CVCUDA_SAMPLES "Build CVCUDA samples" OFF)
 option(BUILD_DOCS "Build documentation" OFF)
 option(BUILD_EXTENSIONS "Build extensions modules" ON)
 option(BUILD_PYTHON "Build Python binding" ON)
@@ -95,7 +96,7 @@ if(BUILD_LIBRARY)
 add_subdirectory(src)
 endif()
 
-if(BUILD_EXAMPLE)
+if(BUILD_SAMPLES)
 add_subdirectory(example)
 endif()
 
