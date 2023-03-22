@@ -88,8 +88,8 @@ template <typename Out, typename In>
 nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* params,
     nvimgcdcsDeviceAllocator_t dev_allocator, cudaStream_t cuda_stream)
 {
-    int64_t region_size_y = params->image_info.height;
-    int64_t region_size_x = params->image_info.width;
+    int64_t region_size_y = params->image_info.plane_info[0].height;
+    int64_t region_size_x = params->image_info.plane_info[0].width;
     if (params->image_info.region.ndim > 0) {
         int64_t roi_start_y = params->image_info.region.start[0];
         int64_t roi_start_x = params->image_info.region.start[1];
@@ -115,11 +115,11 @@ nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* p
 
     int64_t in_stride_y, in_stride_x, in_stride_c;
     if (is_planar(params->image_info.sample_format)) {
-        in_stride_c = params->image_info.height * params->image_info.width;
-        in_stride_y = params->image_info.width;
+        in_stride_c = params->image_info.plane_info[0].height * params->image_info.plane_info[0].width;
+        in_stride_y = params->image_info.plane_info[0].width;
         in_stride_x = 1;
     } else {  // interleaved
-        in_stride_y = params->image_info.width * num_channels;
+        in_stride_y = params->image_info.plane_info[0].width * num_channels;
         in_stride_x = num_channels;
         in_stride_c = 1;
     }

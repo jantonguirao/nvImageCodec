@@ -227,9 +227,6 @@ extern "C"
         nvimgcdcsStructureType_t type;
         void* next;
 
-        uint32_t width;
-        uint32_t height;
-
         nvimgcdcsColorSpec_t color_spec;
         nvimgcdcsChromaSubsampling_t sampling;
         nvimgcdcsSampleFormat_t sample_format;
