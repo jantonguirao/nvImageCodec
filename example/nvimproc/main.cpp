@@ -216,8 +216,8 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     }
 
     nvimgcdcsImageGetImageInfo(image, &image_info);
-    nvimgcdcsImageInfo2ImageData(image_data, image_info);
-    nvimgcdcsImageInfo2TensorData(tensor_data, image_info);
+    nvimgcdcs::adapter::nvcv::ImageInfo2ImageData(image_data, image_info);
+    nvimgcdcs::adapter::nvcv::ImageInfo2TensorData(tensor_data, image_info);
 
     nvimgcdcsImageDestroy(image);
     nvimgcdcsDecoderDestroy(decoder);
@@ -272,7 +272,7 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     cudaStream_t& stream)
 {
     nvimgcdcsImageInfo_t image_info;
-    nvimgcdcsTensorData2Imageinfo(&image_info, tensor_data);
+    nvimgcdcs::adapter::nvcv::TensorData2ImageInfo(&image_info, tensor_data);
     if (0) {
         std::cout << "Input image info: " << std::endl;
         std::cout << "\t - width:" << image_info.plane_info[0].width << std::endl;
