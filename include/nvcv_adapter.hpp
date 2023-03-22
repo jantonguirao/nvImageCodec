@@ -482,31 +482,23 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
         auto sample_type = ext2loc_sample_type(tensor_data.dtype);
         if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_NHWC) == 0 && tensor_data.shape[3] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
-            image_info->height = tensor_data.shape[1]; //TODO remove when removed form image_info
-            image_info->width = tensor_data.shape[2];  //TODO remove when removed form image_info
             image_info->plane_info[0].height = tensor_data.shape[1];
             image_info->plane_info[0].width = tensor_data.shape[2];
             image_info->plane_info[0].row_stride = tensor_data.shape[2] *strided.strides[2];
             image_info->plane_info[0].sample_type = sample_type;
         } else if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_HWC) == 0 && tensor_data.shape[2] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
-            image_info->height = tensor_data.shape[0]; //TODO remove when removed form image_info
-            image_info->width = tensor_data.shape[1];  //TODO remove when removed form image_info
             image_info->plane_info[0].height = tensor_data.shape[0];
             image_info->plane_info[0].width = tensor_data.shape[1];
             image_info->plane_info[0].row_stride = tensor_data.shape[1] *strided.strides[1];
             image_info->plane_info[0].sample_type = sample_type;
         } else if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_NCHW) == 0 && tensor_data.shape[1] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-            image_info->height = tensor_data.shape[2]; //TODO remove when removed form image_info
-            image_info->width = tensor_data.shape[3];  //TODO remove when removed form image_info
             image_info->plane_info[0].height = tensor_data.shape[2];
             image_info->plane_info[0].width = tensor_data.shape[3];
             image_info->plane_info[0].row_stride = tensor_data.shape[3] *strided.strides[3];
         } else if (nvcvTensorLayoutCompare(tensor_data.layout, NVCV_TENSOR_CHW) == 0 && tensor_data.shape[0] == 3) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-            image_info->height = tensor_data.shape[1]; //TODO remove when removed form image_info
-            image_info->width = tensor_data.shape[2];  //TODO remove when removed form image_info
             image_info->plane_info[0].height = tensor_data.shape[1];
             image_info->plane_info[0].width = tensor_data.shape[2];
             image_info->plane_info[0].row_stride = tensor_data.shape[2] *strided.strides[2];
@@ -519,14 +511,14 @@ nvimgcdcsStatus_t nvimgcdcsTensorData2Imageinfo(nvimgcdcsImageInfo_t* image_info
         } else if (image_info->sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
             image_info->num_planes = 3;
             for (auto p = 0; p < image_info->num_planes; ++p) {
-                image_info->plane_info[p].height = image_info->height;
-                image_info->plane_info[p].width = image_info->width;
+                image_info->plane_info[p].height = image_info->plane_info[0].height;
+                image_info->plane_info[p].width = image_info->plane_info[0].width;
                 image_info->plane_info[p].row_stride = image_info->plane_info[0].row_stride;
                 image_info->plane_info[p].num_channels = 1;
                 image_info->plane_info[p].sample_type = sample_type;
             }
         }
-        image_info->buffer_size = image_info->plane_info[0].row_stride * image_info->height * image_info->num_planes;
+        image_info->buffer_size = image_info->plane_info[0].row_stride * image_info->plane_info[0].height * image_info->num_planes;
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
@@ -555,8 +547,8 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2TensorData(NVCVTensorData* tensor_data, con
             tensor_data->layout = NVCV_TENSOR_NCHW;
             tensor_data->shape[0] = 1;
             tensor_data->shape[1] = 3;
-            tensor_data->shape[2] = image_info.height;
-            tensor_data->shape[3] = image_info.width;
+            tensor_data->shape[2] = image_info.plane_info[0].height;
+            tensor_data->shape[3] = image_info.plane_info[0].width;
 
             strided.strides[3] = bytes; 
             strided.strides[2] = image_info.plane_info[0].row_stride;
@@ -565,8 +557,8 @@ nvimgcdcsStatus_t nvimgcdcsImageInfo2TensorData(NVCVTensorData* tensor_data, con
         } else if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
             tensor_data->layout = NVCV_TENSOR_NHWC;
             tensor_data->shape[0] = 1;
-            tensor_data->shape[1] = image_info.height;
-            tensor_data->shape[2] = image_info.width;
+            tensor_data->shape[1] = image_info.plane_info[0].height;
+            tensor_data->shape[2] = image_info.plane_info[0].width;
             tensor_data->shape[3] = 3;
 
             strided.strides[3] = bytes; 

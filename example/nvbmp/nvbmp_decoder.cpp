@@ -106,14 +106,12 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder,
     static constexpr int kHeaderStart = 14;
     unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
     for (size_t p = 0; p < image_info.num_planes; p++) {
-        for (size_t y = 0; y < image_info.height; y++) {
-            for (size_t x = 0; x < image_info.width; x++) {
-                host_buffer[(image_info.num_planes - p - 1) * image_info.height *
-                                image_info.width +
-                            (image_info.height - y - 1) * image_info.width + x] =
-                    code_stream->parse_state
-                        ->buffer[kHeaderStart + code_stream->parse_state->header_size +
-                                 image_info.num_planes * (y * image_info.width + x) + p];
+        for (size_t y = 0; y < image_info.plane_info[p].height; y++) {
+            for (size_t x = 0; x < image_info.plane_info[p].width; x++) {
+                host_buffer[(image_info.num_planes - p - 1) * image_info.plane_info[p].height * image_info.plane_info[p].width +
+                            (image_info.plane_info[p].height - y - 1) * image_info.plane_info[p].width + x] =
+                    code_stream->parse_state->buffer[kHeaderStart + code_stream->parse_state->header_size +
+                                                     image_info.num_planes * (y * image_info.plane_info[p].width + x) + p];
             }
         }
     }

@@ -180,19 +180,17 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     image_info.sample_format = out_format;
     if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
         image_info.num_planes = 1;
-        image_info.plane_info[0].height = image_info.height;
-        image_info.plane_info[0].width = image_info.width;
         image_info.plane_info[0].num_channels = 3;
-        image_info.plane_info[0].row_stride = image_info.width * bytes_per_element * image_info.plane_info[0].num_channels;
+        image_info.plane_info[0].row_stride = image_info.plane_info[0].width * bytes_per_element * image_info.plane_info[0].num_channels;
         image_info.plane_info[0].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-        image_info.buffer_size = image_info.plane_info[0].row_stride * image_info.height * image_info.num_planes;
+        image_info.buffer_size = image_info.plane_info[0].row_stride * image_info.plane_info[0].height * image_info.num_planes;
     } else if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
-        size_t row_stride = image_info.width * bytes_per_element;
+        size_t row_stride = image_info.plane_info[0].width * bytes_per_element;
         image_info.num_planes = 3;
-        image_info.buffer_size = row_stride * image_info.height * image_info.num_planes;
+        image_info.buffer_size = row_stride * image_info.plane_info[0].height * image_info.num_planes;
         for (auto p = 0; p < image_info.num_planes; ++p) {
-            image_info.plane_info[p].height = image_info.height;
-            image_info.plane_info[p].width = image_info.width;
+            image_info.plane_info[p].height = image_info.plane_info[0].height;
+            image_info.plane_info[p].width = image_info.plane_info[0].width;
             image_info.plane_info[p].row_stride = row_stride;
             image_info.plane_info[p].num_channels = 1;
             image_info.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
@@ -277,8 +275,8 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsTensorData2Imageinfo(&image_info, tensor_data);
     if (0) {
         std::cout << "Input image info: " << std::endl;
-        std::cout << "\t - width:" << image_info.width << std::endl;
-        std::cout << "\t - height:" << image_info.height << std::endl;
+        std::cout << "\t - width:" << image_info.plane_info[0].width << std::endl;
+        std::cout << "\t - height:" << image_info.plane_info[0].height << std::endl;
         std::cout << "\t - num_planes:" << image_info.num_planes << std::endl;
         std::cout << "\t - num_channels:" << image_info.plane_info[0].num_channels << std::endl;
         std::cout << "\t - sample_format:" << image_info.sample_format << std::endl;

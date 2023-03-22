@@ -857,13 +857,13 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             // Define  requested output
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-            size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
-            image_info.buffer_size = device_pitch_in_bytes * image_info.height * image_info.num_planes;
+            size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
+            image_info.buffer_size = device_pitch_in_bytes * image_info.plane_info[0].height * image_info.num_planes;
             image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
             CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
             for (uint32_t c = 0; c < image_info.num_planes; ++c) {
-                image_info.plane_info[c].height = image_info.height;
-                image_info.plane_info[c].width = image_info.width;
+                image_info.plane_info[c].height = image_info.plane_info[0].height;
+                image_info.plane_info[c].width = image_info.plane_info[0].width;
                 image_info.plane_info[c].row_stride = device_pitch_in_bytes;
             }
 
