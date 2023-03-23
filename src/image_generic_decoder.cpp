@@ -357,98 +357,6 @@ void ImageGenericDecoder::Worker::addWork(std::unique_ptr<Work> work)
     start();
 }
 
-template<typename T>
-static void swap_elements(T &a, T&b)
-{
-    T intermediate = a;
-    a = b;
-    b = intermediate;
-}
-
-static void move_work_to_fallback_new(IWorkManager::Work* fb, IWorkManager::Work* work, std::vector<bool>& keep)
-{
-    // idea is to sort "keep" so that all decodable images are in front and non-decodable images are at end
-    // Need to apply the same sort to work as well
-    size_t n = work->code_streams_.size();
-    for (size_t i=0; i < n-1; i++)
-    {
-        if (keep[i] < keep[i+1]) {
-            // swap the keep mask
-            bool temp = keep[i];
-            keep[i] = keep[i+1];
-            keep[i+1] = temp;
-
-            // swap the entries in work
-            if (!work->images_.empty())
-            {
-                auto image = work->images_[i];
-                work->images_[i] = work->images_[i+1];
-                work->images_[i+1] = image;
-            }
-            if (!work->host_temp_buffers_.empty())
-            {
-                auto host_temp_buffers = std::move(work->host_temp_buffers_[i]);
-                work->host_temp_buffers_[i] = std::move(work->host_temp_buffers_[i+1]);
-                work->host_temp_buffers_[i+1] = std::move(host_temp_buffers);
-            }
-            if (!work->device_temp_buffers_.empty())
-            {
-                auto device_temp_buffers = std::move(work->device_temp_buffers_[i]);
-                work->device_temp_buffers_[i] = std::move(work->device_temp_buffers_[i+1]);
-                work->device_temp_buffers_[i+1] = std::move(device_temp_buffers);
-            }
-            if (!work->idx2orig_buffer_.empty())
-            {
-                auto idx2orig_buffer = std::move(work->idx2orig_buffer_[i]);
-                work->idx2orig_buffer_[i] = std::move(work->idx2orig_buffer_[i+1]);
-                work->idx2orig_buffer_[i+1] = std::move(idx2orig_buffer);
-            }
-            if (!work->code_streams_.empty())
-            {
-                auto code_stream = work->code_streams_[i];
-                work->code_streams_[i] = work->code_streams_[i+1];
-                work->code_streams_[i+1] = code_stream;
-            }
-            auto index = work->indices_[i];
-            work->indices_[i] = work->indices_[i+1];
-            work->indices_[i+1] = index;
-        }
-    }
-}
-
-static void move_work_to_fallback_v2(IWorkManager::Work* fb, IWorkManager::Work* work, const std::vector<bool>& keep)
-{
-    int moved = 0;
-    size_t n = work->code_streams_.size();
-    for (size_t i = 0; i < n; i++) {
-        if (keep[i]) {
-            if (moved) {
-                // compact
-                if (!work->images_.empty())
-                    work->images_[i - moved] = work->images_[i];
-                if (!work->host_temp_buffers_.empty())
-                    work->host_temp_buffers_[i - moved] = std::move(work->host_temp_buffers_[i]);
-                if (!work->device_temp_buffers_.empty())
-                    work->device_temp_buffers_[i - moved] = std::move(work->device_temp_buffers_[i]);
-                if (!work->idx2orig_buffer_.empty())
-                    work->idx2orig_buffer_[i - moved] = std::move(work->idx2orig_buffer_[i]);
-                if (!work->code_streams_.empty())
-                    work->code_streams_[i - moved] = work->code_streams_[i];
-                work->indices_[i - moved] = work->indices_[i];
-            }
-        } else {
-            if (fb)
-                fb->moveEntry(work, i);
-            moved++;
-        }
-    }
-    if (fb && moved > 0)
-    {
-        fb->resize(moved);
-        work->resize(work->getSamplesNum() - moved);
-    }
-}
-
 static void move_work_to_fallback(IWorkManager::Work* fb, IWorkManager::Work* work, const std::vector<bool>& keep)
 {
     int moved = 0;
@@ -484,11 +392,6 @@ static void filter_work(IWorkManager::Work* work, const std::vector<bool>& keep)
     move_work_to_fallback(nullptr, work, keep);
 }
 
-static void filter_work_new(IWorkManager::Work* work, std::vector<bool>& keep)
-{
-    move_work_to_fallback_new(nullptr, work, keep);
-}
-
 void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexcept
 {
     assert(work->getSamplesNum() > 0);
@@ -507,7 +410,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     auto fallback_worker = getFallback();
     if (fallback_worker) {
         fallback_work = work_manager_->createNewWork(work->results_, work->params_);
-        move_work_to_fallback_v2(fallback_work.get(), work.get(), mask);
+        move_work_to_fallback(fallback_work.get(), work.get(), mask);
         if (!fallback_work->empty())
             fallback_worker->addWork(std::move(fallback_work));
     } else {
