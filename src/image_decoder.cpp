@@ -116,12 +116,12 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decodeBatch(IDecodeState*
         std::vector<nvimgcdcsImageDesc*> image_descs;
 
         for (size_t i = 0; i < code_streams.size(); ++i) {
-
             code_stream_descs.push_back(code_streams[i]->getCodeStreamDesc());
             image_descs.push_back(images[i]->getImageDesc());
             images[i]->setIndex(i);
             images[i]->setPromise(decode_state_batch->getPromise());
-            images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
+            if (images[i]->getProcessingStatus() != NVIMGCDCS_PROCESSING_STATUS_ERROR)
+                images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
         }
 
         decoder_desc_->decodeBatch(decoder_, decode_state_batch->getInternalDecodeState(),

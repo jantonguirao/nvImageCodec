@@ -574,6 +574,7 @@ extern "C"
         void* instance;
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
         nvimgcdcsStatus_t (*imageReady)(void* instance, nvimgcdcsProcessingStatus_t processing_status);
+        nvimgcdcsStatus_t (*getProcessingStatus)(void* instance, nvimgcdcsProcessingStatus_t& processing_status);
     };
     typedef struct nvimgcdcsImageDesc* nvimgcdcsImageDesc_t;
 
