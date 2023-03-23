@@ -123,7 +123,7 @@ int main(int argc, const char* argv[])
     get_write_params(params, &write_params);
 
     nvimgcdcsInstance_t instance;
-    nvimgcdcsInstanceCreateInfo_t instance_create_info;
+    nvimgcdcsInstanceCreateInfo_t instance_create_info{};
     instance_create_info.type             = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.next             = NULL;
     instance_create_info.pinned_allocator = NULL;

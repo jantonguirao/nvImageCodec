@@ -146,7 +146,7 @@ extern "C"
         NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsChromaSubsampling_t;
 
-     typedef enum
+    typedef enum
     {
         NVIMGCDCS_SAMPLEFORMAT_UNKNOWN = 0,
         NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED = 1, //unchanged planar
@@ -765,8 +765,8 @@ extern "C"
         bool default_debug_messenger; //Create default debug messenger
         uint32_t message_severity;    //severity for default debug messenger
         uint32_t message_type;        //message type for default debug messenger
-        int num_cpu_threads;
-        nvimgcdcsExecutorDesc_t executor = nullptr;
+        int num_cpu_threads;          //Number of CPU threads in default executor
+        nvimgcdcsExecutorDesc_t executor;
     } nvimgcdcsInstanceCreateInfo_t;
 
     // Instance
@@ -794,10 +794,6 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetProcessingStatus(
         nvimgcdcsImage_t image, nvimgcdcsProcessingStatus_t* processing_status);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageAttachEncodeState(nvimgcdcsImage_t image, nvimgcdcsEncodeState_t encode_state);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDetachEncodeState(nvimgcdcsImage_t image);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageAttachDecodeState(nvimgcdcsImage_t image, nvimgcdcsDecodeState_t decode_state);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDetachDecodeState(nvimgcdcsImage_t image);
 
     // CodeStream
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
@@ -817,31 +813,18 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t stream, nvimgcdcsImage_t image,
         const nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state_batch,
-        nvimgcdcsCodeStream_t* streams, nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params,
-        nvimgcdcsFuture_t* future, bool blocking);
-
-    //DecodeState
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateBatchCreate(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_state);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
+        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
 
     //Encoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsCodeStream_t stream,
         nvimgcdcsImage_t input_image, const nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state_batch,
-        nvimgcdcsImage_t* images, nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params,
-        nvimgcdcsFuture_t* future, bool blocking);
-
-    //EncodeState
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateBatchCreate(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state_batch);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_state);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
+        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
 
     //High-level API
-
     typedef enum
     {
         NVIMGCDCS_IMREAD_UNCHANGED = -1,

@@ -39,7 +39,6 @@ struct IWorkManager::Work
     Work(const ProcessingResultsPromise& results, const nvimgcdcsDecodeParams_t* params)
         : results_(std::move(results))
         , params_(std::move(params))
-        , decode_state_batch_(nullptr)
     {
     }
 
@@ -65,7 +64,7 @@ struct IWorkManager::Work
             images_.resize(num_samples);
     }
 
-    void init(IDecodeState* decode_state_batch, const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images)
+    void init(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images)
     {
         int N = images.size();
 
@@ -80,8 +79,6 @@ struct IWorkManager::Work
         code_streams_.reserve(N);
         for (auto cs : code_streams)
             code_streams_.push_back(cs);
-
-        decode_state_batch_ = decode_state_batch;
     }
 
     /**
@@ -193,7 +190,6 @@ struct IWorkManager::Work
     std::vector<std::unique_ptr<void, decltype(&cudaFree)>> device_temp_buffers_;
     std::map<int, void*> idx2orig_buffer_;
     const nvimgcdcsDecodeParams_t* params_;
-    IDecodeState* decode_state_batch_;
     std::unique_ptr<Work> next_;
 };
 
@@ -210,7 +206,7 @@ struct IWorkManager::Work
  * DecodeResultsPromise. If it fails, it goes to fallback and only if all fallbacks fail, it is
  * marked in the DecodeResultsPromise as a failure.
  */
-class ImageGenericDecoder::Worker
+class ImageGenericDecoder:: Worker
 {
   public:
     /**
@@ -520,10 +516,10 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode(
 {
     std::vector<ICodeStream*> code_streams{code_stream};
     std::vector<IImage*> images{image};
-    return decodeBatch(image->getAttachedDecodeState(), code_streams, images, params);
+    return decodeBatch(nullptr, code_streams, images, params);
 }
 
-std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decodeBatch(IDecodeState* decode_state_batch,
+std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decodeBatch([[maybe_unused]] IDecodeState* decode_state_batch,
     const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params)
 {
     int N = images.size();
@@ -536,7 +532,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decodeBatch(IDecod
     }
 
     auto work = createNewWork(std::move(results), params);
-    work->init(decode_state_batch, code_streams, images);
+    work->init(code_streams, images);
 
     distributeWork(std::move(work));
 

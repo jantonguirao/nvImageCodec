@@ -19,14 +19,13 @@ namespace fs = std::filesystem;
     #include <windows.h>
 #endif
 
-#define CHECK_CUDA(call)                                                                \
-    {                                                                                   \
-        cudaError_t _e = (call);                                                        \
-        if (_e != cudaSuccess) {                                                        \
-            std::cerr << "CUDA Runtime failure: '#" << _e << "' at " << __FILE__ << ":" \
-                      << __LINE__ << std::endl;                                         \
-            return EXIT_FAILURE;                                                        \
-        }                                                                               \
+#define CHECK_CUDA(call)                                                                                          \
+    {                                                                                                             \
+        cudaError_t _e = (call);                                                                                  \
+        if (_e != cudaSuccess) {                                                                                  \
+            std::cerr << "CUDA Runtime failure: '#" << _e << "' at " << __FILE__ << ":" << __LINE__ << std::endl; \
+            return EXIT_FAILURE;                                                                                  \
+        }                                                                                                         \
     }
 
 #define CHECK_NVIMGCDCS(call)                                   \
@@ -92,24 +91,19 @@ inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_
     return ((static_cast<unsigned int>(sample_type) & 0b11111110) + 7) / 8;
 }
 
-void fill_encode_params(const CommandLineParams& params, fs::path output_path,
-    nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params,
-    nvimgcdcsJpegEncodeParams_t* jpeg_encode_params)
+void fill_encode_params(const CommandLineParams& params, fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
+    nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcdcsJpegEncodeParams_t* jpeg_encode_params)
 {
-    memset(encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
     encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS;
     encode_params->quality = params.quality;
     encode_params->target_psnr = params.target_psnr;
-    encode_params->mct_mode =
-        params.enc_color_trans ? NVIMGCDCS_MCT_MODE_YCC : NVIMGCDCS_MCT_MODE_RGB;
+    encode_params->mct_mode = params.enc_color_trans ? NVIMGCDCS_MCT_MODE_YCC : NVIMGCDCS_MCT_MODE_RGB;
 
     //codec sepcific encode params
     if (params.output_codec == "jpeg2k") {
-        memset(jpeg2k_encode_params, 0, sizeof(nvimgcdcsJpeg2kEncodeParams_t));
         jpeg2k_encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
-        jpeg2k_encode_params->stream_type = output_path.extension().string() == ".jp2"
-                                                ? NVIMGCDCS_JPEG2K_STREAM_JP2
-                                                : NVIMGCDCS_JPEG2K_STREAM_J2K;
+        jpeg2k_encode_params->stream_type =
+            output_path.extension().string() == ".jp2" ? NVIMGCDCS_JPEG2K_STREAM_JP2 : NVIMGCDCS_JPEG2K_STREAM_J2K;
         jpeg2k_encode_params->code_block_w = params.code_block_w;
         jpeg2k_encode_params->code_block_h = params.code_block_h;
         jpeg2k_encode_params->irreversible = !params.reversible;
@@ -129,7 +123,6 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path,
 
         encode_params->next = jpeg2k_encode_params;
     } else if (params.output_codec == "jpeg") {
-        memset(jpeg_encode_params, 0, sizeof(nvimgcdcsJpegEncodeParams_t));
         jpeg_encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
         jpeg_encode_params->encoding = params.jpeg_encoding;
         jpeg_encode_params->optimized_huffman = params.optimized_huffman;
@@ -137,8 +130,7 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path,
     }
 }
 
-int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::path output_path,
-    const CommandLineParams& params)
+int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::path output_path, const CommandLineParams& params)
 {
     std::cout << "Loading " << input_path.string() << " file" << std::endl;
     nvimgcdcsCodeStream_t code_stream;
@@ -164,8 +156,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     std::cout << "\t - codec:" << codec_name << std::endl;
 
     // Prepare decode parameters
-    nvimgcdcsDecodeParams_t decode_params;
-    memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
+    nvimgcdcsDecodeParams_t decode_params{};
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
@@ -188,10 +179,6 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     nvimgcdcsDecoder_t decoder;
     nvimgcdcsDecoderCreate(instance, &decoder);
-
-    nvimgcdcsDecodeState_t decode_state;
-    nvimgcdcsDecodeStateCreate(decoder, &decode_state);
-    nvimgcdcsImageAttachDecodeState(image, decode_state);
 
     // warm up
     for (int warmup_iter = 0; warmup_iter < params.warmup; warmup_iter++) {
@@ -218,27 +205,21 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during decoding" << std::endl;
     }
-    
+
     std::cout << "Saving to " << output_path.string() << " file" << std::endl;
     nvimgcdcsImageInfo_t out_image_info(image_info);
     out_image_info.chroma_subsampling = params.chroma_subsampling;
     nvimgcdcsCodeStream_t output_code_stream;
-    nvimgcdcsCodeStreamCreateToFile(instance, &output_code_stream, output_path.string().c_str(),
-        params.output_codec.data(), &out_image_info);
+    nvimgcdcsCodeStreamCreateToFile(
+        instance, &output_code_stream, output_path.string().c_str(), params.output_codec.data(), &out_image_info);
 
-    nvimgcdcsEncodeParams_t encode_params;
-    memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
-    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
-    nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
-    fill_encode_params(
-        params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
+    nvimgcdcsEncodeParams_t encode_params{};
+    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{};
+    nvimgcdcsJpegEncodeParams_t jpeg_encode_params{};
+    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
 
     nvimgcdcsEncoder_t encoder = nullptr;
     nvimgcdcsEncoderCreate(instance, &encoder);
-
-    nvimgcdcsEncodeState_t encode_state;
-    nvimgcdcsEncodeStateCreate(encoder, &encode_state);
-    nvimgcdcsImageAttachEncodeState(image, encode_state);
 
     double encode_time = wtime();
     nvimgcdcsEncoderEncode(encoder, output_code_stream, image, &encode_params, nullptr, true);
@@ -256,15 +237,10 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     std::cout << " - time spent on decoding: " << decode_time << std::endl;
     std::cout << " - time spent on encoding (including writting): " << encode_time << std::endl;
 
-    nvimgcdcsImageDetachEncodeState(image);
-    nvimgcdcsImageDetachDecodeState(image);
-
-    nvimgcdcsEncodeStateDestroy(encode_state);
     nvimgcdcsEncoderDestroy(encoder);
     nvimgcdcsCodeStreamDestroy(output_code_stream);
 
     nvimgcdcsImageDestroy(image);
-    nvimgcdcsDecodeStateDestroy(decode_state);
     nvimgcdcsDecoderDestroy(decoder);
     nvimgcdcsCodeStreamDestroy(code_stream);
 
@@ -296,8 +272,8 @@ int collect_input_files(const std::string& sInputPath, std::vector<std::string>&
     return EXIT_SUCCESS;
 }
 
-int read_next_batch(FileNames& image_names, int batch_size, FileNames::iterator& cur_iter,
-    FileData& raw_data, std::vector<size_t>& raw_len, FileNames& current_names, bool verbose)
+int read_next_batch(FileNames& image_names, int batch_size, FileNames::iterator& cur_iter, FileData& raw_data, std::vector<size_t>& raw_len,
+    FileNames& current_names, bool verbose)
 {
     int counter = 0;
 
@@ -319,8 +295,7 @@ int read_next_batch(FileNames& image_names, int batch_size, FileNames::iterator&
         // Read an image from disk.
         std::ifstream input(cur_iter->c_str(), std::ios::in | std::ios::binary | std::ios::ate);
         if (!(input.is_open())) {
-            std::cerr << "Cannot open image: " << *cur_iter << ", removing it from image list"
-                      << std::endl;
+            std::cerr << "Cannot open image: " << *cur_iter << ", removing it from image list" << std::endl;
             image_names.erase(cur_iter);
             continue;
         }
@@ -333,8 +308,7 @@ int read_next_batch(FileNames& image_names, int batch_size, FileNames::iterator&
             raw_data[counter].resize(file_size);
         }
         if (!input.read(raw_data[counter].data(), file_size)) {
-            std::cerr << "Cannot read from file: " << *cur_iter << ", removing it from image list"
-                      << std::endl;
+            std::cerr << "Cannot read from file: " << *cur_iter << ", removing it from image list" << std::endl;
             image_names.erase(cur_iter);
             continue;
         }
@@ -356,17 +330,14 @@ struct ImageBuffer
     size_t pitch_in_bytes;
 };
 
-int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
-    std::vector<size_t>& file_len, std::vector<ImageBuffer>& ibuf, FileNames& current_names,
-    nvimgcdcsDecoder_t& decoder, nvimgcdcsDecodeState_t& decode_state_batch, bool& is_host_output,
-    bool& is_device_output, std::vector<nvimgcdcsCodeStream_t>& code_streams,
-    std::vector<nvimgcdcsImage_t>& images, std::vector<nvimgcdcsDecodeState_t>& decode_states,
-    const nvimgcdcsDecodeParams_t& decode_params, double& parse_time)
+int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, std::vector<size_t>& file_len,
+    std::vector<ImageBuffer>& ibuf, FileNames& current_names, nvimgcdcsDecoder_t& decoder, bool& is_host_output, bool& is_device_output,
+    std::vector<nvimgcdcsCodeStream_t>& code_streams, std::vector<nvimgcdcsImage_t>& images, const nvimgcdcsDecodeParams_t& decode_params,
+    double& parse_time)
 {
     parse_time = 0;
     for (uint32_t i = 0; i < file_data.size(); i++) {
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(
-            instance, &code_streams[i], (unsigned char*)file_data[i].data(), file_len[i]));
+        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance, &code_streams[i], (unsigned char*)file_data[i].data(), file_len[i]));
 
         double time = wtime();
         nvimgcdcsImageInfo_t image_info;
@@ -374,8 +345,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         parse_time += wtime() - time;
 
         if (image_info.num_planes > MAX_NUM_COMPONENTS) {
-            std::cout << "Num Components > " << MAX_NUM_COMPONENTS << "not supported by this sample"
-                      << std::endl;
+            std::cout << "Num Components > " << MAX_NUM_COMPONENTS << "not supported by this sample" << std::endl;
             return EXIT_FAILURE;
         }
 
@@ -422,12 +392,6 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
 
         if (decoder == nullptr) {
             CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder));
-            CHECK_NVIMGCDCS(nvimgcdcsDecodeStateBatchCreate(decoder, &decode_state_batch));
-        } 
-        
-        if (decode_states[i] == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsDecodeStateCreate(decoder, &decode_states[i]));
-            CHECK_NVIMGCDCS(nvimgcdcsImageAttachDecodeState(images[i], decode_states[i]));
         }
     }
     return EXIT_SUCCESS;
@@ -436,12 +400,9 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
 static std::map<std::string, std::string> codec2ext = {
     {"bmp", ".bmp"}, {"jpeg2k", ".j2k"}, {"tiff", ".tiff"}, {"jpeg", ".jpg"}, {"pxm", ".ppm"}};
 
-int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_names,
-    nvimgcdcsEncoder_t& encoder, nvimgcdcsEncodeState_t& encode_state_batch, bool& is_host_input,
-    bool& is_device_input, std::vector<nvimgcdcsCodeStream_t>& out_code_streams,
-    std::vector<nvimgcdcsImage_t>& images, std::vector<nvimgcdcsEncodeState_t>& encode_states,
-    const nvimgcdcsEncodeParams_t& encode_params, const CommandLineParams& params,
-    fs::path output_path)
+int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_names, nvimgcdcsEncoder_t& encoder, bool& is_host_input,
+    bool& is_device_input, std::vector<nvimgcdcsCodeStream_t>& out_code_streams, std::vector<nvimgcdcsImage_t>& images,
+    const nvimgcdcsEncodeParams_t& encode_params, const CommandLineParams& params, fs::path output_path)
 {
     for (uint32_t i = 0; i < current_names.size(); i++) {
         fs::path filename = fs::path(current_names[i]).filename();
@@ -460,19 +421,17 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         nvimgcdcsImageInfo_t out_image_info(image_info);
         out_image_info.chroma_subsampling = params.chroma_subsampling;
 
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(instance, &out_code_streams[i],
-            output_filename.string().c_str(), params.output_codec.c_str(), &out_image_info));
+        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(
+            instance, &out_code_streams[i], output_filename.string().c_str(), params.output_codec.c_str(), &out_image_info));
 
         if (encoder == nullptr) {
             CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder));
-            CHECK_NVIMGCDCS(nvimgcdcsEncodeStateBatchCreate(encoder, &encode_state_batch));
         }
     }
     return EXIT_SUCCESS;
 }
 
-int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path output_path,
-    const CommandLineParams& params)
+int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path output_path, const CommandLineParams& params)
 {
     double time = wtime();
     FileNames image_names;
@@ -494,25 +453,18 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     nvimgcdcsDecoder_t decoder = nullptr;
     nvimgcdcsEncoder_t encoder = nullptr;
 
-    nvimgcdcsDecodeState_t decode_state_batch = nullptr;
-    nvimgcdcsEncodeState_t encode_state_batch = nullptr;
-
     std::vector<nvimgcdcsCodeStream_t> in_code_streams(params.batch_size);
     std::vector<nvimgcdcsCodeStream_t> out_code_streams(params.batch_size);
     std::vector<nvimgcdcsImage_t> images(params.batch_size);
-    std::vector<nvimgcdcsDecodeState_t> decode_states(params.batch_size);
-    std::vector<nvimgcdcsEncodeState_t> encode_states(params.batch_size);
 
-    nvimgcdcsDecodeParams_t decode_params;
-    memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
+    nvimgcdcsDecodeParams_t decode_params{};
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
 
     nvimgcdcsEncodeParams_t encode_params;
     nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
     nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
-    fill_encode_params(
-        params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
+    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
 
     bool is_host_output = false;
     bool is_device_output = false;
@@ -539,35 +491,31 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     int warmup = 0;
     while (total_processed < total_images) {
         double start_reading_time = wtime();
-        if (read_next_batch(image_names, params.batch_size, file_iter, file_data, file_len,
-                current_names, params.verbose))
+        if (read_next_batch(image_names, params.batch_size, file_iter, file_data, file_len, current_names, params.verbose))
             return EXIT_FAILURE;
         double reading_time = wtime() - start_reading_time;
 
         double parse_time = 0;
-        if (prepare_decode_resources(instance, file_data, file_len, image_buffers, current_names,
-                decoder, decode_state_batch, is_host_output, is_device_output, in_code_streams,
-                images, decode_states, decode_params, parse_time))
+        if (prepare_decode_resources(instance, file_data, file_len, image_buffers, current_names, decoder, is_host_output, is_device_output,
+                in_code_streams, images, decode_params, parse_time))
             return EXIT_FAILURE;
 
         std::cout << "." << std::flush;
 
         double start_decoding_time = wtime();
         CHECK_NVIMGCDCS(
-            nvimgcdcsDecoderDecodeBatch(decoder, decode_state_batch, in_code_streams.data(),
-                images.data(), params.batch_size, &decode_params, nullptr, true));
+            nvimgcdcsDecoderDecodeBatch(decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, nullptr, true));
         double decode_time = wtime() - start_decoding_time;
 
-        if (prepare_encode_resources(instance, current_names, encoder, encode_state_batch,
-                is_host_input, is_device_input, out_code_streams, images, encode_states,
+        if (prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_code_streams, images,
                 encode_params, params, output_path))
             return EXIT_FAILURE;
 
         double start_encoding_time = wtime();
-        CHECK_NVIMGCDCS(nvimgcdcsEncoderEncodeBatch(encoder, encode_state_batch, images.data(),
-            out_code_streams.data(), params.batch_size, &encode_params, nullptr, true));
+        CHECK_NVIMGCDCS(
+            nvimgcdcsEncoderEncodeBatch(encoder, images.data(), out_code_streams.data(), params.batch_size, &encode_params, nullptr, true));
         double encode_time = wtime() - start_encoding_time;
-        
+
         if (warmup < params.warmup) {
             warmup++;
         } else {
@@ -591,10 +539,6 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     }
 
     for (int i = 0; i < params.batch_size; ++i) {
-        nvimgcdcsImageDetachDecodeState(images[i]);
-        nvimgcdcsImageDetachEncodeState(images[i]);
-        nvimgcdcsDecodeStateDestroy(decode_states[i]);
-        nvimgcdcsEncodeStateDestroy(encode_states[i]);
         if (image_buffers[i].data) {
             CHECK_CUDA(cudaFree(image_buffers[i].data));
         }
@@ -611,42 +555,31 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     std::cout << "Total images: " << total_images << std::endl;
     std::cout << "Total transcoding time: " << total_time << std::endl;
     std::cout << "Avg transcoding time per image: " << total_time / total_images << std::endl;
-    std::cout << "Avg transcode speed  (in images per sec): " << total_images / total_time
-              << std::endl;
-    std::cout << "Avg transcode time per batch: "
-              << total_time / ((total_images + params.batch_size - 1) / params.batch_size)
-              << std::endl;
+    std::cout << "Avg transcode speed  (in images per sec): " << total_images / total_time << std::endl;
+    std::cout << "Avg transcode time per batch: " << total_time / ((total_images + params.batch_size - 1) / params.batch_size) << std::endl;
 
     std::cout << "Total reading time: " << total_reading_time << std::endl;
     std::cout << "Avg reading time per image: " << total_reading_time / total_images << std::endl;
-    std::cout << "Avg reading speed  (in images per sec): " << total_images / total_reading_time
-              << std::endl;
-    std::cout << "Avg reading time per batch: "
-              << total_reading_time / ((total_images + params.batch_size - 1) / params.batch_size)
+    std::cout << "Avg reading speed  (in images per sec): " << total_images / total_reading_time << std::endl;
+    std::cout << "Avg reading time per batch: " << total_reading_time / ((total_images + params.batch_size - 1) / params.batch_size)
               << std::endl;
 
     std::cout << "Total parsing time: " << total_parse_time << std::endl;
     std::cout << "Avg parsing time per image: " << total_parse_time / total_images << std::endl;
-    std::cout << "Avg parsing speed  (in images per sec): " << total_images / total_parse_time
-              << std::endl;
-    std::cout << "Avg parsing time per batch: "
-              << total_parse_time / ((total_images + params.batch_size - 1) / params.batch_size)
+    std::cout << "Avg parsing speed  (in images per sec): " << total_images / total_parse_time << std::endl;
+    std::cout << "Avg parsing time per batch: " << total_parse_time / ((total_images + params.batch_size - 1) / params.batch_size)
               << std::endl;
 
     std::cout << "Total decoding time: " << total_decode_time << std::endl;
     std::cout << "Avg decoding time per image: " << total_decode_time / total_images << std::endl;
-    std::cout << "Avg decoding speed  (in images per sec): " << total_images / total_decode_time
-              << std::endl;
-    std::cout << "Avg decoding time per batch: "
-              << total_decode_time / ((total_images + params.batch_size - 1) / params.batch_size)
+    std::cout << "Avg decoding speed  (in images per sec): " << total_images / total_decode_time << std::endl;
+    std::cout << "Avg decoding time per batch: " << total_decode_time / ((total_images + params.batch_size - 1) / params.batch_size)
               << std::endl;
 
     std::cout << "Total encoding time: " << total_encode_time << std::endl;
     std::cout << "Avg encoding time per image: " << total_encode_time / total_images << std::endl;
-    std::cout << "Avg encoding speed  (in images per sec): " << total_images / total_encode_time
-              << std::endl;
-    std::cout << "Avg encoding time per batch: "
-              << total_encode_time / ((total_images + params.batch_size - 1) / params.batch_size)
+    std::cout << "Avg encoding speed  (in images per sec): " << total_images / total_encode_time << std::endl;
+    std::cout << "Avg encoding time per batch: " << total_encode_time / ((total_images + params.batch_size - 1) / params.batch_size)
               << std::endl;
 
     return EXIT_SUCCESS;
@@ -663,8 +596,7 @@ void list_cuda_devices()
         printf("  Device name: %s\n", prop.name);
         printf("  Memory Clock Rate (KHz): %d\n", prop.memoryClockRate);
         printf("  Memory Bus Width (bits): %d\n", prop.memoryBusWidth);
-        printf("  Peak Memory Bandwidth (GB/s): %f\n\n",
-            2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
+        printf("  Peak Memory Bandwidth (GB/s): %f\n\n", 2.0 * prop.memoryClockRate * (prop.memoryBusWidth / 8) / 1.0e6);
     }
 }
 
@@ -682,7 +614,7 @@ int main(int argc, const char* argv[])
     }
 
     nvimgcdcsInstance_t instance;
-    nvimgcdcsInstanceCreateInfo_t instance_create_info;
+    nvimgcdcsInstanceCreateInfo_t instance_create_info{};
     instance_create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.next = NULL;
     instance_create_info.pinned_allocator = NULL;
@@ -695,8 +627,7 @@ int main(int argc, const char* argv[])
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
     nvimgcdcsExtension_t pxm_extension;
-    nvimgcdcsExtensionDesc_t pxm_extension_desc;
-    memset(&pxm_extension_desc, 0, sizeof(pxm_extension_desc));
+    nvimgcdcsExtensionDesc_t pxm_extension_desc{};
     pxm_extension_desc.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
 
     nvpxm::get_nvpxm_extension_desc(&pxm_extension_desc);

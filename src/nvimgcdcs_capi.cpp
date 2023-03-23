@@ -25,11 +25,11 @@
 #include "image.h"
 #include "iostream_factory.h"
 
+#include <nvtx3/nvtx3.hpp>
 #include "log.h"
 #include "nvimgcodecs_director.h"
 #include "plugin_framework.h"
 #include "processing_results.h"
-#include <nvtx3/nvtx3.hpp>
 
 namespace fs = std::filesystem;
 
@@ -137,20 +137,10 @@ struct nvimgcdcsDecoder
     std::unique_ptr<IImageDecoder> image_decoder_;
 };
 
-struct nvimgcdcsDecodeState
-{
-    std::unique_ptr<IDecodeState> decode_state_;
-};
-
 struct nvimgcdcsEncoder
 {
     nvimgcdcsInstance_t instance_;
     std::unique_ptr<IImageEncoder> image_encoder_;
-};
-
-struct nvimgcdcsEncodeState
-{
-    std::unique_ptr<IEncodeState> encode_state_;
 };
 
 struct nvimgcdcsDebugMessenger
@@ -475,15 +465,13 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCo
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state_batch,
-    nvimgcdcsCodeStream_t* streams, nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future,
-    bool blocking)
+nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams, nvimgcdcsImage_t* images,
+    int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
         {
             CHECK_NULL(decoder)
-            CHECK_NULL(decode_state_batch)
             CHECK_NULL(streams)
             CHECK_NULL(images)
             CHECK_NULL(params)
@@ -495,8 +483,7 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder, nvimgc
                 internal_code_streams.push_back(&streams[i]->code_stream_);
                 internal_images.push_back(&images[i]->image_);
             }
-            auto int_future = decoder->image_decoder_->decodeBatch(
-                decode_state_batch->decode_state_.get(), internal_code_streams, internal_images, params);
+            auto int_future = decoder->image_decoder_->decodeBatch(nullptr, internal_code_streams, internal_images, params);
 
             if (blocking) {
                 int_future->waitForAll();
@@ -505,71 +492,6 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDecodeBatch(nvimgcdcsDecoder_t decoder, nvimgc
                 *future = new nvimgcdcsFuture();
                 (*future)->handle_ = std::move(int_future);
             }
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsDecoderCanUseDecodeState(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decodeState, bool* canUse)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(decoder)
-            assert(!"TODO");
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsDecodeStateCreate(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(decoder)
-            CHECK_NULL(decode_state)
-            std::unique_ptr<IDecodeState> decode_state_ = decoder->image_decoder_->createDecodeState();
-            if (decode_state_) {
-                *decode_state = new nvimgcdcsDecodeState();
-                (*decode_state)->decode_state_ = std::move(decode_state_);
-            } else {
-                ret = NVIMGCDCS_STATUS_INTERNAL_ERROR;
-            }
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecodeStateBatchCreate(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(decoder)
-            CHECK_NULL(decode_state)
-
-            std::unique_ptr<IDecodeState> decode_state_ = decoder->image_decoder_->createDecodeStateBatch();
-            if (decode_state_) {
-                *decode_state = new nvimgcdcsDecodeState();
-                (*decode_state)->decode_state_ = std::move(decode_state_);
-            } else {
-                ret = NVIMGCDCS_STATUS_INTERNAL_ERROR;
-            }
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsDecodeStateDestroy(nvimgcdcsDecodeState_t decode_state)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(decode_state)
-            delete decode_state;
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -618,56 +540,6 @@ nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsIm
         {
             CHECK_NULL(image)
             image->image_.getImageInfo(image_info);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsImageAttachDecodeState(nvimgcdcsImage_t image, nvimgcdcsDecodeState_t decode_state)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            CHECK_NULL(decode_state)
-            image->image_.attachDecodeState(decode_state->decode_state_.get());
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsImageDetachDecodeState(nvimgcdcsImage_t image)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            image->image_.detachDecodeState();
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsImageAttachEncodeState(nvimgcdcsImage_t image, nvimgcdcsEncodeState_t encode_state)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            CHECK_NULL(encode_state)
-            image->image_.attachEncodeState(encode_state->encode_state_.get());
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsImageDetachEncodeState(nvimgcdcsImage_t image)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(image)
-            image->image_.detachEncodeState();
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -739,16 +611,14 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsCo
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state_batch,
-    nvimgcdcsImage_t* images, nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future,
-    bool blocking)
+nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images, nvimgcdcsCodeStream_t* streams,
+    int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
     NVIMGCDCSAPI_TRY
         {
             CHECK_NULL(encoder)
-            CHECK_NULL(encode_state_batch)
             CHECK_NULL(streams)
             CHECK_NULL(images)
             CHECK_NULL(params)
@@ -762,7 +632,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder, nvimgc
             }
 
             auto int_future = encoder->image_encoder_->encodeBatch(
-                encode_state_batch->encode_state_.get(), internal_images, internal_code_streams, params);
+                nullptr, internal_images, internal_code_streams, params);
             if (blocking) {
                 int_future->waitForAll();
             } else {
@@ -770,60 +640,6 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncodeBatch(nvimgcdcsEncoder_t encoder, nvimgc
                 *future = new nvimgcdcsFuture();
                 (*future)->handle_ = std::move(int_future);
             }
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsEncodeStateCreate(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(encoder)
-            CHECK_NULL(encode_state)
-            std::unique_ptr<IEncodeState> encode_state_ = encoder->image_encoder_->createEncodeState();
-            if (encode_state_) {
-                *encode_state = new nvimgcdcsEncodeState();
-                (*encode_state)->encode_state_ = std::move(encode_state_);
-            } else {
-                ret = NVIMGCDCS_STATUS_INTERNAL_ERROR;
-            }
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsEncodeStateBatchCreate(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state_batch)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(encoder)
-            CHECK_NULL(encode_state_batch)
-
-            std::unique_ptr<IEncodeState> encode_state_ = encoder->image_encoder_->createEncodeStateBatch();
-
-            if (encode_state_) {
-                *encode_state_batch = new nvimgcdcsEncodeState();
-                (*encode_state_batch)->encode_state_ = std::move(encode_state_);
-            } else {
-                ret = NVIMGCDCS_STATUS_INTERNAL_ERROR;
-            }
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsEncodeStateDestroy(nvimgcdcsEncodeState_t encode_state)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(encode_state)
-            delete encode_state;
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -847,8 +663,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
 
             int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
-            nvimgcdcsDecodeParams_t decode_params;
-            memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
+            nvimgcdcsDecodeParams_t decode_params{};
             decode_params.enable_color_conversion = flags & NVIMGCDCS_IMREAD_COLOR;
             decode_params.enable_orientation = !(flags & NVIMGCDCS_IMREAD_IGNORE_ORIENTATION);
 
@@ -872,19 +687,12 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             nvimgcdcsDecoder_t decoder;
             nvimgcdcsDecoderCreate(instance, &decoder);
 
-            nvimgcdcsDecodeState_t decode_state;
-            nvimgcdcsDecodeStateCreate(decoder, &decode_state);
-
-            nvimgcdcsImageAttachDecodeState(*image, decode_state);
-
             nvimgcdcsDecoderDecode(decoder, code_stream, *image, &decode_params, nullptr, true);
             nvimgcdcsProcessingStatus_t decode_status;
             nvimgcdcsImageGetProcessingStatus(*image, &decode_status);
             if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
                 NVIMGCDCS_LOG_ERROR("Something went wrong during decoding");
             }
-            nvimgcdcsImageDetachDecodeState(*image);
-            nvimgcdcsDecodeStateDestroy(decode_state);
             nvimgcdcsDecoderDestroy(decoder);
             nvimgcdcsCodeStreamDestroy(code_stream);
         }
@@ -999,17 +807,15 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
 
             if (image_info.chroma_subsampling == NVIMGCDCS_SAMPLING_NONE || image_info.chroma_subsampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
                 image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
-            nvimgcdcsEncodeParams_t encode_params;
-            memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
+            nvimgcdcsEncodeParams_t encode_params{};
             //Defaults
             encode_params.quality = 95;
             encode_params.target_psnr = 50;
             encode_params.mct_mode = NVIMGCDCS_MCT_MODE_RGB;
 
-            nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
-            nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
+            nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{};
+            nvimgcdcsJpegEncodeParams_t jpeg_encode_params{};
             if (codec_name == "jpeg2k") {
-                memset(&jpeg2k_encode_params, 0, sizeof(jpeg2k_encode_params));
                 jpeg2k_encode_params.type = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
                 jpeg2k_encode_params.stream_type =
                     file_path.extension().string() == ".jp2" ? NVIMGCDCS_JPEG2K_STREAM_JP2 : NVIMGCDCS_JPEG2K_STREAM_J2K;
@@ -1027,7 +833,6 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
 
                 encode_params.next = &jpeg2k_encode_params;
             } else if (codec_name == "jpeg") {
-                memset(&jpeg_encode_params, 0, sizeof(jpeg_encode_params));
                 jpeg_encode_params.type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
                 jpeg_encode_params.encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
                 jpeg_encode_params.optimized_huffman = false;
@@ -1042,9 +847,6 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
 
             nvimgcdcsEncoder_t encoder;
             nvimgcdcsEncoderCreate(instance, &encoder);
-            nvimgcdcsEncodeState_t encode_state;
-            nvimgcdcsEncodeStateCreate(encoder, &encode_state);
-            nvimgcdcsImageAttachEncodeState(image, encode_state);
 
             nvimgcdcsEncoderEncode(encoder, output_code_stream, image, &encode_params, nullptr, true);
             nvimgcdcsProcessingStatus_t encode_status;
@@ -1052,8 +854,6 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
             if (encode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
                 NVIMGCDCS_LOG_ERROR("Something went wrong during encoding");
             }
-            nvimgcdcsImageDetachEncodeState(image);
-            nvimgcdcsEncodeStateDestroy(encode_state);
             nvimgcdcsEncoderDestroy(encoder);
             nvimgcdcsCodeStreamDestroy(output_code_stream);
         }
