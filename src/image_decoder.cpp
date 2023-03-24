@@ -46,14 +46,6 @@ void ImageDecoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, s
     decoder_desc_->getCapabilities(decoder_, capabilities, size);
 }
 
-bool ImageDecoder::canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
-    const nvimgcdcsDecodeParams_t* params) const
-{
-    bool result = false;
-    decoder_desc_->canDecode(decoder_, &result, code_stream, image, params);
-    return result;
-}
-
 void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams,
     const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
     std::vector<bool>* result) const
@@ -68,25 +60,7 @@ void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams,
     }
 }
 
-std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(
-    ICodeStream* code_stream, IImage* image, const nvimgcdcsDecodeParams_t* params)
-{
-    ProcessingResultsPromise results(1);
-    auto future = results.getFuture();
-    IDecodeState* decode_state = image->getAttachedDecodeState();
-    decode_state->setPromise(std::move(results));
-    nvimgcdcsDecodeState_t internal_decode_state = decode_state->getInternalDecodeState();
-    nvimgcdcsImageDesc* image_desc = image->getImageDesc();
-    nvimgcdcsCodeStreamDesc* code_stream_desc = code_stream->getCodeStreamDesc();
-    image->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
-    image->setPromise(decode_state->getPromise());
-
-    decoder_desc_->decode(decoder_, internal_decode_state, code_stream_desc, image_desc, params);
-
-    return future;
-}
-
-std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decodeBatch(IDecodeState* decode_state_batch,
+std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* decode_state_batch,
     const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
     const nvimgcdcsDecodeParams_t* params)
 {

@@ -29,14 +29,10 @@ class ImageDecoder : public IImageDecoder
     std::unique_ptr<IDecodeState> createDecodeState() const override;
     std::unique_ptr<IDecodeState> createDecodeStateBatch() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
-    bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
-        const nvimgcdcsDecodeParams_t* params) const override;
     void canDecode(const std::vector<ICodeStream*>& code_streams,
         const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
         std::vector<bool>* result) const override;
-    std::unique_ptr<ProcessingResultsFuture> decode(
-        ICodeStream* code_stream, IImage* image, const nvimgcdcsDecodeParams_t* params) override;
-    std::unique_ptr<ProcessingResultsFuture> decodeBatch(IDecodeState* decode_state_batch,
+    std::unique_ptr<ProcessingResultsFuture> decode(IDecodeState* decode_state_batch,
         const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
         const nvimgcdcsDecodeParams_t* params) override;
 

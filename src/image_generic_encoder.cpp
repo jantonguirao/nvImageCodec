@@ -440,7 +440,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 
             work->images_[i]->attachEncodeState(encode_states_[i].get());
         }
-        auto future = encoder_->encodeBatch(encode_state_batch_.get(), work->images_, work->code_streams_, work->params_);
+        auto future = encoder_->encode(encode_state_batch_.get(), work->images_, work->code_streams_, work->params_);
 
         for (;;) {
             auto indices = future->waitForNew();
@@ -511,27 +511,13 @@ void ImageGenericEncoder::getCapabilities(const nvimgcdcsCapability_t** capabili
     }
 }
 
-bool ImageGenericEncoder::canEncode(nvimgcdcsImageDesc_t image, [[maybe_unused]] nvimgcdcsCodeStreamDesc_t code_stream,
-    [[maybe_unused]] const nvimgcdcsEncodeParams_t* params) const
-{
-    return true;
-}
-
 void ImageGenericEncoder::canEncode([[maybe_unused]] const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
     [[maybe_unused]] const nvimgcdcsEncodeParams_t* params, std::vector<bool>* result) const
 {
     result->resize(code_streams.size(), true);
 }
 
-std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(
-    ICodeStream* code_stream, IImage* image, const nvimgcdcsEncodeParams_t* params)
-{
-    std::vector<ICodeStream*> code_streams{code_stream};
-    std::vector<IImage*> images{image};
-    return encodeBatch(image->getAttachedEncodeState(), images, code_streams, params);
-}
-
-std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encodeBatch(IEncodeState* encode_state_batch,
+std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(IEncodeState* encode_state_batch,
     const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_LOG_TRACE("encodeBatch");

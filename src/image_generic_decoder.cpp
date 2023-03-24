@@ -426,7 +426,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 
             work->images_[i]->attachDecodeState(decode_states_[i].get());
         }
-        auto future = decoder_->decodeBatch(decode_state_batch_.get(), work->code_streams_, work->images_, work->params_);
+        auto future = decoder_->decode(decode_state_batch_.get(), work->code_streams_, work->images_, work->params_);
 
         for (;;) {
             auto indices = future->waitForNew();
@@ -499,27 +499,13 @@ void ImageGenericDecoder::getCapabilities(const nvimgcdcsCapability_t** capabili
     }
 }
 
-bool ImageGenericDecoder::canDecode([[maybe_unused]] nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
-    [[maybe_unused]] const nvimgcdcsDecodeParams_t* params) const
-{
-    return true;
-}
-
 void ImageGenericDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, [[maybe_unused]] const std::vector<IImage*>& images,
     [[maybe_unused]] const nvimgcdcsDecodeParams_t* params, std::vector<bool>* result) const
 {
     result->resize(code_streams.size(), true);
 }
 
-std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode(
-    ICodeStream* code_stream, IImage* image, const nvimgcdcsDecodeParams_t* params)
-{
-    std::vector<ICodeStream*> code_streams{code_stream};
-    std::vector<IImage*> images{image};
-    return decodeBatch(nullptr, code_streams, images, params);
-}
-
-std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decodeBatch([[maybe_unused]] IDecodeState* decode_state_batch,
+std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode([[maybe_unused]] IDecodeState* decode_state_batch,
     const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params)
 {
     int N = images.size();
