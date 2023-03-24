@@ -88,8 +88,8 @@ template <typename Out, typename In>
 nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* params,
     nvimgcdcsDeviceAllocator_t dev_allocator, cudaStream_t cuda_stream)
 {
-    int64_t region_size_y = params->image_info.height;
-    int64_t region_size_x = params->image_info.width;
+    int64_t region_size_y = params->image_info.plane_info[0].height;
+    int64_t region_size_x = params->image_info.plane_info[0].width;
     if (params->image_info.region.ndim > 0) {
         int64_t roi_start_y = params->image_info.region.start[0];
         int64_t roi_start_x = params->image_info.region.start[1];
@@ -115,11 +115,11 @@ nvimgcdcsStatus_t ConvertGPUImpl(const nvimgcdcsImageProcessorConvertParams_t* p
 
     int64_t in_stride_y, in_stride_x, in_stride_c;
     if (is_planar(params->image_info.sample_format)) {
-        in_stride_c = params->image_info.height * params->image_info.width;
-        in_stride_y = params->image_info.width;
+        in_stride_c = params->image_info.plane_info[0].height * params->image_info.plane_info[0].width;
+        in_stride_y = params->image_info.plane_info[0].width;
         in_stride_x = 1;
     } else {  // interleaved
-        in_stride_y = params->image_info.width * num_channels;
+        in_stride_y = params->image_info.plane_info[0].width * num_channels;
         in_stride_x = num_channels;
         in_stride_c = 1;
     }
@@ -153,83 +153,83 @@ nvimgcdcsStatus_t DefaultImageProcessor::convert_gpu(
     cudaStream_t cuda_stream)
 {
     if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 &&
-        params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
+        params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
         return ConvertGPUImpl<uint8_t, uint8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
         return ConvertGPUImpl<uint8_t, uint16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
         return ConvertGPUImpl<uint8_t, int8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
         return ConvertGPUImpl<uint8_t, int16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
         return ConvertGPUImpl<uint8_t, float>(params, dev_allocator, cuda_stream);
 
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
         return ConvertGPUImpl<uint16_t, uint8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
         return ConvertGPUImpl<uint16_t, uint16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
         return ConvertGPUImpl<uint16_t, int8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
         return ConvertGPUImpl<uint16_t, int16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
         return ConvertGPUImpl<uint16_t, float>(params, dev_allocator, cuda_stream);
 
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
         return ConvertGPUImpl<int8_t, uint8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
         return ConvertGPUImpl<int8_t, uint16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
         return ConvertGPUImpl<int8_t, int8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
         return ConvertGPUImpl<int8_t, int16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
         return ConvertGPUImpl<int8_t, float>(params, dev_allocator, cuda_stream);
 
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
         return ConvertGPUImpl<int16_t, uint8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
         return ConvertGPUImpl<int16_t, uint16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
         return ConvertGPUImpl<int16_t, int8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
         return ConvertGPUImpl<int16_t, int16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
         return ConvertGPUImpl<int16_t, float>(params, dev_allocator, cuda_stream);
 
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
         return ConvertGPUImpl<float, uint8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
         return ConvertGPUImpl<float, uint16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8)
         return ConvertGPUImpl<float, int8_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16)
         return ConvertGPUImpl<float, int16_t>(params, dev_allocator, cuda_stream);
     else if (params->out_sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 &&
-             params->image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
+             params->image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32)
         return ConvertGPUImpl<float, float>(params, dev_allocator, cuda_stream);
     else
         return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;

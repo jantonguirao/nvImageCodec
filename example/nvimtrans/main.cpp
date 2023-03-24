@@ -87,6 +87,11 @@ uint32_t verbosity2severity(int verbose)
     return result;
 }
 
+inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
+{
+    return ((static_cast<unsigned int>(sample_type) & 0b11111110) + 7) / 8;
+}
+
 void fill_encode_params(const CommandLineParams& params, fs::path output_path,
     nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params,
     nvimgcdcsJpegEncodeParams_t* jpeg_encode_params)
@@ -153,8 +158,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
 
     std::cout << "Input image info: " << std::endl;
-    std::cout << "\t - width:" << image_info.width << std::endl;
-    std::cout << "\t - height:" << image_info.height << std::endl;
+    std::cout << "\t - width:" << image_info.plane_info[0].width << std::endl;
+    std::cout << "\t - height:" << image_info.plane_info[0].height << std::endl;
     std::cout << "\t - components:" << image_info.num_planes << std::endl;
     std::cout << "\t - codec:" << codec_name << std::endl;
 
@@ -163,19 +168,18 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
-    int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+    int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
     // Preparing output image_info
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
 
-    size_t device_pitch_in_bytes = image_info.width * bytes_per_element;
-    image_info.buffer_size =
-        device_pitch_in_bytes * image_info.height * image_info.num_planes;
+    size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
+    image_info.buffer_size = device_pitch_in_bytes * image_info.plane_info[0].height * image_info.num_planes;
     image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
     CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
     for (auto c = 0; c < image_info.num_planes; ++c) {
-        image_info.plane_info[c].height = image_info.height;
-        image_info.plane_info[c].width = image_info.width;
+        image_info.plane_info[c].height = image_info.plane_info[0].height;
+        image_info.plane_info[c].width = image_info.plane_info[0].width;
         image_info.plane_info[c].row_stride = device_pitch_in_bytes;
     }
 
@@ -217,7 +221,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     
     std::cout << "Saving to " << output_path.string() << " file" << std::endl;
     nvimgcdcsImageInfo_t out_image_info(image_info);
-    out_image_info.sampling = params.chroma_subsampling;
+    out_image_info.chroma_subsampling = params.chroma_subsampling;
     nvimgcdcsCodeStream_t output_code_stream;
     nvimgcdcsCodeStreamCreateToFile(instance, &output_code_stream, output_path.string().c_str(),
         params.output_codec.data(), &out_image_info);
@@ -385,19 +389,18 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data,
         char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetCodecName(code_streams[i], codec_name));
 
-        int bytes_per_element = image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+        int bytes_per_element = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
 
         //Decode to format
         image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
         image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         for (auto c = 0; c < image_info.num_planes; ++c) {
-            image_info.plane_info[c].height = image_info.height;
-            image_info.plane_info[c].width = image_info.width;
+            image_info.plane_info[c].height = image_info.plane_info[0].height;
+            image_info.plane_info[c].width = image_info.plane_info[0].width;
         }
 
-        size_t device_pitch_in_bytes = bytes_per_element * image_info.width;
-        size_t image_buffer_size =
-            device_pitch_in_bytes * image_info.height * image_info.num_planes;
+        size_t device_pitch_in_bytes = bytes_per_element * image_info.plane_info[0].width;
+        size_t image_buffer_size = device_pitch_in_bytes * image_info.plane_info[0].height * image_info.num_planes;
 
         if (image_buffer_size > ibuf[i].size) {
             if (ibuf[i].data) {
@@ -455,7 +458,7 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(images[i], &image_info);
         nvimgcdcsImageInfo_t out_image_info(image_info);
-        out_image_info.sampling = params.chroma_subsampling;
+        out_image_info.chroma_subsampling = params.chroma_subsampling;
 
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(instance, &out_code_streams[i],
             output_filename.string().c_str(), params.output_codec.c_str(), &out_image_info));

@@ -49,7 +49,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_IMAGE_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_INFO,
-        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_COMPOENT_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_COMPONENT_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_RESOLUTION_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_DECODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS,
@@ -116,14 +116,17 @@ extern "C"
         NVIMGCDCS_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStatus_t;
 
+    // 0     bit  -> 0 - unsigned, 1- signed
+    // 1..7  bits -> type number of bits
+    // 8..15 bits -> precision
     typedef enum
     {
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN = 0,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 = 1,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 = 2,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 = 3,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 = 4,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 5,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 = 0x0808,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 = 0x1010,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 = 0x0809,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 = 0x1011,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 0x2021,
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED = -1,
         NVIMGCDCS_SAMPLE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampleDataType_t;
@@ -224,14 +227,10 @@ extern "C"
         nvimgcdcsStructureType_t type;
         void* next;
 
-        uint32_t width;
-        uint32_t height;
-
         nvimgcdcsColorSpec_t color_spec;
-        nvimgcdcsChromaSubsampling_t sampling;
-        nvimgcdcsSampleDataType_t sample_type;
-        nvimgcdcsOrientation_t orientation;
+        nvimgcdcsChromaSubsampling_t chroma_subsampling;
         nvimgcdcsSampleFormat_t sample_format;
+        nvimgcdcsOrientation_t orientation;
         nvimgcdcsRegion_t region;
 
         void* buffer;
@@ -497,7 +496,7 @@ extern "C"
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING =
             8, // Message about behavior that is not necessarily an error, but very likely a bug in your application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR =
-            16, // Message about behavior that is invalid and may cause impropare execution or result of operation (e.g. can't open file) but not application
+            16, // Message about behavior that is invalid and may cause improper execution or result of operation (e.g. can't open file) but not application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL =
             24, // Message about behavior that is invalid and may cause crashes and forcing to shutdown application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL = 0x0FFFFFFF, //Used in case filtering out by message severity

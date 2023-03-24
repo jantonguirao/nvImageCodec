@@ -126,22 +126,17 @@ class Image
         void* buffer = image_info.buffer;
         ssize_t itemsize = 1; //TODO
         ssize_t size = image_info.buffer_size;
-        std::string format = format_str_from_type(image_info.sample_type);
+        std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
         ssize_t ndim = 3; //TODO
-        std::vector<ssize_t> shape{
-            image_info.num_planes, image_info.height, image_info.width};
+        std::vector<ssize_t> shape{image_info.num_planes, image_info.plane_info[0].height, image_info.plane_info[0].width};
         bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0;
 
-        py::tuple strides_tuple = py::make_tuple(
-            is_interleaved
-                ? 1
-                : image_info.plane_info[0].row_stride * image_info.height,
+        py::tuple strides_tuple = py::make_tuple(is_interleaved ? 1 : image_info.plane_info[0].row_stride * image_info.plane_info[0].height,
             image_info.plane_info[0].row_stride, is_interleaved ? 3 : 1);
 
         try {
             //TODO interleaved
-            py::tuple shape_tuple = py::make_tuple(
-                image_info.num_planes, image_info.height, image_info.width);
+            py::tuple shape_tuple = py::make_tuple(image_info.num_planes, image_info.plane_info[0].height, image_info.plane_info[0].width);
 
             // clang-format off
             // TODO when strides none
@@ -175,13 +170,13 @@ class Image
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        return image_info.width;
+        return image_info.plane_info[0].width;
     }
     int getHeight() const
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        return image_info.height;
+        return image_info.plane_info[0].height;
     }
     int getNdim() const { return 3; } //TODO
 
@@ -192,7 +187,7 @@ class Image
     {
         nvimgcdcsImageInfo_t image_info;
         nvimgcdcsImageGetImageInfo(image_, &image_info);
-        std::string format = format_str_from_type(image_info.sample_type);
+        std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
         return py::dtype(format);
     }
 
@@ -243,25 +238,22 @@ class Image
             if (vshape.size() >= 3) {
                 nvimgcdcsImageInfo_t image_info;
                 image_info.num_planes = vshape[0];
-                image_info.height = vshape[1];
-                image_info.width = vshape[2];
+                image_info.plane_info[0].height = vshape[1];
+                image_info.plane_info[0].width = vshape[2];
                 std::string typestr = iface["typestr"].cast<std::string>();
-                image_info.sample_type = type_from_format_str(typestr);
+                auto sample_type = type_from_format_str(typestr);
                 size_t buffer_size = 0;
                 image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
                 image_info.sample_format =
                     NVIMGCDCS_SAMPLEFORMAT_P_RGB; //NVIMGCDCS_SAMPLEFORMAT_I_RGB; //TODO add support for various formats
-                image_info.sampling = NVIMGCDCS_SAMPLING_444;
-                int pitch_in_bytes = vstrides.size() > 1
-                                         ? vstrides[1]
-                                         : image_info.width; 
+                image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
+                int pitch_in_bytes = vstrides.size() > 1 ? vstrides[1] : image_info.plane_info[0].width;
                 for (size_t c = 0; c < image_info.num_planes; c++) {
-                    image_info.plane_info[c].width = image_info.width;
-                    image_info.plane_info[c].height = image_info.height;
+                    image_info.plane_info[c].width = image_info.plane_info[0].width;
+                    image_info.plane_info[c].height = image_info.plane_info[0].height;
                     image_info.plane_info[c].row_stride = pitch_in_bytes;
-                    image_info.plane_info[c].sample_type = image_info.sample_type;
-                    buffer_size += image_info.plane_info[c].row_stride *
-                                   image_info.height;
+                    image_info.plane_info[c].sample_type = sample_type;
+                    buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[0].height;
                 }
                 image_info.buffer = buffer;
                 image_info.buffer_size = buffer_size;

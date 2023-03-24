@@ -163,8 +163,8 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
     if (length >= 26 && code_stream->parse_state->header_size == 12) {
         BitmapCoreHeader header = {};
         io_stream->read(io_stream->instance, &output_size, &header, sizeof(header));
-        image_info->width = header.width;
-        image_info->height = header.heigth;
+        image_info->plane_info[0].width = header.width;
+        image_info->plane_info[0].height = header.heigth;
         bpp = header.bpp;
         if (bpp <= 8) {
             io_stream->tell(io_stream->instance, &palette_start);
@@ -176,8 +176,8 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
         io_stream->read(io_stream->instance, &output_size, &header, sizeof(header));
         io_stream->skip(
             io_stream->instance, code_stream->parse_state->header_size - sizeof(header));
-        image_info->width = abs(header.width);
-        image_info->height = abs(header.heigth);
+        image_info->plane_info[0].width = abs(header.width);
+        image_info->plane_info[0].height = abs(header.heigth);
         bpp = header.bpp;
         compression_type = header.compression;
         ncolors = header.colors_used;
@@ -199,13 +199,12 @@ static nvimgcdcsStatus_t nvbmp_parser_get_image_info(nvimgcdcsParser_t parser,
 
     image_info->num_planes = number_of_channels(io_stream, bpp, compression_type, ncolors, palette_entry_size);
     for (size_t p = 0; p < image_info->num_planes; p++) {
-        image_info->plane_info[p].height = image_info->height;
-        image_info->plane_info[p].width = image_info->width;
+        image_info->plane_info[p].height = image_info->plane_info[0].height;
+        image_info->plane_info[p].width = image_info->plane_info[0].width;
         image_info->plane_info[p].num_channels = 1;
         image_info->plane_info[p].sample_type =
             NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; // TODO Allow other sample data types
     }
-    image_info->sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
     image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     return NVIMGCDCS_STATUS_SUCCESS;
 }

@@ -52,10 +52,9 @@ static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsI
             return NVIMGCDCS_STATUS_SUCCESS;
         }
 
-        if ((image_info.sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) &&
-            image_info.sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16) {
-            NVIMGCDCS_E_LOG_INFO(
-                "cannot encode because not suppoted data type #" << image_info.sample_type);
+        if ((image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) &&
+            image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16) {
+            NVIMGCDCS_E_LOG_INFO("cannot encode because not suppoted data type #" << image_info.plane_info[0].sample_type);
             *result = false;
             return NVIMGCDCS_STATUS_SUCCESS;
         }
@@ -227,22 +226,16 @@ static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeS
     unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
-        write_pxm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer,
-            image_info.plane_info[0].row_stride, NULL, 0, NULL, 0, NULL, 0,
-            image_info.width, image_info.height, image_info.plane_info[0].num_channels,
-            image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
+        write_pxm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
+            NULL, 0, NULL, 0, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
+            image_info.plane_info[0].num_channels, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     } else {
-        write_pxm<unsigned char>(code_stream->io_stream, host_buffer,
-            image_info.plane_info[0].row_stride,
-            host_buffer +
-                image_info.plane_info[0].row_stride * image_info.height,
-            image_info.plane_info[1].row_stride,
-            host_buffer +
-                +image_info.plane_info[0].row_stride * image_info.height +
-                image_info.plane_info[1].row_stride * image_info.height,
-            image_info.plane_info[2].row_stride, NULL, 0, image_info.width,
-            image_info.height, image_info.num_planes,
-            image_info.sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
+        write_pxm<unsigned char>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
+            host_buffer + image_info.plane_info[0].row_stride * image_info.plane_info[0].height, image_info.plane_info[1].row_stride,
+            host_buffer + +image_info.plane_info[0].row_stride * image_info.plane_info[0].height +
+                image_info.plane_info[1].row_stride * image_info.plane_info[0].height,
+            image_info.plane_info[2].row_stride, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
+            image_info.num_planes, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
     }
     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
     return NVIMGCDCS_STATUS_SUCCESS;

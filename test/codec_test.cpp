@@ -27,11 +27,8 @@ TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_12
     std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();
 
     ::testing::Sequence s1;
-    EXPECT_CALL(*factory1.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory1.get(), canParse(nullptr)).Times(1).InSequence(s1);
-    EXPECT_CALL(*factory2.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory2.get(), canParse(nullptr)).Times(1).InSequence(s1);
-    EXPECT_CALL(*factory3.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory3.get(), canParse(nullptr)).Times(1).InSequence(s1);
 
     codec.registerParserFactory(std::move(factory1), 1);
@@ -50,11 +47,8 @@ TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_23
     std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();
 
     ::testing::Sequence s1;
-    EXPECT_CALL(*factory1.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory1.get(), canParse(nullptr)).Times(1).InSequence(s1);
-    EXPECT_CALL(*factory2.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory2.get(), canParse(nullptr)).Times(1).InSequence(s1);
-    EXPECT_CALL(*factory3.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory3.get(), canParse(nullptr)).Times(1).InSequence(s1);
 
     codec.registerParserFactory(std::move(factory2), 2);
@@ -73,11 +67,8 @@ TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_32
     std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();
 
     ::testing::Sequence s1;
-    EXPECT_CALL(*factory1.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory1.get(), canParse(nullptr)).Times(1).InSequence(s1);
-    EXPECT_CALL(*factory2.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory2.get(), canParse(nullptr)).Times(1).InSequence(s1);
-    EXPECT_CALL(*factory3.get(), getParserId()).Times(1).InSequence(s1);
     EXPECT_CALL(*factory3.get(), canParse(nullptr)).Times(1).InSequence(s1);
 
     codec.registerParserFactory(std::move(factory3), 3);
