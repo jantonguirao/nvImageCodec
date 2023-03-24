@@ -479,13 +479,13 @@ extern "C"
     typedef struct nvimgcdcsDecoder* nvimgcdcsDecoder_t;
 
     struct nvimgcdcsEncodeState;
-    typedef nvimgcdcsEncodeState* nvimgcdcsEncodeState_t;
+    typedef struct nvimgcdcsEncodeState* nvimgcdcsEncodeState_t;
 
     struct nvimgcdcsDecodeState;
-    typedef nvimgcdcsDecodeState* nvimgcdcsDecodeState_t;
+    typedef struct nvimgcdcsDecodeState* nvimgcdcsDecodeState_t;
 
     struct nvimgcdcsDebugMessenger;
-    typedef nvimgcdcsDebugMessenger* nvimgcdcsDebugMessenger_t;
+    typedef struct nvimgcdcsDebugMessenger* nvimgcdcsDebugMessenger_t;
 
     typedef enum
     {
@@ -763,8 +763,8 @@ extern "C"
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
         bool load_extension_modules;  //Discover and load extension modules on start
         bool default_debug_messenger; //Create default debug messenger
-        uint32_t message_severity;    //severity for default debug messenger
-        uint32_t message_type;        //message type for default debug messenger
+        uint32_t message_severity;    //Severity for default debug messenger
+        uint32_t message_type;        //Message type for default debug messenger
         int num_cpu_threads;          //Number of CPU threads in default executor
         nvimgcdcsExecutorDesc_t executor;
     } nvimgcdcsInstanceCreateInfo_t;
