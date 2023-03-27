@@ -383,8 +383,8 @@ static void move_work_to_fallback(IWorkManager::Work* fb, IWorkManager::Work* wo
             moved++;
         }
     }
-    if (fb)
-        fb->resize(fb->getSamplesNum() - moved);
+    if (moved)
+        work->resize(n - moved);
 }
 
 static void filter_work(IWorkManager::Work* work, const std::vector<bool>& keep)
@@ -414,11 +414,13 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
         if (!fallback_work->empty())
             fallback_worker->addWork(std::move(fallback_work));
     } else {
-        filter_work(work.get(), mask);
         for (size_t i = 0; i < mask.size(); i++) {
             if (!mask[i])
+            {
                 work->results_.set(work->indices_[i], ProcessingResult::failure(nullptr));
+            }
         }
+        filter_work(work.get(), mask);
     }
 
     if (!work->code_streams_.empty()) {

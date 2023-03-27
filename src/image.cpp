@@ -23,7 +23,7 @@ Image::Image()
     , decode_state_(nullptr)
     , encode_state_(nullptr)
     , image_desc_{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
-          Image::static_image_ready}
+          Image::static_image_ready, Image::static_get_processing_status}
     , promise_(nullptr)
     , processing_status_(NVIMGCDCS_PROCESSING_STATUS_SUCCESS)
 {
@@ -119,6 +119,15 @@ nvimgcdcsStatus_t Image::static_image_ready(
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
     handle->imageReady(processing_status);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t Image::static_get_processing_status(
+    void* instance, nvimgcdcsProcessingStatus_t& processing_status)
+{
+    assert(instance);
+    Image* handle = reinterpret_cast<Image*>(instance);
+    processing_status = handle->getProcessingStatus();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

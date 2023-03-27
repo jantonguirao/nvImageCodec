@@ -44,6 +44,8 @@ class Image : public IImage
     static nvimgcdcsStatus_t static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result);
     static nvimgcdcsStatus_t static_image_ready(
         void* instance, nvimgcdcsProcessingStatus_t processing_status);
+    static nvimgcdcsStatus_t static_get_processing_status(
+        void* instance, nvimgcdcsProcessingStatus_t& processing_status);
 
     int index_;
     nvimgcdcsImageInfo_t image_info_;
