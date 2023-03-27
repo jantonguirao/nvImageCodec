@@ -29,14 +29,10 @@ class IImageDecoder
     virtual std::unique_ptr<IDecodeState> createDecodeState() const = 0;
     virtual std::unique_ptr<IDecodeState> createDecodeStateBatch() const = 0;
     virtual void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) = 0;
-    virtual bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
-       const  nvimgcdcsDecodeParams_t* params) const = 0;
     virtual void canDecode(const std::vector<ICodeStream*>& code_streams,
         const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
         std::vector<bool>* result) const = 0;
-    virtual std::unique_ptr<ProcessingResultsFuture> decode(
-        ICodeStream* code_stream, IImage* image, const nvimgcdcsDecodeParams_t* params) = 0;
-    virtual std::unique_ptr<ProcessingResultsFuture> decodeBatch(IDecodeState* decode_state_batch,
+    virtual std::unique_ptr<ProcessingResultsFuture> decode(IDecodeState* decode_state_batch,
         const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
         const nvimgcdcsDecodeParams_t* params) = 0;
 };

@@ -19,7 +19,7 @@ namespace nvimgcdcs {
 
 Image::Image()
     : index_(0)
-    , image_info_()
+    , image_info_{}
     , decode_state_(nullptr)
     , encode_state_(nullptr)
     , image_desc_{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
@@ -27,7 +27,6 @@ Image::Image()
     , promise_(nullptr)
     , processing_status_(NVIMGCDCS_PROCESSING_STATUS_SUCCESS)
 {
-    memset(&image_info_, 0, sizeof(image_info_));
 }
 
 Image::~Image()

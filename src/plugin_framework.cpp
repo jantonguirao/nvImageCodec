@@ -221,8 +221,7 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
 
         return;
     }
-    nvimgcdcsExtensionDesc_t extension_desc;
-    memset(&extension_desc, 0, sizeof(extension_desc));
+    nvimgcdcsExtensionDesc_t extension_desc{};
     extension_desc.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
     nvimgcdcsStatus_t status = module.extension_entry_(&extension_desc);
     if (status != NVIMGCDCS_STATUS_SUCCESS) {

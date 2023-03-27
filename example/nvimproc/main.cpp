@@ -168,8 +168,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
 
     // Prepare decode parameters
-    nvimgcdcsDecodeParams_t decode_params;
-    memset(&decode_params, 0, sizeof(nvimgcdcsDecodeParams_t));
+    nvimgcdcsDecodeParams_t decode_params{};
     decode_params.enable_color_conversion = true;
     decode_params.enable_orientation = true;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
@@ -207,7 +206,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsDecoder_t decoder;
     nvimgcdcsDecoderCreate(instance, &decoder);
 
-    nvimgcdcsDecoderDecode(decoder, code_stream, image, &decode_params, nullptr, true);
+    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, nullptr, true);
 
     nvimgcdcsProcessingStatus_t decode_status;
     nvimgcdcsImageGetProcessingStatus(image, &decode_status);
@@ -229,7 +228,6 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
 void fill_encode_params(const CommandLineParams& params, fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
     nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcdcsJpegEncodeParams_t* jpeg_encode_params)
 {
-    memset(encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
     encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS;
     encode_params->quality = params.quality;
     encode_params->target_psnr = params.target_psnr;
@@ -237,7 +235,6 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
 
     //codec sepcific encode params
     if (params.output_codec == "jpeg2k") {
-        memset(jpeg2k_encode_params, 0, sizeof(nvimgcdcsJpeg2kEncodeParams_t));
         jpeg2k_encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
         jpeg2k_encode_params->stream_type =
             output_path.extension().string() == ".jp2" ? NVIMGCDCS_JPEG2K_STREAM_JP2 : NVIMGCDCS_JPEG2K_STREAM_J2K;
@@ -260,7 +257,6 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
 
         encode_params->next = jpeg2k_encode_params;
     } else if (params.output_codec == "jpeg") {
-        memset(jpeg_encode_params, 0, sizeof(nvimgcdcsJpegEncodeParams_t));
         jpeg_encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
         jpeg_encode_params->encoding = params.jpeg_encoding;
         jpeg_encode_params->optimized_huffman = params.optimized_huffman;
@@ -290,16 +286,15 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
-    nvimgcdcsEncodeParams_t encode_params;
-    memset(&encode_params, 0, sizeof(nvimgcdcsEncodeParams_t));
-    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
-    nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
+    nvimgcdcsEncodeParams_t encode_params{};
+    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{};
+    nvimgcdcsJpegEncodeParams_t jpeg_encode_params{};
     fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
 
     nvimgcdcsEncoder_t encoder;
     nvimgcdcsEncoderCreate(instance, &encoder);
 
-    nvimgcdcsEncoderEncode(encoder, code_stream, image, &encode_params, nullptr, true);
+    nvimgcdcsEncoderEncode(encoder, &image, &code_stream, 1, &encode_params, nullptr, true);
 
     nvimgcdcsProcessingStatus_t encode_status;
     nvimgcdcsImageGetProcessingStatus(image, &encode_status);
@@ -439,7 +434,7 @@ int main(int argc, const char* argv[])
     }
 
     nvimgcdcsInstance_t instance;
-    nvimgcdcsInstanceCreateInfo_t instance_create_info;
+    nvimgcdcsInstanceCreateInfo_t instance_create_info{};
     instance_create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_create_info.next = NULL;
     instance_create_info.pinned_allocator = NULL;
