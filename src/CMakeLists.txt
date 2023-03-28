@@ -13,10 +13,8 @@ set(NVIMGCDCS_SRCS
     code_stream.cpp
     file_io_stream.cpp
     std_file_io_stream.cpp
-    decode_state.cpp
     image.cpp
     parse_state.cpp
-    encode_state.cpp
     logger.cpp
     default_debug_messenger.cpp
     image_parser_factory.cpp

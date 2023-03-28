@@ -241,7 +241,7 @@ static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeS
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t pxm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state,
+static nvimgcdcsStatus_t pxm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state,
     nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
@@ -280,10 +280,8 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
     pxm_create,
     pxm_destroy,
     pxm_create_encode_state,
-    pxm_create_encode_state,
     pxm_destroy_encode_state,
     pxm_get_capabilities,
-    pxm_encode,
     pxm_encode_batch
 };
 // clang-format on

@@ -230,7 +230,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvbmp_encoder_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t* images,
+static nvimgcdcsStatus_t nvbmp_encoder_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t* images,
     nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
@@ -268,11 +268,9 @@ nvimgcdcsEncoderDesc nvbmp_encoder = {
     nvbmp_encoder_can_encode,
     nvbmp_encoder_create,
     nvbmp_encoder_destroy, 
-    nvbmp_create_encode_state,
     nvbmp_create_encode_state, 
     nvbmp_destroy_encode_state,
     nvbmp_get_capabilities,
-    nvbmp_encoder_encode,
     nvbmp_encoder_encode_batch
 };
 // clang-format on    

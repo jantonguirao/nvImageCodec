@@ -9,7 +9,6 @@
  */
 #include "image_encoder.h"
 #include <cassert>
-#include "encode_state.h"
 #include "encode_state_batch.h"
 #include "exception.h"
 #include "icode_stream.h"
@@ -26,11 +25,6 @@ ImageEncoder::ImageEncoder(const nvimgcdcsEncoderDesc_t desc, const nvimgcdcsEnc
 ImageEncoder::~ImageEncoder()
 {
     encoder_desc_->destroy(encoder_);
-}
-
-std::unique_ptr<IEncodeState> ImageEncoder::createEncodeState() const
-{
-    return std::make_unique<EncodeState>(encoder_desc_, encoder_);
 }
 
 std::unique_ptr<IEncodeState> ImageEncoder::createEncodeStateBatch() const
@@ -80,7 +74,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(IEncodeState* enco
         images[i]->setPromise(encode_state_batch->getPromise());
     }
 
-    encoder_desc_->encodeBatch(
+    encoder_desc_->encode(
         encoder_, encode_state_batch->getInternalEncodeState(), image_descs.data(), code_stream_descs.data(), code_streams.size(), params);
 
     return future;

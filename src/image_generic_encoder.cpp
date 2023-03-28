@@ -275,7 +275,6 @@ class ImageGenericEncoder::Worker
     int index_ = 0;
     std::unique_ptr<IImageEncoder> encoder_;
     bool is_input_expected_in_device_ = false;
-    std::vector<std::unique_ptr<IEncodeState>> encode_states_;
     std::unique_ptr<IEncodeState> encode_state_batch_;
     std::unique_ptr<Worker> fallback_ = nullptr;
 };
@@ -392,8 +391,8 @@ static void move_work_to_fallback(IWorkManager::Work* fb, IWorkManager::Work* wo
             moved++;
         }
     }
-    if (fb)
-        fb->resize(fb->getSamplesNum() - moved);
+    if (moved)
+        work->resize(n - moved);
 }
 
 static void filter_work(IWorkManager::Work* work, const std::vector<bool>& keep)
@@ -433,13 +432,6 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 
     if (!work->code_streams_.empty()) {
         work->ensure_expected_buffer_for_each_image(is_input_expected_in_device_);
-        for (size_t i = 0; i < work->images_.size(); ++i) {
-            if (encode_states_.size() == i) {
-                encode_states_.push_back(encoder_->createEncodeState());
-            }
-
-            work->images_[i]->attachEncodeState(encode_states_[i].get());
-        }
         auto future = encoder_->encode(encode_state_batch_.get(), work->images_, work->code_streams_, work->params_);
 
         for (;;) {
@@ -486,11 +478,6 @@ ImageGenericEncoder::~ImageGenericEncoder()
 {
 }
 
-std::unique_ptr<IEncodeState> ImageGenericEncoder::createEncodeState() const
-{
-    return createEncodeStateBatch();
-}
-
 std::unique_ptr<IEncodeState> ImageGenericEncoder::createEncodeStateBatch() const
 {
     return std::make_unique<EncodeStateBatch>(nullptr, nullptr);
@@ -520,7 +507,6 @@ void ImageGenericEncoder::canEncode([[maybe_unused]] const std::vector<IImage*>&
 std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(IEncodeState* encode_state_batch,
     const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params)
 {
-    NVIMGCDCS_LOG_TRACE("encodeBatch");
     int N = images.size();
     assert(static_cast<int>(code_streams.size()) == N);
 

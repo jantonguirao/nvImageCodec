@@ -34,7 +34,6 @@ class ImageGenericEncoder : public IImageEncoder, public IWorkManager
   public:
     explicit ImageGenericEncoder(ICodecRegistry* codec_registry);
     ~ImageGenericEncoder() override;
-    std::unique_ptr<IEncodeState> createEncodeState() const override;
     std::unique_ptr<IEncodeState> createEncodeStateBatch() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
     void canEncode(const std::vector<IImage*>& images,

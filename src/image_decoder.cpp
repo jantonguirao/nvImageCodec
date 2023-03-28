@@ -9,7 +9,6 @@
  */
 #include "image_decoder.h"
 #include <cassert>
-#include "decode_state.h"
 #include "decode_state_batch.h"
 #include "exception.h"
 #include "icode_stream.h"
@@ -28,11 +27,6 @@ ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t desc, const nvimgcdcsDec
 ImageDecoder::~ImageDecoder()
 {
     decoder_desc_->destroy(decoder_);
-}
-
-std::unique_ptr<IDecodeState> ImageDecoder::createDecodeState() const
-{
-    return std::make_unique<DecodeState>(decoder_desc_, decoder_);
 }
 
 std::unique_ptr<IDecodeState> ImageDecoder::createDecodeStateBatch() const
@@ -82,7 +76,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
         images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
     }
 
-    decoder_desc_->decodeBatch(
+    decoder_desc_->decode(
         decoder_, decode_state_batch->getInternalDecodeState(), code_stream_descs.data(), image_descs.data(), code_streams.size(), params);
 
     return future;

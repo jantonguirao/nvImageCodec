@@ -11,7 +11,6 @@
 
 #include <cassert>
 #include "code_stream.h"
-#include "decode_state.h"
 #include "image.h"
 #include "image_decoder.h"
 
