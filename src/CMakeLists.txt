@@ -31,8 +31,6 @@ set(NVIMGCDCS_SRCS
     thread_pool.cpp
     device_guard.cpp
     default_executor.cpp
-    default_image_processor.cpp
-    default_image_processor_gpu.cu
 )
 
 include_directories(
@@ -66,6 +64,7 @@ if(UNIX)
     # CXX flags
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
     target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PRIVATE dl)
+    target_link_libraries(${NVIMGCDCS_LIBRARY_NAME}_static PRIVATE dl)
 endif()
 
 

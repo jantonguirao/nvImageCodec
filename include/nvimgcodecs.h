@@ -679,40 +679,6 @@ extern "C"
 
     typedef struct nvimgcdcsExecutorDesc* nvimgcdcsExecutorDesc_t;
 
-    typedef struct
-    {
-        // Output
-        void* out_buffer;
-        size_t out_buffer_sz;
-        nvimgcdcsSampleFormat_t out_sample_format;
-        nvimgcdcsSampleDataType_t out_sample_type;
-        // Input
-        void* in_buffer;
-        nvimgcdcsImageInfo_t image_info;
-        nvimgcdcsRegion_t region;
-
-        bool flip_y;
-        bool flip_x;
-        bool swap_xy;
-
-        float multiplier; // used to adjust dynamic range
-    } nvimgcdcsImageProcessorConvertParams_t;
-
-    struct nvimgcdcsImageProcessorDesc
-    {
-        nvimgcdcsStructureType_t type;
-        const void* next;
-
-        void* instance;
-
-        nvimgcdcsStatus_t (*convert_cpu)(
-            void* instance, const nvimgcdcsImageProcessorConvertParams_t* params, nvimgcdcsPinnedAllocator_t* pinned_allocator);
-        nvimgcdcsStatus_t (*convert_gpu)(void* instance, const nvimgcdcsImageProcessorConvertParams_t* params,
-            nvimgcdcsDeviceAllocator_t dev_allocator, cudaStream_t cuda_stream);
-    };
-
-    typedef struct nvimgcdcsImageProcessorDesc* nvimgcdcsImageProcessorDesc_t;
-
     typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
 
@@ -732,7 +698,6 @@ extern "C"
         nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
         nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t* result);
-        nvimgcdcsStatus_t (*getImageProcessor)(void* instance, nvimgcdcsImageProcessorDesc_t* result);
         nvimgcdcsLogFunc_t log;
     };
 
