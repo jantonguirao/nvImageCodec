@@ -230,6 +230,33 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
+nvimgcdcsStatus_t nvbmp_encoder_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t* images,
+    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+{
+    try {
+        NVIMGCDCS_E_LOG_TRACE("nvbmp_encode_batch");
+
+        if (batch_size < 1) {
+            NVIMGCDCS_D_LOG_ERROR("Batch size lower than 1");
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        nvimgcdcsStatus_t result = NVIMGCDCS_STATUS_SUCCESS;
+        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
+            result = nvbmp_encoder_encode(encoder, nullptr, images[sample_idx], code_streams[sample_idx], params);
+            if (result != NVIMGCDCS_STATUS_SUCCESS) {
+                return result;
+            }
+        }
+        return result;
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_D_LOG_ERROR("Could not encode bmp batch - " << e.what());
+        for (int i = 0; i < batch_size; ++i) {
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+        }
+        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    }
+}
+
 // clang-format off
 nvimgcdcsEncoderDesc nvbmp_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
@@ -242,10 +269,10 @@ nvimgcdcsEncoderDesc nvbmp_encoder = {
     nvbmp_encoder_create,
     nvbmp_encoder_destroy, 
     nvbmp_create_encode_state,
-    NULL, 
+    nvbmp_create_encode_state, 
     nvbmp_destroy_encode_state,
     nvbmp_get_capabilities,
     nvbmp_encoder_encode,
-    NULL
+    nvbmp_encoder_encode_batch
 };
 // clang-format on    

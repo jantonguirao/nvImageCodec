@@ -628,8 +628,7 @@ extern "C"
             nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params);
 
         nvimgcdcsStatus_t (*encodeBatch)(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state_batch,
-            nvimgcdcsEncodeState_t* encode_states, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size,
-            const nvimgcdcsEncodeParams_t* params);
+            nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
     };
 
     typedef struct nvimgcdcsEncoderDesc* nvimgcdcsEncoderDesc_t;
