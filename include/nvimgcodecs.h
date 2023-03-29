@@ -438,13 +438,12 @@ extern "C"
         NVIMGCDCS_CAPABILITY_SCALING = 1,
         NVIMGCDCS_CAPABILITY_ORIENTATION = 2,
         NVIMGCDCS_CAPABILITY_ROI = 3,
-        NVIMGCDCS_CAPABILITY_BATCH = 4,
-        NVIMGCDCS_CAPABILITY_HOST_INPUT = 5,
-        NVIMGCDCS_CAPABILITY_HOST_OUTPUT = 6,
-        NVIMGCDCS_CAPABILITY_DEVICE_INPUT = 7,
-        NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT = 8,
-        NVIMGCDCS_CAPABILITY_LAYOUT_PLANAR = 9,
-        NVIMGCDCS_CAPABILITY_LAYOUT_INTERLEAVED = 10,
+        NVIMGCDCS_CAPABILITY_HOST_INPUT = 4,
+        NVIMGCDCS_CAPABILITY_HOST_OUTPUT = 5,
+        NVIMGCDCS_CAPABILITY_DEVICE_INPUT = 6,
+        NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT = 7,
+        NVIMGCDCS_CAPABILITY_LAYOUT_PLANAR = 8,
+        NVIMGCDCS_CAPABILITY_LAYOUT_INTERLEAVED = 9,
         NVIMGCDCS_CAPABILITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsCapability_t;
 
@@ -618,13 +617,10 @@ extern "C"
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
-        nvimgcdcsStatus_t (*createEncodeStateBatch)(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state);
-        nvimgcdcsStatus_t (*destroyEncodeState)(nvimgcdcsEncodeState_t encode_state);
-
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
 
-        nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state_batch,
-            nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
+            int batch_size, const nvimgcdcsEncodeParams_t* params);
     };
 
     typedef struct nvimgcdcsEncoderDesc* nvimgcdcsEncoderDesc_t;
@@ -645,13 +641,10 @@ extern "C"
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
-        nvimgcdcsStatus_t (*createDecodeStateBatch)(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state);
-        nvimgcdcsStatus_t (*destroyDecodeState)(nvimgcdcsDecodeState_t decode_state);
-
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
 
-        nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state_batch,
-            nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
+            int batch_size, const nvimgcdcsDecodeParams_t* params);
     };
 
     typedef struct nvimgcdcsDecoderDesc* nvimgcdcsDecoderDesc_t;

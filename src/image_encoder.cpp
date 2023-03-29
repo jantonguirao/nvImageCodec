@@ -29,7 +29,7 @@ ImageEncoder::~ImageEncoder()
 
 std::unique_ptr<IEncodeState> ImageEncoder::createEncodeStateBatch() const
 {
-    return std::make_unique<EncodeStateBatch>(encoder_desc_, encoder_);
+    return std::make_unique<EncodeStateBatch>();
 }
 
 void ImageEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
@@ -75,7 +75,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(IEncodeState* enco
     }
 
     encoder_desc_->encode(
-        encoder_, encode_state_batch->getInternalEncodeState(), image_descs.data(), code_stream_descs.data(), code_streams.size(), params);
+        encoder_, image_descs.data(), code_stream_descs.data(), code_streams.size(), params);
 
     return future;
 }

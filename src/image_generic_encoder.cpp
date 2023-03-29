@@ -469,7 +469,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 //ImageGenericEncoder
 
 ImageGenericEncoder::ImageGenericEncoder(ICodecRegistry* codec_registry)
-    : capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT, NVIMGCDCS_CAPABILITY_DEVICE_INPUT, NVIMGCDCS_CAPABILITY_BATCH}
+    : capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT, NVIMGCDCS_CAPABILITY_DEVICE_INPUT, NVIMGCDCS_CAPABILITY_HOST_INPUT}
     , codec_registry_(codec_registry)
 {
 }
@@ -480,7 +480,7 @@ ImageGenericEncoder::~ImageGenericEncoder()
 
 std::unique_ptr<IEncodeState> ImageGenericEncoder::createEncodeStateBatch() const
 {
-    return std::make_unique<EncodeStateBatch>(nullptr, nullptr);
+    return std::make_unique<EncodeStateBatch>();
 }
 
 void ImageGenericEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)

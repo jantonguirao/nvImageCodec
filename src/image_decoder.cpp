@@ -31,7 +31,7 @@ ImageDecoder::~ImageDecoder()
 
 std::unique_ptr<IDecodeState> ImageDecoder::createDecodeStateBatch() const
 {
-    return std::make_unique<DecodeStateBatch>(decoder_desc_, decoder_);
+    return std::make_unique<DecodeStateBatch>();
 }
 
 void ImageDecoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
@@ -77,7 +77,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
     }
 
     decoder_desc_->decode(
-        decoder_, decode_state_batch->getInternalDecodeState(), code_stream_descs.data(), image_descs.data(), code_streams.size(), params);
+        decoder_, code_stream_descs.data(), image_descs.data(), code_streams.size(), params);
 
     return future;
 }

@@ -13,9 +13,8 @@ struct nvimgcdcsDecoder
 struct nvimgcdcsDecodeState
 {};
 
-static nvimgcdcsStatus_t nvbmp_can_decode(void* instance, bool* result,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
-    const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_can_decode(
+    void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
 {
     *result = true;
     char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
@@ -36,8 +35,7 @@ static nvimgcdcsStatus_t nvbmp_can_decode(void* instance, bool* result,
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_create(
-    void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_decoder_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_create");
     *decoder = new nvimgcdcsDecoder();
@@ -51,23 +49,7 @@ static nvimgcdcsStatus_t nvbmp_decoder_destroy(nvimgcdcsDecoder_t decoder)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_create_decode_state(
-    nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t* decode_state)
-{
-    NVIMGCDCS_D_LOG_TRACE("nvbmp_create_decode_state");
-    *decode_state = new nvimgcdcsDecodeState();
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t nvbmp_destroy_decode_state(nvimgcdcsDecodeState_t decode_state)
-{
-    NVIMGCDCS_D_LOG_TRACE("nvbmp_destroy_decode_state");
-    delete decode_state;
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t nvbmp_get_capabilities(
-    nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
+nvimgcdcsStatus_t nvbmp_get_capabilities(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_get_capabilities");
     if (decoder == 0)
@@ -85,9 +67,8 @@ nvimgcdcsStatus_t nvbmp_get_capabilities(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder,
-    nvimgcdcsDecodeState_t decode_state, nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state,
+    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_decode");
     nvimgcdcsImageInfo_t image_info;
@@ -119,8 +100,8 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder,
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state,
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
+    nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvbmp_decoder_decode_batch");
@@ -157,8 +138,6 @@ nvimgcdcsDecoderDesc nvbmp_decoder = {
     nvbmp_can_decode,
     nvbmp_decoder_create,
     nvbmp_decoder_destroy, 
-    nvbmp_create_decode_state, 
-    nvbmp_destroy_decode_state,
     nvbmp_get_capabilities,
     nvbmp_decoder_decode_batch
 };
