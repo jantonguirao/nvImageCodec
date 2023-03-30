@@ -128,8 +128,8 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
     return 0;
 }
 
-static nvimgcdcsStatus_t nvbmp_encoder_can_encode(
-    void* instance, bool* result, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_encoder_can_encode(nvimgcdcsEncoder_t encoder, bool* result, nvimgcdcsImageDesc_t image,
+    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_can_encode");
     *result = true;
@@ -242,10 +242,10 @@ nvimgcdcsEncoderDesc nvbmp_encoder = {
     "nvbmp_encoder",    //id
      0x00000100,        // version
     "bmp",              //  codec_type 
-    nvbmp_encoder_can_encode,
     nvbmp_encoder_create,
     nvbmp_encoder_destroy, 
     nvbmp_get_capabilities,
+    nvbmp_encoder_can_encode,
     nvbmp_encoder_encode_batch
 };
 // clang-format on    

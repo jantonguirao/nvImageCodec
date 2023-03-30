@@ -611,13 +611,13 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*canEncode)(void* instance, bool* result, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
-            const nvimgcdcsEncodeParams_t* params);
-
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
+        nvimgcdcsStatus_t (*canEncode)(nvimgcdcsEncoder_t encoder, bool* result, nvimgcdcsImageDesc_t image,
+            nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params);
 
         nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
             int batch_size, const nvimgcdcsEncodeParams_t* params);
@@ -635,13 +635,13 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*canDecode)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
-            const nvimgcdcsDecodeParams_t* params);
-
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
+        nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, bool* result, nvimgcdcsCodeStreamDesc_t code_stream,
+            nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params);
 
         nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
             int batch_size, const nvimgcdcsDecodeParams_t* params);

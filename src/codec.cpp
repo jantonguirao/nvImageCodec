@@ -34,20 +34,6 @@ std::unique_ptr<IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code
     return nullptr;
 }
 
-std::unique_ptr<IImageDecoder> Codec::createDecoder(nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params) const
-{
-    NVIMGCDCS_LOG_TRACE("Codec::createDecoder " << name_);
-    for (const auto& entry : decoders_) {
-        NVIMGCDCS_LOG_TRACE("- probing decoder:" << entry.second->getDecoderId());
-        if (entry.second->canDecode(code_stream, image, params)) {
-            NVIMGCDCS_LOG_TRACE("- - can decode");
-            return entry.second->createDecoder(params);
-        }
-    }
-    return nullptr;
-}
-
 int Codec::getDecodersNum() const
 {
     return decoders_.size();
@@ -80,20 +66,6 @@ std::unique_ptr<IImageEncoder> Codec::createEncoder(
     for (int i = 0; i < index; ++i)
         it++;
     return it->second->createEncoder(params);
-}
-
-std::unique_ptr<IImageEncoder> Codec::createEncoder(nvimgcdcsImageDesc_t image,
-    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params) const
-{
-    NVIMGCDCS_LOG_TRACE("Codec::createEncoder " << name_);
-    for (const auto& entry : encoders_) {
-        NVIMGCDCS_LOG_TRACE("- probing encoder:" << entry.second->getEncoderId());
-        if (entry.second->canEncode(image, code_stream, params)) {
-            NVIMGCDCS_LOG_TRACE("- - can encode");
-            return entry.second->createEncoder(params);
-        }
-    }
-    return nullptr;
 }
 
 const std::string& Codec::name() const
