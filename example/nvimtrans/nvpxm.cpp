@@ -27,8 +27,8 @@ namespace nvpxm {
         }                                                      \
     }
 
-static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsImageDesc_t image,
-    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t pxm_can_encode(
+    void* instance, bool* result, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_can_encode");
     *result = true;
@@ -74,8 +74,7 @@ static nvimgcdcsStatus_t pxm_can_encode(void* instance, bool* result, nvimgcdcsI
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pxm_create(
-    void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t pxm_create(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_create_encoder");
     *encoder = new nvimgcdcsEncoder();
@@ -89,23 +88,7 @@ static nvimgcdcsStatus_t pxm_destroy(nvimgcdcsEncoder_t encoder)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pxm_create_encode_state(
-    nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t* encode_state)
-{
-    NVIMGCDCS_E_LOG_TRACE("pxm_create_encode_state");
-    *encode_state = new nvimgcdcsEncodeState();
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t pxm_destroy_encode_state(nvimgcdcsEncodeState_t encode_state)
-{
-    NVIMGCDCS_E_LOG_TRACE("pxm_destroy_encode_state");
-    delete encode_state;
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t pxm_get_capabilities(
-    nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
+nvimgcdcsStatus_t pxm_get_capabilities(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_get_capabilities");
     if (encoder == 0)
@@ -124,9 +107,8 @@ nvimgcdcsStatus_t pxm_get_capabilities(
 }
 
 template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
-int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG,
-    size_t pitchG, const D* chanB, size_t pitchB, const D* chanA, size_t pitchA, int width,
-    int height, int num_components, uint8_t precision)
+int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB,
+    size_t pitchB, const D* chanA, size_t pitchA, int width, int height, int num_components, uint8_t precision)
 {
     size_t written_size;
     int red, green, blue, alpha;
@@ -152,8 +134,7 @@ int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
         ss << (1 << precision) - 1 << "\n";
     }
     std::string header = ss.str();
-    io_stream->write(
-        io_stream->instance, &written_size, static_cast<void*>(header.data()), header.size());
+    io_stream->write(io_stream->instance, &written_size, static_cast<void*>(header.data()), header.size());
 
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
@@ -177,37 +158,25 @@ int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
                 }
             }
             if (precision == 8) {
-                io_stream->putc(
-                    io_stream->instance, &written_size, static_cast<unsigned char>(red));
+                io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(red));
                 if (num_components > 1) {
-                    io_stream->putc(
-                        io_stream->instance, &written_size, static_cast<unsigned char>(green));
-                    io_stream->putc(
-                        io_stream->instance, &written_size, static_cast<unsigned char>(blue));
+                    io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(green));
+                    io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(blue));
                     if (num_components == 4) {
-                        io_stream->putc(
-                            io_stream->instance, &written_size, static_cast<unsigned char>(alpha));
+                        io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(alpha));
                     }
                 }
             } else {
-                io_stream->putc(
-                    io_stream->instance, &written_size, static_cast<unsigned char>(red >> 8));
-                io_stream->putc(
-                    io_stream->instance, &written_size, static_cast<unsigned char>(red & 0xFF));
+                io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(red >> 8));
+                io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(red & 0xFF));
                 if (num_components > 1) {
-                    io_stream->putc(
-                        io_stream->instance, &written_size, static_cast<unsigned char>(green >> 8));
-                    io_stream->putc(io_stream->instance, &written_size,
-                        static_cast<unsigned char>(green & 0xFF));
-                    io_stream->putc(
-                        io_stream->instance, &written_size, static_cast<unsigned char>(blue >> 8));
-                    io_stream->putc(io_stream->instance, &written_size,
-                        static_cast<unsigned char>(blue & 0xFF));
+                    io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(green >> 8));
+                    io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(green & 0xFF));
+                    io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(blue >> 8));
+                    io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(blue & 0xFF));
                     if (num_components == 4) {
-                        io_stream->putc(io_stream->instance, &written_size,
-                            static_cast<unsigned char>(alpha >> 8));
-                        io_stream->putc(io_stream->instance, &written_size,
-                            static_cast<unsigned char>(alpha & 0xFF));
+                        io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(alpha >> 8));
+                        io_stream->putc(io_stream->instance, &written_size, static_cast<unsigned char>(alpha & 0xFF));
                     }
                 }
             }
@@ -216,9 +185,8 @@ int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
     return 0;
 }
 
-static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state,
-    nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
-    const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t image,
+    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_encode");
     nvimgcdcsImageInfo_t image_info;
@@ -241,6 +209,33 @@ static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeS
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
+static nvimgcdcsStatus_t pxm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
+    int batch_size, const nvimgcdcsEncodeParams_t* params)
+{
+    try {
+        NVIMGCDCS_E_LOG_TRACE("pxm_encode_batch");
+
+        if (batch_size < 1) {
+            NVIMGCDCS_D_LOG_ERROR("Batch size lower than 1");
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        nvimgcdcsStatus_t result = NVIMGCDCS_STATUS_SUCCESS;
+        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
+            result = pxm_encode(encoder, nullptr, images[sample_idx], code_streams[sample_idx], params);
+            if (result != NVIMGCDCS_STATUS_SUCCESS) {
+                return result;
+            }
+        }
+        return result;
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_D_LOG_ERROR("Could not encode pxm batch - " << e.what());
+        for (int i = 0; i < batch_size; ++i) {
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+        }
+        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    }
+}
+
 // clang-format off
 struct nvimgcdcsEncoderDesc ppm_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
@@ -252,17 +247,12 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
     pxm_can_encode,
     pxm_create,
     pxm_destroy,
-    pxm_create_encode_state,
-    NULL,
-    pxm_destroy_encode_state,
     pxm_get_capabilities,
-    pxm_encode,
-    NULL
+    pxm_encode_batch
 };
 // clang-format on
 
-nvimgcdcsStatus_t extension_create(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t extension_create(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("extension_create");
@@ -272,8 +262,7 @@ nvimgcdcsStatus_t extension_create(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t extension_destroy(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t extension_destroy(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("extension_destroy");
     Logger::get().unregisterLogFunc();

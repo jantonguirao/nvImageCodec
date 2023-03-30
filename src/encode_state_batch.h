@@ -18,16 +18,11 @@ namespace nvimgcdcs {
 class EncodeStateBatch : public IEncodeState
 {
   public:
-    EncodeStateBatch(const nvimgcdcsEncoderDesc_t encoder_desc, nvimgcdcsEncoder_t encoder);
-    ~EncodeStateBatch() override;
+    EncodeStateBatch() = default;
+    ~EncodeStateBatch() override = default;
     void setPromise(const ProcessingResultsPromise& promise) override;
     const ProcessingResultsPromise& getPromise() override;
-    nvimgcdcsEncodeState_t getInternalEncodeState() override;
-
   private:
-    const nvimgcdcsEncoderDesc_t encoder_desc_;
-    nvimgcdcsEncoder_t encoder_;
-    nvimgcdcsEncodeState_t encode_state_;
     std::unique_ptr<ProcessingResultsPromise> promise_;
 };
 

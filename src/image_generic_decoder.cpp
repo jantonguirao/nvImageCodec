@@ -262,7 +262,6 @@ class ImageGenericDecoder:: Worker
     int index_ = 0;
     std::unique_ptr<IImageDecoder> decoder_;
     bool is_device_output_ = false;
-    std::vector<std::unique_ptr<IDecodeState>> decode_states_;
     std::unique_ptr<IDecodeState> decode_state_batch_;
     std::unique_ptr<Worker> fallback_ = nullptr;
 };
@@ -421,13 +420,6 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 
     if (!work->code_streams_.empty()) {
         work->ensure_expected_buffer_for_each_image(is_device_output_);
-        for (size_t i = 0; i < work->images_.size(); ++i) {
-            if (decode_states_.size() == i) {
-                decode_states_.push_back(decoder_->createDecodeState());
-            }
-
-            work->images_[i]->attachDecodeState(decode_states_[i].get());
-        }
         auto future = decoder_->decode(decode_state_batch_.get(), work->code_streams_, work->images_, work->params_);
 
         for (;;) {
@@ -467,7 +459,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 //ImageGenericDecoder
 
 ImageGenericDecoder::ImageGenericDecoder(ICodecRegistry* codec_registry)
-    : capabilities_{NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT, NVIMGCDCS_CAPABILITY_HOST_OUTPUT, NVIMGCDCS_CAPABILITY_BATCH}
+    : capabilities_{NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT, NVIMGCDCS_CAPABILITY_HOST_OUTPUT}
     , codec_registry_(codec_registry)
 {
 }
@@ -476,14 +468,9 @@ ImageGenericDecoder::~ImageGenericDecoder()
 {
 }
 
-std::unique_ptr<IDecodeState> ImageGenericDecoder::createDecodeState() const
-{
-    return createDecodeStateBatch();
-}
-
 std::unique_ptr<IDecodeState> ImageGenericDecoder::createDecodeStateBatch() const
 {
-    return std::make_unique<DecodeStateBatch>(nullptr, nullptr);
+    return std::make_unique<DecodeStateBatch>();
 }
 
 void ImageGenericDecoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)

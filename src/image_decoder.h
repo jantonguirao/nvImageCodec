@@ -26,7 +26,6 @@ class ImageDecoder : public IImageDecoder
   public:
     ImageDecoder(const nvimgcdcsDecoderDesc_t desc, const nvimgcdcsDecodeParams_t* params);
     ~ImageDecoder() override;
-    std::unique_ptr<IDecodeState> createDecodeState() const override;
     std::unique_ptr<IDecodeState> createDecodeStateBatch() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
     void canDecode(const std::vector<ICodeStream*>& code_streams,

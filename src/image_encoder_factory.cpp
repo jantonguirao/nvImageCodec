@@ -10,7 +10,6 @@
 #include "image_encoder_factory.h"
 #include <cassert>
 #include "code_stream.h"
-#include "encode_state.h"
 #include "image.h"
 #include "image_encoder.h"
 namespace nvimgcdcs {

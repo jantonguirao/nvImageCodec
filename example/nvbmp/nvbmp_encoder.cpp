@@ -15,9 +15,8 @@ struct nvimgcdcsEncodeState
 {};
 
 template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
-int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG,
-    size_t pitchG, const D* chanB, size_t pitchB, int width, int height, uint8_t precision,
-    bool verbose)
+int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB, size_t pitchB,
+    int width, int height, uint8_t precision, bool verbose)
 {
 
     unsigned int headers[13];
@@ -58,8 +57,7 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
         io_stream->putc(io_stream->instance, &written_size, headers[n] & 0x000000FF);
         io_stream->putc(io_stream->instance, &written_size, (headers[n] & 0x0000FF00) >> 8);
         io_stream->putc(io_stream->instance, &written_size, (headers[n] & 0x00FF0000) >> 16);
-        io_stream->putc(
-            io_stream->instance, &written_size, (headers[n] & (unsigned int)0xFF000000) >> 24);
+        io_stream->putc(io_stream->instance, &written_size, (headers[n] & (unsigned int)0xFF000000) >> 24);
     }
 
     // These next 4 characters are for the biPlanes and biBitCount fields.
@@ -72,13 +70,11 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
         io_stream->putc(io_stream->instance, &written_size, headers[n] & 0x000000FF);
         io_stream->putc(io_stream->instance, &written_size, (headers[n] & 0x0000FF00) >> 8);
         io_stream->putc(io_stream->instance, &written_size, (headers[n] & 0x00FF0000) >> 16);
-        io_stream->putc(
-            io_stream->instance, &written_size, (headers[n] & (unsigned int)0xFF000000) >> 24);
+        io_stream->putc(io_stream->instance, &written_size, (headers[n] & (unsigned int)0xFF000000) >> 24);
     }
 
     if (verbose && precision > 8) {
-        NVIMGCDCS_E_LOG_WARNING(
-            "BMP write - truncating " << (int)precision << " bit data to 8 bit");
+        NVIMGCDCS_E_LOG_WARNING("BMP write - truncating " << (int)precision << " bit data to 8 bit");
     }
 
     //
@@ -132,9 +128,8 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
     return 0;
 }
 
-static nvimgcdcsStatus_t nvbmp_encoder_can_encode(void* instance, bool* result,
-    nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
-    const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_encoder_can_encode(
+    void* instance, bool* result, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_can_encode");
     *result = true;
@@ -157,8 +152,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_can_encode(void* instance, bool* result,
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_encoder_create(
-    void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_encoder_create(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_create");
 
@@ -173,23 +167,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_destroy(nvimgcdcsEncoder_t encoder)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_create_encode_state(
-    nvimgcdcsEncoder_t decoder, nvimgcdcsEncodeState_t* encode_state)
-{
-    NVIMGCDCS_E_LOG_TRACE("nvbmp_create_encode_state");
-    *encode_state = new nvimgcdcsEncodeState();
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t nvbmp_destroy_encode_state(nvimgcdcsEncodeState_t encode_state)
-{
-    NVIMGCDCS_E_LOG_TRACE("nvbmp_destroy_encode_state");
-    delete encode_state;
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t nvbmp_get_capabilities(
-    nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
+nvimgcdcsStatus_t nvbmp_get_capabilities(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_get_capabilities");
     if (encoder == 0)
@@ -207,8 +185,7 @@ nvimgcdcsStatus_t nvbmp_get_capabilities(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
-    nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t image,
+static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t image,
     nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_encode");
@@ -230,6 +207,33 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder,
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
+static nvimgcdcsStatus_t nvbmp_encoder_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
+    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+{
+    try {
+        NVIMGCDCS_E_LOG_TRACE("nvbmp_encode_batch");
+
+        if (batch_size < 1) {
+            NVIMGCDCS_D_LOG_ERROR("Batch size lower than 1");
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        nvimgcdcsStatus_t result = NVIMGCDCS_STATUS_SUCCESS;
+        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
+            result = nvbmp_encoder_encode(encoder, nullptr, images[sample_idx], code_streams[sample_idx], params);
+            if (result != NVIMGCDCS_STATUS_SUCCESS) {
+                return result;
+            }
+        }
+        return result;
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_D_LOG_ERROR("Could not encode bmp batch - " << e.what());
+        for (int i = 0; i < batch_size; ++i) {
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+        }
+        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    }
+}
+
 // clang-format off
 nvimgcdcsEncoderDesc nvbmp_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
@@ -241,11 +245,7 @@ nvimgcdcsEncoderDesc nvbmp_encoder = {
     nvbmp_encoder_can_encode,
     nvbmp_encoder_create,
     nvbmp_encoder_destroy, 
-    nvbmp_create_encode_state,
-    NULL, 
-    nvbmp_destroy_encode_state,
     nvbmp_get_capabilities,
-    nvbmp_encoder_encode,
-    NULL
+    nvbmp_encoder_encode_batch
 };
 // clang-format on    

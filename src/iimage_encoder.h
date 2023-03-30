@@ -26,7 +26,6 @@ class IImageEncoder
 {
   public:
     virtual ~IImageEncoder() = default;
-    virtual std::unique_ptr<IEncodeState> createEncodeState() const = 0;
     virtual std::unique_ptr<IEncodeState> createEncodeStateBatch() const = 0;
     virtual void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) = 0;
     virtual void canEncode(const std::vector<IImage*>& images,

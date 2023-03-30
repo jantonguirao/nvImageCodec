@@ -22,7 +22,6 @@ class IEncodeState
     virtual ~IEncodeState() = default;
     virtual void setPromise(const ProcessingResultsPromise& promise) = 0;
     virtual const ProcessingResultsPromise& getPromise() = 0;
-    virtual nvimgcdcsEncodeState_t getInternalEncodeState() = 0;
 };
 
 } // namespace nvimgcdcs

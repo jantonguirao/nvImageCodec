@@ -27,7 +27,6 @@ class ImageEncoder : public IImageEncoder
     ImageEncoder(const nvimgcdcsEncoderDesc_t desc,
         const nvimgcdcsEncodeParams_t* params);
     ~ImageEncoder() override;
-    std::unique_ptr<IEncodeState> createEncodeState() const override;
     std::unique_ptr<IEncodeState> createEncodeStateBatch() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
     void canEncode(const std::vector<IImage*>& images,
