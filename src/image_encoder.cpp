@@ -70,7 +70,6 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(IEncodeState* enco
         code_stream_descs.push_back(code_streams[i]->getCodeStreamDesc());
         image_descs.push_back(images[i]->getImageDesc());
         images[i]->setIndex(i);
-        images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
         images[i]->setPromise(encode_state_batch->getPromise());
     }
 

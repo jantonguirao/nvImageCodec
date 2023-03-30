@@ -72,8 +72,6 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
         image_descs.push_back(images[i]->getImageDesc());
         images[i]->setIndex(i);
         images[i]->setPromise(decode_state_batch->getPromise());
-            if (images[i]->getProcessingStatus() != NVIMGCDCS_PROCESSING_STATUS_ERROR)
-        images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
     }
 
     decoder_desc_->decode(

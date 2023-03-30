@@ -323,8 +323,8 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0,
-        NVIMGCDCS_PROCESSING_STATUS_INCOMPLETE = 1,
+        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = 0,
+        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 1,
         NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 2,
         NVIMGCDCS_PROCESSING_STATUS_IMAGE_UNSUPPORTED = 3,
         NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED = 4,
@@ -332,8 +332,6 @@ extern "C"
         NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 6,
         NVIMGCDCS_PROCESSING_STATUS_SCALING_UNSUPPORTED = 7,
         NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION = 8,
-        NVIMGCDCS_PROCESSING_STATUS_DECODING = 9,
-        NVIMGCDCS_PROCESSING_STATUS_ENCODING = 10,
         NVIMGCDCS_PROCESSING_STATUS_ERROR = 11,
         //...
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
@@ -572,7 +570,6 @@ extern "C"
         void* instance;
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
         nvimgcdcsStatus_t (*imageReady)(void* instance, nvimgcdcsProcessingStatus_t processing_status);
-        nvimgcdcsStatus_t (*getProcessingStatus)(void* instance, nvimgcdcsProcessingStatus_t& processing_status);
     };
     typedef struct nvimgcdcsImageDesc* nvimgcdcsImageDesc_t;
 
@@ -736,14 +733,14 @@ extern "C"
     // Future
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureWaitForAll(nvimgcdcsFuture_t future);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureDestroy(nvimgcdcsFuture_t future);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureGetProcessingStatus(
+        nvimgcdcsFuture_t future, nvimgcdcsProcessingStatus_t* processing_status, size_t* size);
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetProcessingStatus(
-        nvimgcdcsImage_t image, nvimgcdcsProcessingStatus_t* processing_status);
 
     // CodeStream
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(

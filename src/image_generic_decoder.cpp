@@ -429,7 +429,6 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 
             for (size_t i = 0; i < indices.second; ++i) {
                 int sub_idx = indices.first[i];
-                work->images_[i]->detachDecodeState();
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.success) {
                     nvimgcdcsImageInfo_t image_info;
@@ -502,10 +501,6 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode([[maybe_unu
 
     ProcessingResultsPromise results(N);
     auto future = results.getFuture();
-    for (size_t i = 0; i < images.size(); ++i) {
-        images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_DECODING);
-    }
-
     auto work = createNewWork(std::move(results), params);
     work->init(code_streams, images);
 
