@@ -441,7 +441,6 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 
             for (size_t i = 0; i < indices.second; ++i) {
                 int sub_idx = indices.first[i];
-                work->images_[i]->detachEncodeState();
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.success) {
                     work->clean_after_encoding(is_input_expected_in_device_, sub_idx, &r);
@@ -512,9 +511,6 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(IEncodeStat
 
     ProcessingResultsPromise results(N);
     auto future = results.getFuture();
-    for (size_t i = 0; i < images.size(); ++i) {
-        images[i]->setProcessingStatus(NVIMGCDCS_PROCESSING_STATUS_ENCODING);
-    }
 
     auto work = createNewWork(std::move(results), params);
     work->init(encode_state_batch, code_streams, images);
