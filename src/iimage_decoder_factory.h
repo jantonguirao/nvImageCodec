@@ -25,8 +25,6 @@ class IImageDecoderFactory
     virtual ~IImageDecoderFactory() = default;
     virtual std::string getDecoderId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual bool canDecode(nvimgcdcsCodeStreamDesc_t code_stream,
-        nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params) = 0;
     virtual std::unique_ptr<IImageDecoder> createDecoder(const nvimgcdcsDecodeParams_t* params) const = 0;
 };
 } // namespace nvimgcdcs

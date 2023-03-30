@@ -26,7 +26,6 @@ class ImageEncoderFactory : public IImageEncoderFactory
     explicit ImageEncoderFactory(const nvimgcdcsEncoderDesc_t desc);
     std::string getEncoderId() const override;
     std::string getCodecName() const override;
-    bool canEncode(nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params) override;
     std::unique_ptr<IImageEncoder> createEncoder(const nvimgcdcsEncodeParams_t* params) const override;
   private:
     const nvimgcdcsEncoderDesc_t encoder_desc_;

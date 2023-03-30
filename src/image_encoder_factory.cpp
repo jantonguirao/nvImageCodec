@@ -29,16 +29,6 @@ std::string ImageEncoderFactory::getEncoderId() const
     return encoder_desc_->id;
 }
 
-bool ImageEncoderFactory::canEncode(nvimgcdcsImageDesc_t image,
-    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
-{
-    assert(code_stream);
-    assert(encoder_desc_->canEncode);
-    bool result = false;
-    encoder_desc_->canEncode(encoder_desc_->instance, &result, image, code_stream, params);
-    return result;
-}
-
 std::unique_ptr<IImageEncoder> ImageEncoderFactory::createEncoder(
     const nvimgcdcsEncodeParams_t* params) const
 {

@@ -27,8 +27,8 @@ namespace nvpxm {
         }                                                      \
     }
 
-static nvimgcdcsStatus_t pxm_can_encode(
-    void* instance, bool* result, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, bool* result, nvimgcdcsImageDesc_t image,
+    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_can_encode");
     *result = true;
@@ -244,10 +244,10 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
     "nvpxm",             // id           
     0x00000100,          // version     
     "pxm",               // codec_type   
-    pxm_can_encode,
     pxm_create,
     pxm_destroy,
     pxm_get_capabilities,
+    pxm_can_encode,
     pxm_encode_batch
 };
 // clang-format on
