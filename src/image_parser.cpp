@@ -35,13 +35,13 @@ std::string ImageParser::getCodecName() const
     return parser_desc_->codec;
 }
 
-void ImageParser::getImageInfo(
+nvimgcdcsStatus_t ImageParser::getImageInfo(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info)
 {
     NVIMGCDCS_LOG_TRACE("ImageParser::getImageInfo");
     assert(code_stream);
     assert(parser_desc_->getImageInfo);
-    parser_desc_->getImageInfo(parser_, image_info, code_stream);
+    return parser_desc_->getImageInfo(parser_, image_info, code_stream);
 }
 
 std::unique_ptr<IParseState> ImageParser::createParseState()

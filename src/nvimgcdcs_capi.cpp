@@ -103,6 +103,7 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
         catch (const std::runtime_error& e)                           \
         {                                                             \
             std::cerr << "Error: " << e.what() << std::endl;          \
+            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                      \
         }                                                             \
         catch (...)                                                   \
         {                                                             \
@@ -374,7 +375,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t stream_h
         {
             CHECK_NULL(stream_handle)
             CHECK_NULL(image_info)
-            stream_handle->code_stream_.getImageInfo(image_info);
+            return stream_handle->code_stream_.getImageInfo(image_info);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;

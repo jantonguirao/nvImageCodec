@@ -32,8 +32,8 @@ class CodeStream : public ICodeStream
     void parseFromMem(const unsigned char* data, size_t size) override;
     void setOutputToFile(const char* file_name, const char* codec_name) override;
     void setOutputToHostMem(unsigned char* output_buffer, size_t size, const char* codec_name) override;
-    void getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
-    void setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
+    nvimgcdcsStatus_t getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
+    nvimgcdcsStatus_t setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
     std::string getCodecName() const override;
     ICodec* getCodec() const override;
     nvimgcdcsIOStreamDesc* getInputStreamDesc() override;

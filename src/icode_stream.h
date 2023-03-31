@@ -28,8 +28,8 @@ class ICodeStream
     virtual void parseFromMem(const unsigned char* data, size_t size) = 0;
     virtual void setOutputToFile(const char* file_name, const char* codec_name) = 0;
     virtual void setOutputToHostMem(unsigned char* output_buffer, size_t size, const char* codec_name) = 0;
-    virtual void getImageInfo(nvimgcdcsImageInfo_t* image_info) = 0;
-    virtual void setImageInfo(const nvimgcdcsImageInfo_t* image_info) = 0;
+    virtual nvimgcdcsStatus_t getImageInfo(nvimgcdcsImageInfo_t* image_info) = 0;
+    virtual nvimgcdcsStatus_t setImageInfo(const nvimgcdcsImageInfo_t* image_info) = 0;
     virtual std::string getCodecName() const = 0;
     virtual ICodec* getCodec() const = 0;
     virtual nvimgcdcsIOStreamDesc* getInputStreamDesc() = 0;

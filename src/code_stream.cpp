@@ -70,28 +70,37 @@ void CodeStream::setOutputToHostMem(unsigned char* output_buffer, size_t size, c
     codec_name_ = std::string(codec_name);
 }
 
-void CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
+nvimgcdcsStatus_t CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
 {
     assert(image_info);
     if (!image_info_) {
         assert(parser_);
         image_info_ = std::make_unique<nvimgcdcsImageInfo_t>();
-        parser_->getImageInfo(&code_stream_desc_, image_info_.get());
+        image_info_->next = image_info->next;  // TODO(janton): temp solution but we probably need deep copy
+        auto res = parser_->getImageInfo(&code_stream_desc_, image_info_.get());
+        if (res != NVIMGCDCS_STATUS_SUCCESS) {
+            image_info_.reset();
+            return res;
+        }
     }
     *image_info = *image_info_.get();
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-void CodeStream::setImageInfo(const nvimgcdcsImageInfo_t* image_info)
+nvimgcdcsStatus_t CodeStream::setImageInfo(const nvimgcdcsImageInfo_t* image_info)
 {
     if (!image_info_) {
         image_info_ = std::make_unique<nvimgcdcsImageInfo_t>();
     }
     *image_info_.get() = *image_info;
+    return NVIMGCDCS_STATUS_SUCCESS;
 }
+
 std::string CodeStream::getCodecName() const
 {
     return codec_name_;
 }
+
 ICodec* CodeStream::getCodec() const
 {
     return codec_registry_->getCodecByName(codec_name_.c_str());
