@@ -15,7 +15,6 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <nvtx3/nvtx3.hpp>
 
 namespace nvimgcdcs {
 
