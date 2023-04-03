@@ -9,7 +9,3 @@
 	path = extensions/nvjpeg
 	url = ../nvjpeg/nvjpeg.git
 	branch = nvimagecodecs_ext
-[submodule "resources/jpeg"]
-	path = resources/jpeg
-	url = ../nvjpeg/nvjpeg_test_images.git
-        branch = main

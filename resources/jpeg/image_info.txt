@@ -1,0 +1,18 @@
+Information about source of used images and its licenses
+========================================================
+
+======================
+Image source - pixabay.com
+
+License :
+  CC0 Creative Commons
+  Free for commercial use
+  No attribution required
+
+Files used (original and some derived images):
+https://pixabay.com/en/padlock-door-locked-closed-406986 - padlock-406986_640_420.jpg
+
+======================
+Image source - generate.sh
+
+Derived images using magick - see the script for details

@@ -191,7 +191,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(
         auto handle = reinterpret_cast<JPEGParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not check if nvjpeg can parse code stream - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not check if code stream can be parsed - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -216,7 +216,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::static_create(void* instance, nvimgcdcsParse
         auto handle = reinterpret_cast<JPEGParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create nvjpeg parser - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not create jpeg parser - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -230,7 +230,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
         auto handle = reinterpret_cast<JPEGParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy nvjpeg parser - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg parser - " << e.what());
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -254,7 +254,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_capabilities(
         auto handle = reinterpret_cast<JPEGParserPlugin::Parser*>(parser);
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrive nvjpge parser capabilites - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not retrive jpeg parser capabilites - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -269,13 +269,13 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_create_parse_state(
     nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("nvjpeg_create_parse_state");
+        NVIMGCDCS_LOG_TRACE("JPEG create_parse_state");
         CHECK_NULL(parser);
         CHECK_NULL(parse_state);
         auto handle = reinterpret_cast<JPEGParserPlugin::Parser*>(parser);
         return handle->createParseState(parse_state);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create nvjpeg encode state - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not create jpeg parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -289,7 +289,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy_parse_state(
         // TODO(janton): remove this API
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy nvjpeg parse state - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

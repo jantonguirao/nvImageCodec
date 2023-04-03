@@ -14,6 +14,7 @@ set(SRCS
     )
 # Headers file are located here:
 include_directories(
+    .
     ../src
     ../include
     SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
