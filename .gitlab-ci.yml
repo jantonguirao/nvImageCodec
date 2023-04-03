@@ -18,7 +18,8 @@ before_script:
         echo "Downloading cmake"
         mkdir -p $CMAKE_ROOT
         wget --no-check-certificate --quiet -O - $CMAKE_URL | tar --strip-components=1 -xz -C $CMAKE_ROOT
-    fi  
+    fi
+  - export PATH=$CMAKE_ROOT/bin:$PATH  
   - export CUDACXX=/usr/local/cuda-11.8/bin/nvcc
 
 .build:
