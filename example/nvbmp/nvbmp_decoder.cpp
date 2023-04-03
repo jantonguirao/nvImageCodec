@@ -13,22 +13,27 @@ struct nvimgcdcsDecoder
 struct nvimgcdcsDecodeState
 {};
 
-static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, bool* result, nvimgcdcsCodeStreamDesc_t code_stream,
-    nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
+    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
-    *result = true;
-    char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-    code_stream->getCodecName(code_stream->instance, codec_name);
+    auto result = status;
+    auto code_stream = code_streams;
+    auto image = images;
+    for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
+        *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
+        (*code_stream)->getCodecName((*code_stream)->instance, codec_name);
 
-    if (strcmp(codec_name, "bmp") != 0) {
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
-    if (params->backends != nullptr) {
-        *result = false;
-        for (int b = 0; b < params->num_backends; ++b) {
-            if (params->backends[b].use_cpu) {
-                *result = true;
+        if (strcmp(codec_name, "bmp") != 0) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            continue;
+        }
+        if (params->backends != nullptr) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
+            for (int b = 0; b < params->num_backends; ++b) {
+                if (params->backends[b].use_cpu) {
+                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+                }
             }
         }
     }
