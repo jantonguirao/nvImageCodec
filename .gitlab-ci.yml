@@ -24,7 +24,7 @@ before_script:
   - export PATH=$CMAKE_ROOT/bin:$PATH  
         # Download gcc
   - |
-    if [ ! -d "${$GCC_DIR}" ]; then        
+    if [ ! -d "${GCC_DIR}" ]; then        
         echo "Downloading gcc"
         mkdir -p $GCC_DIR       
         wget --no-check-certificate --quiet -O - $GCC_URL | tar --strip-components=1 -xz -C $GCC_DIR  
