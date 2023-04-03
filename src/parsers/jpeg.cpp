@@ -11,7 +11,6 @@
 #include "parsers/jpeg.h"
 #include <nvimgcodecs.h>
 #include <vector>
-#include <nvtx3/nvtx3.hpp>
 
 #include "parsers/byte_io.h"
 #include "parsers/exif.h"
@@ -299,7 +298,6 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(
     nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
-    nvtx3::scoped_range marker{"getImageInfo"};
     try {
         size_t size = 0;
         nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
