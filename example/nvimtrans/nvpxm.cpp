@@ -27,50 +27,54 @@ namespace nvpxm {
         }                                                      \
     }
 
-static nvimgcdcsStatus_t pxm_can_encode(
-    void* instance, bool* result, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
+    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_can_encode");
-    *result = true;
-    char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-    code_stream->getCodecName(code_stream->instance, codec_name);
+    auto result = status;
+    auto code_stream = code_streams;
+    auto image = images;
+    for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
+        *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
+        (*code_stream)->getCodecName((*code_stream)->instance, codec_name);
 
-    if (strcmp(codec_name, "pxm") != 0) {
-        NVIMGCDCS_E_LOG_INFO("cannot encode because it is not pxm codec but " << codec_name);
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
-
-    if (image != nullptr) {
-        nvimgcdcsImageInfo_t image_info;
-        image->getImageInfo(image->instance, &image_info);
-
-        //Assumed planar format
-        if ((image_info.num_planes > 4 || image_info.num_planes == 2)) {
-            NVIMGCDCS_E_LOG_INFO("cannot encode because not suppoted number components");
-            *result = false;
-            return NVIMGCDCS_STATUS_SUCCESS;
+        if (strcmp(codec_name, "pxm") != 0) {
+            NVIMGCDCS_E_LOG_INFO("cannot encode because it is not pxm codec but " << codec_name);
+            *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            continue;
         }
-
-        if ((image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) &&
-            image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16) {
-            NVIMGCDCS_E_LOG_INFO("cannot encode because not suppoted data type #" << image_info.plane_info[0].sample_type);
-            *result = false;
-            return NVIMGCDCS_STATUS_SUCCESS;
-        }
-    }
-
-    if (params->backends != nullptr) {
-        *result = false;
-        for (int b = 0; b < params->num_backends; ++b) {
-            if (params->backends[b].use_cpu) {
-                *result = true;
+        if (params->backends != nullptr) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
+            for (int b = 0; b < params->num_backends; ++b) {
+                if (params->backends[b].use_cpu) {
+                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+                }
             }
         }
-        if (!*result) {
-            NVIMGCDCS_E_LOG_INFO("cannot encode because not suppoted backend");
+        if (*result != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+            continue;
+        }
+        if ((*image) != nullptr) {
+            nvimgcdcsImageInfo_t image_info;
+            (*image)->getImageInfo((*image)->instance, &image_info);
+
+            //Assumed planar format
+            if ((image_info.num_planes > 4 || image_info.num_planes == 2)) {
+                NVIMGCDCS_E_LOG_INFO("cannot encode because not supported number of components");
+                *result = NVIMGCDCS_PROCESSING_STATUS_NUM_COMPONENTS_UNSUPPORTED;
+                continue;
+            }
+
+            if ((image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) &&
+                image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16) {
+                NVIMGCDCS_E_LOG_INFO("cannot encode because not supported data type #" << image_info.plane_info[0].sample_type);
+                *result = NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+                continue;
+            }
         }
     }
+
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -244,10 +248,10 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
     "nvpxm",             // id           
     0x00000100,          // version     
     "pxm",               // codec_type   
-    pxm_can_encode,
     pxm_create,
     pxm_destroy,
     pxm_get_capabilities,
+    pxm_can_encode,
     pxm_encode_batch
 };
 // clang-format on

@@ -323,19 +323,18 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0,
-        NVIMGCDCS_PROCESSING_STATUS_INCOMPLETE = 1,
+        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = 0,
+        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 1,
         NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 2,
-        NVIMGCDCS_PROCESSING_STATUS_IMAGE_UNSUPPORTED = 3,
+        NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED = 3,
         NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED = 4,
         NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED = 5,
         NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 6,
         NVIMGCDCS_PROCESSING_STATUS_SCALING_UNSUPPORTED = 7,
         NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION = 8,
-        NVIMGCDCS_PROCESSING_STATUS_DECODING = 9,
-        NVIMGCDCS_PROCESSING_STATUS_ENCODING = 10,
+        NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED = 9,
+        NVIMGCDCS_PROCESSING_STATUS_NUM_COMPONENTS_UNSUPPORTED = 10,
         NVIMGCDCS_PROCESSING_STATUS_ERROR = 11,
-        //...
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsProcessingStatus_t;
 
@@ -572,7 +571,6 @@ extern "C"
         void* instance;
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
         nvimgcdcsStatus_t (*imageReady)(void* instance, nvimgcdcsProcessingStatus_t processing_status);
-        nvimgcdcsStatus_t (*getProcessingStatus)(void* instance, nvimgcdcsProcessingStatus_t& processing_status);
     };
     typedef struct nvimgcdcsImageDesc* nvimgcdcsImageDesc_t;
 
@@ -611,13 +609,13 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*canEncode)(void* instance, bool* result, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
-            const nvimgcdcsEncodeParams_t* params);
-
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
+        nvimgcdcsStatus_t (*canEncode)(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
+            nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
         nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
             int batch_size, const nvimgcdcsEncodeParams_t* params);
@@ -635,13 +633,13 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*canDecode)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image,
-            const nvimgcdcsDecodeParams_t* params);
-
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
+        nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams,
+            nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
         nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
             int batch_size, const nvimgcdcsDecodeParams_t* params);
@@ -736,14 +734,14 @@ extern "C"
     // Future
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureWaitForAll(nvimgcdcsFuture_t future);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureDestroy(nvimgcdcsFuture_t future);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureGetProcessingStatus(
+        nvimgcdcsFuture_t future, nvimgcdcsProcessingStatus_t* processing_status, size_t* size);
 
     // Image
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageCreate(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsImageInfo_t* image_info);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageGetProcessingStatus(
-        nvimgcdcsImage_t image, nvimgcdcsProcessingStatus_t* processing_status);
 
     // CodeStream
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
@@ -762,13 +760,13 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
-        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
+        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
-        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
+        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //High-level API
     typedef enum

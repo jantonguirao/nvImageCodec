@@ -128,22 +128,28 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
     return 0;
 }
 
-static nvimgcdcsStatus_t nvbmp_encoder_can_encode(
-    void* instance, bool* result, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_encoder_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
+    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_can_encode");
-    *result = true;
-    char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-    code_stream->getCodecName(code_stream->instance, codec_name);
-    if (strcmp(codec_name, "bmp") != 0) {
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
-    if (params->backends != nullptr) {
-        *result = false;
-        for (int b = 0; b < params->num_backends; ++b) {
-            if (params->backends[b].use_cpu) {
-                *result = true;
+    auto result = status;
+    auto code_stream = code_streams;
+    auto image = images;
+    for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
+        *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
+        (*code_stream)->getCodecName((*code_stream)->instance, codec_name);
+
+        if (strcmp(codec_name, "bmp") != 0) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            continue;
+        }
+        if (params->backends != nullptr) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
+            for (int b = 0; b < params->num_backends; ++b) {
+                if (params->backends[b].use_cpu) {
+                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+                }
             }
         }
     }
@@ -242,10 +248,10 @@ nvimgcdcsEncoderDesc nvbmp_encoder = {
     "nvbmp_encoder",    //id
      0x00000100,        // version
     "bmp",              //  codec_type 
-    nvbmp_encoder_can_encode,
     nvbmp_encoder_create,
     nvbmp_encoder_destroy, 
     nvbmp_get_capabilities,
+    nvbmp_encoder_can_encode,
     nvbmp_encoder_encode_batch
 };
 // clang-format on    

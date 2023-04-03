@@ -24,8 +24,6 @@ class IImageEncoderFactory
     virtual ~IImageEncoderFactory()          = default;
     virtual std::string getEncoderId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual bool canEncode(nvimgcdcsImageDesc_t image, const nvimgcdcsCodeStreamDesc_t code_stream,
-        const nvimgcdcsEncodeParams_t* params)     = 0;
     virtual std::unique_ptr<IImageEncoder> createEncoder(const nvimgcdcsEncodeParams_t* params) const = 0;
 };
 } // namespace nvimgcdcs

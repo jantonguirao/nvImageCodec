@@ -209,6 +209,13 @@ void ProcessingResultsPromise::setAll(ProcessingResult* res, size_t size) {
   impl_->set_all(res, size);
 }
 
+void ProcessingResultsPromise::setAll(ProcessingResult res)
+{
+  for (size_t i = 0; i < impl_->results_.size(); ++i) {
+    impl_->set(i, res);
+  }
+}
+
 int ProcessingResultsPromise::getNumSamples() const {
   return impl_->results_.size();
 }

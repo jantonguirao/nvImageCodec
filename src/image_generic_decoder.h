@@ -36,9 +36,8 @@ class ImageGenericDecoder : public IImageDecoder, public IWorkManager
     ~ImageGenericDecoder() override;
     std::unique_ptr<IDecodeState> createDecodeStateBatch() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
-    void canDecode(const std::vector<ICodeStream*>& code_streams,
-        const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
-        std::vector<bool>* result) const override;
+    void canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
+        std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const override;
     std::unique_ptr<ProcessingResultsFuture> decode(IDecodeState* decode_state_batch,
         const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
         const nvimgcdcsDecodeParams_t* params) override;

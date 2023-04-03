@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <nvimgcodecs.h>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -18,26 +19,23 @@
 namespace nvimgcdcs {
 
 /**
- * @brief Results of a decoding operation.
+ * @brief Results of a processing operation.
  */
 struct ProcessingResult
 {
-    bool success_                 = false;
+    nvimgcdcsProcessingStatus_t status_ = NVIMGCDCS_PROCESSING_STATUS_UNKNOWN;
     std::exception_ptr exception_ = nullptr;
 
-    static ProcessingResult success() { return {true, {}}; }
-
-    static ProcessingResult failure(std::exception_ptr exception)
-    {
-        return {false, std::move(exception)};
-    }
+    static ProcessingResult success() { return {NVIMGCDCS_PROCESSING_STATUS_SUCCESS, {}}; }
+    static ProcessingResult failure(nvimgcdcsProcessingStatus_t status) { return {status, {}}; }
+    static ProcessingResult failure(std::exception_ptr exception) { return {NVIMGCDCS_PROCESSING_STATUS_ERROR, std::move(exception)}; }
 };
 
 class ProcessingResultsSharedState;
 class ProcessingResultsFuture;
 
 /**
- * @brief A promise object for decoding results.
+ * @brief A promise object for processing results.
  *
  * When asynchronous decoding is performed, a promise object and copied among the workers.
  * At exit, a future object is obtained from it by a call to get_future.
@@ -75,6 +73,11 @@ class ProcessingResultsPromise
    */
     void setAll(ProcessingResult* res, size_t size);
 
+    /** 
+    * @brief Sets all results at once with the same result
+    */
+    void setAll(ProcessingResult res);
+
     /**
    * @brief Checks if two promises point to the same shared state.
    */
@@ -99,7 +102,7 @@ class ProcessingResultsPromise
 class ProcessingResultsFuture
 {
   public:
-    ProcessingResultsFuture(ProcessingResultsFuture&& other)      = default;
+    ProcessingResultsFuture(ProcessingResultsFuture&& other) = default;
     ProcessingResultsFuture(const ProcessingResultsFuture& other) = delete;
 
     /**

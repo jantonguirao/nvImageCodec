@@ -23,9 +23,8 @@ Image::Image()
     , decode_state_(nullptr)
     , encode_state_(nullptr)
     , image_desc_{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
-          Image::static_image_ready, Image::static_get_processing_status}
+          Image::static_image_ready}
     , promise_(nullptr)
-    , processing_status_(NVIMGCDCS_PROCESSING_STATUS_SUCCESS)
 {
 }
 
@@ -47,32 +46,6 @@ void Image::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     *image_info = image_info_;
 }
 
-void Image::attachDecodeState(IDecodeState* decode_state)
-{
-    decode_state_ = decode_state;
-}
-void Image::detachDecodeState()
-{
-    decode_state_ = nullptr;
-}
-IDecodeState* Image::getAttachedDecodeState()
-{
-    return decode_state_;
-}
-
-void Image::attachEncodeState(IEncodeState* encode_state)
-{
-    encode_state_ = encode_state;
-}
-void Image::detachEncodeState()
-{
-    encode_state_ = nullptr;
-}
-IEncodeState* Image::getAttachedEncodeState()
-{
-    return encode_state_;
-}
-
 nvimgcdcsImageDesc_t Image::getImageDesc()
 {
     return &image_desc_;
@@ -83,24 +56,10 @@ void Image::setPromise(const ProcessingResultsPromise& promise)
     promise_ = std::make_unique<ProcessingResultsPromise>(promise);
 }
 
-void Image::setProcessingStatus(nvimgcdcsProcessingStatus_t processing_status)
-{
-    processing_status_ = processing_status;
-}
-
-nvimgcdcsProcessingStatus_t Image::getProcessingStatus() const
-{
-    return processing_status_;
-}
-
 nvimgcdcsStatus_t Image::imageReady(nvimgcdcsProcessingStatus_t processing_status)
 {
-    setProcessingStatus(processing_status);
     assert(promise_);
-    ProcessingResult res = NVIMGCDCS_PROCESSING_STATUS_SUCCESS == processing_status
-                               ? ProcessingResult::success()
-                               : ProcessingResult::failure(nullptr);
-    promise_->set(index_, res);
+    promise_->set(index_, {processing_status, {}});
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -121,13 +80,5 @@ nvimgcdcsStatus_t Image::static_image_ready(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t Image::static_get_processing_status(
-    void* instance, nvimgcdcsProcessingStatus_t& processing_status)
-{
-    assert(instance);
-    Image* handle = reinterpret_cast<Image*>(instance);
-    processing_status = handle->getProcessingStatus();
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
 
 } // namespace nvimgcdcs

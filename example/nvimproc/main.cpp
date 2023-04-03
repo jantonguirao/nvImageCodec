@@ -160,6 +160,7 @@ inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_
 int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& params, const FileNames& image_names,
     nvimgcdcsSampleFormat_t out_format, NVCVImageData* image_data, NVCVTensorData* tensor_data, cudaStream_t& stream)
 {
+    int result = EXIT_SUCCESS;
     nvimgcdcsCodeStream_t code_stream;
     nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, image_names[0].c_str());
     nvimgcdcsImageInfo_t image_info;
@@ -206,13 +207,18 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsDecoder_t decoder;
     nvimgcdcsDecoderCreate(instance, &decoder);
 
-    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, nullptr, true);
+    nvimgcdcsFuture_t future;
+    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future);
 
     nvimgcdcsProcessingStatus_t decode_status;
-    nvimgcdcsImageGetProcessingStatus(image, &decode_status);
+    size_t size;
+    nvimgcdcsFutureGetProcessingStatus(future, &decode_status, &size);
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during decoding" << std::endl;
+        result = EXIT_FAILURE;
     }
+
+    nvimgcdcsFutureDestroy(future);
 
     nvimgcdcsImageGetImageInfo(image, &image_info);
     nvimgcdcs::adapter::nvcv::ImageInfo2ImageData(image_data, image_info);
@@ -222,7 +228,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsDecoderDestroy(decoder);
     nvimgcdcsCodeStreamDestroy(code_stream);
 
-    return EXIT_SUCCESS;
+    return result;
 }
 
 void fill_encode_params(const CommandLineParams& params, fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
@@ -267,6 +273,8 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
 int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& params, const NVCVTensorData& tensor_data, fs::path output_path,
     cudaStream_t& stream)
 {
+    int result = EXIT_SUCCESS;
+
     nvimgcdcsImageInfo_t image_info;
     nvimgcdcs::adapter::nvcv::TensorData2ImageInfo(&image_info, tensor_data);
     if (0) {
@@ -294,19 +302,22 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsEncoder_t encoder;
     nvimgcdcsEncoderCreate(instance, &encoder);
 
-    nvimgcdcsEncoderEncode(encoder, &image, &code_stream, 1, &encode_params, nullptr, true);
+    nvimgcdcsFuture_t future;
+    nvimgcdcsEncoderEncode(encoder, &image, &code_stream, 1, &encode_params, &future);
 
     nvimgcdcsProcessingStatus_t encode_status;
-    nvimgcdcsImageGetProcessingStatus(image, &encode_status);
+    size_t status_size;
+    nvimgcdcsFutureGetProcessingStatus(future, &encode_status, &status_size);
     if (encode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during encoding" << std::endl;
+        result = EXIT_FAILURE;
     }
-
+    nvimgcdcsFutureDestroy(future);
     nvimgcdcsEncoderDestroy(encoder);
     nvimgcdcsImageDestroy(image);
     nvimgcdcsCodeStreamDestroy(code_stream);
 
-    return EXIT_SUCCESS;
+    return result;
 }
 
 int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::path output_path, const CommandLineParams& params)

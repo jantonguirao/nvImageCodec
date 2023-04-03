@@ -136,10 +136,15 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsCodeStream_t code_stream;
     std::ifstream file(input_path.string(), std::ios::binary);
     std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(file), {});
-    if (0) {
-        nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, input_path.string().c_str());
-    } else {
-        nvimgcdcsCodeStreamCreateFromHostMem(instance, &code_stream, buffer.data(), buffer.size());
+    try {
+        if (0) {
+            CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, input_path.string().c_str()));
+        } else {
+            CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance, &code_stream, buffer.data(), buffer.size()));
+        }
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Error: Unsupported  file format" << std::endl;
+        return EXIT_FAILURE;
     }
 
     double parse_time = wtime();
@@ -185,26 +190,33 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
         if (warmup_iter == 0) {
             std::cout << "Warmup started!" << std::endl;
         }
-        nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, nullptr, true);
+        nvimgcdcsFuture_t future;
+        nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future);
         nvimgcdcsProcessingStatus_t decode_status;
-        nvimgcdcsImageGetProcessingStatus(image, &decode_status);
+        size_t status_size;
+        nvimgcdcsFutureGetProcessingStatus(future, &decode_status, &status_size);
         if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
             std::cerr << "Error: Something went wrong during warmup decoding" << std::endl;
         }
+        nvimgcdcsFutureDestroy(future);
+
         if (warmup_iter == (params.warmup - 1)) {
             std::cout << "Warmup done!" << std::endl;
         }
     }
 
+    nvimgcdcsFuture_t decode_future;
     double decode_time = wtime();
-    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, nullptr, true);
+    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &decode_future);
     decode_time = wtime() - decode_time;
 
+    size_t status_size;
     nvimgcdcsProcessingStatus_t decode_status;
-    nvimgcdcsImageGetProcessingStatus(image, &decode_status);
+    nvimgcdcsFutureGetProcessingStatus(decode_future, &decode_status, &status_size);
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during decoding" << std::endl;
     }
+    nvimgcdcsFutureDestroy(decode_future);
 
     std::cout << "Saving to " << output_path.string() << " file" << std::endl;
     nvimgcdcsImageInfo_t out_image_info(image_info);
@@ -221,15 +233,17 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsEncoder_t encoder = nullptr;
     nvimgcdcsEncoderCreate(instance, &encoder);
 
+    nvimgcdcsFuture_t encode_future;
     double encode_time = wtime();
-    nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, nullptr, true);
+    nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &encode_future);
     encode_time = wtime() - encode_time;
 
     nvimgcdcsProcessingStatus_t encode_status;
-    nvimgcdcsImageGetProcessingStatus(image, &encode_status);
-    if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+    nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status, &status_size);
+    if (encode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during encoding" << std::endl;
     }
+    nvimgcdcsFutureDestroy(encode_future);
 
     double total_time = parse_time + decode_time + encode_time;
     std::cout << "Total time spent on transcoding: " << total_time << std::endl;
@@ -433,6 +447,7 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
 
 int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path output_path, const CommandLineParams& params)
 {
+    int ret = EXIT_SUCCESS;
     double time = wtime();
     FileNames image_names;
     collect_input_files(input_path.string(), image_names);
@@ -456,7 +471,6 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     std::vector<nvimgcdcsCodeStream_t> in_code_streams(params.batch_size);
     std::vector<nvimgcdcsCodeStream_t> out_code_streams(params.batch_size);
     std::vector<nvimgcdcsImage_t> images(params.batch_size);
-
     nvimgcdcsDecodeParams_t decode_params{};
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
@@ -489,32 +503,57 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     double total_time = 0;
 
     int warmup = 0;
-    while (total_processed < total_images) {
+    while (total_processed < total_images && ret == EXIT_SUCCESS) {
         double start_reading_time = wtime();
-        if (read_next_batch(image_names, params.batch_size, file_iter, file_data, file_len, current_names, params.verbose))
-            return EXIT_FAILURE;
+        ret = read_next_batch(image_names, params.batch_size, file_iter, file_data, file_len, current_names, params.verbose);
         double reading_time = wtime() - start_reading_time;
 
         double parse_time = 0;
-        if (prepare_decode_resources(instance, file_data, file_len, image_buffers, current_names, decoder, is_host_output, is_device_output,
-                in_code_streams, images, decode_params, parse_time))
-            return EXIT_FAILURE;
+        ret = prepare_decode_resources(instance, file_data, file_len, image_buffers, current_names, decoder, is_host_output,
+            is_device_output, in_code_streams, images, decode_params, parse_time);
 
         std::cout << "." << std::flush;
 
+        nvimgcdcsFuture_t decode_future;
         double start_decoding_time = wtime();
-        CHECK_NVIMGCDCS(
-            nvimgcdcsDecoderDecode(decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, nullptr, true));
+        CHECK_NVIMGCDCS(nvimgcdcsDecoderDecode(
+            decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, &decode_future));
         double decode_time = wtime() - start_decoding_time;
 
-        if (prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_code_streams, images,
-                encode_params, params, output_path))
-            return EXIT_FAILURE;
+        size_t status_size;
+        nvimgcdcsFutureGetProcessingStatus(decode_future, nullptr, &status_size);
+        std::vector<nvimgcdcsProcessingStatus_t> decode_status(status_size);
+        nvimgcdcsFutureGetProcessingStatus(decode_future, &decode_status[0], &status_size);
+        std::vector<nvimgcdcsImage_t> img_filtered;
+        std::vector<nvimgcdcsCodeStream_t> out_cs_filtered;
+        for (int i = 0; i < decode_status.size(); ++i) {
+            if (decode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+                std::cerr << "Error: Something went wrong during decoding image #" << i << " it will not be encoded" << std::endl;
+            } else {
+                img_filtered.push_back(images[i]);
+                out_cs_filtered.push_back(out_code_streams[i]);
+            }
+        }
+        nvimgcdcsFutureDestroy(decode_future);
 
+        ret = prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_cs_filtered, img_filtered,
+            encode_params, params, output_path);
+
+        nvimgcdcsFuture_t encode_future;
         double start_encoding_time = wtime();
-        CHECK_NVIMGCDCS(
-            nvimgcdcsEncoderEncode(encoder, images.data(), out_code_streams.data(), params.batch_size, &encode_params, nullptr, true));
+        CHECK_NVIMGCDCS(nvimgcdcsEncoderEncode(
+            encoder, img_filtered.data(), out_cs_filtered.data(), out_cs_filtered.size(), &encode_params, &encode_future));
         double encode_time = wtime() - start_encoding_time;
+
+        nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);
+        std::vector<nvimgcdcsProcessingStatus_t> encode_status(status_size);
+        nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
+        for (int i = 0; i < encode_status.size(); ++i) {
+            if (encode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+                std::cerr << "Error: Something went wrong during encoding image #" << i << " it will not be saved" << std::endl;
+            }
+        }
+        nvimgcdcsFutureDestroy(encode_future);
 
         if (warmup < params.warmup) {
             warmup++;
@@ -582,7 +621,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     std::cout << "Avg encoding time per batch: " << total_encode_time / ((total_images + params.batch_size - 1) / params.batch_size)
               << std::endl;
 
-    return EXIT_SUCCESS;
+    return ret;
 }
 
 void list_cuda_devices()
