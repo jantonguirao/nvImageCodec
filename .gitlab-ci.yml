@@ -1,5 +1,5 @@
-#image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvjpeg2k/build:native-x86_64-centos7-11.8-12.0
-image: gitlab-master.nvidia.com:5005/cv/cvcuda/build-linux:4
+image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvjpeg2k/build:native-x86_64-centos7-11.8-12.0
+
 variables:
     GIT_SUBMODULE_STRATEGY: normal
     DEPENDENCIES_DIR: "$CI_PROJECT_DIR/.dependencies"
@@ -9,6 +9,8 @@ variables:
     GTEST_TAG: "release-1.10.0"
     GTEST_SOURCE_ROOT: "$CI_PROJECT_DIR/.dependencies/googletest"
     GTEST_ROOT: "$CI_PROJECT_DIR/.dependencies/gtest"
+    GCC_URL: " http://ftp.gnu.org/gnu/gcc/gcc-9.4.0/gcc-9.4.0.tar.gz"
+    GCC_DIR: "$CI_PROJECT_DIR/.dependencies/gcc"
 
 
 before_script:
@@ -20,6 +22,12 @@ before_script:
         wget --no-check-certificate --quiet -O - $CMAKE_URL | tar --strip-components=1 -xz -C $CMAKE_ROOT
     fi
   - export PATH=$CMAKE_ROOT/bin:$PATH  
+        # Download gcc
+  - wget --no-check-certificate --quiet -O -$GCC_URL | tar -xzvf -C $GCC_DIR  
+  - cd $GCC_DIR
+  - ./configure
+  - make
+  - make install
   - export CUDACXX=/usr/local/cuda-11.8/bin/nvcc
 
 .build:
