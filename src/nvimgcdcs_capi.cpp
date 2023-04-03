@@ -25,7 +25,6 @@
 #include "image.h"
 #include "iostream_factory.h"
 
-#include <nvtx3/nvtx3.hpp>
 #include "log.h"
 #include "nvimgcodecs_director.h"
 #include "plugin_framework.h"
