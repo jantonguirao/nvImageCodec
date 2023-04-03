@@ -442,7 +442,7 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder)
 }
 
 nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams, nvimgcdcsImage_t* images,
-    int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking)
+    int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
@@ -451,6 +451,7 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCo
             CHECK_NULL(streams)
             CHECK_NULL(images)
             CHECK_NULL(params)
+            CHECK_NULL(future)
 
             std::vector<nvimgcdcs::ICodeStream*> internal_code_streams;
             std::vector<nvimgcdcs::IImage*> internal_images;
@@ -459,15 +460,10 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCo
                 internal_code_streams.push_back(&streams[i]->code_stream_);
                 internal_images.push_back(&images[i]->image_);
             }
-            auto int_future = decoder->image_decoder_->decode(nullptr, internal_code_streams, internal_images, params);
+            *future = new nvimgcdcsFuture();
 
-            if (blocking) {
-                int_future->waitForAll();
-            }             
-            if (future) {
-                *future = new nvimgcdcsFuture();
-                (*future)->handle_ = std::move(int_future);
-            }
+            (*future)->handle_ =
+                std::move(decoder->image_decoder_->decode(nullptr, internal_code_streams, internal_images, params));
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -551,7 +547,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder)
 }
 
 nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images, nvimgcdcsCodeStream_t* streams,
-    int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking)
+    int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -561,6 +557,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsIm
             CHECK_NULL(streams)
             CHECK_NULL(images)
             CHECK_NULL(params)
+            CHECK_NULL(future)
 
             std::vector<nvimgcdcs::ICodeStream*> internal_code_streams;
             std::vector<nvimgcdcs::IImage*> internal_images;
@@ -570,15 +567,9 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsIm
                 internal_images.push_back(&images[i]->image_);
             }
 
-            auto int_future = encoder->image_encoder_->encode(
-                nullptr, internal_images, internal_code_streams, params);
-            if (blocking) {
-                int_future->waitForAll();
-            }
-            if (future) {
-                *future = new nvimgcdcsFuture();
-                (*future)->handle_ = std::move(int_future);
-            }
+            *future = new nvimgcdcsFuture();
+
+            (*future)->handle_ = std::move(encoder->image_encoder_->encode(nullptr, internal_images, internal_code_streams, params));
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -627,7 +618,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             nvimgcdcsDecoderCreate(instance, &decoder);
 
             nvimgcdcsFuture_t future;
-            nvimgcdcsDecoderDecode(decoder, &code_stream, image, 1, &decode_params, &future, true);
+            nvimgcdcsDecoderDecode(decoder, &code_stream, image, 1, &decode_params, &future);
             nvimgcdcsProcessingStatus_t decode_status;
             size_t size;
             nvimgcdcsFutureGetProcessingStatus(future, &decode_status, &size);
@@ -794,7 +785,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
             nvimgcdcsEncoderCreate(instance, &encoder);
 
             nvimgcdcsFuture_t future;
-            nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &future, true);
+            nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &future);
             nvimgcdcsProcessingStatus_t encode_status;
             size_t status_size;
             nvimgcdcsFutureGetProcessingStatus(future, &encode_status, &status_size);

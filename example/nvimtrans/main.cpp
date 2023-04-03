@@ -191,7 +191,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
             std::cout << "Warmup started!" << std::endl;
         }
         nvimgcdcsFuture_t future;
-        nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future, true);
+        nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future);
         nvimgcdcsProcessingStatus_t decode_status;
         size_t status_size;
         nvimgcdcsFutureGetProcessingStatus(future, &decode_status, &status_size);
@@ -207,7 +207,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     nvimgcdcsFuture_t decode_future;
     double decode_time = wtime();
-    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, nullptr, true);
+    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &decode_future);
     decode_time = wtime() - decode_time;
 
     size_t status_size;
@@ -235,7 +235,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     nvimgcdcsFuture_t encode_future;
     double encode_time = wtime();
-    nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &encode_future, true);
+    nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &encode_future);
     encode_time = wtime() - encode_time;
 
     nvimgcdcsProcessingStatus_t encode_status;
@@ -517,7 +517,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
         nvimgcdcsFuture_t decode_future;
         double start_decoding_time = wtime();
         CHECK_NVIMGCDCS(nvimgcdcsDecoderDecode(
-            decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, &decode_future, true));
+            decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, &decode_future));
         double decode_time = wtime() - start_decoding_time;
 
         size_t status_size;
@@ -542,7 +542,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
         nvimgcdcsFuture_t encode_future;
         double start_encoding_time = wtime();
         CHECK_NVIMGCDCS(nvimgcdcsEncoderEncode(
-            encoder, img_filtered.data(), out_cs_filtered.data(), out_cs_filtered.size(), &encode_params, &encode_future, true));
+            encoder, img_filtered.data(), out_cs_filtered.data(), out_cs_filtered.size(), &encode_params, &encode_future));
         double encode_time = wtime() - start_encoding_time;
 
         nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);

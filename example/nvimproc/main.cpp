@@ -208,7 +208,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsDecoderCreate(instance, &decoder);
 
     nvimgcdcsFuture_t future;
-    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future, true);
+    nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future);
 
     nvimgcdcsProcessingStatus_t decode_status;
     size_t size;
@@ -303,7 +303,7 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsEncoderCreate(instance, &encoder);
 
     nvimgcdcsFuture_t future;
-    nvimgcdcsEncoderEncode(encoder, &image, &code_stream, 1, &encode_params, &future, true);
+    nvimgcdcsEncoderEncode(encoder, &image, &code_stream, 1, &encode_params, &future);
 
     nvimgcdcsProcessingStatus_t encode_status;
     size_t status_size;

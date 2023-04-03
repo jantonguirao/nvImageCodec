@@ -760,13 +760,13 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
-        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
+        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
-        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future, bool blocking);
+        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //High-level API
     typedef enum
