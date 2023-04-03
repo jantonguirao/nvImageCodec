@@ -29,9 +29,12 @@ set(NVIMGCDCS_SRCS
     thread_pool.cpp
     device_guard.cpp
     default_executor.cpp
+    parsers/exif.cpp
+    parsers/jpeg.cpp
 )
 
 include_directories(
+    .
     ../include
     SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 

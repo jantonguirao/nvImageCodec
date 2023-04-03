@@ -24,7 +24,7 @@ class MockImageParser : public IImageParser
   public:
     MOCK_METHOD(std::string, getParserId,(), (const, override));
     MOCK_METHOD(std::string, getCodecName,(), (const, override));
-    MOCK_METHOD(void, getImageInfo,(
+    MOCK_METHOD(nvimgcdcsStatus_t, getImageInfo,(
         nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info) ,(override));
     MOCK_METHOD(std::unique_ptr<IParseState>, createParseState,(),(override));
 };
