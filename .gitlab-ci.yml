@@ -34,7 +34,7 @@ before_script:
  #       make
  #       make install
  #   fi
-  - export CUDACXX=/usr/local/cuda-11.8/bin/nvcc
+  - export CUDACXX=nvcc
 
 .build:
     stage: build
