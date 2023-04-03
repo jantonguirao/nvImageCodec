@@ -1,4 +1,5 @@
-image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvjpeg2k/build:native-x86_64-centos7-11.8-12.0
+#image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvjpeg2k/build:native-x86_64-centos7-11.8-12.0
+image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x64:ubuntu-20.04-cuda-11.8-v1
 
 variables:
     GIT_SUBMODULE_STRATEGY: normal
@@ -15,24 +16,24 @@ variables:
 
 before_script:
         # Download CMake
-  - |
-    if [ ! -d "${CMAKE_ROOT}" ]; then
-        echo "Downloading cmake"
-        mkdir -p $CMAKE_ROOT
-        wget --no-check-certificate --quiet -O - $CMAKE_URL | tar --strip-components=1 -xz -C $CMAKE_ROOT
-    fi
-  - export PATH=$CMAKE_ROOT/bin:$PATH  
+ # - |
+ #   if [ ! -d "${CMAKE_ROOT}" ]; then
+ #       echo "Downloading cmake"
+ #       mkdir -p $CMAKE_ROOT
+ #       wget --no-check-certificate --quiet -O - $CMAKE_URL | tar --strip-components=1 -xz -C $CMAKE_ROOT
+ #   fi
+ # - export PATH=$CMAKE_ROOT/bin:$PATH  
         # Download gcc
-  - |
-    if [ ! -d "${GCC_DIR}" ]; then        
-        echo "Downloading gcc"
-        mkdir -p $GCC_DIR       
-        wget --no-check-certificate --quiet -O - $GCC_URL | tar --strip-components=1 -xz -C $GCC_DIR  
-        cd $GCC_DIR
-        ./configure
-        make
-        make install
-    fi
+ # - |
+ #   if [ ! -d "${GCC_DIR}" ]; then        
+ #       echo "Downloading gcc"
+ #       mkdir -p $GCC_DIR       
+ #       wget --no-check-certificate --quiet -O - $GCC_URL | tar --strip-components=1 -xz -C $GCC_DIR  
+ #       cd $GCC_DIR
+ #       ./configure
+ #       make
+ #       make install
+ #   fi
   - export CUDACXX=/usr/local/cuda-11.8/bin/nvcc
 
 .build:
@@ -59,6 +60,7 @@ build:nvimagecodec:
         - source /etc/bashrc
         - source .gitlab/ci/build_type.sh
         # Build
+        - cd /workspace
         - mkdir -p build
         - cd build
         - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
