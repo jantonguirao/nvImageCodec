@@ -12,6 +12,13 @@ variables:
 
 
 before_script:
+        # Download CMake
+  - |
+    if [ ! -d "${CMAKE_ROOT}" ]; then
+        echo "Downloading cmake"
+        mkdir -p $CMAKE_ROOT
+        wget --no-check-certificate --quiet -O - $CMAKE_URL | tar --strip-components=1 -xz -C $CMAKE_ROOT
+    fi  
   - export CUDACXX=/usr/local/cuda-11.8/bin/nvcc
 
 .build:
