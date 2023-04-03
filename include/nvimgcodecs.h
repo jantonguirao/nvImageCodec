@@ -332,7 +332,10 @@ extern "C"
         NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 6,
         NVIMGCDCS_PROCESSING_STATUS_SCALING_UNSUPPORTED = 7,
         NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION = 8,
-        NVIMGCDCS_PROCESSING_STATUS_ERROR = 11,
+        NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED = 9,
+        NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED = 10,
+        NVIMGCDCS_PROCESSING_STATUS_NUM_COMPONENTS_UNSUPPORTED = 11,
+        NVIMGCDCS_PROCESSING_STATUS_ERROR = 12,
         //...
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsProcessingStatus_t;
@@ -613,8 +616,8 @@ extern "C"
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
 
-        nvimgcdcsStatus_t (*canEncode)(nvimgcdcsEncoder_t encoder, bool* result, nvimgcdcsImageDesc_t image,
-            nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t (*canEncode)(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
+            nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
         nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
             int batch_size, const nvimgcdcsEncodeParams_t* params);
@@ -637,8 +640,8 @@ extern "C"
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
 
-        nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, bool* result, nvimgcdcsCodeStreamDesc_t code_stream,
-            nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams,
+            nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
         nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
             int batch_size, const nvimgcdcsDecodeParams_t* params);

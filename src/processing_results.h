@@ -73,6 +73,11 @@ class ProcessingResultsPromise
    */
     void setAll(ProcessingResult* res, size_t size);
 
+    /** 
+    * @brief Sets all results at once with the same result
+    */
+    void setAll(ProcessingResult res);
+
     /**
    * @brief Checks if two promises point to the same shared state.
    */

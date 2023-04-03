@@ -3,7 +3,8 @@ import pytest as t
 import hashlib
 import subprocess
 
-img_dir_path = os.path.abspath("../resources")
+
+img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
 
 def file_md5(file_name):
     hash_md5 = hashlib.md5()
@@ -23,12 +24,12 @@ def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, oupu
     assert check_sum == file_md5(output_img_path)
     
 @t.mark.parametrize("exec_dir_path, transcode_exec",
-    [(os.path.abspath("../build/bin/bin"), "nvimtrans"),
-     (os.path.abspath("../build/bin/bin"), "nvimgcodecs_example_high_level_api")
+                    [(os.path.abspath(os.path.join(os.path.dirname(__file__), "../build/bin/bin")), "nvimtrans"),
+                     (os.path.abspath(os.path.join(os.path.dirname(__file__), "../build/bin/bin")), "nvimgcodecs_example_high_level_api")
     ]
 )
 @t.mark.parametrize(
-    "input_img_file,codec,ouput_img_file,params,check_sum",
+    "input_img_file,codec,output_img_file,params,check_sum",
     [
     ("base/4k_lossless.bmp", "bmp", "4k_lossless-bmp.bmp", "", "22f22e349eb022199a66eaf4d09a2642"),
     ("base/4k_lossless.bmp", "jpeg",  "4k_lossless-bmp.jpg","", "546f0d10710f4357a9d1c6070487c28f"),
@@ -44,7 +45,7 @@ def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, oupu
     ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-420.jpg","--chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
     ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-422.jpg","--chroma_subsampling 422", "288ea71d08e74876d90c89c33284c56f"),
     
-    #jpeg variouse input chroma subsampling
+    #jpeg various input chroma subsampling
     ("base/rgb_25_410.jpg", "bmp",    "rgb_25_410-jpg.bmp", "", "09a9dbb7b75278197c58e7ddcb93c4cb"),
     ("base/rgb_25_410.jpg", "jpeg",   "rgb_25_410-jpg.jpg", "", "d2b17165ebdc89d84d8db39d71524bf5"),
     ("base/rgb_25_410.jpg", "jpeg2k", "rgb_25_410-jpg.jp2", "", "6562455982c8d6a1ee6484cb8c635cb0"),
@@ -71,21 +72,21 @@ def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, oupu
 
     ]
 )
-def test_imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, ouput_img_file, params, check_sum):
-    imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, ouput_img_file, params, check_sum)
+def test_imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum):
+    imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum)
 
 
 @t.mark.parametrize("exec_dir_path, transcode_exec",
-    [(os.path.abspath("../build/bin/bin"), "nvimtrans"),
+                    [(os.path.abspath(os.path.join(os.path.dirname(__file__), "../build/bin/bin")), "nvimtrans"),
     ]
 )
 @t.mark.parametrize(
-    "input_img_file,codec,ouput_img_file,params,check_sum",
+    "input_img_file,codec,output_img_file,params,check_sum",
     [
      ("base/4k_lossless.bmp", "pxm", "4k_lossless-bmp.ppm","", "b452d532ba80d9e560baabe8208a04f5"),
      ("base/4k_lossless_q95_444.jpg", "pxm", "4k_lossless-jpg.ppm","", "083f9062bd227cba62471f5ae3b85df1"),
      ("base/4k_lossless.jp2", "pxm", "4k_lossless-jp2.ppm", "", "b452d532ba80d9e560baabe8208a04f5"),
     ]
 )
-def test_nvimtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, ouput_img_file, params, check_sum):
-    imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, ouput_img_file, params, check_sum)
+def test_nvimtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum):
+    imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum)

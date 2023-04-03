@@ -38,15 +38,20 @@ void ImageEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, s
 }
 
 void ImageEncoder::canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
-    const nvimgcdcsEncodeParams_t* params, std::vector<bool>* result) const
+    const nvimgcdcsEncodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const
 {
-    result->clear();
+    assert(result->size() == code_streams.size());
+    assert(status->size() == code_streams.size());
+
+    std::vector<nvimgcdcsCodeStreamDesc*> cs_descs(code_streams.size());
+    std::vector<nvimgcdcsImageDesc*> im_descs(code_streams.size());
     for (size_t i = 0; i < code_streams.size(); ++i) {
-        bool r;
-        nvimgcdcsCodeStreamDesc* cs_desc = code_streams[i]->getCodeStreamDesc();
-        nvimgcdcsImageDesc* im_desc = images[i]->getImageDesc();
-        encoder_desc_->canEncode(encoder_, &r, im_desc, cs_desc, params);
-        result->push_back(r);
+        cs_descs[i] = code_streams[i]->getCodeStreamDesc();
+        im_descs[i] = images[i]->getImageDesc();
+    }
+    encoder_desc_->canEncode(encoder_, &(*status)[0], &im_descs[0], & cs_descs[0], code_streams.size(), params);
+    for (size_t i = 0; i < code_streams.size(); ++i) {
+        (*result)[i] = (*status)[i] == NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
     }
 }
 

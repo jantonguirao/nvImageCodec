@@ -393,12 +393,14 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     assert(work->images_.size() == work->code_streams_.size());
 
     IImageDecoder* decoder = getDecoder(work->params_);
-    std::vector<bool> mask;
+    std::vector<bool> mask(work->code_streams_.size());
+    std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
     if (decoder) {
         NVIMGCDCS_LOG_DEBUG("code streams: " << work->code_streams_.size());
-        decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask);
+        decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask, &status);
     } else {
         NVIMGCDCS_LOG_ERROR("Could not create decoder");
+        work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
         return;
     }
     std::unique_ptr<IWorkManager::Work> fallback_work;
@@ -413,7 +415,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
         for (size_t i = 0; i < mask.size(); i++) {
             if (!mask[i])
             {
-                work->results_.set(work->indices_[i], ProcessingResult::failure(nullptr));
+                work->results_.set(work->indices_[i], ProcessingResult::failure(status[i]));
             }
         }
     }
@@ -488,9 +490,11 @@ void ImageGenericDecoder::getCapabilities(const nvimgcdcsCapability_t** capabili
 }
 
 void ImageGenericDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, [[maybe_unused]] const std::vector<IImage*>& images,
-    [[maybe_unused]] const nvimgcdcsDecodeParams_t* params, std::vector<bool>* result) const
+    [[maybe_unused]] const nvimgcdcsDecodeParams_t* params, std::vector<bool>* result,
+    std::vector<nvimgcdcsProcessingStatus_t>* status) const
 {
     result->resize(code_streams.size(), true);
+    status->resize(code_streams.size(), NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
 }
 
 std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode([[maybe_unused]] IDecodeState* decode_state_batch,
@@ -579,10 +583,7 @@ void ImageGenericDecoder::distributeWork(std::unique_ptr<IWorkManager::Work> wor
     for (int i = 0; i < work->getSamplesNum(); i++) {
         ICodec* codec = work->code_streams_[i]->getCodec();
         if (!codec) {
-            std::stringstream msg_ss;
-            msg_ss << "Image #" << work->indices_[i] << " not supported";
-
-            work->results_.set(i, ProcessingResult::failure(std::make_exception_ptr(std::runtime_error(msg_ss.str()))));
+            work->results_.set(i, ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
             continue;
         }
         auto& w = dist[codec];
