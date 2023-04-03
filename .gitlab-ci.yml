@@ -56,7 +56,6 @@ build:nvimagecodec:
     extends: .build:nvimagecodec
 
     script:
-        - cd /workspace
         # Get build type
         #- source /etc/bashrc
         - source .gitlab/ci/build_type.sh
