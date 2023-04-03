@@ -56,11 +56,11 @@ build:nvimagecodec:
     extends: .build:nvimagecodec
 
     script:
+        - cd /workspace
         # Get build type
-        - source /etc/bashrc
+        #- source /etc/bashrc
         - source .gitlab/ci/build_type.sh
         # Build
-        - cd /workspace
         - mkdir -p build
         - cd build
         - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
