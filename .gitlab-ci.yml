@@ -1,5 +1,5 @@
-image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvjpeg2k/build:native-x86_64-centos7-11.8-12.0
-
+#image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvjpeg2k/build:native-x86_64-centos7-11.8-12.0
+image: gitlab-master.nvidia.com:5005/cv/cvcuda/build-linux:4
 variables:
     GIT_SUBMODULE_STRATEGY: normal
     DEPENDENCIES_DIR: "$CI_PROJECT_DIR/.dependencies"
