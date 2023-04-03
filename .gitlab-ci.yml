@@ -23,6 +23,8 @@ before_script:
     fi
   - export PATH=$CMAKE_ROOT/bin:$PATH  
         # Download gcc
+  - echo "Downloading gcc"
+  - mkdir -p $GCC_DIR       
   - wget --no-check-certificate --quiet -O - $GCC_URL | tar -xz -C $GCC_DIR  
   - cd $GCC_DIR
   - ./configure
