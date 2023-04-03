@@ -9,7 +9,7 @@ variables:
     GTEST_TAG: "release-1.10.0"
     GTEST_SOURCE_ROOT: "$CI_PROJECT_DIR/.dependencies/googletest"
     GTEST_ROOT: "$CI_PROJECT_DIR/.dependencies/gtest"
-    GCC_URL: " http://ftp.gnu.org/gnu/gcc/gcc-9.4.0/gcc-9.4.0.tar.gz"
+    GCC_URL: "http://ftp.gnu.org/gnu/gcc/gcc-9.4.0/gcc-9.4.0.tar.gz"
     GCC_DIR: "$CI_PROJECT_DIR/.dependencies/gcc"
 
 
@@ -23,7 +23,7 @@ before_script:
     fi
   - export PATH=$CMAKE_ROOT/bin:$PATH  
         # Download gcc
-  - wget --no-check-certificate --quiet -O -$GCC_URL | tar -xzvf -C $GCC_DIR  
+  - wget --no-check-certificate --quiet -O -$GCC_URL | tar -xz -C $GCC_DIR  
   - cd $GCC_DIR
   - ./configure
   - make
