@@ -1,15 +1,15 @@
 [submodule "extensions/nvjpeg2k"]
 	path = extensions/nvjpeg2k
-	url = https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvjpeg2k.git
+	url =../nvjpeg2k.git
         branch = nvimagecodecs_ext
 [submodule "python/pybind11"]
 	path = python/pybind11
 	url =  https://github.com/pybind/pybind11.git
 [submodule "extensions/nvjpeg"]
 	path = extensions/nvjpeg
-	url = https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvjpeg/nvjpeg.git
+	url = ../nvjpeg/nvjpeg.git
 	branch = nvimagecodecs_ext
 [submodule "resources/jpeg"]
 	path = resources/jpeg
-	url = https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvjpeg/nvjpeg_test_images.git
+	url = ../nvjpeg/nvjpeg_test_images.git
         branch = main
