@@ -586,7 +586,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
 
             nvimgcdcsCodeStream_t code_stream;
             nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, file_name);
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};;
             nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
             char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
             nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
@@ -728,7 +728,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
             CHECK_NULL(image)
             CHECK_NULL(file_name)
 
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             nvimgcdcsImageGetImageInfo(image, &image_info);
             fs::path file_path(file_name);
 

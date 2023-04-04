@@ -121,7 +121,7 @@ class Image
     explicit Image(nvimgcdcsImage_t image)
         : image_(image)
     {
-        nvimgcdcsImageInfo_t image_info;
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         nvimgcdcsImageGetImageInfo(image_, &image_info);
         void* buffer = image_info.buffer;
         ssize_t itemsize = 1; //TODO
@@ -168,13 +168,13 @@ class Image
     }
     int getWidth() const
     {
-        nvimgcdcsImageInfo_t image_info;
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         nvimgcdcsImageGetImageInfo(image_, &image_info);
         return image_info.plane_info[0].width;
     }
     int getHeight() const
     {
-        nvimgcdcsImageInfo_t image_info;
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         nvimgcdcsImageGetImageInfo(image_, &image_info);
         return image_info.plane_info[0].height;
     }
@@ -185,7 +185,7 @@ class Image
 
     py::object dtype() const
     {
-        nvimgcdcsImageInfo_t image_info;
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         nvimgcdcsImageGetImageInfo(image_, &image_info);
         std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
         return py::dtype(format);
@@ -236,7 +236,7 @@ class Image
                 }
             }
             if (vshape.size() >= 3) {
-                nvimgcdcsImageInfo_t image_info;
+                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 image_info.num_planes = vshape[0];
                 image_info.plane_info[0].height = vshape[1];
                 image_info.plane_info[0].width = vshape[2];

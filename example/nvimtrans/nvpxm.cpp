@@ -56,7 +56,7 @@ static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
             continue;
         }
         if ((*image) != nullptr) {
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             (*image)->getImageInfo((*image)->instance, &image_info);
 
             //Assumed planar format
@@ -193,7 +193,7 @@ static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeS
     nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_encode");
-    nvimgcdcsImageInfo_t image_info;
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     image->getImageInfo(image->instance, &image_info);
     unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 

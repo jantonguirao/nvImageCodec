@@ -112,7 +112,7 @@ struct IWorkManager::Work
     {
         host_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
             void* h_pinned = nullptr;
             CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.buffer_size));
@@ -125,7 +125,7 @@ struct IWorkManager::Work
     {
         device_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
             void* device_buffer = nullptr;
             CHECK_CUDA(cudaMalloc(&device_buffer, image_info.buffer_size));
@@ -140,7 +140,7 @@ struct IWorkManager::Work
         CHECK_CUDA(cudaEventCreate(&event));
 
         for (size_t i = 0; i < images_.size(); ++i) {
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
 
             if (!is_input_expected_in_device && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
@@ -178,7 +178,7 @@ struct IWorkManager::Work
         auto it = idx2orig_buffer_.find(sub_idx);
         if (it != idx2orig_buffer_.end()) {
             try {
-                nvimgcdcsImageInfo_t image_info;
+                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 images_[sub_idx]->getImageInfo(&image_info);
                 image_info.buffer = it->second;
                 image_info.buffer_kind = image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE

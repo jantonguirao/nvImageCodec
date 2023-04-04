@@ -195,7 +195,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder, nvimgc
     nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_encode");
-    nvimgcdcsImageInfo_t image_info;
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     image->getImageInfo(image->instance, &image_info);
     unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 

@@ -148,7 +148,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     }
 
     double parse_time = wtime();
-    nvimgcdcsImageInfo_t image_info;
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
     parse_time = wtime() - parse_time;
     char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
@@ -208,11 +208,11 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsFuture_t decode_future;
     double decode_time = wtime();
     nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &decode_future);
-    decode_time = wtime() - decode_time;
 
     size_t status_size;
     nvimgcdcsProcessingStatus_t decode_status;
     nvimgcdcsFutureGetProcessingStatus(decode_future, &decode_status, &status_size);
+    decode_time = wtime() - decode_time; //TODO add gpu time
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during decoding" << std::endl;
     }
@@ -236,10 +236,10 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsFuture_t encode_future;
     double encode_time = wtime();
     nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &encode_future);
-    encode_time = wtime() - encode_time;
 
     nvimgcdcsProcessingStatus_t encode_status;
     nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status, &status_size);
+    encode_time = wtime() - encode_time; //TODO add gpu time
     if (encode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during encoding" << std::endl;
     }
@@ -354,7 +354,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance, &code_streams[i], (unsigned char*)file_data[i].data(), file_len[i]));
 
         double time = wtime();
-        nvimgcdcsImageInfo_t image_info;
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetImageInfo(code_streams[i], &image_info));
         parse_time += wtime() - time;
 
@@ -430,7 +430,7 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         filename = filename.replace_extension(ext);
         fs::path output_filename = output_path / filename;
 
-        nvimgcdcsImageInfo_t image_info;
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         nvimgcdcsImageGetImageInfo(images[i], &image_info);
         nvimgcdcsImageInfo_t out_image_info(image_info);
         out_image_info.chroma_subsampling = params.chroma_subsampling;
@@ -518,10 +518,11 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
         double start_decoding_time = wtime();
         CHECK_NVIMGCDCS(nvimgcdcsDecoderDecode(
             decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, &decode_future));
-        double decode_time = wtime() - start_decoding_time;
 
         size_t status_size;
         nvimgcdcsFutureGetProcessingStatus(decode_future, nullptr, &status_size);
+        double decode_time = wtime() - start_decoding_time; //TODO add gpu time
+
         std::vector<nvimgcdcsProcessingStatus_t> decode_status(status_size);
         nvimgcdcsFutureGetProcessingStatus(decode_future, &decode_status[0], &status_size);
         std::vector<nvimgcdcsImage_t> img_filtered;
@@ -543,9 +544,9 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
         double start_encoding_time = wtime();
         CHECK_NVIMGCDCS(nvimgcdcsEncoderEncode(
             encoder, img_filtered.data(), out_cs_filtered.data(), out_cs_filtered.size(), &encode_params, &encode_future));
-        double encode_time = wtime() - start_encoding_time;
 
         nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);
+        double encode_time = wtime() - start_encoding_time; //TODO add gpu time
         std::vector<nvimgcdcsProcessingStatus_t> encode_status(status_size);
         nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
         for (int i = 0; i < encode_status.size(); ++i) {

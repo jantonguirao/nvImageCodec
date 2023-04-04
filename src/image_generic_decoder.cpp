@@ -110,7 +110,7 @@ struct IWorkManager::Work
     {
         host_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
             void* h_pinned = nullptr;
             CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.buffer_size));
@@ -123,7 +123,7 @@ struct IWorkManager::Work
     {
         device_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
             void* device_buffer = nullptr;
             CHECK_CUDA(cudaMalloc(&device_buffer, image_info.buffer_size));
@@ -135,7 +135,7 @@ struct IWorkManager::Work
     void ensure_expected_buffer_for_each_image(bool is_device_output)
     {
         for (size_t i = 0; i < images_.size(); ++i) {
-            nvimgcdcsImageInfo_t image_info;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
 
             if (!is_device_output && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
@@ -164,7 +164,7 @@ struct IWorkManager::Work
         auto it = idx2orig_buffer_.find(sub_idx);
         try {
             if (it != idx2orig_buffer_.end()) {
-                nvimgcdcsImageInfo_t image_info;
+                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 images_[sub_idx]->getImageInfo(&image_info);
                 auto copy_direction = is_device_output ? cudaMemcpyDeviceToHost : cudaMemcpyHostToDevice;
                 CHECK_CUDA(cudaMemcpyAsync(it->second, image_info.buffer, image_info.buffer_size, copy_direction, stream));
@@ -433,7 +433,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
                 int sub_idx = indices.first[i];
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.success) {
-                    nvimgcdcsImageInfo_t image_info;
+                    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                     work->images_[i]->getImageInfo(&image_info);
                     work->copy_buffer_if_necessary(is_device_output_, sub_idx, image_info.cuda_stream, &r);
                     work->results_.set(work->indices_[sub_idx], r);

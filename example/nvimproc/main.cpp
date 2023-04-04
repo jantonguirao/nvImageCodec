@@ -163,7 +163,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     int result = EXIT_SUCCESS;
     nvimgcdcsCodeStream_t code_stream;
     nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, image_names[0].c_str());
-    nvimgcdcsImageInfo_t image_info;
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
     char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
     nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
@@ -275,7 +275,7 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
 {
     int result = EXIT_SUCCESS;
 
-    nvimgcdcsImageInfo_t image_info;
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcs::adapter::nvcv::TensorData2ImageInfo(&image_info, tensor_data);
     if (0) {
         std::cout << "Input image info: " << std::endl;
