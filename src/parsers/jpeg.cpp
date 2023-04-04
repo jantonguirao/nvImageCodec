@@ -317,13 +317,13 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(
         }
 
         bool read_shape = false, read_orientation = false, read_app14 = false;
-        uint16_t height, width;
+        uint16_t height = 0, width = 0;
         uint8_t num_components;
-        uint8_t precision;
+        uint8_t precision = 8;
         nvimgcdcsOrientation_t orientation{NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
         int adobe_transform = -1;
-        nvimgcdcsChromaSubsampling_t subsampling;
-        jpeg_marker_t sof_marker;
+        nvimgcdcsChromaSubsampling_t subsampling = NVIMGCDCS_SAMPLING_NONE;
+        jpeg_marker_t sof_marker = {};
         while (!read_shape || !read_orientation || !read_app14) {
             jpeg_marker_t marker;
             marker[0] = ReadValue<uint8_t>(io_stream);
