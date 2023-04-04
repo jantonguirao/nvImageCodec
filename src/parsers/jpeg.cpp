@@ -165,16 +165,9 @@ struct nvimgcdcsParserDesc* JPEGParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    std::array<uint8_t, 2> signature;
-    size_t read_nbytes = 0;
     nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
-    io_stream->read(io_stream->instance, &read_nbytes, &signature[0], signature.size());
-    if (read_nbytes != signature.size()) {
-        *result = false;
-        NVIMGCDCS_LOG_WARNING("Wrong size during reading from io_stream");
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
+    auto signature = ReadValue<jpeg_marker_t>(io_stream);
     *result = (signature == soi_marker);
     return NVIMGCDCS_STATUS_SUCCESS;
 }

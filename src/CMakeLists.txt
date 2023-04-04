@@ -31,6 +31,7 @@ set(NVIMGCDCS_SRCS
     default_executor.cpp
     parsers/exif.cpp
     parsers/jpeg.cpp
+    parsers/jpeg2k.cpp
 )
 
 include_directories(

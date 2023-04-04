@@ -10,7 +10,7 @@ License :
   No attribution required
 
 Files used (original and some derived images):
-https://pixabay.com/en/padlock-door-locked-closed-406986 - padlock-406986_640_420.jpg
+https://pixabay.com/en/padlock-door-locked-closed-406986 - padlock-406986_640*
 
 ======================
 Image source - generate.sh

@@ -56,7 +56,9 @@ void ReadValueImpl(T &value, nvimgcdcsIoStreamDesc_t io_stream) {
   uint8_t data[nbytes];  // NOLINT [runtime/arrays]
   size_t read_nbytes = 0;
   io_stream->read(io_stream->instance, &read_nbytes, data, nbytes);
-  assert(read_nbytes == nbytes);
+  if (read_nbytes != nbytes) {
+      throw std::runtime_error("Unexpected end of stream");
+  }
   return ReadValueImpl<nbytes, is_little_endian>(value, data);
 }
 
