@@ -90,7 +90,7 @@ TEST_F(JPEG2KParserPluginTest, Uint8) {
         nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCDCS_SAMPLEFORMAT_P_RGB, info.sample_format);
     EXPECT_EQ(3, info.num_planes);
-    EXPECT_EQ(NVIMGCDCS_COLORSPEC_SYCC, info.color_spec);
+    EXPECT_EQ(NVIMGCDCS_COLORSPEC_SRGB, info.color_spec);
     EXPECT_EQ(NVIMGCDCS_SAMPLING_NONE, info.chroma_subsampling);
     EXPECT_EQ(0, info.orientation.rotated);
     EXPECT_FALSE(info.orientation.flip_x);
@@ -112,7 +112,7 @@ TEST_F(JPEG2KParserPluginTest, TiledUint8) {
         nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCDCS_SAMPLEFORMAT_P_RGB, info.sample_format);
     EXPECT_EQ(3, info.num_planes);
-    EXPECT_EQ(NVIMGCDCS_COLORSPEC_SYCC, info.color_spec);
+    EXPECT_EQ(NVIMGCDCS_COLORSPEC_SRGB, info.color_spec);
     EXPECT_EQ(NVIMGCDCS_SAMPLING_NONE, info.chroma_subsampling);
     EXPECT_EQ(0, info.orientation.rotated);
     EXPECT_FALSE(info.orientation.flip_x);
@@ -134,7 +134,7 @@ TEST_F(JPEG2KParserPluginTest, TiledUint16) {
         nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCDCS_SAMPLEFORMAT_P_RGB, info.sample_format);
     EXPECT_EQ(3, info.num_planes);
-    EXPECT_EQ(NVIMGCDCS_COLORSPEC_SYCC, info.color_spec);
+    EXPECT_EQ(NVIMGCDCS_COLORSPEC_SRGB, info.color_spec);
     EXPECT_EQ(NVIMGCDCS_SAMPLING_NONE, info.chroma_subsampling);
     EXPECT_EQ(0, info.orientation.rotated);
     EXPECT_FALSE(info.orientation.flip_x);

@@ -29,7 +29,7 @@ const block_type_t jp2_signature = {'j', 'P', ' ', ' '};      // JPEG2000 signat
 const block_type_t jp2_file_type = {'f', 't', 'y', 'p'};      // File type
 const block_type_t jp2_header = {'j', 'p', '2', 'h'};         // JPEG2000 header (super box)
 const block_type_t jp2_image_header = {'i', 'h', 'd', 'r'};   // Image header
-const block_type_t jp2_color_spec = {'c', 'o', 'l', 'r'};     // Color specification
+const block_type_t jp2_colour_spec = {'c', 'o', 'l', 'r'};     // Color specification
 const block_type_t jp2_code_stream = {'j', 'p', '2', 'c'};    // Contiguous code stream
 const block_type_t jp2_url = {'u', 'r', 'l', ' '};            // Data entry URL
 const block_type_t jp2_palette = {'p', 'c', 'l', 'r'};        // Palette
@@ -217,6 +217,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(
         uint8_t bits_per_component = 8;
         uint8_t sign_component = 0;
         nvimgcdcsChromaSubsampling_t subsampling;
+        nvimgcdcsColorSpec_t color_spec = NVIMGCDCS_COLORSPEC_UNKNOWN;
         while (ReadBoxHeader(block_type, block_size, io_stream)) {
             if (block_type == jp2_header) {  // superbox
                 auto remaining_bytes = block_size - sizeof(block_size) - sizeof(block_type);
@@ -237,6 +238,29 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(
                         io_stream->skip(io_stream->instance, sizeof(uint8_t));  // compression_type
                         io_stream->skip(io_stream->instance, sizeof(uint8_t));  // color_space_unknown
                         io_stream->skip(io_stream->instance, sizeof(uint8_t));  // IPR
+                    } else if (block_type == jp2_colour_spec && color_spec == NVIMGCDCS_COLORSPEC_UNKNOWN) {
+                        auto method = ReadValueBE<uint8_t>(io_stream);
+                        io_stream->skip(io_stream->instance, sizeof(int8_t));  // precedence
+                        io_stream->skip(io_stream->instance, sizeof(int8_t));  // colourspace approximation
+                        auto enumCS = ReadValueBE<uint32_t>(io_stream);
+                        if (method == 1) {
+                            switch (enumCS) {
+                                case 16:  // sRGB
+                                    color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+                                    break;
+                                case 17:  // Greyscale
+                                    color_spec = NVIMGCDCS_COLORSPEC_GRAY;
+                                    break;
+                                case 18:
+                                    color_spec = NVIMGCDCS_COLORSPEC_SYCC;
+                                    break;
+                                default:
+                                    color_spec = NVIMGCDCS_COLORSPEC_UNSUPPORTED;
+                                    break;
+                            }
+                        } else if (method == 2) {
+                            color_spec = NVIMGCDCS_COLORSPEC_UNSUPPORTED;
+                        }
                     } else {
                         io_stream->skip(io_stream->instance, block_size - sizeof(block_size) - sizeof(block_type));
                     }
@@ -308,20 +332,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(
         image_info->sample_format = num_components > 1 ? NVIMGCDCS_SAMPLEFORMAT_P_RGB : NVIMGCDCS_SAMPLEFORMAT_P_Y;
         image_info->orientation = {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
         image_info->chroma_subsampling = subsampling;
-
-        switch(num_components) {
-        case 1:
-            image_info->color_spec = NVIMGCDCS_COLORSPEC_GRAY;
-            break;
-        case 3:
-        case 4:
-            image_info->color_spec = NVIMGCDCS_COLORSPEC_SYCC;
-            break;
-        default:
-            NVIMGCDCS_LOG_ERROR("Unexpected number of channels" << num_components);
-            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
-        }
-
+        image_info->color_spec = color_spec;
         image_info->num_planes = num_components;
         auto sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
         if (bits_per_component <= 16 && bits_per_component > 8) {
