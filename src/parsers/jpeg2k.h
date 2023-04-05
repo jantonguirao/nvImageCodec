@@ -11,6 +11,8 @@
 #pragma once
 
 #include <nvimgcodecs.h>
+#include <vector>
+#include <array>
 
 namespace nvimgcdcs {
 
@@ -28,6 +30,9 @@ class JPEG2KParserPlugin
         nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
         nvimgcdcsStatus_t createParseState(nvimgcdcsParseState_t* parse_state);
         nvimgcdcsStatus_t destroyParseSate(nvimgcdcsParseState_t parse_state);
+
+        nvimgcdcsStatus_t parseJP2(nvimgcdcsIoStreamDesc_t io_stream);
+        nvimgcdcsStatus_t parseCodeStream(nvimgcdcsIoStreamDesc_t io_stream);
         nvimgcdcsStatus_t getImageInfo(
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
 
@@ -39,6 +44,15 @@ class JPEG2KParserPlugin
         static nvimgcdcsStatus_t static_destroy_parse_state(nvimgcdcsParseState_t parse_state);
         static nvimgcdcsStatus_t static_get_image_info(nvimgcdcsParser_t parser,
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
+
+        std::vector<nvimgcdcsCapability_t> capabilities_{NVIMGCDCS_CAPABILITY_HOST_INPUT};
+    
+        uint16_t num_components, CSiz;
+        uint32_t height = 0, width;
+        uint8_t bits_per_component;
+        nvimgcdcsColorSpec_t color_spec;
+        uint32_t XSiz, YSiz, XOSiz, YOSiz;
+        std::array<uint8_t, NVIMGCDCS_MAX_NUM_PLANES> XRSiz, YRSiz, Ssiz;
     };
 
     nvimgcdcsStatus_t canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream);

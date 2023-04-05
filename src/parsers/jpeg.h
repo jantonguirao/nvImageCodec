@@ -11,7 +11,7 @@
 #pragma once
 
 #include <nvimgcodecs.h>
-
+#include <vector>
 namespace nvimgcdcs {
 
 class JPEGParserPlugin
@@ -39,6 +39,8 @@ class JPEGParserPlugin
         static nvimgcdcsStatus_t static_destroy_parse_state(nvimgcdcsParseState_t parse_state);
         static nvimgcdcsStatus_t static_get_image_info(nvimgcdcsParser_t parser,
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
+
+        std::vector<nvimgcdcsCapability_t> capabilities_{NVIMGCDCS_CAPABILITY_HOST_INPUT};
     };
 
     nvimgcdcsStatus_t canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream);

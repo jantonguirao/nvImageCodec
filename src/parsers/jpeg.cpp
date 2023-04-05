@@ -231,7 +231,15 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
 nvimgcdcsStatus_t JPEGParserPlugin::Parser::getCapabilities(
     const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
-    // TODO(janton): remove this API
+    if (capabilities) {
+        *capabilities = capabilities_.data();
+    }
+
+    if (size) {
+        *size = capabilities_.size();
+    } else {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
