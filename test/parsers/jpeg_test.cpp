@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 #include "parsers/jpeg.h"
+#include "parsers/parser_test_utils.h"
 #include "nvimgcodecs_tests.h"
 #include <nvimgcodecs.h>
 #include <string>
@@ -19,11 +20,6 @@
 
 namespace nvimgcdcs {
 namespace test {
-
-inline std::vector<uint8_t> read_file(const std::string &filename) {
-  std::ifstream stream(filename, std::ios::binary);
-  return {std::istreambuf_iterator<char>(stream), std::istreambuf_iterator<char>()};
-}
 
 static int NormalizeAngle(int degrees)
 {
@@ -85,23 +81,6 @@ class JPEGParserPluginTest : public ::testing::Test
             nvimgcdcsCodeStreamCreateFromHostMem(instance_, &stream_handle_, data, data_size));
     }
 
-    std::vector<uint8_t> replace(
-        const std::vector<uint8_t>& data, const std::vector<uint8_t>& old_value, const std::vector<uint8_t>& new_value)
-    {
-        std::vector<uint8_t> result;
-        result.reserve(data.size());
-        auto it = data.begin();
-        size_t n = old_value.size();
-        while (it != data.end()) {
-            if (it + n <= data.end() && std::equal(it, it + n, old_value.begin(), old_value.end())) {
-                result.insert(result.end(), new_value.begin(), new_value.end());
-                it += n;
-            } else {
-                result.push_back(*(it++));
-            }
-        }
-        return result;
-    }
 
     nvimgcdcsInstance_t instance_;
     nvimgcdcsExtensionDesc_t jpeg_parser_extension_desc_{};

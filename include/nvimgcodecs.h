@@ -173,15 +173,6 @@ extern "C"
         NVIMGCDCS_COLORSPEC_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsColorSpec_t;
 
-    typedef enum
-    {
-        NVIMGCDCS_SCALE_NONE = 0,   // decoded output is not scaled
-        NVIMGCDCS_SCALE_1_BY_2 = 1, // decoded output width and height is scaled by a factor of 1/2
-        NVIMGCDCS_SCALE_1_BY_4 = 2, // decoded output width and height is scaled by a factor of 1/4
-        NVIMGCDCS_SCALE_1_BY_8 = 3, // decoded output width and height is scaled by a factor of 1/8
-        NVIMGCDCS_SCALE_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsScaleFactor_t;
-
     typedef struct
     {
         nvimgcdcsStructureType_t type;
@@ -264,54 +255,6 @@ extern "C"
         NVIMGCDCS_JPEG_ENCODING_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsJpegEncoding_t;
 
-    //TODO fill with data in nvJpeg2k
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-
-        uint32_t width;
-        uint32_t height;
-
-    } nvimgcdcsJpeg2kResolutionInfo_t;
-
-#define NVIMGCDCS_MAX_NUM_RESOLUTIONS 32
-    //TODO fill with data in nvJpeg2k
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-
-        uint32_t tile_width;
-        uint32_t tile_height;
-
-        nvimgcdcsJpeg2kResolutionInfo_t resolution_info;
-    } nvimgcdcsJpeg2kTileComponentInfo_t;
-
-    //TODO fill with data in nvJpeg2k
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-
-        uint32_t num_resolutions;
-        nvimgcdcsJpeg2kTileComponentInfo_t component_info[NVIMGCDCS_MAX_NUM_PLANES];
-    } nvimgcdcsJpeg2kTileInfo_t;
-
-    //TODO fill with data in nvJpeg2k
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-
-        uint32_t tile_width;
-        uint32_t tile_height;
-        uint32_t num_tiles_x;                // no of tiles in horizontal direction
-        uint32_t num_tiles_y;                // no of tiles in vertical direction
-        nvimgcdcsJpeg2kTileInfo_t tile_info; //for each tile in raster scan order
-    } nvimgcdcsJpeg2kImageInfo_t;
-
-    //TODO fill with data in nvJpeg
     typedef struct
     {
         nvimgcdcsStructureType_t type;
@@ -358,7 +301,6 @@ extern "C"
 
         bool enable_orientation;
         bool enable_scaling;
-        nvimgcdcsScaleFactor_t scale;
         bool enable_roi;
         //For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
         //For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.

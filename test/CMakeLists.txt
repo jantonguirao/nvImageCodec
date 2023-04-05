@@ -11,6 +11,7 @@ set(SRCS
     processing_results_test.cpp
     device_guard_test.cpp
     parsers/jpeg_test.cpp
+    parsers/jpeg2k_test.cpp
     )
 # Headers file are located here:
 include_directories(
