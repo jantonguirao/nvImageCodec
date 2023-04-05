@@ -53,6 +53,54 @@ void SkipBox(nvimgcdcsIoStreamDesc_t io_stream, block_type_t expected_block, con
     io_stream->skip(io_stream->instance, block_size - sizeof(block_size) - sizeof(block_type));
 }
 
+template <typename T, typename V>
+constexpr inline
+T DivUp(T x, V d)
+{
+    return (x + d - 1) / d;
+}
+
+nvimgcdcsSampleDataType_t BitsPerComponentToType(uint8_t bits_per_component) {
+    auto sign_component = bits_per_component >> 7;
+    bits_per_component = bits_per_component & 0x7f;
+    bits_per_component += 1;
+    auto sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
+    if (bits_per_component <= 16 && bits_per_component > 8) {
+        sample_type = sign_component ?
+            NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 :
+            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+    } else if (bits_per_component <= 8) {
+        sample_type = sign_component ?
+            NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 :
+            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+    }
+    return sample_type;
+}
+
+nvimgcdcsChromaSubsampling_t XRSizYRSizToSubsampling(uint8_t CSiz, const uint8_t* XRSiz, const uint8_t* YRSiz) {
+    if(CSiz == 3 || CSiz == 4) {
+        if ((XRSiz[0] == 1) && (XRSiz[1] == 2) && (XRSiz[2] == 2)
+            && (YRSiz[0] == 1) && (YRSiz[1] == 2) && (YRSiz[2] == 2)) {
+            return NVIMGCDCS_SAMPLING_420;
+        } else if ((XRSiz[0] == 1) && (XRSiz[1] == 2) && (XRSiz[2] == 2)
+                && (YRSiz[0] == 1) && (YRSiz[1] == 1) && (YRSiz[2] == 1)) {
+            return NVIMGCDCS_SAMPLING_422;
+        } else if ((XRSiz[0] == 1) && (XRSiz[1] == 1) && (XRSiz[2] == 1)
+                && (YRSiz[0] == 1) && (YRSiz[1] == 1) && (YRSiz[2] == 1)) {
+            return NVIMGCDCS_SAMPLING_444;
+        } else {
+            return NVIMGCDCS_SAMPLING_UNSUPPORTED;
+        }
+    } else {
+        for (uint8_t i = 0; i < CSiz; i++) {
+            if ((XRSiz[0] != 1) || (XRSiz[1] != 1) || (XRSiz[2] != 1)
+             || (YRSiz[0] != 1) || (YRSiz[1] != 1) || (YRSiz[2] != 1))
+            return NVIMGCDCS_SAMPLING_UNSUPPORTED;
+        }
+        return NVIMGCDCS_SAMPLING_NONE;
+    }
+}
+
 }  // namespace
 
 JPEG2KParserPlugin::JPEG2KParserPlugin()
@@ -214,16 +262,18 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(
         block_type_t block_type;
         uint16_t num_components = 0;
         uint32_t height = 0, width = 0;
+        constexpr uint8_t DIFFERENT_BITDEPTH_PER_COMPONENT = 0xFF;
         uint8_t bits_per_component = 8;
-        uint8_t sign_component = 0;
-        nvimgcdcsChromaSubsampling_t subsampling;
         nvimgcdcsColorSpec_t color_spec = NVIMGCDCS_COLORSPEC_UNKNOWN;
+        uint32_t XSiz = 0, YSiz = 0, XOSiz = 0, YOSiz = 0;
+        uint16_t CSiz = 0;
+        std::array<uint8_t, NVIMGCDCS_MAX_NUM_PLANES> XRSiz, YRSiz, Ssiz;
         while (ReadBoxHeader(block_type, block_size, io_stream)) {
             if (block_type == jp2_header) {  // superbox
                 auto remaining_bytes = block_size - sizeof(block_size) - sizeof(block_type);
                 while (remaining_bytes > 0) {
                     ReadBoxHeader(block_type, block_size, io_stream);
-                    if (block_type == jp2_image_header) {
+                    if (block_type == jp2_image_header) {  // Ref. I.5.3.1 Image Header box 
                         if (block_size != 22) {
                             NVIMGCDCS_LOG_ERROR("Invalid JPEG2K image header");
                             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
@@ -231,10 +281,13 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(
                         height = ReadValueBE<uint32_t>(io_stream);
                         width = ReadValueBE<uint32_t>(io_stream);
                         num_components = ReadValueBE<uint16_t>(io_stream);
+
+                        if (num_components > NVIMGCDCS_MAX_NUM_PLANES) {
+                            NVIMGCDCS_LOG_ERROR("Too many components " << num_components);
+                            return NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
+                        }
+
                         bits_per_component = ReadValueBE<uint8_t>(io_stream);
-                        sign_component = bits_per_component >> 7;
-                        bits_per_component = bits_per_component & 0x7f;
-                        bits_per_component += 1;
                         io_stream->skip(io_stream->instance, sizeof(uint8_t));  // compression_type
                         io_stream->skip(io_stream->instance, sizeof(uint8_t));  // color_space_unknown
                         io_stream->skip(io_stream->instance, sizeof(uint8_t));  // IPR
@@ -251,7 +304,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(
                                 case 17:  // Greyscale
                                     color_spec = NVIMGCDCS_COLORSPEC_GRAY;
                                     break;
-                                case 18:
+                                case 18:  // sYCC
                                     color_spec = NVIMGCDCS_COLORSPEC_SYCC;
                                     break;
                                 default:
@@ -284,76 +337,60 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(
                     NVIMGCDCS_LOG_ERROR("Invalid SIZ marker size");
                     return NVIMGCDCS_STATUS_BAD_CODESTREAM;
                 }
+
                 io_stream->skip(io_stream->instance, sizeof(uint16_t));  // RSiz
-                io_stream->skip(io_stream->instance, sizeof(uint32_t));  // XSiz
-                io_stream->skip(io_stream->instance, sizeof(uint32_t));  // YSiz
-                io_stream->skip(io_stream->instance, sizeof(uint32_t));  // XOSiz
-                io_stream->skip(io_stream->instance, sizeof(uint32_t));  // YOSiz
+                XSiz = ReadValueBE<uint32_t>(io_stream);
+                YSiz = ReadValueBE<uint32_t>(io_stream);
+                XOSiz = ReadValueBE<uint32_t>(io_stream);
+                YOSiz = ReadValueBE<uint32_t>(io_stream);
                 io_stream->skip(io_stream->instance, sizeof(uint32_t));  // XTSiz
                 io_stream->skip(io_stream->instance, sizeof(uint32_t));  // YTSiz
                 io_stream->skip(io_stream->instance, sizeof(uint32_t));  // XTOSiz
                 io_stream->skip(io_stream->instance, sizeof(uint32_t));  // YTOSiz
-
-                uint16_t CSiz = ReadValueBE<uint16_t>(io_stream);
+                CSiz = ReadValueBE<uint16_t>(io_stream);
 
                 // CSiz in table A.9, minimum of 1 and Max of 16384
-                if (CSiz < 1 || CSiz > 16384) {
-                    NVIMGCDCS_LOG_ERROR("Invalid number of components");
-                    return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+                if (CSiz > NVIMGCDCS_MAX_NUM_PLANES) {
+                    NVIMGCDCS_LOG_ERROR("Too many components " << num_components);
+                    return NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
                 }
 
-                std::vector<uint8_t> XRSiz(CSiz);
-                std::vector<uint8_t> YRSiz(CSiz);
                 for (int i = 0; i < CSiz; i++) {
-                    io_stream->skip(io_stream->instance, sizeof(uint8_t));  // precision
+                    Ssiz[i] = ReadValueBE<uint8_t>(io_stream);
                     XRSiz[i] = ReadValue<uint8_t>(io_stream);
                     YRSiz[i] = ReadValue<uint8_t>(io_stream);
-                }
-                if(CSiz == 3 || CSiz == 4) {
-                    if ((XRSiz[0] == 1) && (XRSiz[1] == 2) && (XRSiz[2] == 2)
-                     && (YRSiz[0] == 1) && (YRSiz[1] == 2) && (YRSiz[2] == 2)) {
-                        subsampling = NVIMGCDCS_SAMPLING_420;
-                    } else if ((XRSiz[0] == 1) && (XRSiz[1] == 2) && (XRSiz[2] == 2)
-                            && (YRSiz[0] == 1) && (YRSiz[1] == 1) && (YRSiz[2] == 1)) {
-                        subsampling = NVIMGCDCS_SAMPLING_422;
-                    } else if ((XRSiz[0] == 1) && (XRSiz[1] == 1) && (XRSiz[2] == 1)
-                            && (YRSiz[0] == 1) && (YRSiz[1] == 1) && (YRSiz[2] == 1)) {
-                        subsampling = NVIMGCDCS_SAMPLING_444;
-                    } else {
-                        NVIMGCDCS_LOG_ERROR("Unsupported chroma subsampling");
-                        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+                    if (bits_per_component != DIFFERENT_BITDEPTH_PER_COMPONENT && Ssiz[i] != bits_per_component) {
+                        NVIMGCDCS_LOG_ERROR("SSiz is expected to match BPC from image header box");
+                        return NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
                     }
                 }
                 break;  // stop parsing here
             }
         }
+        if (CSiz != num_components) {
+            NVIMGCDCS_LOG_ERROR("Unexpected number of components in main header versus image header box");
+            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        }
 
         image_info->type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
         image_info->sample_format = num_components > 1 ? NVIMGCDCS_SAMPLEFORMAT_P_RGB : NVIMGCDCS_SAMPLEFORMAT_P_Y;
         image_info->orientation = {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
-        image_info->chroma_subsampling = subsampling;
+        image_info->chroma_subsampling = XRSizYRSizToSubsampling(CSiz, &XRSiz[0], &YRSiz[0]);;
         image_info->color_spec = color_spec;
         image_info->num_planes = num_components;
-        auto sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-        if (bits_per_component <= 16 && bits_per_component > 8) {
-            sample_type = sign_component ?
-                NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 :
-                NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
-        } else if (bits_per_component <= 8) {
-            sample_type = sign_component ?
-                NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 :
-                NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-        } else {
-            NVIMGCDCS_LOG_ERROR(
-                "Not supported precision " << bits_per_component << " (sign=" <<
-                (int)sign_component << ")");
-            return NVIMGCDCS_STATUS_INTERNAL_ERROR;
-        }
         for (int p = 0; p < num_components; p++) {
-            image_info->plane_info[p].height = height;
-            image_info->plane_info[p].width = width;
+            image_info->plane_info[p].height = DivUp(YSiz - YOSiz, YRSiz[p]);
+            if (image_info->plane_info[p].height > height) {
+                NVIMGCDCS_LOG_ERROR("Unexpected component height");
+                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+            }
+            image_info->plane_info[p].width = DivUp(XSiz - XOSiz, XRSiz[p]);
+            if (image_info->plane_info[p].width > width) {
+                NVIMGCDCS_LOG_ERROR("Unexpected component width");
+                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+            }
             image_info->plane_info[p].num_channels = 1;
-            image_info->plane_info[p].sample_type = sample_type;
+            image_info->plane_info[p].sample_type = BitsPerComponentToType(Ssiz[p]);
         }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg stream - " << e.what());
