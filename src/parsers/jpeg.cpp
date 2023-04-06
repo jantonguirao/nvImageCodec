@@ -17,6 +17,7 @@
 #include "log.h"
 #include "logger.h"
 #include "exception.h"
+#include "exif_orientation.h"
 
 namespace nvimgcdcs {
 
@@ -42,54 +43,6 @@ bool IsSofMarker(const jpeg_marker_t &marker) {
   // SOF markers are from range 0xFFC0-0xFFCF, excluding 0xFFC4, 0xFFC8 and 0xFFCC.
   if (!IsValidMarker(marker) || marker[1] < 0xc0 || marker[1] > 0xcf) return false;
   return marker[1] != 0xc4 && marker[1] != 0xc8 && marker[1] != 0xcc;
-}
-
-/**
- * @brief The transform that needs to be applied to rectify an image.
- *
- * The operations are applied in the order in which they are declared.
- */
-struct Orientation {
-  /// @brief Rotation angle, CCW, in degrees; only multiples of 90 are allowed.
-  int rotate;
-  /// @brief Mirror, horizontal
-  bool flip_x;
-  /// @brief Mirror, vertical
-  bool flip_y;
-};
-
-enum class ExifOrientation : uint16_t {
-  HORIZONTAL = 1,
-  MIRROR_HORIZONTAL = 2,
-  ROTATE_180 = 3,
-  MIRROR_VERTICAL = 4,
-  MIRROR_HORIZONTAL_ROTATE_270_CW = 5,
-  ROTATE_90_CW = 6,
-  MIRROR_HORIZONTAL_ROTATE_90_CW = 7,
-  ROTATE_270_CW = 8
-};
-
-nvimgcdcsOrientation_t FromExifOrientation(ExifOrientation exif_orientation) {
-  switch (exif_orientation) {
-    case ExifOrientation::HORIZONTAL:
-      return {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
-    case ExifOrientation::MIRROR_HORIZONTAL:
-      return {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, true, false};
-    case ExifOrientation::ROTATE_180:
-      return {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 180, false, false};
-    case ExifOrientation::MIRROR_VERTICAL:
-      return {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, true};
-    case ExifOrientation::MIRROR_HORIZONTAL_ROTATE_270_CW:
-      return {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 90, false, true};  // 270 CW = 90 CCW
-    case ExifOrientation::ROTATE_90_CW:
-      return {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 270, false, false};  // 90 CW = 270 CCW
-    case ExifOrientation::MIRROR_HORIZONTAL_ROTATE_90_CW:
-      return {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 270, false, true};  // 90 CW = 270 CCW
-    case ExifOrientation::ROTATE_270_CW:
-      return {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 90, false, false};  // 270 CW = 90 CCW
-    default:
-      FatalError(BAD_FORMAT_STATUS, "invalid exif orientation value");
-  }
 }
 
 nvimgcdcsSampleDataType_t precision_to_sample_type(int precision)
@@ -254,7 +207,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_capabilities(
         auto handle = reinterpret_cast<JPEGParserPlugin::Parser*>(parser);
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrive jpeg parser capabilites - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not retrieve jpeg parser capabilites - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

@@ -61,27 +61,6 @@ class JPEGParserPluginTest : public ::testing::Test
         nvimgcdcsInstanceDestroy(instance_);
     }
 
-    void LoadImageFromFilename(const std::string& filename) {
-        if (stream_handle_) {
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-                nvimgcdcsCodeStreamDestroy(stream_handle_));
-            stream_handle_ = nullptr;
-        }
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-            nvimgcdcsCodeStreamCreateFromFile(instance_, &stream_handle_, filename.c_str()));
-    }
-
-    void LoadImageFromHostMemory(const uint8_t* data, size_t data_size) {
-        if (stream_handle_) {
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-                nvimgcdcsCodeStreamDestroy(stream_handle_));
-            stream_handle_ = nullptr;
-        }
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-            nvimgcdcsCodeStreamCreateFromHostMem(instance_, &stream_handle_, data, data_size));
-    }
-
-
     nvimgcdcsInstance_t instance_;
     nvimgcdcsExtensionDesc_t jpeg_parser_extension_desc_{};
     nvimgcdcsExtension_t jpeg_parser_extension_;
@@ -89,7 +68,7 @@ class JPEGParserPluginTest : public ::testing::Test
 };
 
 TEST_F(JPEGParserPluginTest, YCC_410) {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_410.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_410.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -111,7 +90,7 @@ TEST_F(JPEGParserPluginTest, YCC_410) {
 }
 
 TEST_F(JPEGParserPluginTest, YCC_410_Extended_JPEG_info) {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_410.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_410.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -140,7 +119,7 @@ TEST_F(JPEGParserPluginTest, YCC_410_Extended_JPEG_info) {
 
 
 TEST_F(JPEGParserPluginTest, YCC_411) {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_411.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_411.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -163,7 +142,7 @@ TEST_F(JPEGParserPluginTest, YCC_411) {
 
 
 TEST_F(JPEGParserPluginTest, YCC_420) {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_420.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_420.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -186,7 +165,7 @@ TEST_F(JPEGParserPluginTest, YCC_420) {
 
 
 TEST_F(JPEGParserPluginTest, YCC_422) {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_422.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_422.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -209,7 +188,7 @@ TEST_F(JPEGParserPluginTest, YCC_422) {
 
 
 TEST_F(JPEGParserPluginTest, YCC_440) {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_440.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_440.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -232,7 +211,7 @@ TEST_F(JPEGParserPluginTest, YCC_440) {
 
 
 TEST_F(JPEGParserPluginTest, YCC_444) {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_444.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_444.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -254,7 +233,7 @@ TEST_F(JPEGParserPluginTest, YCC_444) {
 }
 
 TEST_F(JPEGParserPluginTest, Gray) {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_gray.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_gray.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -277,7 +256,7 @@ TEST_F(JPEGParserPluginTest, Gray) {
 
 
 TEST_F(JPEGParserPluginTest, CMYK) {  // TODO(janton) : get a permissive license free image
-    LoadImageFromFilename(resources_dir + "/jpeg/cmyk-dali.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/cmyk-dali.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -299,7 +278,7 @@ TEST_F(JPEGParserPluginTest, CMYK) {  // TODO(janton) : get a permissive license
 }
 
 TEST_F(JPEGParserPluginTest, YCCK) {  // TODO(janton) : get a permissive license free image
-    LoadImageFromFilename(resources_dir + "/jpeg/ycck_colorspace.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/ycck_colorspace.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -322,14 +301,14 @@ TEST_F(JPEGParserPluginTest, YCCK) {  // TODO(janton) : get a permissive license
 
 TEST_F(JPEGParserPluginTest, File_vs_MemoryStream)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/padlock-406986_640_420.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_420.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
 
     auto buffer = read_file(resources_dir + "/jpeg/padlock-406986_640_420.jpg");
-    LoadImageFromHostMemory(buffer.data(), buffer.size());
+    LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
     nvimgcdcsImageInfo_t info2;
     info2.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info2.next = nullptr;
@@ -397,7 +376,7 @@ TEST_F(JPEGParserPluginTest, Padding)
 
 TEST_F(JPEGParserPluginTest, EXIF_NoOrientation)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_no_orientation.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_no_orientation.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -409,7 +388,7 @@ TEST_F(JPEGParserPluginTest, EXIF_NoOrientation)
 
 TEST_F(JPEGParserPluginTest, EXIF_Horizontal)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_horizontal.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_horizontal.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -421,7 +400,7 @@ TEST_F(JPEGParserPluginTest, EXIF_Horizontal)
 
 TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontal)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -433,7 +412,7 @@ TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontal)
 
 TEST_F(JPEGParserPluginTest, EXIF_Rotate180)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_rotate_180.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_rotate_180.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -445,7 +424,7 @@ TEST_F(JPEGParserPluginTest, EXIF_Rotate180)
 
 TEST_F(JPEGParserPluginTest, EXIF_MirrorVertical)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_mirror_vertical.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_mirror_vertical.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -457,7 +436,7 @@ TEST_F(JPEGParserPluginTest, EXIF_MirrorVertical)
 
 TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontalRotate270)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_270.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_270.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -469,7 +448,7 @@ TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontalRotate270)
 
 TEST_F(JPEGParserPluginTest, EXIF_Rotate90)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_rotate_90.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_rotate_90.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -481,7 +460,7 @@ TEST_F(JPEGParserPluginTest, EXIF_Rotate90)
 
 TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontalRotate90)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_90.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_90.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -493,7 +472,7 @@ TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontalRotate90)
 
 TEST_F(JPEGParserPluginTest, EXIF_Rotate270)
 {
-    LoadImageFromFilename(resources_dir + "/jpeg/exif/padlock-406986_640_rotate_270.jpg");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_rotate_270.jpg");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;

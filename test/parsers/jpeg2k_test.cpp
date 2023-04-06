@@ -55,26 +55,6 @@ class JPEG2KParserPluginTest : public ::testing::Test
         nvimgcdcsInstanceDestroy(instance_);
     }
 
-    void LoadImageFromFilename(const std::string& filename) {
-        if (stream_handle_) {
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-                nvimgcdcsCodeStreamDestroy(stream_handle_));
-            stream_handle_ = nullptr;
-        }
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-            nvimgcdcsCodeStreamCreateFromFile(instance_, &stream_handle_, filename.c_str()));
-    }
-
-    void LoadImageFromHostMemory(const uint8_t* data, size_t data_size) {
-        if (stream_handle_) {
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-                nvimgcdcsCodeStreamDestroy(stream_handle_));
-            stream_handle_ = nullptr;
-        }
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-            nvimgcdcsCodeStreamCreateFromHostMem(instance_, &stream_handle_, data, data_size));
-    }
-
     nvimgcdcsImageInfo_t expected_cat_1046544_640() {
         nvimgcdcsImageInfo_t info;
         info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
@@ -101,42 +81,24 @@ class JPEG2KParserPluginTest : public ::testing::Test
     nvimgcdcsCodeStream_t stream_handle_ = nullptr;
 };
 
-void ExpectEq(nvimgcdcsImageInfo_t expected, nvimgcdcsImageInfo_t actual) {
-    EXPECT_EQ(expected.type, actual.type);
-    EXPECT_EQ(expected.next, actual.next);
-    EXPECT_EQ(expected.sample_format, actual.sample_format);
-    EXPECT_EQ(expected.num_planes, actual.num_planes);
-    EXPECT_EQ(expected.color_spec, actual.color_spec);
-    EXPECT_EQ(expected.chroma_subsampling, actual.chroma_subsampling);
-    EXPECT_EQ(expected.orientation.rotated, actual.orientation.rotated);
-    EXPECT_EQ(expected.orientation.flip_x, actual.orientation.flip_x);
-    EXPECT_EQ(expected.orientation.flip_y, actual.orientation.flip_y);
-    for (int p = 0; p < expected.num_planes; p++) {
-        EXPECT_EQ(expected.plane_info[p].height, actual.plane_info[p].height);
-        EXPECT_EQ(expected.plane_info[p].width, actual.plane_info[p].width);
-        EXPECT_EQ(expected.plane_info[p].num_channels, actual.plane_info[p].num_channels);
-        EXPECT_EQ(expected.plane_info[p].sample_type, actual.plane_info[p].sample_type);
-    }
-}
-
 
 TEST_F(JPEG2KParserPluginTest, Uint8) {
-    LoadImageFromFilename(resources_dir + "/jpeg2k/cat-1046544_640.jp2");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg2k/cat-1046544_640.jp2");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
-    ExpectEq(expected_cat_1046544_640(), info);
+    expect_eq(expected_cat_1046544_640(), info);
 }
 
 TEST_F(JPEG2KParserPluginTest, Uint8_FromHostMem) {
     auto buffer = read_file(resources_dir + "/jpeg2k/cat-1046544_640.jp2");
-    LoadImageFromHostMemory(buffer.data(), buffer.size());
+    LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
-    ExpectEq(expected_cat_1046544_640(), info);
+    expect_eq(expected_cat_1046544_640(), info);
 }
 
 TEST_F(JPEG2KParserPluginTest, Uint8_CodeStreamOnly) {
@@ -152,7 +114,7 @@ TEST_F(JPEG2KParserPluginTest, Uint8_CodeStreamOnly) {
         0x70, 0x32, 0x63, 0xff, 0x4f};
     std::vector<uint8_t> just_SOC = {0xff, 0x4f};
     buffer = replace(buffer, JP2_header_until_SOC, just_SOC);
-    LoadImageFromHostMemory(buffer.data(), buffer.size());
+    LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
 
     auto expected_info = expected_cat_1046544_640();
     expected_info.color_spec = NVIMGCDCS_COLORSPEC_UNKNOWN;  // don't have such info in codestream
@@ -161,21 +123,21 @@ TEST_F(JPEG2KParserPluginTest, Uint8_CodeStreamOnly) {
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
-    ExpectEq(expected_info, info);
+    expect_eq(expected_info, info);
 }
 
 TEST_F(JPEG2KParserPluginTest, TiledUint8) {
-    LoadImageFromFilename(resources_dir + "/jpeg2k/tiled-cat-1046544_640.jp2");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg2k/tiled-cat-1046544_640.jp2");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
         nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
-    ExpectEq(expected_cat_1046544_640(), info);
+    expect_eq(expected_cat_1046544_640(), info);
 }
 
 TEST_F(JPEG2KParserPluginTest, TiledUint16) {
-    LoadImageFromFilename(resources_dir + "/jpeg2k/cat-1046544_640-16bit.jp2");
+    LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg2k/cat-1046544_640-16bit.jp2");
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
@@ -184,12 +146,12 @@ TEST_F(JPEG2KParserPluginTest, TiledUint16) {
     auto expected_info = expected_cat_1046544_640();
     for (int p = 0; p < expected_info.num_planes; p++)
         expected_info.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
-    ExpectEq(expected_info, info);
+    expect_eq(expected_info, info);
 }
 
 TEST_F(JPEG2KParserPluginTest, ErrorUnexpectedEnd) {
     const std::array<uint8_t, 12> just_the_signatures = {0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a};
-    LoadImageFromHostMemory(just_the_signatures.data(), just_the_signatures.size());
+    LoadImageFromHostMemory(instance_, stream_handle_, just_the_signatures.data(), just_the_signatures.size());
     nvimgcdcsImageInfo_t info;
     info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
     info.next = nullptr;
