@@ -33,6 +33,7 @@ set(NVIMGCDCS_SRCS
     parsers/exif.cpp
     parsers/jpeg.cpp
     parsers/jpeg2k.cpp
+    parsers/tiff.cpp
 )
 
 include_directories(
