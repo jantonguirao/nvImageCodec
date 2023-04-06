@@ -216,14 +216,14 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_get_capabilities(
     nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg_get_capabilities");
+        NVIMGCDCS_LOG_TRACE("jpeg2k_get_capabilities");
         CHECK_NULL(parser);
         CHECK_NULL(capabilities);
         CHECK_NULL(size);
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrive jpeg parser capabilites - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not retrieve jpeg parser capabilites - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

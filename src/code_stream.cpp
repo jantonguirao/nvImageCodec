@@ -76,6 +76,7 @@ nvimgcdcsStatus_t CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     if (!image_info_) {
         assert(parser_);
         image_info_ = std::make_unique<nvimgcdcsImageInfo_t>();
+        image_info_->type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
         image_info_->next = image_info->next;  // TODO(janton): temp solution but we probably need deep copy
         auto res = parser_->getImageInfo(&code_stream_desc_, image_info_.get());
         if (res != NVIMGCDCS_STATUS_SUCCESS) {
