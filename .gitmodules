@@ -1,7 +1,3 @@
-[submodule "extensions/nvjpeg2k"]
-	path = extensions/nvjpeg2k
-	url =../nvjpeg2k.git
-        branch = nvimagecodecs_ext
 [submodule "python/pybind11"]
 	path = python/pybind11
 	url =  https://github.com/pybind/pybind11.git
