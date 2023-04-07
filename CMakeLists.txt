@@ -92,6 +92,8 @@ set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS OFF)
 
+add_subdirectory(external)
+
 if(BUILD_LIBRARY)
 add_subdirectory(src)
 endif()
