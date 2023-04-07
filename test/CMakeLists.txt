@@ -13,6 +13,7 @@ set(SRCS
     parsers/bmp_test.cpp
     parsers/jpeg_test.cpp
     parsers/jpeg2k_test.cpp
+    parsers/tiff_test.cpp
     )
 # Headers file are located here:
 include_directories(
