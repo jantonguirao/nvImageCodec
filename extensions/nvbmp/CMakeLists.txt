@@ -1,4 +1,4 @@
-set(NVIMGCDCS_NVBMP_LIBRARY_NAME nvbmp)  
+set(NVIMGCDCS_NVBMP_LIBRARY_NAME nvbmp_ext)  
 
 set(NVIMGCDCS_NVBMP_SRC
       ext_module.cpp
