@@ -1,4 +1,4 @@
-#include "nvbmp_parser.h"
+#include "parser.h"
 #include <nvimgcodecs.h>
 #include <cassert>
 #include <iostream>

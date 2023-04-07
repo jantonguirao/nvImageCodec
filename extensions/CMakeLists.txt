@@ -28,3 +28,5 @@ if(BUILD_NVJPEG_EXT)
     add_subdirectory(nvjpeg)
 endif()
 
+add_subdirectory(nvbmp)
+
