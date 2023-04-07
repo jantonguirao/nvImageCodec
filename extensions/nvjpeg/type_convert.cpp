@@ -7,7 +7,7 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
-#include "XmJpegTypeConver.h"
+#include "type_convert.h"
 
 nvjpegOutputFormat_t nvimgcdcs_to_nvjpeg_format(nvimgcdcsSampleFormat_t nvimgcdcs_format)
 {

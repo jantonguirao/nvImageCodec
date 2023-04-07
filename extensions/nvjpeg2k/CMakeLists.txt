@@ -1,10 +1,10 @@
 set(NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME nvjpeg2k_ext)
 
 set(NVIMGCDCS_NVJPEG2K_EXT_SRC
-  jpeg2k_xm_module.cpp
-  jpeg2k_xm_encoder.cpp
-  jpeg2k_xm_decoder.cpp
-  jpeg2k_xm_parser.cpp
+  ext_module.cpp
+  cuda_encoder.cpp
+  cuda_decoder.cpp
+  parser.cpp
 )
 
 find_package(CUDAToolkit REQUIRED)

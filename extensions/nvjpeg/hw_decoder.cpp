@@ -1,4 +1,4 @@
-#include "XmJpegHwDecoder.h"
+#include "hw_decoder.h"
 
 #include <nvimgcodecs.h>
 #include <cassert>
@@ -9,10 +9,10 @@
 #include <sstream>
 #include <vector>
 
-#include "XmJpegErrorHandling.h"
-#include "XmJpegParser.h"
-#include "XmJpegTypeConver.h"
-#include "XmLog.h"
+#include "errors_handling.h"
+#include "parser.h"
+#include "type_convert.h"
+#include "log.h"
 
 namespace nvjpeg {
 

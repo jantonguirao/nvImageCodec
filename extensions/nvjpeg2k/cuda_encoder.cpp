@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 
-#include "jpeg2k_xm_encoder.h"
-#include "jpeg2k_xm_error_handling.h"
-#include "jpeg2k_xm_log.h"
+#include "cuda_encoder.h"
+#include "error_handling.h"
+#include "log.h"
 #include "nvjpeg2k.h"
 
 namespace nvjpeg2k {

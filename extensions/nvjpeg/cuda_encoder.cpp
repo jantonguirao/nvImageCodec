@@ -1,4 +1,4 @@
-#include "XmJpegEncoder.h"
+#include "cuda_encoder.h"
 #include <nvimgcodecs.h>
 #include <cstring>
 #include <future>
@@ -9,9 +9,9 @@
 
 #include <nvjpeg.h>
 
-#include "XmJpegErrorHandling.h"
-#include "XmJpegTypeConver.h"
-#include "XmLog.h"
+#include "errors_handling.h"
+#include "type_convert.h"
+#include "log.h"
 
 
 namespace nvjpeg {

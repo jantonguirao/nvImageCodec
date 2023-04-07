@@ -1,12 +1,12 @@
 set(NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME nvjpeg_ext)
 
 set(NVIMGCDCS_NVJPEG_EXT_SRC
-  XmJpegModule.cpp
-  XmJpegDecoder.cpp
-  XmJpegHwDecoder.cpp
-  XmJpegEncoder.cpp
-  XmJpegParser.cpp
-  XmJpegTypeConvert.cpp
+  ext_module.cpp
+  cuda_decoder.cpp
+  hw_decoder.cpp
+  cuda_encoder.cpp
+  parser.cpp
+  type_convert.cpp
 )
 
 find_package(CUDAToolkit REQUIRED)

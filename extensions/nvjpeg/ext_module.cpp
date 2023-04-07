@@ -1,10 +1,10 @@
 #include <nvimgcodecs.h>
-#include "XmJpegDecoder.h"
-#include "XmJpegHwDecoder.h"
-#include "XmJpegEncoder.h"
-#include "XmJpegParser.h"
-#include "XmJpegErrorHandling.h"
-#include "XmLog.h"
+#include "cuda_decoder.h"
+#include "hw_decoder.h"
+#include "cuda_encoder.h"
+#include "parser.h"
+#include "errors_handling.h"
+#include "log.h"
 
 extern nvimgcdcsParserDesc jpeg_parser;
 

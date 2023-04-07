@@ -1,9 +1,9 @@
 #include <nvimgcodecs.h>
-#include "jpeg2k_xm_decoder.h"
-#include "jpeg2k_xm_encoder.h"
-#include "jpeg2k_xm_error_handling.h"
-#include "jpeg2k_xm_log.h"
-#include "jpeg2k_xm_parser.h"
+#include "cuda_decoder.h"
+#include "cuda_encoder.h"
+#include "error_handling.h"
+#include "log.h"
+#include "parser.h"
 
 namespace nvjpeg2k {
 
