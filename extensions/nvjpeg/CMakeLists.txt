@@ -15,6 +15,7 @@ include_directories(
   ../../include
   SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )
+include_directories(../../external/NVTX/c/include)
 
 add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG_EXT_SRC})
 

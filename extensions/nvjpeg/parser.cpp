@@ -7,6 +7,8 @@
 #include <vector>
 #include <cstring>
 
+#include <nvtx3/nvtx3.hpp>
+
 #include "errors_handling.h"
 #include "parser.h"
 #include "type_convert.h"
@@ -207,7 +209,7 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getImageInfo(
     nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     NVIMGCDCS_P_LOG_TRACE("jpeg_parser_get_image_info");
-    //nvtx3::scoped_range marker{"getImageInfo"};
+    nvtx3::scoped_range marker{"getImageInfo"};
     try {
         size_t encoded_stream_data_size = 0;
         auto parse_state =

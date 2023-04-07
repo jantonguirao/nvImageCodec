@@ -9,10 +9,12 @@
 #include <sstream>
 #include <vector>
 
+#include <nvtx3/nvtx3.hpp>
+
 #include "errors_handling.h"
+#include "log.h"
 #include "parser.h"
 #include "type_convert.h"
-#include "log.h"
 
 namespace nvjpeg {
 
@@ -289,7 +291,7 @@ NvJpegHwDecoderPlugin::DecodeState::~DecodeState()
 
 nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
 {
-    //NVTX3_FUNC_RANGE();
+    NVTX3_FUNC_RANGE();
     auto subsampling_score = [](nvimgcdcsChromaSubsampling_t subsampling) -> uint32_t {
         switch (subsampling) {
         case NVIMGCDCS_SAMPLING_444:

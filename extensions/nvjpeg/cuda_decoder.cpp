@@ -4,7 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <numeric>
-//#include <nvtx3/nvtx3.hpp>
+#include <nvtx3/nvtx3.hpp>
 #include <sstream>
 #include <vector>
 #include "errors_handling.h"
@@ -282,7 +282,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
     int cuda_device_id = params->backends ? params->backends->cuda_device_id : 0;
     executor->launch(
         executor->instance, cuda_device_id, sample_idx, decode_state_batch_.get(), [](int tid, int sample_idx, void* context) -> void {
-            //nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
+            nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
             auto* decode_state = reinterpret_cast<NvJpegCudaDecoderPlugin::DecodeState*>(context);
             nvimgcdcsCodeStreamDesc_t code_stream = decode_state->samples_[sample_idx].code_stream;
             nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
@@ -395,7 +395,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
 
 nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decodeBatch()
 {
-   // NVTX3_FUNC_RANGE();
+    NVTX3_FUNC_RANGE();
     nvjpegDecodeParams_t nvjpeg_params;
     XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle_, &nvjpeg_params));
     std::unique_ptr<std::remove_pointer<nvjpegDecodeParams_t>::type, decltype(&nvjpegDecodeParamsDestroy)> nvjpeg_params_raii(
