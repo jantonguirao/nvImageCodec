@@ -6,10 +6,10 @@
 #include <memory>
 #include <sstream>
 #include <vector>
-#include "jpeg2k_xm_log.h"
+#include "log.h"
 
-#include "jpeg2k_xm_decoder.h"
-#include "jpeg2k_xm_error_handling.h"
+#include "cuda_decoder.h"
+#include "error_handling.h"
 
 namespace nvjpeg2k {
 

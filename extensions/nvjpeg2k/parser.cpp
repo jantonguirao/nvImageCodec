@@ -1,4 +1,4 @@
-#include "jpeg2k_xm_parser.h"
+#include "parser.h"
 
 #include <nvimgcodecs.h>
 #include <cassert>
@@ -8,8 +8,8 @@
 #include <cstring>
 
 #include <nvjpeg2k.h>
-#include "jpeg2k_xm_error_handling.h"
-#include "jpeg2k_xm_log.h"
+#include "error_handling.h"
+#include "log.h"
 
     namespace nvjpeg2k {
 

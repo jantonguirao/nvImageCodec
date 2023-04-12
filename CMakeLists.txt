@@ -25,9 +25,10 @@ option(BUILD_SAMPLES "Build samples" ON)
 option(BUILD_CVCUDA_SAMPLES "Build CVCUDA samples" OFF)
 option(BUILD_DOCS "Build documentation" OFF)
 option(BUILD_EXTENSIONS "Build extensions modules" ON)
+option(BUILD_NVJPEG_EXT "Build nvjpeg extensions module" ON)
+option(BUILD_NVJPEG2K_EXT "Build nvjpeg2k extensions module" ON)
+option(BUILD_NVBMP_EXT "Build nvbmp extensions module" ON)
 option(BUILD_PYTHON "Build Python binding" ON)
-
-
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
 
@@ -91,6 +92,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS OFF)
+
+add_subdirectory(external)
 
 if(BUILD_LIBRARY)
 add_subdirectory(src)

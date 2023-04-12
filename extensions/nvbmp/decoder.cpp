@@ -3,7 +3,7 @@
 #include <cstring>
 #include "exceptions.h"
 #include "log.h"
-#include "nvbmp_parser.h"
+#include "parser.h"
 
 struct nvimgcdcsDecoder
 {

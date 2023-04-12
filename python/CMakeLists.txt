@@ -15,12 +15,10 @@ cmake_minimum_required(VERSION 3.22)
 project(nvimgcodecs_python CXX)
 
 set(PYBIND11_PYTHON_VERSION ${PYTHON_VERSION})
-add_subdirectory(pybind11)
 
 include_directories(
   ../include
 )   
-# find_package(nvimgcodecs REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 

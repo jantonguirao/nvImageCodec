@@ -1,0 +1,51 @@
+set(NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME nvjpeg_ext)
+
+set(NVIMGCDCS_NVJPEG_EXT_SRC
+  ext_module.cpp
+  cuda_decoder.cpp
+  hw_decoder.cpp
+  cuda_encoder.cpp
+  parser.cpp
+  type_convert.cpp
+)
+
+find_package(CUDAToolkit REQUIRED)
+
+include_directories(
+  ../../include
+  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+)
+include_directories(../../external/NVTX/c/include)
+
+add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG_EXT_SRC})
+
+target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} PUBLIC CUDA::cudart ${NVJPEG_LIBRARY})
+
+if(UNIX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
+  set_target_properties(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR})
+else()
+  set_target_properties(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    VERSION ${PROJECT_VERSION}
+    OUTPUT_NAME ${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}_${PROJECT_VERSION_MAJOR}
+    ARCHIVE_OUTPUT_NAME ${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME})
+endif()
+
+if(UNIX)
+  install(TARGETS ${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
+    LIBRARY DESTINATION plugins
+    PUBLIC_HEADER DESTINATION include
+  )
+
+else()
+  install(TARGETS ${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
+    RUNTIME DESTINATION plugins
+    LIBRARY DESTINATION lib64
+    ARCHIVE DESTINATION lib64
+    PUBLIC_HEADER DESTINATION include
+  )
+endif()

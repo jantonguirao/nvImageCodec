@@ -1,0 +1,44 @@
+set(NVIMGCDCS_NVBMP_LIBRARY_NAME nvbmp_ext)  
+
+set(NVIMGCDCS_NVBMP_SRC
+      ext_module.cpp
+      encoder.cpp
+      decoder.cpp
+      parser.cpp
+)
+include_directories(
+  ../../include
+  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+)     
+    
+add_library(${NVIMGCDCS_NVBMP_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVBMP_SRC})
+
+if(UNIX)
+set_target_properties(${NVIMGCDCS_NVBMP_LIBRARY_NAME} PROPERTIES 
+        POSITION_INDEPENDENT_CODE ON 
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR} )
+else()
+set_target_properties(${NVIMGCDCS_NVBMP_LIBRARY_NAME} PROPERTIES 
+        POSITION_INDEPENDENT_CODE ON 
+        VERSION ${PROJECT_VERSION}
+        OUTPUT_NAME ${NVIMGCDCS_NVBMP_LIBRARY_NAME}_${PROJECT_VERSION_MAJOR}
+        ARCHIVE_OUTPUT_NAME ${NVIMGCDCS_NVBMP_LIBRARY_NAME})
+endif()
+
+
+if(UNIX)
+        install(TARGETS ${NVIMGCDCS_NVBMP_LIBRARY_NAME}
+                LIBRARY DESTINATION plugins
+                PUBLIC_HEADER DESTINATION include
+        )
+
+else()
+install(TARGETS  ${NVIMGCDCS_NVBMP_LIBRARY_NAME}
+    RUNTIME DESTINATION plugins
+    LIBRARY DESTINATION lib64
+    ARCHIVE DESTINATION lib64
+    PUBLIC_HEADER DESTINATION include 
+        )
+endif()
+
