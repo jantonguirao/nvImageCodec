@@ -1,12 +1,12 @@
 set(NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME nvjpeg_ext)
 
 set(NVIMGCDCS_NVJPEG_EXT_SRC
-  ext_module.cpp
   cuda_decoder.cpp
   hw_decoder.cpp
   cuda_encoder.cpp
   parser.cpp
   type_convert.cpp
+  nvjpeg_ext.cpp
 )
 
 find_package(CUDAToolkit REQUIRED)
@@ -17,7 +17,8 @@ include_directories(
 )
 include_directories(../../external/NVTX/c/include)
 
-add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG_EXT_SRC})
+add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG_EXT_SRC} ext_module.cpp)
+add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVJPEG_EXT_SRC})
 
 target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} PUBLIC CUDA::cudart ${NVJPEG_LIBRARY})
 

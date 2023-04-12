@@ -707,6 +707,11 @@ static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encod
             jpeg2k_encode_params->irreversible = false;
             break;
         }
+        case NVIMGCDCS_IMWRITE_JPEG2K_PROG_ORDER: {
+            param++;
+            jpeg2k_encode_params->prog_order = static_cast<nvimgcdcsJpeg2kProgOrder_t>(*param);
+            break;
+        }
         case NVIMGCDCS_IMWRITE_MCT_MODE: {
             param++;
             encode_params->mct_mode = static_cast<nvimgcdcsMctMode_t>(*param);
@@ -755,18 +760,11 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
                 jpeg2k_encode_params.type = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
                 jpeg2k_encode_params.stream_type =
                     file_path.extension().string() == ".jp2" ? NVIMGCDCS_JPEG2K_STREAM_JP2 : NVIMGCDCS_JPEG2K_STREAM_J2K;
-                jpeg2k_encode_params.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL; //TODO Support for all j2k progression orders
-                jpeg2k_encode_params.num_layers = 1;
-                jpeg2k_encode_params.irreversible = 1;
-                //jpeg2k_encode_params.rsiz = ;
-                jpeg2k_encode_params.enable_SOP_marker = 0;
-                jpeg2k_encode_params.enable_EPH_marker = 0;
+                jpeg2k_encode_params.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL; 
                 jpeg2k_encode_params.num_resolutions = 5;
                 jpeg2k_encode_params.code_block_w = 64;
                 jpeg2k_encode_params.code_block_h = 64;
-                // jpeg2k_encode_params.encode_modes;
-                jpeg2k_encode_params.enable_custom_precincts = 0;
-
+                jpeg2k_encode_params.irreversible = true;
                 encode_params.next = &jpeg2k_encode_params;
             } else if (codec_name == "jpeg") {
                 jpeg_encode_params.type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;

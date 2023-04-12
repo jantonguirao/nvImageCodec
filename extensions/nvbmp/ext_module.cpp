@@ -1,54 +1,17 @@
+/*
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * NVIDIA CORPORATION and its licensors retain all intellectual property
+ * and proprietary rights in and to this software, related documentation
+ * and any modifications thereto.  Any use, reproduction, disclosure or
+ * distribution of this software and related documentation without an express
+ * license agreement from NVIDIA CORPORATION is strictly prohibited.
+ */
+
 #include <nvimgcodecs.h>
-#include "log.h"
-
-extern nvimgcdcsParserDesc nvbmp_parser;
-extern nvimgcdcsEncoderDesc nvbmp_encoder;
-extern nvimgcdcsDecoderDesc nvbmp_decoder;
-
-nvimgcdcsStatus_t nvimgcdcsExtensionCreate(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
-{
-    Logger::get().registerLogFunc(framework->instance, framework->log);
-
-    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");
-    framework->registerParser(framework->instance, &nvbmp_parser);
-    framework->registerEncoder(framework->instance, &nvbmp_encoder);
-    framework->registerDecoder(framework->instance, &nvbmp_decoder);
-
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
-{
-    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionDestroy");
-    Logger::get().unregisterLogFunc();
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-// clang-format off
-nvimgcdcsExtensionDesc_t nvbmp_extension = {
-    NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
-    NULL,
-
-    "nvbmp_extension",  // id
-     0x00000100,        // version
-
-    nvimgcdcsExtensionCreate,
-    nvimgcdcsExtensionDestroy
-};
-// clang-format on  
+#include "nvbmp_ext.h"
 
 nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc)
 {
-    if (ext_desc == nullptr) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-
-    if ( ext_desc->type != NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC){
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-
-    *ext_desc = nvbmp_extension;
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return get_nvbmp_extension_desc(ext_desc);
 }

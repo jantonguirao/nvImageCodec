@@ -44,14 +44,9 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_REGION,
         NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_IMAGE_PLANE_INFO,
-        NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODING,
-        NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO,
+        NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_IMAGE_INFO,
-        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_INFO,
-        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_TILE_COMPONENT_INFO,
-        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_RESOLUTION_INFO,
-        NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_DECODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC,
@@ -310,17 +305,9 @@ extern "C"
         nvimgcdcsBackend_t* backends;
     } nvimgcdcsDecodeParams_t;
 
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type;
-        void* next;
-        uint32_t tile_id;
-        uint32_t num_res_levels;
-    } nvimgcdcsJpeg2kDecodeParams_t;
-
     typedef enum
     {
-        NVIMGCDCS_MCT_MODE_YCC = 0, //transform RGB color images to YUV (default false)
+        NVIMGCDCS_MCT_MODE_YCC = 0, //transform RGB color images to YUV
         NVIMGCDCS_MCT_MODE_RGB = 1,
         NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsMctMode_t;
@@ -363,19 +350,11 @@ extern "C"
         void* next;
 
         nvimgcdcsJpeg2kBitstreamType_t stream_type;
-        uint16_t rsiz;
-        uint32_t enable_SOP_marker;
-        uint32_t enable_EPH_marker;
         nvimgcdcsJpeg2kProgOrder_t prog_order;
-        uint32_t num_layers;
         uint32_t num_resolutions;
-        uint32_t code_block_w;
-        uint32_t code_block_h;
-        uint32_t encode_modes;
-        uint32_t irreversible;
-        uint32_t enable_custom_precincts;
-        uint32_t precint_width[NVIMGCDCS_JPEG2K_MAXRES];
-        uint32_t precint_height[NVIMGCDCS_JPEG2K_MAXRES];
+        uint32_t code_block_w; //32, 64
+        uint32_t code_block_h; //32, 64
+        bool irreversible;
     } nvimgcdcsJpeg2kEncodeParams_t;
 
     typedef struct
@@ -593,8 +572,8 @@ extern "C"
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
 
-        nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams,
-            nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
+            nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
         nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
             int batch_size, const nvimgcdcsDecodeParams_t* params);
@@ -737,16 +716,18 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 1, // 0-100 default 95
-        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 2,
-        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 3, //optimized_huffman
-        NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 7,
+        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 1,         // value 0-100 default 95
+        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 2,     // flag NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN
+        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 3,        // flag optimized_huffman
+        NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 7, // value nvimgcdcsImwriteSamplingFactor_t
 
-        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 100,     // default 50
-        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 101,     // num_decomps default 5
-        NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 103, // code_block_w code_block_h (default 64 64)
-        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 104,
-        NVIMGCDCS_IMWRITE_MCT_MODE = 500, // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )
+        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 100,     // value default 50
+        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 101,     // value num_decomps default 5
+        NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 103, // value code_block_w code_block_h (default 64 64)
+        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 104,      // flag !irreversible
+        NVIMGCDCS_IMWRITE_JPEG2K_PROG_ORDER = 105,      // value nvimgcdcsJpeg2kProgOrder_t (default RPCL)
+
+        NVIMGCDCS_IMWRITE_MCT_MODE = 500, // value  nvimgcdcsMctMode_t (default NVIMGCDCS_MCT_MODE_RGB )
         NVIMGCDCS_IMWRITE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImwriteParams_t;
 

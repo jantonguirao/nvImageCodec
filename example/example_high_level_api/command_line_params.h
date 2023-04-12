@@ -38,6 +38,7 @@ struct CommandLineParams
     bool optimized_huffman;
     bool ignore_orientation;
     nvimgcdcsJpegEncoding_t jpeg_encoding;
+    nvimgcdcsJpeg2kProgOrder_t jpeg2k_prog_order;
     nvimgcdcsChromaSubsampling_t chroma_subsampling;
     bool list_cuda_devices;
 };
@@ -57,8 +58,7 @@ int find_param_index(const char** argv, int argc, const char* parm)
     if (count == 0 || count == 1) {
         return index;
     } else {
-        std::cout << "Error, parameter " << parm << " has been specified more than once, exiting\n"
-                  << std::endl;
+        std::cout << "Error, parameter " << parm << " has been specified more than once, exiting\n" << std::endl;
         return -1;
     }
 
@@ -67,13 +67,11 @@ int find_param_index(const char** argv, int argc, const char* parm)
 
 int process_commandline_params(int argc, const char* argv[], CommandLineParams* params)
 {
-    static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"},
-        {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"}, {".tiff", "tiff"}, {".tif", "tiff"},
-        {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pxm"}, {".pgm", "pxm"}, {".pbm", "pxm"}};
+    static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"}, {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"},
+        {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pxm"}, {".pgm", "pxm"}, {".pbm", "pxm"}};
 
     int pidx;
-    if ((pidx = find_param_index(argv, argc, "-h")) != -1 ||
-        (pidx = find_param_index(argv, argc, "--help")) != -1) {
+    if ((pidx = find_param_index(argv, argc, "-h")) != -1 || (pidx = find_param_index(argv, argc, "--help")) != -1) {
         std::cout << "Usage: " << argv[0] << " [decoding options]"
                   << " -i <input> "
                   << "[encoding options]"
@@ -87,16 +85,14 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         std::cout << "  -b --batch_size\t: Batch size (default 1)" << std::endl;
         std::cout << std::endl;
         std::cout << "Decoding options: " << std::endl;
-        std::cout
-            << "  --dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
-            << "  \t\t\t - When true, for jpeg with 4 color components assumes CMYK colorspace "
-               "and converts to RGB/YUV."
-            << std::endl
-            << "  \t\t\t - When true, for Jpeg2k and 422/420 chroma subsampling enable "
-               "conversion to RGB."
-            << std::endl;
-        std::cout << "  --ignore_orientation\t: Ignore EXFIF orientation (default false)"
+        std::cout << "  --dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
+                  << "  \t\t\t - When true, for jpeg with 4 color components assumes CMYK colorspace "
+                     "and converts to RGB/YUV."
+                  << std::endl
+                  << "  \t\t\t - When true, for Jpeg2k and 422/420 chroma subsampling enable "
+                     "conversion to RGB."
                   << std::endl;
+        std::cout << "  --ignore_orientation\t: Ignore EXFIF orientation (default false)" << std::endl;
         std::cout << "  -i  --input\t\t: Path to single image or directory" << std::endl;
         std::cout << std::endl;
         std::cout << "Encoding options: " << std::endl;
@@ -107,25 +103,19 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
                      "color images to YUV (default false)"
                   << std::endl;
         std::cout << "  --psnr\t\t: Target psnr (default 50)" << std::endl;
-        std::cout
-            << "  --reversible\t\t: false for lossy and true for lossless compresion (default "
-               "false) "
-            << std::endl;
-        std::cout
-            << "  --num_decomps\t\t: number of wavelet transform decompositions levels (default 5)"
-            << std::endl;
-        std::cout
-            << "  --optimized_huffman\t: For false non-optimized Huffman will be used. Otherwise "
-               "optimized version will be used. (default false)."
-            << std::endl;
+        std::cout << "  --reversible\t\t: false for lossy and true for lossless compresion (default "
+                     "false) "
+                  << std::endl;
+        std::cout << "  --num_decomps\t\t: number of wavelet transform decompositions levels (default 5)" << std::endl;
+        std::cout << "  --optimized_huffman\t: For false non-optimized Huffman will be used. Otherwise "
+                     "optimized version will be used. (default false)."
+                  << std::endl;
         std::cout << "  --jpeg_encoding\t: Corresponds to the JPEG marker"
-                     " baseline_dct, sequential_dct or progressive_dct (default "
+                     " baseline_dct, progressive_dct (default "
                      "baseline_dct)."
                   << std::endl;
-        ;
-        std::cout
-            << "  -o  --output\t\t: File or directory to write decoded image using <output_codec>"
-            << std::endl;
+        std::cout << "  --jpeg2k_prog_order\t: Jpeg2000 progression order: LRCP, RLCP, RPCL, PCRL, CPRL (default RPCL)" << std::endl;
+        std::cout << "  -o  --output\t\t: File or directory to write decoded image using <output_codec>" << std::endl;
 
         return EXIT_SUCCESS;
     }
@@ -135,14 +125,12 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
     }
 
     params->verbose = 1;
-    if (((pidx = find_param_index(argv, argc, "--verbose")) != -1) ||
-        (pidx = find_param_index(argv, argc, "-v") != -1)) {
+    if (((pidx = find_param_index(argv, argc, "--verbose")) != -1) || ((pidx = find_param_index(argv, argc, "-v")) != -1)) {
         params->verbose = static_cast<int>(strtod(argv[pidx + 1], NULL));
     }
 
     params->input = "./";
-    if ((pidx = find_param_index(argv, argc, "-i")) != -1 ||
-        (pidx = find_param_index(argv, argc, "--input")) != -1) {
+    if ((pidx = find_param_index(argv, argc, "-i")) != -1 || (pidx = find_param_index(argv, argc, "--input")) != -1) {
         params->input = argv[pidx + 1];
     } else {
         std::cout << "Please specify input directory with encoded images" << std::endl;
@@ -155,8 +143,7 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
     }
 
     params->quality = 95;
-    if ((pidx = find_param_index(argv, argc, "-q")) != -1 ||
-        (pidx = find_param_index(argv, argc, "--quality")) != -1) {
+    if ((pidx = find_param_index(argv, argc, "-q")) != -1 || (pidx = find_param_index(argv, argc, "--quality")) != -1) {
         params->quality = static_cast<float>(strtod(argv[pidx + 1], NULL));
     }
 
@@ -166,8 +153,7 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
     }
 
     params->write_output = false;
-    if ((pidx = find_param_index(argv, argc, "-o")) != -1 ||
-        (pidx = find_param_index(argv, argc, "--output")) != -1) {
+    if ((pidx = find_param_index(argv, argc, "-o")) != -1 || (pidx = find_param_index(argv, argc, "--output")) != -1) {
         params->output = argv[pidx + 1];
     }
 
@@ -175,13 +161,12 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
     fs::path file_path(params->output);
     if (file_path.has_extension()) {
         std::string extension = file_path.extension().string();
-        auto it               = ext2codec.find(extension);
+        auto it = ext2codec.find(extension);
         if (it != ext2codec.end()) {
             params->output_codec = it->second;
         }
     }
-    if ((pidx = find_param_index(argv, argc, "-c")) != -1 ||
-        (pidx = find_param_index(argv, argc, "--output_codec")) != -1) {
+    if ((pidx = find_param_index(argv, argc, "-c")) != -1 || (pidx = find_param_index(argv, argc, "--output_codec")) != -1) {
         params->output_codec = argv[pidx + 1];
     }
 
@@ -219,8 +204,6 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
     if ((pidx = find_param_index(argv, argc, "--jpeg_encoding")) != -1) {
         if (strcmp(argv[pidx + 1], "baseline_dct") == 0) {
             params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
-        } else if (strcmp(argv[pidx + 1], "sequential_dct") == 0) {
-            params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN;
         } else if (strcmp(argv[pidx + 1], "progressive_dct") == 0) {
             params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
         } else {
@@ -229,11 +212,9 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
     }
     params->chroma_subsampling = NVIMGCDCS_SAMPLING_444;
     if ((pidx = find_param_index(argv, argc, "--chroma_subsampling")) != -1) {
-        std::map<std::string, nvimgcdcsChromaSubsampling_t> str2Css = {
-            {"444", NVIMGCDCS_SAMPLING_444}, {"420", NVIMGCDCS_SAMPLING_420},
-            {"440", NVIMGCDCS_SAMPLING_440}, {"422", NVIMGCDCS_SAMPLING_422},
-            {"411", NVIMGCDCS_SAMPLING_411}, {"410", NVIMGCDCS_SAMPLING_410},
-            {"gray", NVIMGCDCS_SAMPLING_GRAY}, {"410v", NVIMGCDCS_SAMPLING_410V}};
+        std::map<std::string, nvimgcdcsChromaSubsampling_t> str2Css = {{"444", NVIMGCDCS_SAMPLING_444}, {"420", NVIMGCDCS_SAMPLING_420},
+            {"440", NVIMGCDCS_SAMPLING_440}, {"422", NVIMGCDCS_SAMPLING_422}, {"411", NVIMGCDCS_SAMPLING_411},
+            {"410", NVIMGCDCS_SAMPLING_410}, {"gray", NVIMGCDCS_SAMPLING_GRAY}, {"410v", NVIMGCDCS_SAMPLING_410V}};
         auto it = str2Css.find(argv[pidx + 1]);
         if (it != str2Css.end()) {
             params->chroma_subsampling = it->second;
@@ -241,10 +222,21 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
             std::cout << "Unknown chroma subsampling type: " << argv[pidx + 1] << std::endl;
         }
     }
+    params->jpeg2k_prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL;
+    if ((pidx = find_param_index(argv, argc, "--jpeg2k_prog_order")) != -1) {
+        std::map<std::string, nvimgcdcsJpeg2kProgOrder_t> str2Css = {{"LRCP", NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP},
+            {"RLCP", NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP}, {"RPCL", NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL},
+            {"PCRL", NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL}, {"CPRL", NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL}};
+        auto it = str2Css.find(argv[pidx + 1]);
+        if (it != str2Css.end()) {
+            params->jpeg2k_prog_order = it->second;
+        } else {
+            std::cout << "Unknown progression order type: " << argv[pidx + 1] << std::endl;
+        }
+    }
 
     params->batch_size = 1;
-    if ((pidx = find_param_index(argv, argc, "-b")) != -1 ||
-        (pidx = find_param_index(argv, argc, "--batch_size")) != -1) {
+    if ((pidx = find_param_index(argv, argc, "-b")) != -1 || (pidx = find_param_index(argv, argc, "--batch_size")) != -1) {
         params->batch_size = std::atoi(argv[pidx + 1]);
     }
 

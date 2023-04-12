@@ -193,13 +193,9 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_get_capabilities(
 NvJpeg2kDecoderPlugin::DecodeState::DecodeState(NvJpeg2kDecoderPlugin::Decoder* decoder)
     : decoder_(decoder)
 {
-    NVIMGCDCS_D_LOG_DEBUG("nvjpeg2kDecodeStateCreate");
     XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateCreate(decoder_->handle_, &handle_));
-    NVIMGCDCS_D_LOG_DEBUG("cudaStreamCreateWithFlags");
     XM_CHECK_CUDA(cudaStreamCreateWithFlags(&stream_, cudaStreamNonBlocking));
-    NVIMGCDCS_D_LOG_DEBUG("cudaEventCreate");
     XM_CHECK_CUDA(cudaEventCreate(&event_));
-    NVIMGCDCS_D_LOG_DEBUG("DS done");
 }
 
 NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
@@ -254,7 +250,7 @@ NvJpeg2kDecoderPlugin::ParseState* NvJpeg2kDecoderPlugin::Decoder::getSamplePars
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(NvJpeg2kDecoderPlugin::DecodeState* decode_state, ParseState* parse_state,
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
 {
-
+    NVIMGCDCS_D_LOG_TRACE("nvjpeg2k_decode");
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     image->getImageInfo(image->instance, &image_info);
     unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);

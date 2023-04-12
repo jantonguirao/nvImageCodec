@@ -142,26 +142,6 @@ nvimgcdcsChromaSubsampling_t nvjpeg_to_nvimgcdcs_css(nvjpegChromaSubsampling_t n
     }
 }
 
-// nvimgcdcsColorSpec_t nvjpeg_to_nvimgcdcs_color_space(ColorSpace nvjpeg_color_space)
-// {
-//     switch (nvjpeg_color_space) {
-//     case COLORSPACE_UNKNOWN:
-//         return NVIMGCDCS_COLORSPEC_UNKNOWN;
-//     case COLORSPACE_RGB:
-//         return NVIMGCDCS_COLORSPEC_SRGB;
-//     case COLORSPACE_YCBCR:
-//         return NVIMGCDCS_COLORSPEC_SYCC;
-//     case COLORSPACE_CMYK:
-//         return NVIMGCDCS_COLORSPEC_CMYK;
-//     case COLORSPACE_YCCK:
-//         return NVIMGCDCS_COLORSPEC_YCCK;
-//     case COLORSPACE_GRAYSCALE:
-//         return NVIMGCDCS_COLORSPEC_GRAY;
-//     default:
-//         return NVIMGCDCS_COLORSPEC_UNSUPPORTED;
-//     }
-// }
-
 nvimgcdcsOrientation_t exif_to_nvimgcdcs_orientation(nvjpegExifOrientation_t exif_orientation)
 {
     switch (exif_orientation) {

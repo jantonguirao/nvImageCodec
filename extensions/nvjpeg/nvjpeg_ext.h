@@ -8,10 +8,9 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
-#include <nvimgcodecs.h>
-#include "nvjpeg_ext.h"
+#pragma once
 
-nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc)
-{
-    return get_nvjpeg_extension_desc(ext_desc);
-}
+#include <nvimgcodecs.h>
+
+
+nvimgcdcsStatus_t get_nvjpeg_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);

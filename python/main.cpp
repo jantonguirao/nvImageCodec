@@ -46,8 +46,7 @@ class Module
         instance_create_info.device_allocator = NULL;
         instance_create_info.load_extension_modules = true;
         instance_create_info.default_debug_messenger = true;
-        instance_create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL |
-                                                NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR |
+        instance_create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR |
                                                 NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING;
         instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
         instance_create_info.num_cpu_threads = 10;
@@ -342,6 +341,12 @@ PYBIND11_MODULE(nvimgcodecs, m)
         NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE); // code_block_w code_block_h (default 64 64)
     m.attr("NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE") =
         static_cast<int>(NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE);
+    m.attr("NVIMGCDCS_IMWRITE_JPEG2K_PROG_ORDER") = static_cast<int>(NVIMGCDCS_IMWRITE_JPEG2K_PROG_ORDER);
+    m.attr("NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP") = static_cast<int>(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP);
+    m.attr("NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP") = static_cast<int>(NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP);
+    m.attr("NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL") = static_cast<int>(NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL);
+    m.attr("NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL") = static_cast<int>(NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL);
+    m.attr("NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL") = static_cast<int>(NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL);
     m.attr("NVIMGCDCS_IMWRITE_MCT_MODE") = static_cast<int>(
         NVIMGCDCS_IMWRITE_MCT_MODE); // nvimgcdcsMctMode_t value (default NVIMGCDCS_MCT_MODE_RGB )
     m.attr("NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444") =
