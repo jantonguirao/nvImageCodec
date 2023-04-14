@@ -1,7 +1,7 @@
 set(NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME nvjpeg2k_ext)
 
 set(NVIMGCDCS_NVJPEG2K_EXT_SRC
-  ext_module.cpp
+  nvjpeg2k_ext.cpp
   cuda_encoder.cpp
   cuda_decoder.cpp
   parser.cpp
@@ -14,7 +14,8 @@ include_directories(
   SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )
 
-add_library(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG2K_EXT_SRC})
+add_library(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG2K_EXT_SRC} ext_module.cpp)
+add_library(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVJPEG2K_EXT_SRC})
 
 target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} PUBLIC CUDA::cudart ${NVJPEG2K_LIBRARY})
 

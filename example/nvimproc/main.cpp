@@ -247,20 +247,8 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
         jpeg2k_encode_params->code_block_w = params.code_block_w;
         jpeg2k_encode_params->code_block_h = params.code_block_h;
         jpeg2k_encode_params->irreversible = !params.reversible;
-        jpeg2k_encode_params->prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL;
+        jpeg2k_encode_params->prog_order = params.jpeg2k_prog_order;
         jpeg2k_encode_params->num_resolutions = params.num_decomps;
-
-        //TODO Support for more jpeg2k specific parameters
-        // uint16_t rsiz;
-        // uint32_t enable_SOP_marker;
-        // uint32_t enable_EPH_marker;
-        // nvimgcdcsJpeg2kProgOrder_t prog_order;
-        // uint32_t num_layers;
-        // uint32_t encode_modes;
-        // uint32_t enable_custom_precincts;
-        // uint32_t precint_width[NVIMGCDCS_JPEG2K_MAXRES];
-        // uint32_t precint_height[NVIMGCDCS_JPEG2K_MAXRES];
-
         encode_params->next = jpeg2k_encode_params;
     } else if (params.output_codec == "jpeg") {
         jpeg_encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;

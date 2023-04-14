@@ -20,6 +20,5 @@ nvjpegJpegEncoding_t nvimgcdcs_to_nvjpeg_encoding(nvimgcdcsJpegEncoding_t nvimgc
 
 nvimgcdcsSampleDataType_t precision_to_sample_type(int precision);
 nvimgcdcsChromaSubsampling_t nvjpeg_to_nvimgcdcs_css(nvjpegChromaSubsampling_t nvjpeg_css);
-//nvimgcdcsColorSpec_t nvjpeg_to_nvimgcdcs_color_space(ColorSpace nvjpeg_color_space);
 nvimgcdcsOrientation_t exif_to_nvimgcdcs_orientation(nvjpegExifOrientation_t exif_orientation);
 nvimgcdcsJpegEncoding_t nvjpeg_to_nvimgcdcs_encoding(nvjpegJpegEncoding_t nvjpeg_encoding);

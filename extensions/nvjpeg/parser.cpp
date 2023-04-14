@@ -231,8 +231,6 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getImageInfo(
         }
         assert(encoded_stream_data != nullptr);
 
-        //XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size,
-        //    false, false, parse_state->nvjpeg2k_stream_));
         XM_CHECK_NVJPEG(nvjpegJpegStreamParseHeader(
             handle_, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size, parse_state->nvjpeg_stream_));
 
@@ -243,7 +241,7 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getImageInfo(
 
         image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
         image_info->color_spec = NVIMGCDCS_COLORSPEC_UNKNOWN;
-        auto sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; //precision_to_sample_type(header.getSamplePrecision());
+        auto sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; 
         for (uint32_t p = 0; p < image_info->num_planes; ++p) {
             XM_CHECK_NVJPEG(nvjpegJpegStreamGetComponentDimensions(
                 parse_state->nvjpeg_stream_, p, &image_info->plane_info[p].width, &image_info->plane_info[p].height));
@@ -258,13 +256,21 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getImageInfo(
         nvjpegJpegStreamGetExifOrientation(parse_state->nvjpeg_stream_, &orientation_flag);
         image_info->orientation = exif_to_nvimgcdcs_orientation(orientation_flag);
 
-        //nvjpegJpegEncoding_t jpeg_encoding;
-        //XM_CHECK_NVJPEG(nvjpegJpegStreamGetJpegEncoding(parse_state->nvjpeg2k_stream_, &jpeg_encoding));
-        //
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_P_LOG_ERROR("Could not retrieve image info from jpeg stream - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
-    }
+        nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(image_info->next);
+        while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+            jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
+        if (jpeg_image_info) {
+            nvjpegJpegEncoding_t jpeg_encoding;
+            XM_CHECK_NVJPEG(nvjpegJpegStreamGetJpegEncoding(parse_state->nvjpeg_stream_, &jpeg_encoding));
+            jpeg_image_info->encoding = nvjpeg_to_nvimgcdcs_encoding(jpeg_encoding);
+        }
+
+        }
+        catch (const std::runtime_error& e)
+        {
+            NVIMGCDCS_P_LOG_ERROR("Could not retrieve image info from jpeg stream - " << e.what());
+            return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+        }
 
     return NVIMGCDCS_STATUS_SUCCESS;
 }

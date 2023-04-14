@@ -70,7 +70,6 @@ class PluginFramework
         const nvimgcdcsDebugMessageType_t message_type,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
-    //TODO define statics with macro
     static nvimgcdcsStatus_t static_register_encoder(
         void* instance, const nvimgcdcsEncoderDesc_t desc);
     static nvimgcdcsStatus_t static_register_decoder(

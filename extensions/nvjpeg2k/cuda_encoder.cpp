@@ -257,6 +257,13 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(NvJpeg2kEncoderPlugin::
     encode_config.irreversible = 0;
     encode_config.prog_order = NVJPEG2K_LRCP;
     encode_config.num_resolutions = 6;
+    encode_config.num_layers = 1;
+    encode_config.enable_tiling = 0;
+    encode_config.enable_SOP_marker = 0;
+    encode_config.enable_EPH_marker = 0;
+    encode_config.encode_modes = 0;
+    encode_config.enable_custom_precincts = 0;
+
     fill_encode_config(&encode_config, params);
 
     XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetEncodeConfig(encode_params.get(), &encode_config));

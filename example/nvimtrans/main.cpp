@@ -107,20 +107,8 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
         jpeg2k_encode_params->code_block_w = params.code_block_w;
         jpeg2k_encode_params->code_block_h = params.code_block_h;
         jpeg2k_encode_params->irreversible = !params.reversible;
-        jpeg2k_encode_params->prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL;
+        jpeg2k_encode_params->prog_order = params.jpeg2k_prog_order;
         jpeg2k_encode_params->num_resolutions = params.num_decomps;
-
-        //TODO Support for more jpeg2k specific parameters
-        // uint16_t rsiz;
-        // uint32_t enable_SOP_marker;
-        // uint32_t enable_EPH_marker;
-        // nvimgcdcsJpeg2kProgOrder_t prog_order;
-        // uint32_t num_layers;
-        // uint32_t encode_modes;
-        // uint32_t enable_custom_precincts;
-        // uint32_t precint_width[NVIMGCDCS_JPEG2K_MAXRES];
-        // uint32_t precint_height[NVIMGCDCS_JPEG2K_MAXRES];
-
         encode_params->next = jpeg2k_encode_params;
     } else if (params.output_codec == "jpeg") {
         jpeg_encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
@@ -149,6 +137,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     double parse_time = wtime();
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcdcsJpegImageInfo_t jpeg_image_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+    image_info.next = &jpeg_image_info;
     nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
     parse_time = wtime() - parse_time;
     char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
@@ -159,6 +149,9 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     std::cout << "\t - height:" << image_info.plane_info[0].height << std::endl;
     std::cout << "\t - components:" << image_info.num_planes << std::endl;
     std::cout << "\t - codec:" << codec_name << std::endl;
+    if (jpeg_image_info.encoding != NVIMGCDCS_JPEG_ENCODING_UNKNOWN) {
+        std::cout << "\t - jpeg encoding: 0x" << std::hex << jpeg_image_info.encoding << std::endl;
+    }
 
     // Prepare decode parameters
     nvimgcdcsDecodeParams_t decode_params{};
@@ -516,8 +509,8 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
 
         nvimgcdcsFuture_t decode_future;
         double start_decoding_time = wtime();
-        CHECK_NVIMGCDCS(nvimgcdcsDecoderDecode(
-            decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, &decode_future));
+        CHECK_NVIMGCDCS(
+            nvimgcdcsDecoderDecode(decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, &decode_future));
 
         size_t status_size;
         nvimgcdcsFutureGetProcessingStatus(decode_future, nullptr, &status_size);

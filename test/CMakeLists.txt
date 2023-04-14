@@ -1,6 +1,5 @@
 
 
-
 set(SRCS
     nvimgcodecs_tests.cpp
     codec_test.cpp
@@ -14,10 +13,14 @@ set(SRCS
     parsers/jpeg_test.cpp
     parsers/jpeg2k_test.cpp
     parsers/tiff_test.cpp
-    )
+    extensions/nvjpeg_ext_parser_test.cpp
+    extensions/nvjpeg_ext_encoder_test.cpp
+    extensions/nvjpeg2k_ext_encoder_test.cpp
+)
 # Headers file are located here:
 include_directories(
     .
+    ..
     ../src
     ../include
     SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
@@ -25,15 +28,11 @@ include_directories(
 
 set(FILESTOPACK nvimgcodecs_tests)
 
-## cmake is unable to find library libcudart.so. work around by adding this
-find_library(CUDART_SHARED 
-    NAMES cudart
-    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+find_package(CUDAToolkit REQUIRED)
 
-find_library(CUDA_LIB
-    NAMES cuda
-    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
-)
+if(NOT DEFINED NVJPEG2K_LIBRARY)
+    find_library(NVJPEG2K_LIBRARY NAMES nvjpeg2k)
+endif()
 
 # Find all dependencies
 include(Dependencies)
@@ -49,12 +48,24 @@ foreach(testapp nvimgcodecs_tests)
         set(PTHREAD pthread)
     endif()
 
-    target_link_libraries(${testapp} PUBLIC nvimgcodecs_static ${CUDART_SHARED} ${CUDA_LIB} GTest::gtest GTest::gmock ${PTHREAD})
+    target_link_libraries(${testapp} PUBLIC
+        nvimgcodecs_static
+        nvjpeg_ext_static
+        nvjpeg2k_ext_static
+        ${NVJPEG2K_LIBRARY}
+        CUDA::cudart
+        CUDA::cuda_driver
+        CUDA::nvjpeg_static
+        GTest::gtest
+        GTest::gmock
+        ${PTHREAD})
 endforeach()
 
 install(TARGETS ${FILESTOPACK}
     DESTINATION test COMPONENT Applications
 )
 
-add_test(NAME nvImageCodecsTest-L0 COMMAND nvimgcodecs_tests)
-add_test(NAME nvImageCodecsTest-L2 COMMAND ${PYTHON_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME nvImageCodecsTest-L0 COMMAND nvimgcodecs_tests --gtest_filter=-*Parser*:*Ext* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME nvImageCodecsTest-L1-Builtin_Parsers COMMAND nvimgcodecs_tests --gtest_filter=*Parser* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME nvImageCodecsTest-L1-Extensions COMMAND nvimgcodecs_tests --gtest_filter=*Ext* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME nvImageCodecsTest-L2-Transcoding COMMAND ${PYTHON_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
