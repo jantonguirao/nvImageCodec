@@ -295,7 +295,6 @@ extern "C"
         void* next;
 
         bool enable_orientation;
-        bool enable_scaling;
         bool enable_roi;
         //For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
         //For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.

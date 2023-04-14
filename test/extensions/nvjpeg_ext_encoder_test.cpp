@@ -16,128 +16,93 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <tuple>
 #include "nvimgcodecs_tests.h"
+#include "nvjpeg_ext_test_common.h"
+
+using ::testing::Bool;
+using ::testing::Combine;
+using ::testing::TestWithParam;
+using ::testing::Values;
 
 namespace nvimgcdcs { namespace test {
 
-class NvJpegExtEncoderTest : public ::testing::Test
+class NvJpegExtEncoderTestBase: public NvJpegExtTestBase
 {
   public:
-    NvJpegExtEncoderTest() {}
+    NvJpegExtEncoderTestBase() {}
 
-    void SetUp() override
+    virtual void SetUp() 
     {
-        nvimgcdcsInstanceCreateInfo_t create_info;
-        create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        create_info.next = nullptr;
-        create_info.device_allocator = nullptr;
-        create_info.pinned_allocator = nullptr;
-        create_info.load_extension_modules = false;
-        create_info.executor = nullptr;
-        create_info.num_cpu_threads = 1;
-
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
-
-        nvjpeg_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
-        nvjpeg_extension_desc_.next = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvjpeg_extension_desc(&nvjpeg_extension_desc_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &nvjpeg_extension_, &nvjpeg_extension_desc_));
-
-        image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        jpeg_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
-        image_info_.next = &jpeg_info_;
-
-        image_info_.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-        image_info_.num_planes = 3;
-        image_info_.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-        image_info_.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
-        for (int p = 0; p < image_info_.num_planes; p++) {
-            image_info_.plane_info[p].height = 320;
-            image_info_.plane_info[p].width = 320;
-            image_info_.plane_info[p].num_channels = 1;
-            image_info_.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-        }
-        image_info_.buffer_size = image_info_.num_planes * image_info_.plane_info[0].height * image_info_.plane_info[0].width;
-
-        in_buffer_.resize(image_info_.buffer_size);
-        image_info_.buffer = in_buffer_.data();
-        image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
-
-        out_buffer_.resize(image_info_.buffer_size);
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-            nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, out_buffer_.data(), out_buffer_.size(), "jpeg", &image_info_));
-
+        NvJpegExtTestBase::SetUp();
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_));
-        images_.clear();
-        images_.push_back(in_image_);
-        streams_.clear();
-        streams_.push_back(out_code_stream_);
+
         jpeg_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
-        params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg_enc_params_, 0};
+        params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
+        params_.next = &jpeg_enc_params_;
         params_.quality = 95;
         params_.target_psnr = 0;
         params_.num_backends = 0; //Zero means that all backends are allowed.
         params_.mct_mode = NVIMGCDCS_MCT_MODE_YCC;
     }
 
-    void TearDown() override
+    virtual void TearDown()
     {
-        if (future_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureDestroy(future_));
         if (encoder_)
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderDestroy(encoder_));
-        if (out_code_stream_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(out_code_stream_));
-        if (in_image_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageDestroy(in_image_));
-        if (stream_handle_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(stream_handle_));
-        if (out_stream_handle_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(out_stream_handle_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(nvjpeg_extension_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
+        NvJpegExtTestBase::TearDown();
     }
 
-    nvimgcdcsInstance_t instance_;
-    nvimgcdcsExtensionDesc_t nvjpeg_extension_desc_{};
-    nvimgcdcsExtension_t nvjpeg_extension_;
-    nvimgcdcsCodeStream_t stream_handle_ = nullptr;
-    nvimgcdcsCodeStream_t out_stream_handle_ = nullptr;
-    std::vector<unsigned char> in_buffer_;
-    std::vector<unsigned char> out_buffer_;
-    nvimgcdcsImageInfo_t image_info_;
-    nvimgcdcsJpegImageInfo_t jpeg_info_;
-    nvimgcdcsImage_t in_image_;
-    nvimgcdcsCodeStream_t out_code_stream_;
-    std::vector<nvimgcdcsImage_t> images_;
-    std::vector<nvimgcdcsCodeStream_t> streams_;
     nvimgcdcsEncoder_t encoder_;
     nvimgcdcsJpegEncodeParams_t jpeg_enc_params_;
     nvimgcdcsEncodeParams_t params_;
-    nvimgcdcsFuture_t future_;
 };
 
-TEST_F(NvJpegExtEncoderTest, Encode_CSS_444_Extended_Jpeg_info_Baseline_DCT)
+class NvJpegExtEncoderTestSingleImage : public NvJpegExtEncoderTestBase,
+                                        public TestWithParam<std::tuple<nvimgcdcsChromaSubsampling_t, nvimgcdcsJpegEncoding_t>>
 {
-    jpeg_enc_params_.encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
+  public:
+    virtual ~NvJpegExtEncoderTestSingleImage() = default;
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
+  protected:
+    void SetUp() override
+    {
+        NvJpegExtEncoderTestBase::SetUp();
 
-    LoadImageFromHostMemory(instance_, stream_handle_, out_buffer_.data(), out_buffer_.size());
-    nvimgcdcsImageInfo_t load_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsJpegImageInfo_t load_jpeg_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
-    load_info.next = &load_jpeg_info;
+        image_info_.chroma_subsampling = std::get<0>(GetParam());
+        jpeg_enc_params_.encoding = std::get<1>(GetParam());
+    }
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &load_info));
-    EXPECT_EQ(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, load_jpeg_info.encoding);
-}
+    virtual void TearDown()
+    {
+        NvJpegExtEncoderTestBase::TearDown();
+    }
+};
 
-TEST_F(NvJpegExtEncoderTest, Encode_CSS_444_Extended_Jpeg_info_Progressive_DCT)
+TEST_P(NvJpegExtEncoderTestSingleImage, Encode_Single_Image_Extended_Jpeg_info)
 {
-    jpeg_enc_params_.encoding = NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
+    image_info_.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+    image_info_.num_planes = 3;
+    image_info_.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+    image_info_.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
+    for (int p = 0; p < image_info_.num_planes; p++) {
+        image_info_.plane_info[p].height = 320;
+        image_info_.plane_info[p].width = 320;
+        image_info_.plane_info[p].num_channels = 1;
+        image_info_.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+    }
+    image_info_.buffer_size = image_info_.num_planes * image_info_.plane_info[0].height * image_info_.plane_info[0].width;
 
+    in_buffer_.resize(image_info_.buffer_size);
+    image_info_.buffer = in_buffer_.data();
+    image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
+
+    out_buffer_.resize(image_info_.buffer_size);
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
+        nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, out_buffer_.data(), out_buffer_.size(), "jpeg", &image_info_));
+    images_.push_back(in_image_);
+    streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
     nvimgcdcsProcessingStatus_t encode_status;
@@ -146,13 +111,24 @@ TEST_F(NvJpegExtEncoderTest, Encode_CSS_444_Extended_Jpeg_info_Progressive_DCT)
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
 
-    LoadImageFromHostMemory(instance_, stream_handle_, out_buffer_.data(), out_buffer_.size());
+    LoadImageFromHostMemory(instance_, in_code_stream_, out_buffer_.data(), out_buffer_.size());
     nvimgcdcsImageInfo_t load_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcsJpegImageInfo_t load_jpeg_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     load_info.next = &load_jpeg_info;
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &load_info));
-    EXPECT_EQ(NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN, load_jpeg_info.encoding);
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &load_info));
+    EXPECT_EQ(jpeg_enc_params_.encoding, load_jpeg_info.encoding);
+    EXPECT_EQ(image_info_.chroma_subsampling, load_info.chroma_subsampling);
 }
+
+static nvimgcdcsJpegEncoding_t encodings[] = {
+    NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN};
+
+static nvimgcdcsChromaSubsampling_t css[] = {NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422 ,
+    NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410,
+    NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V};
+
+    INSTANTIATE_TEST_SUITE_P(
+        ENCODE_CHROMA_SUBSAMPLING_AND_ENCODING, NvJpegExtEncoderTestSingleImage, Combine(::testing::ValuesIn(css), ::testing::ValuesIn(encodings)));
 
 }} // namespace nvimgcdcs::test

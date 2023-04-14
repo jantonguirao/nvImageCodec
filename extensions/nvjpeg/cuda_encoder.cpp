@@ -291,7 +291,8 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(NvJpegCudaEncoderPlug
         XM_CHECK_NVJPEG(nvjpegEncoderParamsSetSamplingFactors(encode_params.get(), chroma_subsampling, NULL));
     }
     if (image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC || image_info.color_spec == NVIMGCDCS_COLORSPEC_YCCK) {
-        XM_CHECK_NVJPEG(nvjpegEncodeYUV(handle_, encode_state->handle_, encode_params.get(), &input_image, chroma_subsampling,
+        nvjpegChromaSubsampling_t input_chroma_subsampling = nvimgcdcs_to_nvjpeg_css(image_info.chroma_subsampling);
+        XM_CHECK_NVJPEG(nvjpegEncodeYUV(handle_, encode_state->handle_, encode_params.get(), &input_image, input_chroma_subsampling,
             image_info.plane_info[0].width, image_info.plane_info[0].height, encode_state->stream_));
     } else {
         XM_CHECK_NVJPEG(nvjpegEncodeImage(handle_, encode_state->handle_, encode_params.get(), &input_image, input_format,
