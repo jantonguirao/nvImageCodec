@@ -51,7 +51,13 @@ build:nvimagecodec:
 
 test:
     stage: test
+    dependencies:
+        - build:nvimagecodec
+    tags:
+        - docker
+        - cuda
     script:
+        - cd build
         - ctest
 
 # Documentation jobs
