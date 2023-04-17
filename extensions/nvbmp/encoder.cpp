@@ -158,7 +158,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_can_encode(nvimgcdcsEncoder_t encoder, nv
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_encoder_create(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_encoder_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_create");
 

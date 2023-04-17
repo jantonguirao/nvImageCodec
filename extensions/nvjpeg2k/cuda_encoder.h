@@ -45,8 +45,7 @@ class NvJpeg2kEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework,
-            const nvimgcdcsEncodeParams_t* params);
+        Encoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id);
         ~Encoder();
 
         nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -67,10 +66,11 @@ class NvJpeg2kEncoderPlugin
         nvjpeg2kEncoder_t handle_;
         const nvimgcdcsFrameworkDesc_t framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
+        int device_id_;
     };
 
-    nvimgcdcsStatus_t create(nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params);
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params);
+    nvimgcdcsStatus_t create(nvimgcdcsEncoder_t* encoder, int device_id);
+    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id);
 
     struct nvimgcdcsEncoderDesc encoder_desc_;
     std::vector<nvimgcdcsCapability_t> capabilities_;

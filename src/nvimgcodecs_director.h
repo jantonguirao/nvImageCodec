@@ -40,8 +40,8 @@ class NvImgCodecsDirector
     explicit NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_info);
     ~NvImgCodecsDirector();
 
-    std::unique_ptr<IImageDecoder> createGenericDecoder();
-    std::unique_ptr<IImageEncoder> createGenericEncoder();
+    std::unique_ptr<IImageDecoder> createGenericDecoder(int device_id);
+    std::unique_ptr<IImageEncoder> createGenericEncoder(int device_id);
 
     nvimgcdcsDeviceAllocator_t* device_allocator_;
     nvimgcdcsPinnedAllocator_t* pinned_allocator_;

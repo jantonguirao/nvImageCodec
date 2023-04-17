@@ -32,6 +32,7 @@ extern "C"
 #endif
 
 #define NVIMGCDCS_MAX_CODEC_NAME_SIZE 256
+#define NVIMGCDCS_DEVICE_CURRENT -1
 
     typedef enum
     {
@@ -265,11 +266,11 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
+
         bool use_cpu;
         bool use_gpu;
         bool use_hw_eng;
         int variant;
-        int cuda_device_id;
     } nvimgcdcsBackend_t;
 
     typedef enum
@@ -542,7 +543,7 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, int device_id);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -566,7 +567,7 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -690,13 +691,13 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_handle, char* codec_name);
 
     //Decoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
         nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
         nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);

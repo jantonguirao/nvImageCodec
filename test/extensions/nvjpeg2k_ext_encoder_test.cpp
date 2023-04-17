@@ -68,7 +68,7 @@ class NvJpeg2kExtEncoderTest : public ::testing::Test
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
             nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, out_buffer_.data(), out_buffer_.size(), "jpeg2k", &image_info_));
 
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT));
         images_.clear();
         images_.push_back(in_image_);
         streams_.clear();

@@ -404,10 +404,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     return EXIT_SUCCESS;
 }
 
-void list_cuda_devices()
+void list_cuda_devices(int num_devices)
 {
-    int num_devices;
-    cudaGetDeviceCount(&num_devices);
     for (int i = 0; i < num_devices; i++) {
         cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, i);
@@ -428,9 +426,25 @@ int main(int argc, const char* argv[])
         return status;
     }
 
+    int num_devices;
+    cudaGetDeviceCount(&num_devices);
     if (params.list_cuda_devices) {
-        list_cuda_devices();
+        list_cuda_devices(num_devices);
     }
+
+    if (params.device_id < num_devices) {
+        cudaSetDevice(params.device_id);
+    } else {
+        std::cerr << "Error: Wrong device id #" << params.device_id << std::endl;
+        list_cuda_devices(num_devices);
+        return EXIT_FAILURE;
+    }
+
+    cudaDeviceProp props;
+    int dev = 0;
+    cudaGetDevice(&dev);
+    cudaGetDeviceProperties(&props, dev);
+    std::cout << "\n Using GPU - " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
 
     nvimgcdcsInstance_t instance;
     nvimgcdcsInstanceCreateInfo_t instance_create_info{};

@@ -33,11 +33,9 @@ class ICodec
     virtual std::unique_ptr<IImageParser> createParser(
         nvimgcdcsCodeStreamDesc_t code_stream) const = 0;
     virtual int getDecodersNum() const = 0;
-    virtual std::unique_ptr<IImageDecoder> createDecoder(
-        int index, const nvimgcdcsDecodeParams_t* params) const = 0;
+    virtual std::unique_ptr<IImageDecoder> createDecoder(int index, int device_id) const = 0;
     virtual int getEncodersNum() const = 0;
-    virtual std::unique_ptr<IImageEncoder> createEncoder(
-        int index, const nvimgcdcsEncodeParams_t* params) const = 0;
+    virtual std::unique_ptr<IImageEncoder> createEncoder(int index, int device_id) const = 0;
 
     virtual void registerParserFactory(
         std::unique_ptr<IImageParserFactory> factory, float priority) = 0;

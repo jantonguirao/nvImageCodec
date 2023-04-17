@@ -40,7 +40,7 @@ static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsP
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_decoder_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_create");
     *decoder = new nvimgcdcsDecoder();

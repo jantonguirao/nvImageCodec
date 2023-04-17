@@ -176,7 +176,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
     nvimgcdcsDecoder_t decoder;
-    nvimgcdcsDecoderCreate(instance, &decoder);
+    nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT);
 
     // warm up
     for (int warmup_iter = 0; warmup_iter < params.warmup; warmup_iter++) {
@@ -224,7 +224,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
 
     nvimgcdcsEncoder_t encoder = nullptr;
-    nvimgcdcsEncoderCreate(instance, &encoder);
+    nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT);
 
     nvimgcdcsFuture_t encode_future;
     double encode_time = wtime();
@@ -398,7 +398,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
         CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &images[i], &image_info));
 
         if (decoder == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder));
+            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT));
         }
     }
     return EXIT_SUCCESS;
@@ -432,7 +432,7 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
             instance, &out_code_streams[i], output_filename.string().c_str(), params.output_codec.c_str(), &out_image_info));
 
         if (encoder == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder));
+            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT));
         }
     }
     return EXIT_SUCCESS;
@@ -618,10 +618,8 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     return ret;
 }
 
-void list_cuda_devices()
+void list_cuda_devices(int num_devices)
 {
-    int num_devices;
-    cudaGetDeviceCount(&num_devices);
     for (int i = 0; i < num_devices; i++) {
         cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, i);
@@ -641,10 +639,25 @@ int main(int argc, const char* argv[])
     if (status != -1) {
         return status;
     }
-
+    int num_devices;
+    cudaGetDeviceCount(&num_devices);
     if (params.list_cuda_devices) {
-        list_cuda_devices();
+        list_cuda_devices(num_devices);
     }
+
+    if (params.device_id < num_devices) {
+        cudaSetDevice(params.device_id);
+    } else {
+        std::cerr << "Error: Wrong device id #" << params.device_id <<  std::endl;
+        list_cuda_devices(num_devices);
+        return EXIT_FAILURE;
+    }
+
+    cudaDeviceProp props;
+    int dev = 0;
+    cudaGetDevice(&dev);
+    cudaGetDeviceProperties(&props, dev);
+    std::cout << "\n Using GPU - " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
 
     nvimgcdcsInstance_t instance;
     nvimgcdcsInstanceCreateInfo_t instance_create_info{};

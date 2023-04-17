@@ -32,7 +32,7 @@ class ICodec;
 class ImageGenericDecoder : public IImageDecoder, public IWorkManager
 {
   public:
-    explicit ImageGenericDecoder(ICodecRegistry* codec_registry);
+    explicit ImageGenericDecoder(ICodecRegistry* codec_registry, int device_id);
     ~ImageGenericDecoder() override;
     std::unique_ptr<IDecodeState> createDecodeStateBatch() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
@@ -58,6 +58,7 @@ class ImageGenericDecoder : public IImageDecoder, public IWorkManager
     std::set<const ICodec*> filtered_;
     std::vector<nvimgcdcsCapability_t> capabilities_;
     ICodecRegistry* codec_registry_;
+    int device_id_;
 };
 
 } // namespace nvimgcdcs

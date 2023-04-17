@@ -25,6 +25,6 @@ class IImageDecoderFactory
     virtual ~IImageDecoderFactory() = default;
     virtual std::string getDecoderId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual std::unique_ptr<IImageDecoder> createDecoder(const nvimgcdcsDecodeParams_t* params) const = 0;
+    virtual std::unique_ptr<IImageDecoder> createDecoder(int device_id) const = 0;
 };
 } // namespace nvimgcdcs
