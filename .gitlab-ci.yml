@@ -17,10 +17,6 @@ variables:
 before_script:
   - export CUDACXX=nvcc
 
-stages:
-  - build
-  - test
-
 .build:
     stage: build
     tags:
@@ -48,17 +44,9 @@ build:nvimagecodec:
         - cd build
         - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
         - nice -n 19 make -j8
-
-test:
-    stage: test
-    dependencies:
-        - build:nvimagecodec
-    tags:
-        - docker
-        - cuda
-    script:
-        - cd build
         - ctest
+
+
 
 # Documentation jobs
 # include: '.gitlab/ci/build_docs.yml'
