@@ -706,13 +706,14 @@ extern "C"
     typedef enum
     {
         NVIMGCDCS_IMREAD_UNCHANGED = -1,
-        NVIMGCDCS_IMREAD_GRAYSCALE = 0, // do not convert to RGB
-        //for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
+        NVIMGCDCS_IMREAD_GRAYSCALE = 0, // flag do not convert to RGB
+        // flag for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
         //for Jpeg2k and 422/420 chroma subsampling enable conversion to RGB
         NVIMGCDCS_IMREAD_COLOR = 1,
-        NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 128, //Ignore orientation from Exif
+        NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 128, // flag Ignore orientation from Exif
+        NVIMGCDCS_IMREAD_DEVICE_ID = 1000,         //value device id to process on (default 0)
         NVIMGCDCS_IMREAD_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsImreadFlags_t;
+    } nvimgcdcsImreadParams_t;
 
     typedef enum
     {
@@ -728,6 +729,7 @@ extern "C"
         NVIMGCDCS_IMWRITE_JPEG2K_PROG_ORDER = 105,      // value nvimgcdcsJpeg2kProgOrder_t (default RPCL)
 
         NVIMGCDCS_IMWRITE_MCT_MODE = 500, // value  nvimgcdcsMctMode_t (default NVIMGCDCS_MCT_MODE_RGB )
+        NVIMGCDCS_IMWRITE_DEVICE_ID = 1000, //value  device id to process on (default 0)
         NVIMGCDCS_IMWRITE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImwriteParams_t;
 
@@ -744,7 +746,8 @@ extern "C"
         NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImwriteSamplingFactor_t;
 
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, int flags);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(
+        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, const int* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params);
 

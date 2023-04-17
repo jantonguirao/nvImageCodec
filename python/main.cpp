@@ -190,11 +190,10 @@ class Image
         return py::dtype(format);
     }
 
-    static Image* createImageFromFile(
-        nvimgcdcsInstance_t instance, const char* file_name, int flags)
+    static Image* createImageFromFile(nvimgcdcsInstance_t instance, const char* file_name, const int* params)
     {
         nvimgcdcsImage_t image;
-        nvimgcdcsImRead(instance, &image, file_name, flags);
+        nvimgcdcsImRead(instance, &image, file_name, params);
         return new Image(image);
     }
 
@@ -299,11 +298,12 @@ PYBIND11_MODULE(nvimgcodecs, m)
 
     m.def(
         "imread",
-        [](const char* file_name, int flags) -> Image* {
-            return Image::createImageFromFile(module.instance_, file_name, flags);
+        [](const char* file_name, const std::vector<int>& params) -> Image* {
+            std::vector<int> params_with_ending_zero = params;
+            params_with_ending_zero.push_back(0);
+            return Image::createImageFromFile(module.instance_, file_name, params_with_ending_zero.data());
         },
-        "Loads an image from a specified file", "file_name"_a,
-        "flags"_a = static_cast<int>(NVIMGCDCS_IMREAD_COLOR));
+        "Loads an image from a specified file", "file_name"_a, "params"_a = std::vector<int>());
     m.def(
         "imwrite",
         [](const char* file_name, Image* image, const std::vector<int>& params) -> void {
@@ -325,8 +325,9 @@ PYBIND11_MODULE(nvimgcodecs, m)
     m.attr("NVIMGCDCS_IMREAD_COLOR") = static_cast<int>(NVIMGCDCS_IMREAD_COLOR);
     m.attr("NVIMGCDCS_IMREAD_IGNORE_ORIENTATION") =
         static_cast<int>(NVIMGCDCS_IMREAD_IGNORE_ORIENTATION); //Ignore orientation from Exif;
-    m.attr("NVIMGCDCS_IMWRITE_JPEG_QUALITY") =
-        static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_QUALITY); // 0-100 default 95
+    m.attr("NVIMGCDCS_IMREAD_DEVICE_ID") = static_cast<int>(NVIMGCDCS_IMREAD_DEVICE_ID);
+    m.attr("NVIMGCDCS_IMWRITE_DEVICE_ID") = static_cast<int>(NVIMGCDCS_IMWRITE_DEVICE_ID);
+    m.attr("NVIMGCDCS_IMWRITE_JPEG_QUALITY") = static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_QUALITY); // 0-100 default 95
     m.attr("NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE") =
         static_cast<int>(NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE);
     m.attr("NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE") =

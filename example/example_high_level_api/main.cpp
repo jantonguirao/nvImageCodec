@@ -28,12 +28,16 @@ uint32_t verbosity2severity(int verbose)
     return result;
 }
 
-int get_read_flags(const CommandLineParams& params)
+void get_read_flags(const CommandLineParams& params, std::vector<int>* read_params)
 {
-    int flags = 0;
-    flags |= params.ignore_orientation ? NVIMGCDCS_IMREAD_IGNORE_ORIENTATION : 0;
-    flags |= params.dec_color_trans ? NVIMGCDCS_IMREAD_COLOR : 0;
-    return flags;
+    if(params.ignore_orientation)
+        read_params->push_back(NVIMGCDCS_IMREAD_IGNORE_ORIENTATION);
+    if (params.dec_color_trans)
+        read_params->push_back( NVIMGCDCS_IMREAD_COLOR);
+    if (params.device_id != 0) {
+        read_params->push_back(NVIMGCDCS_IMREAD_DEVICE_ID);
+        read_params->push_back(params.device_id);
+    }
 }
 
 void get_write_params(const CommandLineParams& params, std::vector<int>* write_params)
@@ -82,6 +86,11 @@ void get_write_params(const CommandLineParams& params, std::vector<int>* write_p
 
     if (params.reversible)
         write_params->push_back(NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE);
+
+    if (params.device_id != 0) {
+        write_params->push_back(NVIMGCDCS_IMWRITE_DEVICE_ID);
+        write_params->push_back(params.device_id);
+    }
 
     write_params->push_back(0);
 }
@@ -132,7 +141,8 @@ int main(int argc, const char* argv[])
     fs::path input_file  = fs::absolute(exe_path).parent_path() / fs::path(params.input);
     fs::path output_file = fs::absolute(exe_path).parent_path() / fs::path(params.output);
 
-    int read_flags = get_read_flags(params);
+    std::vector<int> read_params;
+    get_read_flags(params, &read_params);
     std::vector<int> write_params;
     get_write_params(params, &write_params);
 
@@ -152,7 +162,7 @@ int main(int argc, const char* argv[])
     nvimgcdcsImage_t image;
 
     std::cout << "Loading " << input_file.string() << " file" << std::endl;
-    nvimgcdcsImRead(instance, &image, input_file.string().c_str(), read_flags);
+    nvimgcdcsImRead(instance, &image, input_file.string().c_str(), read_params.data());
 
     std::cout << "Saving to " << output_file.string() << " file" << std::endl;
     nvimgcdcsImWrite(instance, image, output_file.string().c_str(), write_params.data());

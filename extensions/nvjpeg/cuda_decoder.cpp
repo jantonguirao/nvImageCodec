@@ -278,7 +278,6 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
 {
     nvimgcdcsExecutorDesc_t executor;
     framework_->getExecutor(framework_->instance, &executor);
-    const nvimgcdcsDecodeParams_t* params = decode_state_batch_->samples_[sample_idx].params;
     executor->launch(
         executor->instance, device_id_, sample_idx, decode_state_batch_.get(), [](int tid, int sample_idx, void* context) -> void {
             nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
