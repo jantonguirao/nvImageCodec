@@ -657,7 +657,7 @@ int main(int argc, const char* argv[])
     int dev = 0;
     cudaGetDevice(&dev);
     cudaGetDeviceProperties(&props, dev);
-    std::cout << "\n Using GPU - " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
+    std::cout << "Using GPU - " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
 
     nvimgcdcsInstance_t instance;
     nvimgcdcsInstanceCreateInfo_t instance_create_info{};
