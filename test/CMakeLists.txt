@@ -2,6 +2,7 @@
 
 set(SRCS
     nvimgcodecs_tests.cpp
+    test_utils.cpp
     codec_test.cpp
     code_stream_test.cpp
     codec_registry_test.cpp
@@ -15,7 +16,9 @@ set(SRCS
     parsers/tiff_test.cpp
     extensions/nvjpeg_ext_parser_test.cpp
     extensions/nvjpeg_ext_encoder_test.cpp
+    extensions/nvjpeg_ext_decoder_test.cpp
     extensions/nvjpeg2k_ext_encoder_test.cpp
+    extensions/nvjpeg2k_ext_decoder_test.cpp
 )
 # Headers file are located here:
 include_directories(

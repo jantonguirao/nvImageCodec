@@ -294,7 +294,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(NvJpeg2kDecoderPlugin::
 
     nvjpeg2kDecodeParams_t decode_params;
     nvjpeg2kDecodeParamsCreate(&decode_params);
-
+    XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, params->enable_color_conversion));
     size_t row_nbytes;
     size_t component_nbytes;
     if (params->enable_roi && image_info.region.ndim > 0) {

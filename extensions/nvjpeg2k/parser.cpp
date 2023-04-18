@@ -271,7 +271,7 @@ nvimgcdcsStatus_t NvJpeg2kParserPlugin::Parser::static_get_image_info(
         auto handle = reinterpret_cast<NvJpeg2kParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_P_LOG_ERROR("Could not retrieve image info from jpeg2k code stream.");
+        NVIMGCDCS_P_LOG_ERROR("Could not retrieve image info from jpeg2k code stream. - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
