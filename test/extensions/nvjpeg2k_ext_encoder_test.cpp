@@ -97,10 +97,6 @@ class NvJpeg2kExtEncoderTest : public ::testing::Test
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(out_code_stream_));
         if (in_image_)
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageDestroy(in_image_));
-        if (stream_handle_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(stream_handle_));
-        if (out_stream_handle_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(out_stream_handle_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(nvjpeg2k_extension_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
     }
@@ -108,14 +104,12 @@ class NvJpeg2kExtEncoderTest : public ::testing::Test
     nvimgcdcsInstance_t instance_;
     nvimgcdcsExtensionDesc_t nvjpeg2k_extension_desc_{};
     nvimgcdcsExtension_t nvjpeg2k_extension_;
-    nvimgcdcsCodeStream_t stream_handle_ = nullptr;
-    nvimgcdcsCodeStream_t out_stream_handle_ = nullptr;
     std::vector<unsigned char> in_buffer_;
     std::vector<unsigned char> out_buffer_;
     nvimgcdcsImageInfo_t image_info_;
     nvimgcdcsJpegImageInfo_t jpeg_info_;
     nvimgcdcsImage_t in_image_;
-    nvimgcdcsCodeStream_t out_code_stream_;
+    nvimgcdcsCodeStream_t out_code_stream_= nullptr;
     std::vector<nvimgcdcsImage_t> images_;
     std::vector<nvimgcdcsCodeStream_t> streams_;
     nvimgcdcsEncoder_t encoder_;
@@ -134,7 +128,7 @@ TEST_F(NvJpeg2kExtEncoderTest, Encode_LRCP)
     size_t status_size;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+    ASSERT_EQ(status_size, 1);
 }
 
 TEST_F(NvJpeg2kExtEncoderTest, Encode_RLCP)
@@ -147,7 +141,7 @@ TEST_F(NvJpeg2kExtEncoderTest, Encode_RLCP)
     size_t status_size;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+    ASSERT_EQ(status_size, 1);
 }
 
 TEST_F(NvJpeg2kExtEncoderTest, Encode_RPCL)
@@ -160,7 +154,7 @@ TEST_F(NvJpeg2kExtEncoderTest, Encode_RPCL)
     size_t status_size;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+    ASSERT_EQ(status_size, 1);
 }
 
 TEST_F(NvJpeg2kExtEncoderTest, Encode_PCRL)
@@ -173,7 +167,7 @@ TEST_F(NvJpeg2kExtEncoderTest, Encode_PCRL)
     size_t status_size;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+    ASSERT_EQ(status_size, 1);
 }
 
 TEST_F(NvJpeg2kExtEncoderTest, Encode_CPRL)
@@ -186,7 +180,7 @@ TEST_F(NvJpeg2kExtEncoderTest, Encode_CPRL)
     size_t status_size;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+    ASSERT_EQ(status_size, 1);
 }
 
 }} // namespace nvimgcdcs::test

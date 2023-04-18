@@ -18,7 +18,7 @@
 
 namespace nvjpeg {
 
-class NvJpegImgCodecsExtension
+struct NvJpegImgCodecsExtension
 {
   public:
     explicit NvJpegImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
@@ -45,14 +45,7 @@ class NvJpegImgCodecsExtension
 
 } // namespace nvjpeg
 
-struct nvimgcdcsExtension
-{
-    nvimgcdcsExtension(const nvimgcdcsFrameworkDesc_t framework)
-        : nvJpegExtension_(framework)
-    {
-    }
-    nvjpeg::NvJpegImgCodecsExtension nvJpegExtension_;
-};
+
 
 nvimgcdcsStatus_t nvimgcdcsExtensionCreate(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
 {
@@ -61,7 +54,7 @@ nvimgcdcsStatus_t nvimgcdcsExtensionCreate(const nvimgcdcsFrameworkDesc_t framew
     try {
         XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
-        *extension = new nvimgcdcsExtension(framework);
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new nvjpeg::NvJpegImgCodecsExtension(framework));
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
@@ -74,7 +67,8 @@ nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(const nvimgcdcsFrameworkDesc_t frame
     try {
         XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
-        delete extension;
+        auto ext_handle = reinterpret_cast<nvjpeg::NvJpegImgCodecsExtension*>(extension);
+        delete ext_handle;
         Logger::get().unregisterLogFunc();
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;

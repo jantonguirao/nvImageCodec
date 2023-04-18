@@ -53,9 +53,9 @@ foreach(testapp nvimgcodecs_tests)
         nvjpeg_ext_static
         nvjpeg2k_ext_static
         ${NVJPEG2K_LIBRARY}
+        CUDA::nvjpeg
         CUDA::cudart
         CUDA::cuda_driver
-        CUDA::nvjpeg_static
         GTest::gtest
         GTest::gmock
         ${PTHREAD})
