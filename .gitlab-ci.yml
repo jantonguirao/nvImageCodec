@@ -44,6 +44,8 @@ build:nvimagecodec:
         - cd build
         - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
         - nice -n 19 make -j8
+        - nvidia-smi
+        - ctest
 
 
 
