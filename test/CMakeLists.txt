@@ -53,7 +53,7 @@ foreach(testapp nvimgcodecs_tests)
         nvjpeg_ext_static
         nvjpeg2k_ext_static
         ${NVJPEG2K_LIBRARY}
-        ${NVJPEG_LIBRARY}
+        CUDA::nvjpeg
         CUDA::cudart
         CUDA::cuda_driver
         GTest::gtest
