@@ -10,9 +10,8 @@
 #include <nvjpeg.h>
 
 #include "errors_handling.h"
-#include "type_convert.h"
 #include "log.h"
-
+#include "type_convert.h"
 
 namespace nvjpeg {
 
@@ -81,11 +80,12 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_can_encode(nvimgcdcsE
 }
 
 NvJpegCudaEncoderPlugin::Encoder::Encoder(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, const nvimgcdcsEncodeParams_t* params)
+    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
     : capabilities_(capabilities)
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
+    , device_id_(device_id)
 {
     if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
         device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
@@ -120,21 +120,20 @@ NvJpegCudaEncoderPlugin::Encoder::Encoder(
     encode_state_batch_ = std::make_unique<NvJpegCudaEncoderPlugin::EncodeState>(this /*,num_threads*/);
 }
 
-nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, int device_id)
 {
-    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpegCudaEncoderPlugin::Encoder(capabilities_, framework_, params));
+    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpegCudaEncoderPlugin::Encoder(capabilities_, framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::static_create(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("jpeg_create_encoder");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(encoder);
-        XM_CHECK_NULL(params);
         NvJpegCudaEncoderPlugin* handle = reinterpret_cast<NvJpegCudaEncoderPlugin*>(instance);
-        handle->create(encoder, params);
+        handle->create(encoder, device_id);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not create nvjpeg encoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
@@ -305,10 +304,9 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(NvJpegCudaEncoderPlug
     framework_->getExecutor(framework_->instance, &executor);
     encode_state->image_ = image;
     encode_state->code_stream_ = code_stream;
-    int cuda_device_id = params->backends ? params->backends->cuda_device_id : 0;
     int sample_idx = 0; // doesn't matter now
     executor->launch(
-        executor->instance, cuda_device_id, sample_idx, encode_state, [](int thread_id, int sample_idx, void* task_context) -> void {
+        executor->instance, device_id_, sample_idx, encode_state, [](int thread_id, int sample_idx, void* task_context) -> void {
             auto encode_state = reinterpret_cast<NvJpegCudaEncoderPlugin::EncodeState*>(task_context);
             XM_CHECK_CUDA(cudaEventSynchronize(encode_state->event_));
 

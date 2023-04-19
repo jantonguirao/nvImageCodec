@@ -42,7 +42,7 @@ class NvJpeg2kExtDecoderTestBase : public NvJpeg2kExtTestBase
     void SetUp()
     {
         NvJpeg2kExtTestBase::SetUp();
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         params_.enable_color_conversion = true;
     }

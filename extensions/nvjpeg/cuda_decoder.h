@@ -86,8 +86,7 @@ class NvJpegCudaDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework,
-            const nvimgcdcsDecodeParams_t* params);
+        Decoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id);
         ~Decoder();
 
         nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -113,11 +112,12 @@ class NvJpegCudaDecoderPlugin
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcdcsFrameworkDesc_t framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
+        int device_id_;
     };
 
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
+    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id);
 
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
+    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id);
 
     struct nvimgcdcsDecoderDesc decoder_desc_;
     std::vector<nvimgcdcsCapability_t> capabilities_;

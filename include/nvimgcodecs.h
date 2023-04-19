@@ -32,6 +32,7 @@ extern "C"
 #endif
 
 #define NVIMGCDCS_MAX_CODEC_NAME_SIZE 256
+#define NVIMGCDCS_DEVICE_CURRENT -1
 
     typedef enum
     {
@@ -265,11 +266,11 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
+
         bool use_cpu;
         bool use_gpu;
         bool use_hw_eng;
         int variant;
-        int cuda_device_id;
     } nvimgcdcsBackend_t;
 
     typedef enum
@@ -542,7 +543,7 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, int device_id);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -566,7 +567,7 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -690,13 +691,13 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_handle, char* codec_name);
 
     //Decoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
         nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
         nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);
@@ -704,31 +705,33 @@ extern "C"
     //High-level API
     typedef enum
     {
-        NVIMGCDCS_IMREAD_UNCHANGED = -1,
-        NVIMGCDCS_IMREAD_GRAYSCALE = 0, // do not convert to RGB
-        //for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
+        NVIMGCDCS_IMREAD_DEVICE_ID = 0, //value device id to process on (default 0)
+        NVIMGCDCS_IMREAD_GRAYSCALE = 1, // flag do not convert to RGB
+        // flag for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
         //for Jpeg2k and 422/420 chroma subsampling enable conversion to RGB
-        NVIMGCDCS_IMREAD_COLOR = 1,
-        NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 128, //Ignore orientation from Exif
+        NVIMGCDCS_IMREAD_COLOR = 2,
+        NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 3, // flag Ignore orientation from Exif
         NVIMGCDCS_IMREAD_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsImreadFlags_t;
+    } nvimgcdcsImReadParams_t;
 
     typedef enum
     {
-        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 1,         // value 0-100 default 95
-        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 2,     // flag NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN
-        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 3,        // flag optimized_huffman
-        NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 7, // value nvimgcdcsImwriteSamplingFactor_t
+        NVIMGCDCS_IMWRITE_DEVICE_ID = 0, //value  device id to process on (default 0)
+        NVIMGCDCS_IMWRITE_MCT_MODE = 1,  // value  nvimgcdcsMctMode_t (default NVIMGCDCS_MCT_MODE_RGB )
 
-        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 100,     // value default 50
-        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 101,     // value num_decomps default 5
-        NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 103, // value code_block_w code_block_h (default 64 64)
-        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 104,      // flag !irreversible
-        NVIMGCDCS_IMWRITE_JPEG2K_PROG_ORDER = 105,      // value nvimgcdcsJpeg2kProgOrder_t (default RPCL)
+        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 100,         // value 0-100 default 95
+        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 101,     // flag NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN
+        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 102,        // flag optimized_huffman
+        NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 103, // value nvimgcdcsImWriteSamplingFactor_t
 
-        NVIMGCDCS_IMWRITE_MCT_MODE = 500, // value  nvimgcdcsMctMode_t (default NVIMGCDCS_MCT_MODE_RGB )
+        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 200,     // value default 50
+        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 201,     // value num_decomps default 5
+        NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 202, // value code_block_w code_block_h (default 64 64)
+        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 203,      // flag !irreversible
+        NVIMGCDCS_IMWRITE_JPEG2K_PROG_ORDER = 204,      // value nvimgcdcsJpeg2kProgOrder_t (default RPCL)
+
         NVIMGCDCS_IMWRITE_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsImwriteParams_t;
+    } nvimgcdcsImWriteParams_t;
 
     typedef enum
     {
@@ -741,9 +744,10 @@ extern "C"
         NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410V = 0x440000,
         NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY = 0x110000,
         NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsImwriteSamplingFactor_t;
+    } nvimgcdcsImWriteSamplingFactor_t;
 
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, int flags);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(
+        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, const int* params);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(
         nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params);
 

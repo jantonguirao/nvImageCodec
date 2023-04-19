@@ -39,8 +39,7 @@ int Codec::getDecodersNum() const
     return decoders_.size();
 }
 
-std::unique_ptr<IImageDecoder> Codec::createDecoder(
-    int index, const nvimgcdcsDecodeParams_t* params) const
+std::unique_ptr<IImageDecoder> Codec::createDecoder(int index, int device_id) const
 {
     if (size_t(index) >= decoders_.size()) {
         return std::unique_ptr<IImageDecoder>();
@@ -48,7 +47,7 @@ std::unique_ptr<IImageDecoder> Codec::createDecoder(
     auto it = decoders_.begin();
     for (int i = 0; i < index; ++i)
         it++;
-    return it->second->createDecoder(params);
+    return it->second->createDecoder(device_id);
 }
 
 int Codec::getEncodersNum() const
@@ -56,8 +55,7 @@ int Codec::getEncodersNum() const
     return encoders_.size();
 }
 
-std::unique_ptr<IImageEncoder> Codec::createEncoder(
-    int index, const nvimgcdcsEncodeParams_t* params) const
+std::unique_ptr<IImageEncoder> Codec::createEncoder(int index, int device_id) const
 {
     if (size_t(index) >= encoders_.size()) {
         return std::unique_ptr<IImageEncoder>();
@@ -65,7 +63,7 @@ std::unique_ptr<IImageEncoder> Codec::createEncoder(
     auto it = encoders_.begin();
     for (int i = 0; i < index; ++i)
         it++;
-    return it->second->createEncoder(params);
+    return it->second->createEncoder(device_id);
 }
 
 const std::string& Codec::name() const

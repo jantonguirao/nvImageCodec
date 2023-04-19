@@ -412,7 +412,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_h
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -420,7 +420,9 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instan
         {
             CHECK_NULL(instance)
             CHECK_NULL(decoder)
-            std::unique_ptr<IImageDecoder> image_decoder = instance->director_.createGenericDecoder();
+            if (device_id == -1)
+                CHECK_CUDA(cudaGetDevice(&device_id));
+            std::unique_ptr<IImageDecoder> image_decoder = instance->director_.createGenericDecoder(device_id);
             *decoder = new nvimgcdcsDecoder();
             (*decoder)->image_decoder_ = std::move(image_decoder);
             (*decoder)->instance_ = instance;
@@ -517,7 +519,7 @@ nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsIm
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -525,7 +527,9 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instan
         {
             CHECK_NULL(instance)
             CHECK_NULL(encoder)
-            std::unique_ptr<IImageEncoder> image_encoder = instance->director_.createGenericEncoder();
+            if (device_id == -1)
+                CHECK_CUDA(cudaGetDevice(&device_id));
+            std::unique_ptr<IImageEncoder> image_encoder = instance->director_.createGenericEncoder(device_id);
             *encoder = new nvimgcdcsEncoder();
             (*encoder)->image_encoder_ = std::move(image_encoder);
             (*encoder)->instance_ = instance;
@@ -575,7 +579,33 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsIm
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, int flags)
+static void fill_decode_params(const int* params, nvimgcdcsDecodeParams_t* decode_params, int* device_id)
+{
+    const int* param = params;
+    while (param && *param) {
+        NVIMGCDCS_LOG_TRACE("imwread param: " << *param);
+        switch (*param) {
+        case NVIMGCDCS_IMREAD_COLOR: {
+            decode_params->enable_color_conversion = true;
+            break;
+        }
+        case NVIMGCDCS_IMREAD_IGNORE_ORIENTATION: {
+            decode_params->enable_orientation = false;
+            break;
+        }
+        case NVIMGCDCS_IMREAD_DEVICE_ID: {
+            param++;
+            *device_id = *param;
+            break;
+        }
+        default:
+            break;
+        };
+        param++;
+    }
+}
+
+nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, const int* params)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
@@ -593,10 +623,6 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
 
             int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
-            nvimgcdcsDecodeParams_t decode_params{};
-            decode_params.enable_color_conversion = flags & NVIMGCDCS_IMREAD_COLOR;
-            decode_params.enable_orientation = !(flags & NVIMGCDCS_IMREAD_IGNORE_ORIENTATION);
-
             // Define  requested output
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
@@ -610,12 +636,19 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
                 image_info.plane_info[c].row_stride = device_pitch_in_bytes;
             }
 
+            nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
+            // Defaults
+            decode_params.enable_color_conversion = false;
+            decode_params.enable_orientation = true;
+            int device_id = NVIMGCDCS_DEVICE_CURRENT;
+            fill_decode_params(params, &decode_params, &device_id);
+
             nvimgcdcsImageCreate(instance, image, &image_info);
             (*image)->dev_image_buffer_ = image_info.buffer;
             (*image)->dev_image_buffer_size_ = image_info.buffer_size;
 
             nvimgcdcsDecoder_t decoder;
-            nvimgcdcsDecoderCreate(instance, &decoder);
+            nvimgcdcsDecoderCreate(instance, &decoder, device_id);
 
             nvimgcdcsFuture_t future;
             nvimgcdcsDecoderDecode(decoder, &code_stream, image, 1, &decode_params, &future);
@@ -639,7 +672,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
 static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"}, {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"},
     {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pxm"}, {".pgm", "pxm"}, {".pbm", "pxm"}};
 
-static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsImageInfo_t* image_info)
+static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsImageInfo_t* image_info, int* device_id)
 {
     nvimgcdcsJpegEncodeParams_t* jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(encode_params->next);
     nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params = static_cast<nvimgcdcsJpeg2kEncodeParams_t*>(encode_params->next);
@@ -666,8 +699,8 @@ static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encod
         case NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR: {
             param++;
             NVIMGCDCS_LOG_DEBUG("imwrite param: sampling factor:" << *param);
-            nvimgcdcsImwriteSamplingFactor_t sampling_factor = static_cast<nvimgcdcsImwriteSamplingFactor_t>(*param);
-            std::map<nvimgcdcsImwriteSamplingFactor_t, nvimgcdcsChromaSubsampling_t> sf2css = {
+            nvimgcdcsImWriteSamplingFactor_t sampling_factor = static_cast<nvimgcdcsImWriteSamplingFactor_t>(*param);
+            std::map<nvimgcdcsImWriteSamplingFactor_t, nvimgcdcsChromaSubsampling_t> sf2css = {
                 {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444, NVIMGCDCS_SAMPLING_444},
                 {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420, NVIMGCDCS_SAMPLING_420},
                 {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440, NVIMGCDCS_SAMPLING_440},
@@ -717,6 +750,11 @@ static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encod
             encode_params->mct_mode = static_cast<nvimgcdcsMctMode_t>(*param);
             break;
         }
+        case NVIMGCDCS_IMWRITE_DEVICE_ID: {
+            param++;
+            *device_id = *param;
+            break;
+        }
         default:
             break;
         };
@@ -748,7 +786,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
 
             if (image_info.chroma_subsampling == NVIMGCDCS_SAMPLING_NONE || image_info.chroma_subsampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
                 image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
-            nvimgcdcsEncodeParams_t encode_params{};
+            nvimgcdcsEncodeParams_t encode_params{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
             //Defaults
             encode_params.quality = 95;
             encode_params.target_psnr = 50;
@@ -772,15 +810,15 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
                 jpeg_encode_params.optimized_huffman = false;
                 encode_params.next = &jpeg_encode_params;
             }
-
+            int device_id = NVIMGCDCS_DEVICE_CURRENT;
             nvimgcdcsImageInfo_t out_image_info(image_info);
-            fill_encode_params(params, &encode_params, &out_image_info);
+            fill_encode_params(params, &encode_params, &out_image_info, &device_id);
 
             nvimgcdcsCodeStream_t output_code_stream;
             nvimgcdcsCodeStreamCreateToFile(instance, &output_code_stream, file_name, codec_name.c_str(), &out_image_info);
 
             nvimgcdcsEncoder_t encoder;
-            nvimgcdcsEncoderCreate(instance, &encoder);
+            nvimgcdcsEncoderCreate(instance, &encoder, device_id);
 
             nvimgcdcsFuture_t future;
             nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &future);

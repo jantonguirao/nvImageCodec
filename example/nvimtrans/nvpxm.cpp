@@ -78,7 +78,7 @@ static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pxm_create(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t pxm_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
 {
     NVIMGCDCS_E_LOG_TRACE("pxm_create_encoder");
     *encoder = new nvimgcdcsEncoder();

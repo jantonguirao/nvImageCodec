@@ -29,9 +29,8 @@ std::string ImageEncoderFactory::getEncoderId() const
     return encoder_desc_->id;
 }
 
-std::unique_ptr<IImageEncoder> ImageEncoderFactory::createEncoder(
-    const nvimgcdcsEncodeParams_t* params) const
+std::unique_ptr<IImageEncoder> ImageEncoderFactory::createEncoder(int device_id) const
 {
-    return std::make_unique<ImageEncoder>(encoder_desc_, params);
+    return std::make_unique<ImageEncoder>(encoder_desc_, device_id);
 }
 } // namespace nvimgcdcs

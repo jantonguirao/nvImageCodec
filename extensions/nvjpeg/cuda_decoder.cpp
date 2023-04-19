@@ -79,11 +79,12 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_can_decode(nvimgcdcsD
 }
 
 NvJpegCudaDecoderPlugin::Decoder::Decoder(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, const nvimgcdcsDecodeParams_t* params)
+    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
     : capabilities_(capabilities)
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
+    , device_id_(device_id)
 {
     if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
         device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
@@ -118,21 +119,20 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(
         std::make_unique<NvJpegCudaDecoderPlugin::DecodeState>(handle_, &device_allocator_, &pinned_allocator_, num_threads);
 }
 
-nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegCudaDecoderPlugin::Decoder(capabilities_, framework_, params));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegCudaDecoderPlugin::Decoder(capabilities_, framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("nvjpeg_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
-        XM_CHECK_NULL(params);
         NvJpegCudaDecoderPlugin* handle = reinterpret_cast<NvJpegCudaDecoderPlugin*>(instance);
-        handle->create(decoder, params);
+        handle->create(decoder, device_id);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg decoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
@@ -278,10 +278,8 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
 {
     nvimgcdcsExecutorDesc_t executor;
     framework_->getExecutor(framework_->instance, &executor);
-    const nvimgcdcsDecodeParams_t* params = decode_state_batch_->samples_[sample_idx].params;
-    int cuda_device_id = params->backends ? params->backends->cuda_device_id : 0;
     executor->launch(
-        executor->instance, cuda_device_id, sample_idx, decode_state_batch_.get(), [](int tid, int sample_idx, void* context) -> void {
+        executor->instance, device_id_, sample_idx, decode_state_batch_.get(), [](int tid, int sample_idx, void* context) -> void {
             nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
             auto* decode_state = reinterpret_cast<NvJpegCudaDecoderPlugin::DecodeState*>(context);
             nvimgcdcsCodeStreamDesc_t code_stream = decode_state->samples_[sample_idx].code_stream;

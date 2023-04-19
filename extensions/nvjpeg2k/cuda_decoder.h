@@ -47,8 +47,7 @@ class NvJpeg2kDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework,
-            const nvimgcdcsDecodeParams_t* params);
+        Decoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id);
         ~Decoder();
 
         nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -77,13 +76,12 @@ class NvJpeg2kDecoderPlugin
         const nvimgcdcsFrameworkDesc_t framework_;
         std::vector<std::unique_ptr<ParseState>> per_sample_parse_state_;
         std::vector<std::unique_ptr<DecodeState>> per_sample_decode_state_;
+        int device_id_;
     };
 
+    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id);
 
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
-
-
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params);
+    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id);
 
     struct nvimgcdcsDecoderDesc decoder_desc_;
     std::vector<nvimgcdcsCapability_t> capabilities_;

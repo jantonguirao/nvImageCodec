@@ -78,9 +78,10 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEnc
 }
 
 NvJpeg2kEncoderPlugin::Encoder::Encoder(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, const nvimgcdcsEncodeParams_t* params)
+    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
     : capabilities_(capabilities)
     , framework_(framework)
+    , device_id_(device_id)
 {
     XM_CHECK_NVJPEG2K(nvjpeg2kEncoderCreateSimple(&handle_));
 
@@ -92,21 +93,20 @@ NvJpeg2kEncoderPlugin::Encoder::Encoder(
     encode_state_batch_ = std::make_unique<NvJpeg2kEncoderPlugin::EncodeState>(this /*,num_threads*/);
 }
 
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, int device_id)
 {
-    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(capabilities_, framework_, params));
+    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(capabilities_, framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg2k_create_encoder");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(encoder);
-        XM_CHECK_NULL(params);
         auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin*>(instance);
-        handle->create(encoder, params);
+        handle->create(encoder, device_id);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not create nvjpeg2k encoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
@@ -291,11 +291,9 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(NvJpeg2kEncoderPlugin::
     encode_state->image_ = image;
     encode_state->code_stream_ = code_stream;
 
-    int cuda_device_id = params->backends ? params->backends->cuda_device_id : 0;
-
     int sample_idx = 0;
     executor->launch(
-        executor->instance, cuda_device_id, sample_idx, encode_state, [](int thread_id, int sample_idx, void* task_context) -> void {
+        executor->instance, device_id_, sample_idx, encode_state, [](int thread_id, int sample_idx, void* task_context) -> void {
             auto encode_state = reinterpret_cast<NvJpeg2kEncoderPlugin::EncodeState*>(task_context);
             XM_CHECK_CUDA(cudaEventSynchronize(encode_state->event_));
             size_t length;

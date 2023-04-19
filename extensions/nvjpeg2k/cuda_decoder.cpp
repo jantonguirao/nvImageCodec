@@ -77,11 +77,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
 }
 
 NvJpeg2kDecoderPlugin::Decoder::Decoder(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, const nvimgcdcsDecodeParams_t* params)
+    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
     : capabilities_(capabilities)
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
+    , device_id_(device_id)
 {
 
     if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
@@ -115,21 +116,20 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(
     //int num_threads = executor->get_num_threads(executor->instance);
 }
 
-nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpeg2kDecoderPlugin::Decoder(capabilities_, framework_, params));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpeg2kDecoderPlugin::Decoder(capabilities_, framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("jpeg2k_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
-        XM_CHECK_NULL(params);
         auto handle = reinterpret_cast<NvJpeg2kDecoderPlugin*>(instance);
-        handle->create(decoder, params);
+        handle->create(decoder, device_id);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg2k decoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error

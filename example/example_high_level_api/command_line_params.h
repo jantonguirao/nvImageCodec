@@ -83,6 +83,7 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         std::cout << "  -w\t\t\t: warmup iterations (default 0)" << std::endl;
         std::cout << "  -l\t\t\t: List cuda devices" << std::endl;
         std::cout << "  -b --batch_size\t: Batch size (default 1)" << std::endl;
+        std::cout << "  -d --device\t: Cuda device (default 0)" << std::endl;
         std::cout << std::endl;
         std::cout << "Decoding options: " << std::endl;
         std::cout << "  --dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
@@ -247,5 +248,9 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
 
     params->list_cuda_devices = find_param_index(argv, argc, "-l") != -1;
 
+    params->device_id = 0;
+    if ((pidx = find_param_index(argv, argc, "-d")) != -1 || (pidx = find_param_index(argv, argc, "--device")) != -1) {
+        params->device_id = std::atoi(argv[pidx + 1]);
+    }
     return -1;
 }

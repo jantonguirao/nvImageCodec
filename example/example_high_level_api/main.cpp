@@ -28,12 +28,16 @@ uint32_t verbosity2severity(int verbose)
     return result;
 }
 
-int get_read_flags(const CommandLineParams& params)
+void get_read_flags(const CommandLineParams& params, std::vector<int>* read_params)
 {
-    int flags = 0;
-    flags |= params.ignore_orientation ? NVIMGCDCS_IMREAD_IGNORE_ORIENTATION : 0;
-    flags |= params.dec_color_trans ? NVIMGCDCS_IMREAD_COLOR : 0;
-    return flags;
+    if(params.ignore_orientation)
+        read_params->push_back(NVIMGCDCS_IMREAD_IGNORE_ORIENTATION);
+    if (params.dec_color_trans)
+        read_params->push_back( NVIMGCDCS_IMREAD_COLOR);
+    if (params.device_id != 0) {
+        read_params->push_back(NVIMGCDCS_IMREAD_DEVICE_ID);
+        read_params->push_back(params.device_id);
+    }
 }
 
 void get_write_params(const CommandLineParams& params, std::vector<int>* write_params)
@@ -47,7 +51,7 @@ void get_write_params(const CommandLineParams& params, std::vector<int>* write_p
             write_params->push_back(NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE);
         write_params->push_back(NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR);
 
-        std::map<nvimgcdcsChromaSubsampling_t, nvimgcdcsImwriteSamplingFactor_t> css2sf = {
+        std::map<nvimgcdcsChromaSubsampling_t, nvimgcdcsImWriteSamplingFactor_t> css2sf = {
             {NVIMGCDCS_SAMPLING_444, NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444},
             {NVIMGCDCS_SAMPLING_420, NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420},
             {NVIMGCDCS_SAMPLING_440, NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440},
@@ -83,13 +87,16 @@ void get_write_params(const CommandLineParams& params, std::vector<int>* write_p
     if (params.reversible)
         write_params->push_back(NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE);
 
+    if (params.device_id != 0) {
+        write_params->push_back(NVIMGCDCS_IMWRITE_DEVICE_ID);
+        write_params->push_back(params.device_id);
+    }
+
     write_params->push_back(0);
 }
 
-void list_cuda_devices()
+void list_cuda_devices(int num_devices)
 {
-    int num_devices;
-    cudaGetDeviceCount(&num_devices);
     for (int i = 0; i < num_devices; i++) {
         cudaDeviceProp prop;
         cudaGetDeviceProperties(&prop, i);
@@ -110,15 +117,32 @@ int main(int argc, const char* argv[])
         return status;
     }
 
+    int num_devices;
+    cudaGetDeviceCount(&num_devices);
     if (params.list_cuda_devices) {
-        list_cuda_devices();
+        list_cuda_devices(num_devices);
     }
+
+    if (params.device_id < num_devices) {
+        cudaSetDevice(params.device_id);
+    } else {
+        std::cerr << "Error: Wrong device id #" << params.device_id << std::endl;
+        list_cuda_devices(num_devices);
+        return EXIT_FAILURE;
+    }
+
+    cudaDeviceProp props;
+    int dev = 0;
+    cudaGetDevice(&dev);
+    cudaGetDeviceProperties(&props, dev);
+    std::cout << "Using GPU - " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
 
     fs::path exe_path(argv[0]);
     fs::path input_file  = fs::absolute(exe_path).parent_path() / fs::path(params.input);
     fs::path output_file = fs::absolute(exe_path).parent_path() / fs::path(params.output);
 
-    int read_flags = get_read_flags(params);
+    std::vector<int> read_params;
+    get_read_flags(params, &read_params);
     std::vector<int> write_params;
     get_write_params(params, &write_params);
 
@@ -138,7 +162,7 @@ int main(int argc, const char* argv[])
     nvimgcdcsImage_t image;
 
     std::cout << "Loading " << input_file.string() << " file" << std::endl;
-    nvimgcdcsImRead(instance, &image, input_file.string().c_str(), read_flags);
+    nvimgcdcsImRead(instance, &image, input_file.string().c_str(), read_params.data());
 
     std::cout << "Saving to " << output_file.string() << " file" << std::endl;
     nvimgcdcsImWrite(instance, image, output_file.string().c_str(), write_params.data());

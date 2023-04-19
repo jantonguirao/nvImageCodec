@@ -245,7 +245,7 @@ class ImageGenericEncoder::Worker
     void addWork(std::unique_ptr<Work> work);
 
     ImageGenericEncoder::Worker* getFallback();
-    IImageEncoder* getEncoder(const nvimgcdcsEncodeParams_t* params);
+    IImageEncoder* getEncoder(int device_id);
 
   private:
     /**
@@ -295,10 +295,10 @@ ImageGenericEncoder::Worker* ImageGenericEncoder::Worker::getFallback()
     return fallback_.get();
 }
 
-IImageEncoder* ImageGenericEncoder::Worker::getEncoder(const nvimgcdcsEncodeParams_t* params)
+IImageEncoder* ImageGenericEncoder::Worker::getEncoder(int device_id)
 {
     if (!encoder_) {
-        encoder_ = codec_->createEncoder(index_, params);
+        encoder_ = codec_->createEncoder(index_, device_id);
         if (encoder_) {
             encode_state_batch_ = encoder_->createEncodeStateBatch();
             size_t capabilities_size;
@@ -406,7 +406,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
 
-    IImageEncoder* encoder = getEncoder(work->params_);
+    IImageEncoder* encoder = getEncoder(device_id_);
     std::vector<bool> mask(work->code_streams_.size());
     std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
     if (encoder) {
@@ -469,9 +469,10 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 
 //ImageGenericEncoder
 
-ImageGenericEncoder::ImageGenericEncoder(ICodecRegistry* codec_registry)
+ImageGenericEncoder::ImageGenericEncoder(ICodecRegistry* codec_registry, int device_id)
     : capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT, NVIMGCDCS_CAPABILITY_DEVICE_INPUT, NVIMGCDCS_CAPABILITY_HOST_INPUT}
     , codec_registry_(codec_registry)
+    , device_id_(device_id)
 {
 }
 
@@ -603,16 +604,8 @@ void ImageGenericEncoder::distributeWork(std::unique_ptr<IWorkManager::Work> wor
         w->moveEntry(work.get(), i);
     }
 
-    int device_id = 0;
-    for (int i = 0; i < work->params_->num_backends; ++i) {
-        if (work->params_->backends->use_gpu) {
-            device_id = work->params_->backends->cuda_device_id;
-            break;
-        }
-    }
-
     for (auto& [codec, w] : dist) {
-        auto worker = getWorker(codec, device_id);
+        auto worker = getWorker(codec, device_id_);
         worker->addWork(std::move(w));
     }
 }
