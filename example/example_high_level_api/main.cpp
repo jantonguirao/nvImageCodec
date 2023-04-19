@@ -51,7 +51,7 @@ void get_write_params(const CommandLineParams& params, std::vector<int>* write_p
             write_params->push_back(NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE);
         write_params->push_back(NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR);
 
-        std::map<nvimgcdcsChromaSubsampling_t, nvimgcdcsImwriteSamplingFactor_t> css2sf = {
+        std::map<nvimgcdcsChromaSubsampling_t, nvimgcdcsImWriteSamplingFactor_t> css2sf = {
             {NVIMGCDCS_SAMPLING_444, NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444},
             {NVIMGCDCS_SAMPLING_420, NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420},
             {NVIMGCDCS_SAMPLING_440, NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440},

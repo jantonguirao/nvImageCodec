@@ -10,9 +10,8 @@
 #include <nvjpeg.h>
 
 #include "errors_handling.h"
-#include "type_convert.h"
 #include "log.h"
-
+#include "type_convert.h"
 
 namespace nvjpeg {
 
@@ -86,7 +85,7 @@ NvJpegCudaEncoderPlugin::Encoder::Encoder(
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
-    ,device_id_(device_id)
+    , device_id_(device_id)
 {
     if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
         device_allocator_.dev_ctx = framework->device_allocator->device_ctx;

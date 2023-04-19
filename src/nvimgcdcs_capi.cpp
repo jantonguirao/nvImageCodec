@@ -699,8 +699,8 @@ static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encod
         case NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR: {
             param++;
             NVIMGCDCS_LOG_DEBUG("imwrite param: sampling factor:" << *param);
-            nvimgcdcsImwriteSamplingFactor_t sampling_factor = static_cast<nvimgcdcsImwriteSamplingFactor_t>(*param);
-            std::map<nvimgcdcsImwriteSamplingFactor_t, nvimgcdcsChromaSubsampling_t> sf2css = {
+            nvimgcdcsImWriteSamplingFactor_t sampling_factor = static_cast<nvimgcdcsImWriteSamplingFactor_t>(*param);
+            std::map<nvimgcdcsImWriteSamplingFactor_t, nvimgcdcsChromaSubsampling_t> sf2css = {
                 {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444, NVIMGCDCS_SAMPLING_444},
                 {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420, NVIMGCDCS_SAMPLING_420},
                 {NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440, NVIMGCDCS_SAMPLING_440},
