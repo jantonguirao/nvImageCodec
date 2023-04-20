@@ -62,7 +62,7 @@ class BMPParserPluginTest : public ::testing::Test
         info.next = nullptr;
         info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
-        info.color_spec = NVIMGCDCS_COLORSPEC_UNKNOWN;
+        info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
         info.orientation = {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
@@ -108,6 +108,7 @@ TEST_F(BMPParserPluginTest, Grayscale) {
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
         nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_111793_640();
+    expected_info.color_spec = NVIMGCDCS_COLORSPEC_GRAY;
     expected_info.num_planes = 1;
     expected_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_Y;
     expect_eq(expected_info, info);
@@ -122,6 +123,7 @@ TEST_F(BMPParserPluginTest, Palette_1Bit) {
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
         nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_111793_640();
+    expected_info.color_spec = NVIMGCDCS_COLORSPEC_GRAY;
     expected_info.num_planes = 1;
     expected_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_Y;
     expect_eq(expected_info, info);
