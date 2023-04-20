@@ -256,6 +256,11 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
 
+        if (image_info->type != NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO) {
+            NVIMGCDCS_LOG_ERROR("Unexpected structure type");
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+
         constexpr size_t header_start = 14;
         io_stream->seek(io_stream->instance, header_start, SEEK_SET);
         uint32_t header_size = ReadValueLE<uint32_t>(io_stream);
@@ -308,11 +313,16 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
             image_info->plane_info[p].num_channels = 1;
             image_info->plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; // TODO(janton) always?
         }
-        if (image_info->num_planes == 1)
+        if (image_info->num_planes == 1) {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_Y;
-        else
+            image_info->color_spec = NVIMGCDCS_COLORSPEC_GRAY;
+        } else {
             image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+            image_info->color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        }
         image_info->orientation = {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+        
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve image info from bmp stream - " << e.what());

@@ -395,6 +395,12 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
             return NVIMGCDCS_STATUS_SUCCESS;
         }
         io_stream->seek(io_stream->instance, 0, SEEK_SET);
+
+        if (image_info->type != NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO) {
+            NVIMGCDCS_LOG_ERROR("Unexpected structure type");
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+
         std::array<uint8_t, 12> bitstream_start;
         size_t read_nbytes = 0;
         io_stream->read(io_stream->instance, &read_nbytes, bitstream_start.data(), bitstream_start.size());
@@ -417,11 +423,9 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
 
-        image_info->type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
         image_info->sample_format = num_components > 1 ? NVIMGCDCS_SAMPLEFORMAT_P_RGB : NVIMGCDCS_SAMPLEFORMAT_P_Y;
         image_info->orientation = {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
         image_info->chroma_subsampling = XRSizYRSizToSubsampling(CSiz, &XRSiz[0], &YRSiz[0]);
-        ;
         image_info->color_spec = color_spec;
         image_info->num_planes = num_components;
         for (int p = 0; p < num_components; p++) {
