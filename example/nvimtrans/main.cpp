@@ -665,6 +665,7 @@ int main(int argc, const char* argv[])
     instance_create_info.next = NULL;
     instance_create_info.pinned_allocator = NULL;
     instance_create_info.device_allocator = NULL;
+    instance_create_info.load_builtin_modules = true;
     instance_create_info.load_extension_modules = true;
     instance_create_info.default_debug_messenger = true;
     instance_create_info.message_severity = verbosity2severity(params.verbose);

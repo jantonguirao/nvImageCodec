@@ -643,6 +643,7 @@ extern "C"
 
         nvimgcdcsDeviceAllocator_t* device_allocator;
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
+        bool load_builtin_modules;    //Load default modules
         bool load_extension_modules;  //Discover and load extension modules on start
         bool default_debug_messenger; //Create default debug messenger
         uint32_t message_severity;    //Severity for default debug messenger

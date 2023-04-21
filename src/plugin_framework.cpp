@@ -126,7 +126,8 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
         NVIMGCDCS_LOG_ERROR("Could not create extension");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
-    *extension = internal_extension.handle_;
+    if (extension)
+        *extension = internal_extension.handle_;
 
     extensions_.push_back(internal_extension);
     return NVIMGCDCS_STATUS_SUCCESS;

@@ -36,6 +36,7 @@ class JPEG2KParserPluginTest : public ::testing::Test
         create_info.next = nullptr;
         create_info.device_allocator = nullptr;
         create_info.pinned_allocator = nullptr;
+        create_info.load_builtin_modules = false;
         create_info.load_extension_modules = false;
         create_info.executor = nullptr;
         create_info.num_cpu_threads = 1;
