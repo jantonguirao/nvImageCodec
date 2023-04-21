@@ -15,6 +15,7 @@
 #include "library_loader.h"
 #include "default_executor.h"
 #include "user_executor.h"
+#include "builtin_modules.h"
 
 namespace nvimgcdcs {
 
@@ -38,6 +39,13 @@ NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_in
           std::move(GetExecutor(create_info)),
           device_allocator_, pinned_allocator_)
 {
+    if (create_info.load_builtin_modules) {
+        for (auto builtin_ext : get_builtin_modules())
+            plugin_framework_.registerExtension(nullptr, &builtin_ext);
+    }
+    if (create_info.load_extension_modules) {
+        plugin_framework_.discoverAndLoadExtModules();
+    }
 }
 
 NvImgCodecsDirector::~NvImgCodecsDirector()

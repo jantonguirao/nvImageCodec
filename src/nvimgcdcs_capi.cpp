@@ -29,7 +29,6 @@
 #include "nvimgcodecs_director.h"
 #include "plugin_framework.h"
 #include "processing_results.h"
-#include "builtin_modules.h"
 
 namespace fs = std::filesystem;
 
@@ -198,14 +197,6 @@ nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, nvimgcd
         {
             CHECK_NULL(instance);
             nvimgcdcs = new nvimgcdcsInstance(create_info);
-            if (create_info.load_builtin_modules) {
-                for (auto builtin_ext : get_builtin_modules())
-                    nvimgcdcs->director_.plugin_framework_.registerExtension(nullptr, &builtin_ext);
-            }
-            if (create_info.load_extension_modules) {
-                nvimgcdcs->director_.plugin_framework_.discoverAndLoadExtModules();
-            }
-
             *instance = nvimgcdcs;
         }
     NVIMGCDCSAPI_CATCH(ret)
