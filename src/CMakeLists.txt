@@ -35,6 +35,7 @@ set(NVIMGCDCS_SRCS
     parsers/jpeg2k.cpp
     parsers/tiff.cpp
     parsers/png.cpp
+    parsers/webp.cpp
 )
 
 include_directories(
