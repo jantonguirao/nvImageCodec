@@ -29,6 +29,7 @@ set(NVIMGCDCS_SRCS
     thread_pool.cpp
     device_guard.cpp
     default_executor.cpp
+    builtin_modules.cpp
     parsers/bmp.cpp
     parsers/exif.cpp
     parsers/jpeg.cpp
@@ -37,6 +38,7 @@ set(NVIMGCDCS_SRCS
     parsers/png.cpp
     parsers/pnm.cpp
     parsers/webp.cpp
+    parsers/parsers_ext_module.cpp
 )
 
 include_directories(

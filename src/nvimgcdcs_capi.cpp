@@ -197,10 +197,6 @@ nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, nvimgcd
         {
             CHECK_NULL(instance);
             nvimgcdcs = new nvimgcdcsInstance(create_info);
-            if (create_info.load_extension_modules) {
-                nvimgcdcs->director_.plugin_framework_.discoverAndLoadExtModules();
-            }
-
             *instance = nvimgcdcs;
         }
     NVIMGCDCSAPI_CATCH(ret)
