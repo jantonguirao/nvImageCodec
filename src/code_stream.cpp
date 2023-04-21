@@ -15,7 +15,7 @@
 #include "codec.h"
 #include "codec_registry.h"
 #include "image_parser.h"
-
+#include "exception.h"
 namespace nvimgcdcs {
 
 CodeStream::CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStreamFactory> io_stream_factory)
@@ -37,7 +37,10 @@ void CodeStream::parse()
 {
     auto parser = codec_registry_->getParser(&code_stream_desc_);
     if (!parser)
-        throw std::runtime_error("Could not match parser");
+        throw Exception(
+            UNSUPPORTED_FORMAT_STATUS,
+            "The encoded stream did not match any of the available format parsers",
+            "CodeStream::parse - Encoded stream parsing");
 
     parser_ = std::move(parser);
     codec_name_ = parser_->getCodecName();
