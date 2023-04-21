@@ -15,6 +15,7 @@ set(SRCS
     parsers/jpeg2k_test.cpp
     parsers/tiff_test.cpp
     parsers/png_test.cpp
+    parsers/pnm_test.cpp
     parsers/webp_test.cpp
     extensions/nvjpeg_ext_parser_test.cpp
     extensions/nvjpeg_ext_encoder_test.cpp
