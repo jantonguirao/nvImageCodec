@@ -681,9 +681,7 @@ int main(int argc, const char* argv[])
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
     nvimgcdcsExtension_t pxm_extension;
-    nvimgcdcsExtensionDesc_t pxm_extension_desc{};
-    pxm_extension_desc.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
-
+    nvimgcdcsExtensionDesc_t pxm_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
     nvpxm::get_nvpxm_extension_desc(&pxm_extension_desc);
     nvimgcdcsExtensionCreate(instance, &pxm_extension, &pxm_extension_desc);
 

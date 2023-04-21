@@ -14,6 +14,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+
 #include "code_stream.h"
 #include "codec_registry.h"
 #include "exception.h"
@@ -24,11 +25,12 @@
 #include "iimage_encoder.h"
 #include "image.h"
 #include "iostream_factory.h"
-
 #include "log.h"
 #include "nvimgcodecs_director.h"
 #include "plugin_framework.h"
 #include "processing_results.h"
+#include "image_generic_decoder.h"
+#include "image_generic_encoder.h"
 
 namespace fs = std::filesystem;
 
@@ -134,13 +136,13 @@ struct nvimgcdcsFuture
 struct nvimgcdcsDecoder
 {
     nvimgcdcsInstance_t instance_;
-    std::unique_ptr<IImageDecoder> image_decoder_;
+    std::unique_ptr<ImageGenericDecoder> image_decoder_;
 };
 
 struct nvimgcdcsEncoder
 {
     nvimgcdcsInstance_t instance_;
-    std::unique_ptr<IImageEncoder> image_encoder_;
+    std::unique_ptr<ImageGenericEncoder> image_encoder_;
 };
 
 struct nvimgcdcsDebugMessenger
@@ -418,7 +420,7 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instan
             CHECK_NULL(decoder)
             if (device_id == -1)
                 CHECK_CUDA(cudaGetDevice(&device_id));
-            std::unique_ptr<IImageDecoder> image_decoder = instance->director_.createGenericDecoder(device_id);
+            std::unique_ptr<ImageGenericDecoder> image_decoder = instance->director_.createGenericDecoder(device_id);
             *decoder = new nvimgcdcsDecoder();
             (*decoder)->image_decoder_ = std::move(image_decoder);
             (*decoder)->instance_ = instance;
@@ -434,6 +436,31 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder)
         {
             CHECK_NULL(decoder)
             delete decoder;
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
+    nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
+    bool force_format)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(decoder)
+            CHECK_NULL(streams)
+            CHECK_NULL(images)
+            CHECK_NULL(params)
+            std::vector<nvimgcdcs::ICodeStream*> internal_code_streams;
+            std::vector<nvimgcdcs::IImage*> internal_images;
+
+            for (int i = 0; i < batch_size; ++i) {
+                internal_code_streams.push_back(&streams[i]->code_stream_);
+                internal_images.push_back(&images[i]->image_);
+            }
+
+            decoder->image_decoder_->canDecode(internal_code_streams, internal_images, params, processing_status, force_format);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -460,8 +487,7 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCo
             }
             *future = new nvimgcdcsFuture();
 
-            (*future)->handle_ =
-                std::move(decoder->image_decoder_->decode(nullptr, internal_code_streams, internal_images, params));
+            (*future)->handle_ = std::move(decoder->image_decoder_->decode(internal_code_streams, internal_images, params));
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -525,7 +551,7 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instan
             CHECK_NULL(encoder)
             if (device_id == -1)
                 CHECK_CUDA(cudaGetDevice(&device_id));
-            std::unique_ptr<IImageEncoder> image_encoder = instance->director_.createGenericEncoder(device_id);
+            std::unique_ptr<ImageGenericEncoder> image_encoder = instance->director_.createGenericEncoder(device_id);
             *encoder = new nvimgcdcsEncoder();
             (*encoder)->image_encoder_ = std::move(image_encoder);
             (*encoder)->instance_ = instance;
@@ -541,6 +567,33 @@ nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder)
         {
             CHECK_NULL(encoder)
             delete encoder;
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
+    nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
+    bool force_format)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(encoder)
+            CHECK_NULL(streams)
+            CHECK_NULL(images)
+            CHECK_NULL(params)
+
+            std::vector<nvimgcdcs::ICodeStream*> internal_code_streams;
+            std::vector<nvimgcdcs::IImage*> internal_images;
+
+            for (int i = 0; i < batch_size; ++i) {
+                internal_code_streams.push_back(&streams[i]->code_stream_);
+                internal_images.push_back(&images[i]->image_);
+            }
+
+            encoder->image_encoder_->canEncode(internal_images, internal_code_streams, params, processing_status, force_format);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -569,7 +622,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsIm
 
             *future = new nvimgcdcsFuture();
 
-            (*future)->handle_ = std::move(encoder->image_encoder_->encode(nullptr, internal_images, internal_code_streams, params));
+            (*future)->handle_ = std::move(encoder->image_encoder_->encode(internal_images, internal_code_streams, params));
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -612,7 +665,8 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
 
             nvimgcdcsCodeStream_t code_stream;
             nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, file_name);
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            ;
             nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
             char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
             nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
@@ -794,7 +848,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
                 jpeg2k_encode_params.type = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
                 jpeg2k_encode_params.stream_type =
                     file_path.extension().string() == ".jp2" ? NVIMGCDCS_JPEG2K_STREAM_JP2 : NVIMGCDCS_JPEG2K_STREAM_J2K;
-                jpeg2k_encode_params.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL; 
+                jpeg2k_encode_params.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL;
                 jpeg2k_encode_params.num_resolutions = 5;
                 jpeg2k_encode_params.code_block_w = 64;
                 jpeg2k_encode_params.code_block_h = 64;
@@ -889,15 +943,14 @@ nvimgcdcsStatus_t nvimgcdcsFutureDestroy(nvimgcdcsFuture_t future)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsFutureGetProcessingStatus(
-    nvimgcdcsFuture_t future,  nvimgcdcsProcessingStatus_t* processing_status, size_t* size)
+nvimgcdcsStatus_t nvimgcdcsFutureGetProcessingStatus(nvimgcdcsFuture_t future, nvimgcdcsProcessingStatus_t* processing_status, size_t* size)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
         {
             CHECK_NULL(future)
             CHECK_NULL(size)
-            std::vector<ProcessingResult> results (std::move(future->handle_->getAllCopy()));
+            std::vector<ProcessingResult> results(std::move(future->handle_->getAllCopy()));
             *size = results.size();
             if (processing_status) {
                 auto ptr = processing_status;

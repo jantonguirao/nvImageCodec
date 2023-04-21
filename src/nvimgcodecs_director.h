@@ -17,6 +17,8 @@
 #include "log.h"
 #include "plugin_framework.h"
 #include "default_executor.h"
+#include "image_generic_decoder.h"
+#include "image_generic_encoder.h"
 
 namespace nvimgcdcs {
 
@@ -40,8 +42,8 @@ class NvImgCodecsDirector
     explicit NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_info);
     ~NvImgCodecsDirector();
 
-    std::unique_ptr<IImageDecoder> createGenericDecoder(int device_id);
-    std::unique_ptr<IImageEncoder> createGenericEncoder(int device_id);
+    std::unique_ptr<ImageGenericDecoder> createGenericDecoder(int device_id);
+    std::unique_ptr<ImageGenericEncoder> createGenericEncoder(int device_id);
 
     nvimgcdcsDeviceAllocator_t* device_allocator_;
     nvimgcdcsPinnedAllocator_t* pinned_allocator_;

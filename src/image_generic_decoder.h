@@ -29,18 +29,15 @@ class ICodeStream;
 class ICodecRegistry;
 class ICodec;
 
-class ImageGenericDecoder : public IImageDecoder, public IWorkManager
+class ImageGenericDecoder : public IWorkManager
 {
   public:
     explicit ImageGenericDecoder(ICodecRegistry* codec_registry, int device_id);
-    ~ImageGenericDecoder() override;
-    std::unique_ptr<IDecodeState> createDecodeStateBatch() const override;
-    void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
+    ~ImageGenericDecoder();
     void canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
-        std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const override;
-    std::unique_ptr<ProcessingResultsFuture> decode(IDecodeState* decode_state_batch,
-        const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
-        const nvimgcdcsDecodeParams_t* params) override;
+        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
+    std::unique_ptr<ProcessingResultsFuture> decode(
+        const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params);
 
   private:
     class Worker;
@@ -55,8 +52,6 @@ class ImageGenericDecoder : public IImageDecoder, public IWorkManager
     std::mutex work_mutex_;
     std::unique_ptr<Work> free_work_items_;
     std::map<const ICodec*, std::unique_ptr<Worker>> workers_;
-    std::set<const ICodec*> filtered_;
-    std::vector<nvimgcdcsCapability_t> capabilities_;
     ICodecRegistry* codec_registry_;
     int device_id_;
 };

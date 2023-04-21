@@ -30,14 +30,12 @@ uint32_t testExtModuleGetVersion()
     return 1;
 }
 
-nvimgcdcsStatus_t testExtModuleCreate(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t testExtModuleCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t testExtModuleDestroy(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t testExtModuleDestroy(nvimgcdcsExtension_t extension)
 {
     return NVIMGCDCS_STATUS_SUCCESS;
 }

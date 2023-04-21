@@ -313,7 +313,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                         orientation = NVJPEG_ORIENTATION_ROTATE_90;
 
                     if (orientation == NVJPEG_ORIENTATION_UNKNOWN) {
-                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION);
+                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED);
                         return;
                     }
                     NVIMGCDCS_D_LOG_DEBUG("Setting up EXIF orientation " << orientation);
@@ -343,7 +343,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                         io_stream->read(io_stream->instance, &read_nbytes, &p.parse_state_.buffer_[0], encoded_stream_data_size);
                         if (read_nbytes != encoded_stream_data_size) {
                             NVIMGCDCS_P_LOG_ERROR("Unexpected end-of-stream");
-                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                         }
                     }
                     encoded_stream_data = &p.parse_state_.buffer_[0];
@@ -385,7 +385,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             } catch (const std::runtime_error& e) {
                 NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg code stream - " << e.what());
-                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
         });
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -464,7 +464,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_decode_batch(nvimgcdc
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
-            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }

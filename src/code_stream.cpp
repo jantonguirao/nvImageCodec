@@ -33,6 +33,10 @@ CodeStream::CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStream
 {
 }
 
+CodeStream::~CodeStream()
+{
+}
+
 void CodeStream::parse()
 {
     auto parser = codec_registry_->getParser(&code_stream_desc_);

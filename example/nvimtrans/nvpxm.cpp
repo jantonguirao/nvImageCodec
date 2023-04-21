@@ -62,7 +62,7 @@ static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
             //Assumed planar format
             if ((image_info.num_planes > 4 || image_info.num_planes == 2)) {
                 NVIMGCDCS_E_LOG_INFO("cannot encode because not supported number of components");
-                *result = NVIMGCDCS_PROCESSING_STATUS_NUM_COMPONENTS_UNSUPPORTED;
+                *result = NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
                 continue;
             }
 
@@ -234,7 +234,7 @@ static nvimgcdcsStatus_t pxm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsI
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not encode pxm batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
-            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
@@ -256,19 +256,19 @@ struct nvimgcdcsEncoderDesc ppm_encoder = {
 };
 // clang-format on
 
-nvimgcdcsStatus_t extension_create(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t nvpxm_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
-    NVIMGCDCS_LOG_TRACE("extension_create");
+    NVIMGCDCS_LOG_TRACE("nvpxm_extension_create");
 
     framework->registerEncoder(framework->instance, &ppm_encoder);
 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t extension_destroy(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t nvpxm_extension_destroy(nvimgcdcsExtension_t extension)
 {
-    NVIMGCDCS_LOG_TRACE("extension_destroy");
+    NVIMGCDCS_LOG_TRACE("nvpxm_extension_destroy");
     Logger::get().unregisterLogFunc();
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -279,11 +279,12 @@ nvimgcdcsExtensionDesc_t nvpxm_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
+    NULL,
     "nvpxm_extension",  // id
      0x00000100,        // version
 
-    extension_create,
-    extension_destroy
+    nvpxm_extension_create,
+    nvpxm_extension_destroy
 };
 // clang-format on  
 
