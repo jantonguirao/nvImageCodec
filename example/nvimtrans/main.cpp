@@ -92,7 +92,8 @@ inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_
 }
 
 void fill_encode_params(const CommandLineParams& params, fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
-    nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcdcsJpegEncodeParams_t* jpeg_encode_params)
+    nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcdcsJpegEncodeParams_t* jpeg_encode_params,
+    nvimgcdcsJpegImageInfo_t* jpeg_image_info)
 {
     encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS;
     encode_params->quality = params.quality;
@@ -112,7 +113,7 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
         encode_params->next = jpeg2k_encode_params;
     } else if (params.output_codec == "jpeg") {
         jpeg_encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
-        jpeg_encode_params->encoding = params.jpeg_encoding;
+        jpeg_image_info->encoding = params.jpeg_encoding;
         jpeg_encode_params->optimized_huffman = params.optimized_huffman;
         encode_params->next = jpeg_encode_params;
     }
@@ -161,6 +162,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     // Preparing output image_info
     image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+    image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
 
     size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
     image_info.buffer_size = device_pitch_in_bytes * image_info.plane_info[0].height * image_info.num_planes;
@@ -207,21 +209,26 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsFutureGetProcessingStatus(decode_future, &decode_status, &status_size);
     decode_time = wtime() - decode_time; //TODO add gpu time
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
-        std::cerr << "Error: Something went wrong during decoding" << std::endl;
+        std::cerr << "Error: Something went wrong during decoding - processing status: " << decode_status << std::endl;
     }
     nvimgcdcsFutureDestroy(decode_future);
 
     std::cout << "Saving to " << output_path.string() << " file" << std::endl;
+
+    nvimgcdcsJpegImageInfo_t out_jpeg_image_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+    nvimgcdcsEncodeParams_t encode_params{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
+    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
+    nvimgcdcsJpegEncodeParams_t jpeg_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
+    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params, &out_jpeg_image_info);
+
     nvimgcdcsImageInfo_t out_image_info(image_info);
     out_image_info.chroma_subsampling = params.chroma_subsampling;
+    out_image_info.next = &out_jpeg_image_info;
+    out_jpeg_image_info.next = image_info.next;
+
     nvimgcdcsCodeStream_t output_code_stream;
     nvimgcdcsCodeStreamCreateToFile(
         instance, &output_code_stream, output_path.string().c_str(), params.output_codec.data(), &out_image_info);
-
-    nvimgcdcsEncodeParams_t encode_params{};
-    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{};
-    nvimgcdcsJpegEncodeParams_t jpeg_encode_params{};
-    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
 
     nvimgcdcsEncoder_t encoder = nullptr;
     nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT);
@@ -371,6 +378,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
         //Decode to format
         image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
         image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
         for (auto c = 0; c < image_info.num_planes; ++c) {
             image_info.plane_info[c].height = image_info.plane_info[0].height;
             image_info.plane_info[c].width = image_info.plane_info[0].width;
@@ -409,11 +417,12 @@ static std::map<std::string, std::string> codec2ext = {
 
 int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_names, nvimgcdcsEncoder_t& encoder, bool& is_host_input,
     bool& is_device_input, std::vector<nvimgcdcsCodeStream_t>& out_code_streams, std::vector<nvimgcdcsImage_t>& images,
-    const nvimgcdcsEncodeParams_t& encode_params, const CommandLineParams& params, fs::path output_path)
+    const nvimgcdcsEncodeParams_t& encode_params, const CommandLineParams& params, nvimgcdcsJpegImageInfo_t& jpeg_image_info,
+    fs::path output_path)
 {
     for (uint32_t i = 0; i < current_names.size(); i++) {
         fs::path filename = fs::path(current_names[i]).filename();
-        //TODO extension can depend on image format
+        //TODO extension can depend on image format e.g. ppm, pgm
         std::string ext = "___";
         auto it = codec2ext.find(params.output_codec);
         if (it != codec2ext.end()) {
@@ -427,6 +436,8 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         nvimgcdcsImageGetImageInfo(images[i], &image_info);
         nvimgcdcsImageInfo_t out_image_info(image_info);
         out_image_info.chroma_subsampling = params.chroma_subsampling;
+        out_image_info.next = reinterpret_cast<void*>(&jpeg_image_info);
+        jpeg_image_info.next = image_info.next;
 
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(
             instance, &out_code_streams[i], output_filename.string().c_str(), params.output_codec.c_str(), &out_image_info));
@@ -468,10 +479,11 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
 
-    nvimgcdcsEncodeParams_t encode_params{};
-    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
-    nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
-    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
+    nvimgcdcsJpegImageInfo_t jpeg_image_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+    nvimgcdcsEncodeParams_t encode_params{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
+    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
+    nvimgcdcsJpegEncodeParams_t jpeg_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
+    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params, &jpeg_image_info);
 
     bool is_host_output = false;
     bool is_device_output = false;
@@ -532,13 +544,13 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
                     nvimgcdcsCodeStreamDestroy(out_code_streams[i]);
                 out_code_streams.erase(out_code_streams.begin() + i);
                 --i;
-            } 
+            }
         }
         
         nvimgcdcsFutureDestroy(decode_future);
 
         ret = prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_code_streams, images,
-            encode_params, params, output_path);
+            encode_params, params, jpeg_image_info, output_path);
 
         nvimgcdcsFuture_t encode_future;
         double start_encoding_time = wtime();
@@ -646,7 +658,7 @@ int main(int argc, const char* argv[])
     if (status != -1) {
         return status;
     }
-    int num_devices;
+    int num_devices = 0;
     cudaGetDeviceCount(&num_devices);
     if (params.list_cuda_devices) {
         list_cuda_devices(num_devices);
@@ -655,7 +667,7 @@ int main(int argc, const char* argv[])
     if (params.device_id < num_devices) {
         cudaSetDevice(params.device_id);
     } else {
-        std::cerr << "Error: Wrong device id #" << params.device_id <<  std::endl;
+        std::cerr << "Error: Wrong device id #" << params.device_id << std::endl;
         list_cuda_devices(num_devices);
         return EXIT_FAILURE;
     }

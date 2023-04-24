@@ -36,6 +36,36 @@ static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsP
                 }
             }
         }
+        if (params->enable_roi) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED;
+        }
+        if (params->enable_color_conversion) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED;
+        }
+
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*image)->getImageInfo((*image)->instance, &image_info);
+        if (image_info.color_spec != NVIMGCDCS_COLORSPEC_SRGB) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+        }
+        if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_NONE) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+        if (image_info.num_planes != 3) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+        }
+
+        for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+            if (image_info.plane_info[p].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+            }
+            if (image_info.plane_info[p].num_channels != 1) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
+            }
+        }
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }

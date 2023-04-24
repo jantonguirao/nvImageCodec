@@ -81,8 +81,6 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         io_stream->raw_data(io_stream->instance, &encoded_stream_data);
         io_stream->size(io_stream->instance, &encoded_stream_data_size);
 
-        // TODO - does this condition need to be checked again when accessing encoded_stream_data
-        // in decodeBatch function?
         if (!encoded_stream_data) {
             io_stream->seek(io_stream->instance, 0, SEEK_SET);
             size_t read_nbytes = 0;

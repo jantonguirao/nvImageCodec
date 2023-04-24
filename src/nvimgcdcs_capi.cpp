@@ -253,7 +253,8 @@ nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(nvimgcdcsExtension_t extension)
         {
             CHECK_NULL(extension)
 
-            return extension->nvimgcdcs_instance_->director_.plugin_framework_.unregisterExtension(extension->extension_ext_handle_);
+            ret =  extension->nvimgcdcs_instance_->director_.plugin_framework_.unregisterExtension(extension->extension_ext_handle_);
+            delete extension;
         }
     NVIMGCDCSAPI_CATCH(ret)
 
@@ -666,7 +667,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             nvimgcdcsCodeStream_t code_stream;
             nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, file_name);
             nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            ;
+            
             nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
             char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
             nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
@@ -676,6 +677,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             // Define  requested output
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+            image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
             size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
             image_info.buffer_size = device_pitch_in_bytes * image_info.plane_info[0].height * image_info.num_planes;
             image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
@@ -724,9 +726,9 @@ static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c",
 
 static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsImageInfo_t* image_info, int* device_id)
 {
-    nvimgcdcsJpegEncodeParams_t* jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(encode_params->next);
-    nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params = static_cast<nvimgcdcsJpeg2kEncodeParams_t*>(encode_params->next);
-
+    auto jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(encode_params->next);
+    auto jpeg2k_encode_params = static_cast<nvimgcdcsJpeg2kEncodeParams_t*>(encode_params->next);
+    auto jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(image_info->next);
     const int* param = params;
     while (param && *param) {
         NVIMGCDCS_LOG_TRACE("imwrite param: " << *param);
@@ -739,7 +741,7 @@ static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encod
             break;
         }
         case NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE: {
-            jpeg_encode_params->encoding = NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
+            jpeg_image_info->encoding = NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
             break;
         }
         case NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE: {
@@ -841,9 +843,9 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
             encode_params.quality = 95;
             encode_params.target_psnr = 50;
             encode_params.mct_mode = NVIMGCDCS_MCT_MODE_RGB;
-
-            nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{};
-            nvimgcdcsJpegEncodeParams_t jpeg_encode_params{};
+            nvimgcdcsJpegImageInfo_t jpeg_image_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+            nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
+            nvimgcdcsJpegEncodeParams_t jpeg_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
             if (codec_name == "jpeg2k") {
                 jpeg2k_encode_params.type = NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
                 jpeg2k_encode_params.stream_type =
@@ -856,12 +858,14 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
                 encode_params.next = &jpeg2k_encode_params;
             } else if (codec_name == "jpeg") {
                 jpeg_encode_params.type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
-                jpeg_encode_params.encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
+                jpeg_image_info.encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
                 jpeg_encode_params.optimized_huffman = false;
                 encode_params.next = &jpeg_encode_params;
             }
             int device_id = NVIMGCDCS_DEVICE_CURRENT;
             nvimgcdcsImageInfo_t out_image_info(image_info);
+            out_image_info.next = &jpeg_image_info;
+            jpeg_image_info.next = image_info.next;
             fill_encode_params(params, &encode_params, &out_image_info, &device_id);
 
             nvimgcdcsCodeStream_t output_code_stream;

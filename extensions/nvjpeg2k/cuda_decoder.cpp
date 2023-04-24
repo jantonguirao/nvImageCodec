@@ -4,9 +4,10 @@
 #include <future>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <vector>
-#include <cmath>
+
 #include "log.h"
 #include <nvtx3/nvtx3.hpp>
 
@@ -54,6 +55,37 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
                 if (params->backends[b].use_gpu) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
+            }
+        }
+
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*image)->getImageInfo((*image)->instance, &image_info);
+        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
+            NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
+        if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+        }
+        static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{
+            NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420};
+        if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
+            NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED,
+            NVIMGCDCS_SAMPLEFORMAT_P_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_P_Y,
+            NVIMGCDCS_SAMPLEFORMAT_P_YUV,
+        };
+        if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+
+        static const std::set<nvimgcdcsSampleDataType_t> supported_sample_type{
+            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16};
+        for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+            auto sample_type = image_info.plane_info[p].sample_type;
+            if (supported_sample_type.find(sample_type) == supported_sample_type.end()) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
             }
         }
     }
@@ -278,7 +310,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
             io_stream->read(io_stream->instance, &read_nbytes, &parse_state->buffer_[0], encoded_stream_data_size);
             if (read_nbytes != encoded_stream_data_size) {
                 NVIMGCDCS_D_LOG_ERROR("Unexpected end-of-stream");
-                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                             return;
             }
         }

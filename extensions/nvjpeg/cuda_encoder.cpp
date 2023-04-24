@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <set>
 
 #include <nvjpeg.h>
 
@@ -54,6 +55,58 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessin
                 if (params->backends[b].use_gpu) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
+            }
+        }
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
+
+        nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(cs_image_info.next);
+        while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+            jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
+        if (jpeg_image_info) {
+
+            static const std::set<nvimgcdcsJpegEncoding_t> supported_encoding{NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT,
+               NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN};
+            if (supported_encoding.find(jpeg_image_info->encoding) == supported_encoding.end()) {
+                *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
+                continue;
+            }
+        }
+
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*image)->getImageInfo((*image)->instance, &image_info);
+        nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
+
+        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
+            NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
+        if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+        }
+        static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422,
+            NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY,
+            NVIMGCDCS_SAMPLING_410V};
+        if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if (supported_css.find(out_image_info.chroma_subsampling) == supported_css.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+
+        static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
+            NVIMGCDCS_SAMPLEFORMAT_P_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_I_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_P_BGR,
+            NVIMGCDCS_SAMPLEFORMAT_I_BGR,
+        };
+        if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+
+        for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+            auto sample_type = image_info.plane_info[p].sample_type;
+            if (sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
             }
         }
     }
@@ -240,7 +293,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(NvJpegCudaEncoderPlug
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     image->getImageInfo(image->instance, &image_info);
 
-    nvimgcdcsImageInfo_t out_image_info;
+    nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     code_stream->getImageInfo(code_stream->instance, &out_image_info);
 
     if (image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
@@ -273,13 +326,19 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(NvJpegCudaEncoderPlug
     XM_CHECK_NVJPEG(nvjpegEncoderParamsSetQuality(encode_params.get(), static_cast<int>(params->quality), encode_state->stream_));
     NVIMGCDCS_E_LOG_DEBUG(" - quality: " << static_cast<int>(params->quality));
 
-    nvimgcdcsJpegEncodeParams_t* jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(params->next);
+    auto jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(out_image_info.next);
+    while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+        jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
+    if (jpeg_image_info) {
+        nvjpegJpegEncoding_t encoding = nvimgcdcs_to_nvjpeg_encoding(jpeg_image_info->encoding);
+        NVIMGCDCS_E_LOG_DEBUG(" - encoding: " << encoding);
+        XM_CHECK_NVJPEG(nvjpegEncoderParamsSetEncoding(encode_params.get(), encoding, encode_state->stream_));
+    }
+
+    auto jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(params->next);
     while (jpeg_encode_params && jpeg_encode_params->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS)
         jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(jpeg_encode_params->next);
     if (jpeg_encode_params) {
-        nvjpegJpegEncoding_t encoding = nvimgcdcs_to_nvjpeg_encoding(jpeg_encode_params->encoding);
-        NVIMGCDCS_E_LOG_DEBUG(" - encoding: " << encoding);
-        XM_CHECK_NVJPEG(nvjpegEncoderParamsSetEncoding(encode_params.get(), encoding, encode_state->stream_));
         NVIMGCDCS_E_LOG_DEBUG(" - optimized huffman: " << jpeg_encode_params->optimized_huffman);
         if (jpeg_encode_params->optimized_huffman) {
             XM_CHECK_NVJPEG(nvjpegEncoderParamsSetOptimizedHuffman(encode_params.get(), 1, NULL));

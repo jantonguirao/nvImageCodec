@@ -38,12 +38,14 @@ class NvJpegExtEncoderTestBase: public NvJpegExtTestBase
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT));
 
         jpeg_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
+        jpeg_enc_params_.optimized_huffman= false;
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         params_.next = &jpeg_enc_params_;
         params_.quality = 95;
         params_.target_psnr = 0;
         params_.num_backends = 0; //Zero means that all backends are allowed.
         params_.mct_mode = NVIMGCDCS_MCT_MODE_YCC;
+        out_jpeg_image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     }
 
     virtual void TearDown()
@@ -56,6 +58,7 @@ class NvJpegExtEncoderTestBase: public NvJpegExtTestBase
     nvimgcdcsEncoder_t encoder_;
     nvimgcdcsJpegEncodeParams_t jpeg_enc_params_;
     nvimgcdcsEncodeParams_t params_;
+    nvimgcdcsJpegImageInfo_t out_jpeg_image_info_;
 };
 
 class NvJpegExtEncoderTestSingleImage : public NvJpegExtEncoderTestBase,
@@ -70,7 +73,8 @@ class NvJpegExtEncoderTestSingleImage : public NvJpegExtEncoderTestBase,
         NvJpegExtEncoderTestBase::SetUp();
 
         image_info_.chroma_subsampling = std::get<0>(GetParam());
-        jpeg_enc_params_.encoding = std::get<1>(GetParam());
+        out_jpeg_image_info_.encoding = std::get<1>(GetParam());
+        image_info_.next = &out_jpeg_image_info_;
     }
 
     virtual void TearDown()
@@ -117,7 +121,7 @@ TEST_P(NvJpegExtEncoderTestSingleImage, Encode_Single_Image_Extended_Jpeg_info)
     load_info.next = &load_jpeg_info;
 
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &load_info));
-    EXPECT_EQ(jpeg_enc_params_.encoding, load_jpeg_info.encoding);
+    EXPECT_EQ(out_jpeg_image_info_.encoding, load_jpeg_info.encoding);
     EXPECT_EQ(image_info_.chroma_subsampling, load_info.chroma_subsampling);
 }
 
