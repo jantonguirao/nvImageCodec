@@ -73,10 +73,10 @@ class Logger
     } while (0)
 
 //TODO set correct version
-#define NVIMGCDCS_X_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvpxm-extension", 0, msg)
-#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvpxm-parser", 0, msg)
-#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvpxm-encoder", 0, msg)
-#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvpxm-decoder", 0, msg)
+#define NVIMGCDCS_X_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvpnm-extension", 0, msg)
+#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvpnm-parser", 0, msg)
+#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvpnm-encoder", 0, msg)
+#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvpnm-decoder", 0, msg)
 
 #define NVIMGCDCS_LOG_TRACE(...) \
     NVIMGCDCS_X_LOG(             \

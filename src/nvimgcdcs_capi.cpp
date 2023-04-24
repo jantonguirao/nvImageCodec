@@ -722,7 +722,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
 }
 
 static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"}, {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"},
-    {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pxm"}, {".pgm", "pxm"}, {".pbm", "pxm"}};
+    {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pnm"}, {".pgm", "pnm"}, {".pbm", "pnm"}};
 
 static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsImageInfo_t* image_info, int* device_id)
 {

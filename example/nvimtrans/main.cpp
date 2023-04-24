@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include "command_line_params.h"
-#include "nvpxm.h"
+#include <extensions/nvpnm/nvpnm_ext.h>
 
 namespace fs = std::filesystem;
 
@@ -413,7 +413,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
 }
 
 static std::map<std::string, std::string> codec2ext = {
-    {"bmp", ".bmp"}, {"jpeg2k", ".j2k"}, {"tiff", ".tiff"}, {"jpeg", ".jpg"}, {"pxm", ".ppm"}};
+    {"bmp", ".bmp"}, {"jpeg2k", ".j2k"}, {"tiff", ".tiff"}, {"jpeg", ".jpg"}, {"pnm", ".ppm"}};
 
 int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_names, nvimgcdcsEncoder_t& encoder, bool& is_host_input,
     bool& is_device_input, std::vector<nvimgcdcsCodeStream_t>& out_code_streams, std::vector<nvimgcdcsImage_t>& images,
@@ -692,10 +692,10 @@ int main(int argc, const char* argv[])
     instance_create_info.num_cpu_threads = 10;
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
-    nvimgcdcsExtension_t pxm_extension;
-    nvimgcdcsExtensionDesc_t pxm_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
-    nvpxm::get_nvpxm_extension_desc(&pxm_extension_desc);
-    nvimgcdcsExtensionCreate(instance, &pxm_extension, &pxm_extension_desc);
+    nvimgcdcsExtension_t pnm_extension;
+    nvimgcdcsExtensionDesc_t pnm_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
+    get_nvpnm_extension_desc(&pnm_extension_desc);
+    nvimgcdcsExtensionCreate(instance, &pnm_extension, &pnm_extension_desc);
 
     fs::path exe_path(argv[0]);
     fs::path input_path = fs::absolute(exe_path).parent_path() / fs::path(params.input);
@@ -707,7 +707,7 @@ int main(int argc, const char* argv[])
         exit_code = process_one_image(instance, input_path, output_path, params);
     }
 
-    nvimgcdcsExtensionDestroy(pxm_extension);
+    nvimgcdcsExtensionDestroy(pnm_extension);
     nvimgcdcsInstanceDestroy(instance);
 
     return exit_code;

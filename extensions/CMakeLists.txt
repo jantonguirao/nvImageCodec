@@ -34,3 +34,7 @@ if(BUILD_NVBMP_EXT)
     add_subdirectory(nvbmp)
 endif()
 
+if(BUILD_NVPNM_EXT)
+    add_subdirectory(nvpnm)
+endif()
+

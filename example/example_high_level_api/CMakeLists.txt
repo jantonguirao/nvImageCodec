@@ -4,6 +4,7 @@ set(NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_SRC
       main.cpp
 )
 include_directories(
+  ../../
   ../../include
 )   
 
@@ -19,7 +20,7 @@ find_library(CUDART_SHARED
 add_executable(${NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_NAME} ${NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_SRC})
 
 set_property(TARGET ${NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-target_link_libraries(${NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_NAME} PUBLIC nvimgcodecs ${CUDART_SHARED})
+target_link_libraries(${NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_NAME} PUBLIC nvimgcodecs nvpnm_ext_static ${CUDART_SHARED})
 
 install(TARGETS ${NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_NAME}
     DESTINATION bin COMPONENT Applications

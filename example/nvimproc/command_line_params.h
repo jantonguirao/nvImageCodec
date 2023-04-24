@@ -68,7 +68,7 @@ int find_param_index(const char** argv, int argc, const char* parm)
 int process_commandline_params(int argc, const char* argv[], CommandLineParams* params)
 {
     static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"}, {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"},
-        {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pxm"}, {".pgm", "pxm"}, {".pbm", "pxm"}};
+        {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pnm"}, {".pgm", "pnm"}, {".pbm", "pnm"}};
 
     int pidx;
     if ((pidx = find_param_index(argv, argc, "-h")) != -1 || (pidx = find_param_index(argv, argc, "--help")) != -1) {
