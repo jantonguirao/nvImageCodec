@@ -6,7 +6,9 @@
 #include <memory>
 #include <sstream>
 #include <vector>
+#include <cmath>
 #include "log.h"
+#include <nvtx3/nvtx3.hpp>
 
 #include "cuda_decoder.h"
 #include "error_handling.h"
@@ -110,10 +112,13 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(
     if (framework->pinned_allocator && (framework->pinned_allocator->pinned_mem_padding != 0)) {
         XM_CHECK_NVJPEG2K(nvjpeg2kSetPinnedMemoryPadding(framework->pinned_allocator->pinned_mem_padding, handle_));
     }
-    // TODO create resources per thread
-    //nvimgcdcsExecutorDesc_t executor;
-    //framework_->getExecutor(framework_->instance, &executor);
-    //int num_threads = executor->get_num_threads(executor->instance);
+    
+    // create resources per thread
+    nvimgcdcsExecutorDesc_t executor;
+    framework_->getExecutor(framework_->instance, &executor);
+    int num_threads = executor->get_num_threads(executor->instance);
+        
+    decode_state_batch_ = std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(handle_, num_threads);
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id)
@@ -140,6 +145,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(void* instance, nvimgcdcs
 NvJpeg2kDecoderPlugin::Decoder::~Decoder()
 {
     try {
+        decode_state_batch_.reset();
         XM_CHECK_NVJPEG2K(nvjpeg2kDestroy(handle_));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not properly destroy nvjpeg2k decoder");
@@ -190,36 +196,37 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_get_capabilities(
     }
 }
 
-NvJpeg2kDecoderPlugin::DecodeState::DecodeState(NvJpeg2kDecoderPlugin::Decoder* decoder)
-    : decoder_(decoder)
+NvJpeg2kDecoderPlugin::DecodeState::DecodeState(nvjpeg2kHandle_t handle, int num_threads)
+    : handle_(handle)
 {
-    XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateCreate(decoder_->handle_, &handle_));
-    XM_CHECK_CUDA(cudaStreamCreateWithFlags(&stream_, cudaStreamNonBlocking));
-    XM_CHECK_CUDA(cudaEventCreate(&event_));
+    per_thread_.reserve(num_threads);
+    for (int i = 0; i < num_threads; i++) {
+        per_thread_.emplace_back();
+        auto& res = per_thread_.back();
+        XM_CHECK_CUDA(cudaStreamCreateWithFlags(&res.stream_, cudaStreamNonBlocking));
+        XM_CHECK_CUDA(cudaEventCreate(&res.event_));
+        XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateCreate(handle_, &res.state_));
+        res.parse_state_ = std::make_unique<NvJpeg2kDecoderPlugin::ParseState>();
+    }
 }
 
 NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
 {
-    try {
-        if (handle_) {
-            XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateDestroy(handle_));
+    for (auto& res : per_thread_) {
+        try {
+            if (res.event_) {
+                XM_CHECK_CUDA(cudaEventDestroy(res.event_));
+            }
+            if (res.stream_) {
+                XM_CHECK_CUDA(cudaStreamDestroy(res.stream_));
+            }
+            if (res.state_) {
+                XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateDestroy(res.state_));
+            }
+        } catch (const std::runtime_error& e) {
+            NVIMGCDCS_D_LOG_ERROR("Coud not destroy jpeg2k decode state - " << e.what());
         }
-        if (event_) {
-            XM_CHECK_CUDA(cudaEventDestroy(event_));
-        }
-
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not destroy jpeg2k decode state - " << e.what());
     }
-}
-
-NvJpeg2kDecoderPlugin::DecodeState* NvJpeg2kDecoderPlugin::Decoder::getSampleDecodeState(int sample_idx)
-{
-    if (static_cast<size_t>(sample_idx) == per_sample_decode_state_.size()) {
-        per_sample_decode_state_.emplace_back(std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(this));
-    }
-
-    return per_sample_decode_state_[sample_idx].get();
 }
 
 NvJpeg2kDecoderPlugin::ParseState::ParseState()
@@ -237,98 +244,164 @@ NvJpeg2kDecoderPlugin::ParseState::~ParseState()
         NVIMGCDCS_D_LOG_ERROR("Could not destroy nvjpeg2k stream - " << e.what());
     }
 }
-
-NvJpeg2kDecoderPlugin::ParseState* NvJpeg2kDecoderPlugin::Decoder::getSampleParseState(int sample_idx)
+        
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 {
-    if (static_cast<size_t>(sample_idx) == per_sample_parse_state_.size()) {
-        per_sample_parse_state_.emplace_back(std::make_unique<NvJpeg2kDecoderPlugin::ParseState>());
-    }
+    nvimgcdcsExecutorDesc_t executor;
+    framework_->getExecutor(framework_->instance, &executor);
+    executor->launch(
+        executor->instance, device_id_, sample_idx, decode_state_batch_.get(), [](int tid, int sample_idx, void* context) -> void {
+            nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
+            auto* decode_state = reinterpret_cast<NvJpeg2kDecoderPlugin::DecodeState*>(context);
+            auto& t = decode_state->per_thread_[tid];
+            auto* parse_state = t.parse_state_.get();
+            auto jpeg2k_state = t.state_;
+            nvimgcdcsCodeStreamDesc_t code_stream = decode_state->samples_[sample_idx].code_stream;
+            nvimgcdcsImageDesc_t image = decode_state->samples_[sample_idx].image;
+            const nvimgcdcsDecodeParams_t* params = decode_state->samples_[sample_idx].params;
+            auto handle_ = decode_state->handle_;
+            try {
+                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+                image->getImageInfo(image->instance, &image_info);
+                unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-    return per_sample_parse_state_[sample_idx].get();
-}
+                nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+                size_t encoded_stream_data_size = 0;
+                io_stream->size(io_stream->instance, &encoded_stream_data_size);
+                const void* encoded_stream_data = nullptr;
+                io_stream->raw_data(io_stream->instance, &encoded_stream_data);
+                if (!encoded_stream_data) {
+                    if (parse_state->buffer_.size() != encoded_stream_data_size) {
+                        parse_state->buffer_.resize(encoded_stream_data_size);
+                        io_stream->seek(io_stream->instance, 0, SEEK_SET);
+                        size_t read_nbytes = 0;
+                        io_stream->read(io_stream->instance, &read_nbytes, &parse_state->buffer_[0], encoded_stream_data_size);
+                        if (read_nbytes != encoded_stream_data_size) {
+                            NVIMGCDCS_D_LOG_ERROR("Unexpected end-of-stream");
+                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+                            return;
+                        }
+                    }
+                    encoded_stream_data = &parse_state->buffer_[0];
+                }
+                
+                
+                XM_CHECK_NVJPEG2K(nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size, false,
+                    false, parse_state->nvjpeg2k_stream_));
+                std::vector<unsigned char*> decode_output(image_info.num_planes);
+                std::vector<size_t> pitch_in_bytes(image_info.num_planes);
+                nvjpeg2kImage_t output_image;
 
-nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(NvJpeg2kDecoderPlugin::DecodeState* decode_state, ParseState* parse_state,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
-{
-    NVIMGCDCS_D_LOG_TRACE("nvjpeg2k_decode");
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    image->getImageInfo(image->instance, &image_info);
-    unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
+                size_t bytes_per_sample;
+                if (image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
+                    bytes_per_sample = 1;
+                    output_image.pixel_type = NVJPEG2K_UINT8;
+                } else if (image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 ||
+                        image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16) {
+                    bytes_per_sample = 2;
+                    output_image.pixel_type = NVJPEG2K_UINT16;
+                } else {
+                    NVIMGCDCS_D_LOG_ERROR("bit depth not supported");
+                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+                    return;
+                }
 
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
-    size_t encoded_stream_data_size = 0;
-    io_stream->size(io_stream->instance, &encoded_stream_data_size);
-    const void* encoded_stream_data = nullptr;
-    io_stream->raw_data(io_stream->instance, &encoded_stream_data);
-    if (!encoded_stream_data) {
-        if (parse_state->buffer_.size() != encoded_stream_data_size) {
-            parse_state->buffer_.resize(encoded_stream_data_size);
-            io_stream->seek(io_stream->instance, 0, SEEK_SET);
-            size_t read_nbytes = 0;
-            io_stream->read(io_stream->instance, &read_nbytes, &parse_state->buffer_[0], encoded_stream_data_size);
-            if (read_nbytes != encoded_stream_data_size) {
-                NVIMGCDCS_D_LOG_ERROR("Unexpected end-of-stream");
+                nvjpeg2kDecodeParams_t decode_params;
+                nvjpeg2kDecodeParamsCreate(&decode_params);
+                XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, params->enable_color_conversion));
+                size_t row_nbytes;
+                size_t component_nbytes;
+                if (params->enable_roi && image_info.region.ndim > 0) {
+                    auto region = image_info.region;
+                    NVIMGCDCS_D_LOG_DEBUG(
+                        "Setting up ROI :" << region.start[0] << ", " << region.start[1] << ", " << region.end[0] << ", " << region.end[1]);
+                    auto roi_width = region.end[1] - region.start[1];
+                    auto roi_height = region.end[0] - region.start[0];
+                    XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetDecodeArea(decode_params, region.start[1], region.end[1], region.start[0], region.end[0]));
+                    row_nbytes = roi_width * bytes_per_sample;
+                    component_nbytes = roi_height * row_nbytes;
+                } else {
+                    row_nbytes = image_info.plane_info[0].width * bytes_per_sample;
+                    component_nbytes = image_info.plane_info[0].height * row_nbytes;
+                }
+                for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+                    decode_output[p] = device_buffer + p * component_nbytes;
+                    pitch_in_bytes[p] = row_nbytes;
+                }
+
+                output_image.num_components = image_info.num_planes; //assumed planar
+                output_image.pixel_data = (void**)&decode_output[0];
+                output_image.pitch_in_bytes = &pitch_in_bytes[0];
+
+                std::unique_ptr<std::remove_pointer<nvjpeg2kDecodeParams_t>::type, decltype(&nvjpeg2kDecodeParamsDestroy)> decode_params_raii(
+                    decode_params, &nvjpeg2kDecodeParamsDestroy);
+
+                // Waits for GPU stage from previous iteration (on this thread)
+                XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
+                
+                XM_CHECK_NVJPEG2K(nvjpeg2kDecodeImage(
+                    handle_, jpeg2k_state, parse_state->nvjpeg2k_stream_, decode_params_raii.get(), &output_image, t.stream_));
+
+                XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));
+                XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, t.event_));
+
+                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
+            } catch (const std::runtime_error& e) {
+                NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg2k code stream - " << e.what());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
             }
+    });
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decodeBatch()
+{
+    //NVTX3_FUNC_RANGE();
+    
+    /*
+    auto subsampling_score = [](nvimgcdcsChromaSubsampling_t subsampling) -> uint32_t {
+        switch (subsampling) {
+        case NVIMGCDCS_SAMPLING_444:
+            return 8;
+        case NVIMGCDCS_SAMPLING_422:
+            return 7;
+        case NVIMGCDCS_SAMPLING_420:
+            return 6;
+        case NVIMGCDCS_SAMPLING_440:
+            return 5;
+        case NVIMGCDCS_SAMPLING_411:
+            return 4;
+        case NVIMGCDCS_SAMPLING_410:
+            return 3;
+        case NVIMGCDCS_SAMPLING_GRAY:
+            return 2;
+        case NVIMGCDCS_SAMPLING_410V:
+        default:
+            return 1;
         }
-        encoded_stream_data = &parse_state->buffer_[0];
+    };
+
+    int nsamples = decode_state_batch_->samples_.size();
+    using sort_elem_t = std::tuple<uint32_t, uint64_t, int>;
+    std::vector<sort_elem_t> sample_meta(nsamples);
+    for (int i = 0; i < nsamples; i++) {
+        nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[i].image;
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image->getImageInfo(image->instance, &image_info);
+        uint64_t area = image_info.plane_info[0].height * image_info.plane_info[0].width;
+        sample_meta[i] = sort_elem_t{subsampling_score(image_info.chroma_subsampling), area, i};
     }
-
-    XM_CHECK_NVJPEG2K(nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size, false,
-        false, parse_state->nvjpeg2k_stream_));
-    std::vector<unsigned char*> decode_output(image_info.num_planes);
-    std::vector<size_t> pitch_in_bytes(image_info.num_planes);
-    nvjpeg2kImage_t output_image;
-
-    size_t bytes_per_sample;
-    if (image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
-        bytes_per_sample = 1;
-        output_image.pixel_type = NVJPEG2K_UINT8;
-    } else if (image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 ||
-               image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16) {
-        bytes_per_sample = 2;
-        output_image.pixel_type = NVJPEG2K_UINT16;
-    } else {
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+    auto order = [](const sort_elem_t& lhs, const sort_elem_t& rhs) { return lhs > rhs; };
+    std::sort(sample_meta.begin(), sample_meta.end(), order);
+    for (auto& elem : sample_meta) {
+        int sample_idx = std::get<2>(elem);
+        this->decode(sample_idx);
     }
-
-    nvjpeg2kDecodeParams_t decode_params;
-    nvjpeg2kDecodeParamsCreate(&decode_params);
-    XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, params->enable_color_conversion));
-    size_t row_nbytes;
-    size_t component_nbytes;
-    if (params->enable_roi && image_info.region.ndim > 0) {
-        auto region = image_info.region;
-        NVIMGCDCS_D_LOG_DEBUG(
-            "Setting up ROI :" << region.start[0] << ", " << region.start[1] << ", " << region.end[0] << ", " << region.end[1]);
-        auto roi_width = region.end[1] - region.start[1];
-        auto roi_height = region.end[0] - region.start[0];
-        XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetDecodeArea(decode_params, region.start[1], region.end[1], region.start[0], region.end[0]));
-        row_nbytes = roi_width * bytes_per_sample;
-        component_nbytes = roi_height * row_nbytes;
-    } else {
-        row_nbytes = image_info.plane_info[0].width * bytes_per_sample;
-        component_nbytes = image_info.plane_info[0].height * row_nbytes;
+    */
+    int batch_size = decode_state_batch_->samples_.size();
+    for (int i = 0; i < batch_size; i++) {
+        this->decode(i);
     }
-    for (uint32_t p = 0; p < image_info.num_planes; ++p) {
-        decode_output[p] = device_buffer + p * component_nbytes;
-        pitch_in_bytes[p] = row_nbytes;
-    }
-
-    output_image.num_components = image_info.num_planes; //assumed planar
-    output_image.pixel_data = (void**)&decode_output[0];
-    output_image.pitch_in_bytes = &pitch_in_bytes[0];
-
-    std::unique_ptr<std::remove_pointer<nvjpeg2kDecodeParams_t>::type, decltype(&nvjpeg2kDecodeParamsDestroy)> decode_params_raii(
-        decode_params, &nvjpeg2kDecodeParamsDestroy);
-
-    XM_CHECK_NVJPEG2K(nvjpeg2kDecodeImage(
-        handle_, decode_state->handle_, parse_state->nvjpeg2k_stream_, decode_params_raii.get(), &output_image, decode_state->stream_));
-
-    XM_CHECK_CUDA(cudaEventRecord(decode_state->event_, decode_state->stream_));
-    XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, decode_state->event_));
-
-    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -346,17 +419,13 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsD
             NVIMGCDCS_D_LOG_ERROR("Batch size lower than 1");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
-        auto handle = reinterpret_cast<NvJpeg2kDecoderPlugin::Decoder*>(decoder);
-        nvimgcdcsStatus_t result = NVIMGCDCS_STATUS_SUCCESS;
+        auto *handle = reinterpret_cast<NvJpeg2kDecoderPlugin::Decoder*>(decoder);
+        handle->decode_state_batch_->samples_.clear();
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            auto dec_state = handle->getSampleDecodeState(sample_idx);
-            auto par_state = handle->getSampleParseState(sample_idx);
-            result = handle->decode(dec_state, par_state, code_streams[sample_idx], images[sample_idx], params);
-            if (result != NVIMGCDCS_STATUS_SUCCESS) {
-                return result;
-            }
+            handle->decode_state_batch_->samples_.push_back(
+                NvJpeg2kDecoderPlugin::DecodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
         }
-        return result;
+        return handle->decodeBatch();
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg2k batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
