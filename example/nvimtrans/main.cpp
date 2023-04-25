@@ -468,7 +468,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
 
-    nvimgcdcsEncodeParams_t encode_params;
+    nvimgcdcsEncodeParams_t encode_params{};
     nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params;
     nvimgcdcsJpegEncodeParams_t jpeg_encode_params;
     fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
@@ -497,6 +497,10 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
 
     int warmup = 0;
     while (total_processed < total_images && ret == EXIT_SUCCESS) {
+        images.resize(params.batch_size);
+        in_code_streams.resize(params.batch_size);
+        out_code_streams.resize(params.batch_size);
+
         double start_reading_time = wtime();
         ret = read_next_batch(image_names, params.batch_size, file_iter, file_data, file_len, current_names, params.verbose);
         double reading_time = wtime() - start_reading_time;
@@ -518,25 +522,28 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
 
         std::vector<nvimgcdcsProcessingStatus_t> decode_status(status_size);
         nvimgcdcsFutureGetProcessingStatus(decode_future, &decode_status[0], &status_size);
-        std::vector<nvimgcdcsImage_t> img_filtered;
-        std::vector<nvimgcdcsCodeStream_t> out_cs_filtered;
         for (int i = 0; i < decode_status.size(); ++i) {
             if (decode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
                 std::cerr << "Error: Something went wrong during decoding image #" << i << " it will not be encoded" << std::endl;
-            } else {
-                img_filtered.push_back(images[i]);
-                out_cs_filtered.push_back(out_code_streams[i]);
-            }
+                if (images[i])
+                    nvimgcdcsImageDestroy(images[i]);
+                images.erase(images.begin() + i);
+                if (out_code_streams[i])
+                    nvimgcdcsCodeStreamDestroy(out_code_streams[i]);
+                out_code_streams.erase(out_code_streams.begin() + i);
+                --i;
+            } 
         }
+        
         nvimgcdcsFutureDestroy(decode_future);
 
-        ret = prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_cs_filtered, img_filtered,
+        ret = prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_code_streams, images,
             encode_params, params, output_path);
 
         nvimgcdcsFuture_t encode_future;
         double start_encoding_time = wtime();
         CHECK_NVIMGCDCS(nvimgcdcsEncoderEncode(
-            encoder, img_filtered.data(), out_cs_filtered.data(), out_cs_filtered.size(), &encode_params, &encode_future));
+            encoder, images.data(), out_code_streams.data(), out_code_streams.size(), &encode_params, &encode_future));
 
         nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);
         double encode_time = wtime() - start_encoding_time; //TODO add gpu time
