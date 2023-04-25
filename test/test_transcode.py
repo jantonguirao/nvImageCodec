@@ -70,23 +70,12 @@ def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, oupu
     ("base/rgb_25_444.jpg", "jpeg",   "rgb_25_444-jpg.jpg", "", "9f9a2c181e981be66d7f0f2a0139935e"),
     ("base/rgb_25_444.jpg", "jpeg2k", "rgb_25_444-jpg.jp2", "", "dda34d8944767382cc532cf334b9abbb"),
 
+    #test pnm
+    ("base/4k_lossless.bmp", "pnm", "4k_lossless-bmp.ppm","", "b452d532ba80d9e560baabe8208a04f5"),
+    ("base/4k_lossless_q95_444.jpg", "pnm", "4k_lossless-jpg.ppm","", "083f9062bd227cba62471f5ae3b85df1"),
+    ("base/4k_lossless.jp2", "pnm", "4k_lossless-jp2.ppm", "", "b452d532ba80d9e560baabe8208a04f5"),
     ]
 )
 def test_imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum):
     imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum)
 
-
-@t.mark.parametrize("exec_dir_path, transcode_exec",
-                    [(os.path.abspath(os.path.join(os.path.dirname(__file__), "../build/bin/bin")), "nvimtrans"),
-    ]
-)
-@t.mark.parametrize(
-    "input_img_file,codec,output_img_file,params,check_sum",
-    [
-     ("base/4k_lossless.bmp", "pxm", "4k_lossless-bmp.ppm","", "b452d532ba80d9e560baabe8208a04f5"),
-     ("base/4k_lossless_q95_444.jpg", "pxm", "4k_lossless-jpg.ppm","", "083f9062bd227cba62471f5ae3b85df1"),
-     ("base/4k_lossless.jp2", "pxm", "4k_lossless-jp2.ppm", "", "b452d532ba80d9e560baabe8208a04f5"),
-    ]
-)
-def test_nvimtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum):
-    imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum)

@@ -3,6 +3,7 @@
 #include <cstring>
 #include <future>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -55,12 +56,67 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
                 }
             }
         }
+
+        nvimgcdcsJpeg2kEncodeParams_t* j2k_encode_params = static_cast<nvimgcdcsJpeg2kEncodeParams_t*>(params->next);
+        while (j2k_encode_params && j2k_encode_params->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS)
+            j2k_encode_params = static_cast<nvimgcdcsJpeg2kEncodeParams_t*>(j2k_encode_params->next);
+        if (j2k_encode_params) {
+            if ((j2k_encode_params->code_block_w != 32 || j2k_encode_params->code_block_h != 32) &&
+                (j2k_encode_params->code_block_w != 64 || j2k_encode_params->code_block_h != 64)) {
+                *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
+                NVIMGCDCS_E_LOG_WARNING("Unsupported block size: " << j2k_encode_params->code_block_w << "x"
+                                                                   << j2k_encode_params->code_block_h << "(Valid values: 32, 64)");
+            }
+            if (j2k_encode_params->num_resolutions > NVJPEG2K_MAXRES) {
+                NVIMGCDCS_E_LOG_WARNING(
+                    "Unsupported number of resolutions: " << j2k_encode_params->num_resolutions << " (max = " << NVJPEG2K_MAXRES << ") ");
+                *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
+            }
+        }
+
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*image)->getImageInfo((*image)->instance, &image_info);
+        nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
+
+        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
+            NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
+        if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+        }
+        static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{
+            NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420};
+        if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if (out_image_info.chroma_subsampling != image_info.chroma_subsampling) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+
+        static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
+            NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED,
+            NVIMGCDCS_SAMPLEFORMAT_P_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_P_Y,
+            NVIMGCDCS_SAMPLEFORMAT_P_YUV,
+        };
+        if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+
+        static const std::set<nvimgcdcsSampleDataType_t> supported_sample_type{
+            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16};
+        for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+            auto sample_type = image_info.plane_info[p].sample_type;
+            if (supported_sample_type.find(sample_type) == supported_sample_type.end()) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+            }
+        }
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
-            nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
+    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg2k_can_encode");
@@ -346,7 +402,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsE
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not encode jpeg2k batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
-            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }

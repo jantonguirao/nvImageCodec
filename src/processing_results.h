@@ -28,7 +28,7 @@ struct ProcessingResult
 
     static ProcessingResult success() { return {NVIMGCDCS_PROCESSING_STATUS_SUCCESS, {}}; }
     static ProcessingResult failure(nvimgcdcsProcessingStatus_t status) { return {status, {}}; }
-    static ProcessingResult failure(std::exception_ptr exception) { return {NVIMGCDCS_PROCESSING_STATUS_ERROR, std::move(exception)}; }
+    static ProcessingResult failure(std::exception_ptr exception) { return {NVIMGCDCS_PROCESSING_STATUS_FAIL, std::move(exception)}; }
 };
 
 class ProcessingResultsSharedState;

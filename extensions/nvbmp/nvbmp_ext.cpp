@@ -5,12 +5,12 @@ extern nvimgcdcsParserDesc nvbmp_parser;
 extern nvimgcdcsEncoderDesc nvbmp_encoder;
 extern nvimgcdcsDecoderDesc nvbmp_decoder;
 
-nvimgcdcsStatus_t nvimgcdcsExtensionCreate(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t nvbmp_extension_create(void* instance, nvimgcdcsExtension_t* extension,
+    const nvimgcdcsFrameworkDesc_t framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
 
-    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");
+    NVIMGCDCS_LOG_TRACE("nvbmp_extension_create");
     framework->registerParser(framework->instance, &nvbmp_parser);
     framework->registerEncoder(framework->instance, &nvbmp_encoder);
     framework->registerDecoder(framework->instance, &nvbmp_decoder);
@@ -18,10 +18,9 @@ nvimgcdcsStatus_t nvimgcdcsExtensionCreate(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t nvbmp_extension_destroy(nvimgcdcsExtension_t extension)
 {
-    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionDestroy");
+    NVIMGCDCS_LOG_TRACE("nvbmp_extension_destroy");
     Logger::get().unregisterLogFunc();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -31,11 +30,12 @@ nvimgcdcsExtensionDesc_t nvbmp_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
+    NULL,
     "nvbmp_extension",  // id
      0x00000100,        // version
 
-    nvimgcdcsExtensionCreate,
-    nvimgcdcsExtensionDestroy
+    nvbmp_extension_create,
+    nvbmp_extension_destroy
 };
 // clang-format on  
 

@@ -1,4 +1,5 @@
 #include <cuda_runtime_api.h>
+
 #include <nvimgcodecs.h>
 #include <cassert>
 #include <cstring>
@@ -7,8 +8,10 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "command_line_params.h"
 
+#include <extensions/nvpnm/nvpnm_ext.h>
+
+#include "command_line_params.h"
 namespace fs = std::filesystem;
 
 uint32_t verbosity2severity(int verbose)
@@ -159,6 +162,11 @@ int main(int argc, const char* argv[])
     instance_create_info.message_type            = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
     instance_create_info.num_cpu_threads = 10;
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
+    
+    nvimgcdcsExtension_t pnm_extension;
+    nvimgcdcsExtensionDesc_t pnm_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
+    get_nvpnm_extension_desc(&pnm_extension_desc);
+    nvimgcdcsExtensionCreate(instance, &pnm_extension, &pnm_extension_desc);
 
     nvimgcdcsImage_t image;
 
@@ -169,6 +177,8 @@ int main(int argc, const char* argv[])
     nvimgcdcsImWrite(instance, image, output_file.string().c_str(), write_params.data());
 
     nvimgcdcsImageDestroy(image);
+
+    nvimgcdcsExtensionDestroy(pnm_extension);
     nvimgcdcsInstanceDestroy(instance);
 
     return EXIT_SUCCESS;

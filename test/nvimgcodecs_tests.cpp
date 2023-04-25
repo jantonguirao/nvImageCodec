@@ -38,8 +38,8 @@ int main(int argc, char **argv)
 
     nvimgcdcs::test::resources_dir = getCmdOption(argv, argv + argc, "--resources_dir");
     if (nvimgcdcs::test::resources_dir.empty()) {
-        std::cerr << "Need a valid resources dir (e.g. --resources_dir path/to/resources)\n";
-        return 1;
+        std::cerr << "Some tests needs a valid resources dir (e.g. --resources_dir path/to/resources)\n";
+        nvimgcdcs::test::resources_dir = "../../resources";
     }
 
     cudaDeviceProp props;

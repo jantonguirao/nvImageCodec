@@ -33,18 +33,14 @@ constexpr std::string_view defaultModuleDir = "/usr/lib/nvimgcodecs/plugins";
 constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plugins";
 #endif
 
-PluginFramework::PluginFramework(ICodecRegistry* codec_registry,
-    std::unique_ptr<IDirectoryScaner> directory_scaner,
-    std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
-    nvimgcdcsDeviceAllocator_t* device_allocator,
+PluginFramework::PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr<IDirectoryScaner> directory_scaner,
+    std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor, nvimgcdcsDeviceAllocator_t* device_allocator,
     nvimgcdcsPinnedAllocator_t* pinned_allocator)
     : directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
     , executor_(std::move(executor))
-    , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, "nvImageCodecs", 0x000100,
-          this, device_allocator, pinned_allocator, &static_register_encoder,
-          &static_register_decoder, &static_register_parser, &static_get_executor,
-          &static_log}
+    , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, this, "nvImageCodecs", 0x000100, device_allocator, pinned_allocator,
+          &static_register_encoder, &static_register_decoder, &static_register_parser, &static_get_executor, &static_log}
     , codec_registry_(codec_registry)
     , plugin_dirs_{defaultModuleDir}
 {
@@ -55,44 +51,39 @@ PluginFramework::~PluginFramework()
     unregisterAllExtensions();
 }
 
-nvimgcdcsStatus_t PluginFramework::static_register_encoder(
-    void* instance, const nvimgcdcsEncoderDesc_t desc)
+nvimgcdcsStatus_t PluginFramework::static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerEncoder(desc);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_register_decoder(
-    void* instance, const nvimgcdcsDecoderDesc_t desc)
+nvimgcdcsStatus_t PluginFramework::static_register_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerDecoder(desc);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_register_parser(
-    void* instance, const struct nvimgcdcsParserDesc* desc)
+nvimgcdcsStatus_t PluginFramework::static_register_parser(void* instance, const struct nvimgcdcsParserDesc* desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerParser(desc);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_get_executor(
-    void* instance, nvimgcdcsExecutorDesc_t* result)
+nvimgcdcsStatus_t PluginFramework::static_get_executor(void* instance, nvimgcdcsExecutorDesc_t* result)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->getExecutor(result);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_log(void* instance,
-    const nvimgcdcsDebugMessageSeverity_t message_severity,
+nvimgcdcsStatus_t PluginFramework::static_log(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
     const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->log(message_severity, message_type, data);
 }
 
-nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* extension,
-    const nvimgcdcsExtensionDesc_t* extension_desc, const Module& module)
+nvimgcdcsStatus_t PluginFramework::registerExtension(
+    nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc, const Module& module)
 {
     if (extension_desc == nullptr) {
         NVIMGCDCS_LOG_ERROR("Extension description cannot be null");
@@ -104,8 +95,7 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
-    NVIMGCDCS_LOG_INFO(
-        "Registering extension " << extension_desc->id << " version:" << extension_desc->version);
+    NVIMGCDCS_LOG_INFO("Registering extension " << extension_desc->id << " version:" << extension_desc->version);
 
     if (extension_desc->create == nullptr) {
         NVIMGCDCS_LOG_ERROR("Could not find  'create' function in extension module");
@@ -121,7 +111,7 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
     internal_extension.desc_ = *extension_desc;
     internal_extension.module_ = module;
     nvimgcdcsStatus_t status =
-        internal_extension.desc_.create(&framework_desc_, &internal_extension.handle_);
+        internal_extension.desc_.create(internal_extension.desc_.instance, &internal_extension.handle_, &framework_desc_);
     if (status != NVIMGCDCS_STATUS_SUCCESS) {
         NVIMGCDCS_LOG_ERROR("Could not create extension");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
@@ -133,8 +123,7 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::registerExtension(
-    nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc)
+nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc)
 {
     Module module;
     module.lib_handle_ = nullptr;
@@ -144,7 +133,7 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(
 
 nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::vector<Extension>::const_iterator it)
 {
-    it->desc_.destroy(&framework_desc_, it->handle_);
+    it->desc_.destroy(it->handle_);
 
     if (it->module_.lib_handle_ != nullptr) {
         NVIMGCDCS_LOG_INFO("Unloading extension module:" << it->module_.path_);
@@ -156,8 +145,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::vector<Extension>::c
 
 nvimgcdcsStatus_t PluginFramework::unregisterExtension(nvimgcdcsExtension_t extension)
 {
-    auto it = std::find_if(extensions_.begin(), extensions_.end(),
-        [&](auto e) -> bool { return e.handle_ == extension; });
+    auto it = std::find_if(extensions_.begin(), extensions_.end(), [&](auto e) -> bool { return e.handle_ == extension; });
     if (it == extensions_.end()) {
         NVIMGCDCS_LOG_WARNING("Could not find extension to unregister ");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
@@ -213,8 +201,7 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
 
         return;
     }
-    nvimgcdcsExtensionDesc_t extension_desc{};
-    extension_desc.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
+    nvimgcdcsExtensionDesc_t extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
     nvimgcdcsStatus_t status = module.extension_entry_(&extension_desc);
     if (status != NVIMGCDCS_STATUS_SUCCESS) {
         NVIMGCDCS_LOG_ERROR("Could not get extension module description");
@@ -235,8 +222,7 @@ ICodec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
 {
     ICodec* codec = codec_registry_->getCodecByName(codec_name);
     if (codec == nullptr) {
-        NVIMGCDCS_LOG_INFO(
-            "Codec " << codec_name << " not yet registered, registering for first time");
+        NVIMGCDCS_LOG_INFO("Codec " << codec_name << " not yet registered, registering for first time");
         std::unique_ptr<Codec> new_codec = std::make_unique<Codec>(codec_name);
         codec_registry_->registerCodec(std::move(new_codec));
         codec = codec_registry_->getCodecByName(codec_name);
@@ -251,8 +237,7 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t 
     NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
-    std::unique_ptr<IImageEncoderFactory> encoder_factory =
-        std::make_unique<ImageEncoderFactory>(desc);
+    std::unique_ptr<IImageEncoderFactory> encoder_factory = std::make_unique<ImageEncoderFactory>(desc);
     codec->registerEncoderFactory(std::move(encoder_factory), 1);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -264,8 +249,7 @@ nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t 
     NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
-    std::unique_ptr<IImageDecoderFactory> decoder_factory =
-        std::make_unique<ImageDecoderFactory>(desc);
+    std::unique_ptr<IImageDecoderFactory> decoder_factory = std::make_unique<ImageDecoderFactory>(desc);
     codec->registerDecoderFactory(std::move(decoder_factory), 1);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -277,8 +261,7 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDe
     NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
-    std::unique_ptr<IImageParserFactory> parser_factory =
-        std::make_unique<ImageParserFactory>(desc);
+    std::unique_ptr<IImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
     codec->registerParserFactory(std::move(parser_factory), 1);
     return NVIMGCDCS_STATUS_SUCCESS;
 }

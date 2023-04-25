@@ -276,19 +276,31 @@ extern "C"
     typedef enum
     {
         NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = 0,
-        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 1,
-        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 2,
-        NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED = 3,
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED = 4,
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED = 5,
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 6,
-        NVIMGCDCS_PROCESSING_STATUS_SCALING_UNSUPPORTED = 7,
-        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN_ORIENTATION = 8,
-        NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED = 9,
-        NVIMGCDCS_PROCESSING_STATUS_NUM_COMPONENTS_UNSUPPORTED = 10,
-        NVIMGCDCS_PROCESSING_STATUS_ERROR = 11,
+        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0b01,
+
+        NVIMGCDCS_PROCESSING_STATUS_FAIL = 0b11,
+        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 0b111,
+        NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED = 0b1011,
+        NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED = 0b10011,
+        NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED = 0b100011,
+        NVIMGCDCS_PROCESSING_STATUS_RESOLUTION_UNSUPPORTED = 0b1000011,
+
+        //These below when returned from canDecode/canEncode mean that processing
+        //is possible but with different image format or parameters
+        NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED = 0b101,
+        NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED = 0b1001,
+        NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED = 0b10001,
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED = 0b100001,
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED = 0b1000001,
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 0b10000001,
+        NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED = 0b100000001,
+        NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED = 0b1000000001,
+        NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED = 0b10000000001,
+
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsProcessingStatus_t;
+    } nvimgcdcsProcessingStatus;
+
+    typedef uint32_t nvimgcdcsProcessingStatus_t;
 
     typedef struct
     {
@@ -361,7 +373,7 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        nvimgcdcsJpegEncoding_t encoding;
+       
         bool optimized_huffman;
     } nvimgcdcsJpegEncodeParams_t;
 
@@ -603,9 +615,9 @@ extern "C"
         nvimgcdcsStructureType_t type;
         const void* next;
 
+        void* instance;
         const char* id; // framework named identifier e.g. nvImageCodecs
         uint32_t version;
-        void* instance;
 
         nvimgcdcsDeviceAllocator_t* device_allocator;
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
@@ -625,11 +637,12 @@ extern "C"
         nvimgcdcsStructureType_t type;
         void* next;
 
+        void* instance;
         const char* id;
         uint32_t version;
 
-        nvimgcdcsStatus_t (*create)(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension);
-        nvimgcdcsStatus_t (*destroy)(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework);
+        nvimgcdcsStatus_t (*destroy)(nvimgcdcsExtension_t extension);
     } nvimgcdcsExtensionDesc_t;
 
     typedef nvimgcdcsStatus_t (*nvimgcdcsExtensionModuleEntryFunc_t)(nvimgcdcsExtensionDesc_t* ext_desc);
@@ -694,12 +707,18 @@ extern "C"
     //Decoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
+        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
+        bool force_format);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
         nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
+        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
+        bool force_format);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
         nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);
 

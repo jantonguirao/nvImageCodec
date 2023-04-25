@@ -12,12 +12,12 @@
 #include <nvimgcodecs.h>
 #include <vector>
 
-#include "parsers/byte_io.h"
-#include "parsers/exif.h"
-#include "log.h"
-#include "logger.h"
 #include "exception.h"
 #include "exif_orientation.h"
+#include "log.h"
+#include "logger.h"
+#include "parsers/byte_io.h"
+#include "parsers/exif.h"
 
 namespace nvimgcdcs {
 
@@ -34,21 +34,23 @@ constexpr jpeg_marker_t app14_marker = {0xff, 0xee};
 
 constexpr jpeg_exif_header_t exif_header = {'E', 'x', 'i', 'f', 0, 0};
 
-bool IsValidMarker(const jpeg_marker_t &marker) {
-  return marker[0] == 0xff && marker[1] != 0x00;
+bool IsValidMarker(const jpeg_marker_t& marker)
+{
+    return marker[0] == 0xff && marker[1] != 0x00;
 }
 
-bool IsSofMarker(const jpeg_marker_t &marker) {
-  // According to https://www.w3.org/Graphics/JPEG/itu-t81.pdf table B.1 Marker code assignments
-  // SOF markers are from range 0xFFC0-0xFFCF, excluding 0xFFC4, 0xFFC8 and 0xFFCC.
-  if (!IsValidMarker(marker) || marker[1] < 0xc0 || marker[1] > 0xcf) return false;
-  return marker[1] != 0xc4 && marker[1] != 0xc8 && marker[1] != 0xcc;
+bool IsSofMarker(const jpeg_marker_t& marker)
+{
+    // According to https://www.w3.org/Graphics/JPEG/itu-t81.pdf table B.1 Marker code assignments
+    // SOF markers are from range 0xFFC0-0xFFCF, excluding 0xFFC4, 0xFFC8 and 0xFFCC.
+    if (!IsValidMarker(marker) || marker[1] < 0xc0 || marker[1] > 0xcf)
+        return false;
+    return marker[1] != 0xc4 && marker[1] != 0xc8 && marker[1] != 0xcc;
 }
 
 nvimgcdcsSampleDataType_t precision_to_sample_type(int precision)
 {
-    return precision == 8 ? NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8
-                          : NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
+    return precision == 8 ? NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 : NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
 }
 
 nvimgcdcsChromaSubsampling_t chroma_subsampling_from_factors(
@@ -97,16 +99,15 @@ nvimgcdcsChromaSubsampling_t chroma_subsampling_from_factors(
     return NVIMGCDCS_SAMPLING_UNSUPPORTED;
 }
 
-}  // namespace
+} // namespace
 
 JPEGParserPlugin::JPEGParserPlugin()
     : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr,
-          this,            // instance
+          this,          // instance
           "jpeg_parser", // id
-          0x00000100,      // version
-          "jpeg",          // codec_type
-          static_can_parse, static_create, Parser::static_destroy,
-          Parser::static_create_parse_state, Parser::static_destroy_parse_state,
+          0x00000100,    // version
+          "jpeg",        // codec_type
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_create_parse_state, Parser::static_destroy_parse_state,
           Parser::static_get_image_info, Parser::static_get_capabilities}
 {
 }
@@ -125,8 +126,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(
-    void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("jpeg_parser_can_parse");
@@ -147,8 +147,7 @@ JPEGParserPlugin::Parser::Parser()
 
 nvimgcdcsStatus_t JPEGParserPlugin::create(nvimgcdcsParser_t* parser)
 {
-    *parser = reinterpret_cast<nvimgcdcsParser_t>(
-        new JPEGParserPlugin::Parser());
+    *parser = reinterpret_cast<nvimgcdcsParser_t>(new JPEGParserPlugin::Parser());
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -181,8 +180,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::getCapabilities(
-    const nvimgcdcsCapability_t** capabilities, size_t* size)
+nvimgcdcsStatus_t JPEGParserPlugin::Parser::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
     if (capabilities) {
         *capabilities = capabilities_.data();
@@ -218,8 +216,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::createParseState(nvimgcdcsParseState
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_create_parse_state(
-    nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
+nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
     try {
         NVIMGCDCS_LOG_TRACE("JPEG create_parse_state");
@@ -233,8 +230,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_create_parse_state(
     }
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy_parse_state(
-    nvimgcdcsParseState_t parse_state)
+nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
 {
     try {
         NVIMGCDCS_LOG_TRACE("jpeg_destroy_parse_state");
@@ -247,9 +243,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy_parse_state(
     }
 }
 
-
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(
-    nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
     try {
@@ -309,15 +303,15 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(
                 num_components = ReadValue<uint8_t>(io_stream);
 
                 if (num_components > 4)
-                    return NVIMGCDCS_STATUS_BAD_CODESTREAM;  // should not happen
+                    return NVIMGCDCS_STATUS_BAD_CODESTREAM; // should not happen
                 std::array<std::pair<uint8_t, uint8_t>, 4> sampling_factors;
                 for (int c = 0; c < num_components; c++) {
-                    io_stream->skip(io_stream->instance, 1);  // component_id
+                    io_stream->skip(io_stream->instance, 1); // component_id
                     auto temp = ReadValue<uint8_t>(io_stream);
                     auto horizontal_sampling_factor = temp >> 4;
                     auto vertical_sampling_factor = temp & 0x0F;
                     sampling_factors[c] = {horizontal_sampling_factor, vertical_sampling_factor};
-                    io_stream->skip(io_stream->instance, 1);  // quantization table selector
+                    io_stream->skip(io_stream->instance, 1); // quantization table selector
                 }
                 uint8_t yh = num_components > 0 ? sampling_factors[0].first : 0;
                 uint8_t yv = num_components > 0 ? sampling_factors[0].second : 0;
@@ -349,7 +343,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(
                 constexpr std::array<uint8_t, 5> adobe_signature = {0x41, 0x64, 0x6F, 0x62, 0x65}; /// Adobe in ASCII
                 auto signature = ReadValue<std::array<uint8_t, 5>>(io_stream);
                 if (size == app14_data_len && signature == adobe_signature) {
-                    io_stream->skip(io_stream->instance, 2 + 2 + 2);  ////version, flags0, flags1
+                    io_stream->skip(io_stream->instance, 2 + 2 + 2); ////version, flags0, flags1
                     adobe_transform = ReadValue<uint8_t>(io_stream);
                 }
             }
@@ -365,7 +359,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(
         image_info->orientation = orientation;
         image_info->chroma_subsampling = subsampling;
 
-        switch(num_components) {
+        switch (num_components) {
         case 1:
             image_info->color_spec = NVIMGCDCS_COLORSPEC_GRAY;
             break;
@@ -407,8 +401,8 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_image_info(nvimgcdcsParser_t parser,
-    nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_image_info(
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
@@ -425,8 +419,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_image_info(nvimgcdcsParse
 
 static auto jpeg_parser_plugin = JPEGParserPlugin();
 
-nvimgcdcsStatus_t jpeg_parser_extension_create(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t jpeg_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     NVIMGCDCS_LOG_TRACE("extension_create");
 
@@ -435,8 +428,7 @@ nvimgcdcsStatus_t jpeg_parser_extension_create(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t jpeg_parser_extension_destroy(
-    const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t jpeg_parser_extension_destroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("jpeg_parser_extension_destroy");
 
@@ -448,6 +440,7 @@ nvimgcdcsExtensionDesc_t jpeg_parser_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
+    NULL,
     "jpeg_parser_extension",  // id
      0x00000100,              // version
 
@@ -470,4 +463,4 @@ nvimgcdcsStatus_t get_jpeg_parser_extension_desc(nvimgcdcsExtensionDesc_t* ext_d
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-}  // namespace nvimgcdcs
+} // namespace nvimgcdcs

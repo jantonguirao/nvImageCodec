@@ -28,6 +28,7 @@ class CodeStream : public ICodeStream
 {
   public:
     explicit CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStreamFactory> io_stream_factory);
+    ~CodeStream();
     void parseFromFile(const std::string& file_name) override;
     void parseFromMem(const unsigned char* data, size_t size) override;
     void setOutputToFile(const char* file_name, const char* codec_name) override;

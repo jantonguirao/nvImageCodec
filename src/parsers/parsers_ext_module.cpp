@@ -20,8 +20,7 @@
 
 namespace nvimgcdcs {
 
-
-nvimgcdcsStatus_t parsers_extension_create(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     NVIMGCDCS_LOG_TRACE("parsers_extension_create");
 
@@ -43,7 +42,7 @@ nvimgcdcsStatus_t parsers_extension_create(const nvimgcdcsFrameworkDesc_t framew
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t parsers_extension_destroy(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t parsers_extension_destroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("parsers_extension_destroy");
 
@@ -55,6 +54,7 @@ nvimgcdcsExtensionDesc_t parsers_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
+    NULL,
     "parsers",    // id
      0x00000100,  // version
 

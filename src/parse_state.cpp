@@ -11,17 +11,18 @@
 
 namespace nvimgcdcs {
 
-ParseState::ParseState(
-    const struct nvimgcdcsParserDesc* parser_desc, nvimgcdcsParser_t parser)
+ParseState::ParseState(const struct nvimgcdcsParserDesc* parser_desc, nvimgcdcsParser_t parser)
     : parser_desc_(parser_desc)
     , parser_(parser)
+    , parse_state_(nullptr)
 {
     parser_desc_->createParseState(parser_, &parse_state_);
 }
 
 ParseState::~ParseState()
 {
-    parser_desc_->destroyParseState(parse_state_);
+    if (parse_state_)
+        parser_desc_->destroyParseState(parse_state_);
 }
 
 nvimgcdcsParseState_t ParseState::getInternalParseState()

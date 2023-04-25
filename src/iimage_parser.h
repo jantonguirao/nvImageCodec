@@ -19,12 +19,11 @@ class IParseState;
 class IImageParser
 {
   public:
-    virtual ~IImageParser()                  = default;
-    virtual std::string getParserId() const  = 0;
+    virtual ~IImageParser() = default;
+    virtual std::string getParserId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual nvimgcdcsStatus_t getImageInfo(
-        nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info) = 0;
-    virtual std::unique_ptr<IParseState> createParseState()                       = 0;
+    virtual nvimgcdcsStatus_t getImageInfo(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info) = 0;
+    virtual std::unique_ptr<IParseState> createParseState() = 0;
 };
 
 } // namespace nvimgcdcs

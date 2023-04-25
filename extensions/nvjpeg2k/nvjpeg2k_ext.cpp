@@ -30,12 +30,10 @@ struct NvJpeg2kImgCodecsExtension
 
 } // namespace nvjpeg2k
 
-
-
-nvimgcdcsStatus_t nvimgcdcsNvJ2kExtensionCreate(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t nvjpeg2k_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
-    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");
+    NVIMGCDCS_LOG_TRACE("nvjpeg2k_extension_create");
     try {
         XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
@@ -46,11 +44,10 @@ nvimgcdcsStatus_t nvimgcdcsNvJ2kExtensionCreate(const nvimgcdcsFrameworkDesc_t f
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvimgcdcsNvJ2kExtensionDestroy(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t nvjpeg2k_extension_destroy(nvimgcdcsExtension_t extension)
 {
-    NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionDestroy");
+    NVIMGCDCS_LOG_TRACE("nvjpeg2k_extension_destroy");
     try {
-        XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
         auto ext_handle = reinterpret_cast<nvjpeg2k::NvJpeg2kImgCodecsExtension*>(extension);
         delete ext_handle;
@@ -66,11 +63,12 @@ nvimgcdcsExtensionDesc_t nvjpeg2k_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
+    NULL,
     "nvjpeg2k_extension",  // id
      0x00000100,        // version
 
-    nvimgcdcsNvJ2kExtensionCreate,
-    nvimgcdcsNvJ2kExtensionDestroy
+    nvjpeg2k_extension_create,
+    nvjpeg2k_extension_destroy
 };
 // clang-format on
 

@@ -13,8 +13,5 @@
 #include <nvimgcodecs.h>
 
 
-namespace nvpxm {
+nvimgcdcsStatus_t get_nvpnm_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);
 
-nvimgcdcsStatus_t get_nvpxm_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);
-
-} // namespace nvpxm

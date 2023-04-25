@@ -329,7 +329,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_get_image_info(
 
 static auto tiff_parser_plugin = TIFFParserPlugin();
 
-nvimgcdcsStatus_t tiff_parser_extension_create(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t tiff_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     NVIMGCDCS_LOG_TRACE("extension_create");
 
@@ -338,7 +338,7 @@ nvimgcdcsStatus_t tiff_parser_extension_create(const nvimgcdcsFrameworkDesc_t fr
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t tiff_parser_extension_destroy(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t tiff_parser_extension_destroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("tiff_parser_extension_destroy");
 
@@ -349,8 +349,9 @@ nvimgcdcsStatus_t tiff_parser_extension_destroy(const nvimgcdcsFrameworkDesc_t f
 nvimgcdcsExtensionDesc_t tiff_parser_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
-
-    "tiff_parser_extension",  // id
+   
+    NULL,
+     "tiff_parser_extension",  // id
      0x00000100,             // version
 
     tiff_parser_extension_create,

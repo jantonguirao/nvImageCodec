@@ -38,7 +38,6 @@ struct IWorkManager::Work
     Work(const ProcessingResultsPromise& results, const nvimgcdcsEncodeParams_t* params)
         : results_(std::move(results))
         , params_(std::move(params))
-        , encode_state_batch_(nullptr)
     {
     }
 
@@ -64,7 +63,7 @@ struct IWorkManager::Work
             images_.resize(num_samples);
     }
 
-    void init(IEncodeState* encode_state_batch, const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images)
+    void init(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images)
     {
         int N = images.size();
 
@@ -79,8 +78,6 @@ struct IWorkManager::Work
         code_streams_.reserve(N);
         for (auto cs : code_streams)
             code_streams_.push_back(cs);
-
-        encode_state_batch_ = encode_state_batch;
     }
 
     /**
@@ -202,7 +199,6 @@ struct IWorkManager::Work
     std::vector<std::unique_ptr<void, decltype(&cudaFree)>> device_temp_buffers_;
     std::map<int, void*> idx2orig_buffer_;
     const nvimgcdcsEncodeParams_t* params_;
-    IEncodeState* encode_state_batch_;
     std::unique_ptr<Work> next_;
 };
 
@@ -245,7 +241,7 @@ class ImageGenericEncoder::Worker
     void addWork(std::unique_ptr<Work> work);
 
     ImageGenericEncoder::Worker* getFallback();
-    IImageEncoder* getEncoder(int device_id);
+    IImageEncoder* getEncoder();
 
   private:
     /**
@@ -295,19 +291,21 @@ ImageGenericEncoder::Worker* ImageGenericEncoder::Worker::getFallback()
     return fallback_.get();
 }
 
-IImageEncoder* ImageGenericEncoder::Worker::getEncoder(int device_id)
+IImageEncoder* ImageGenericEncoder::Worker::getEncoder()
 {
     if (!encoder_) {
-        encoder_ = codec_->createEncoder(index_, device_id);
+        encoder_ = codec_->createEncoder(index_, device_id_);
         if (encoder_) {
             encode_state_batch_ = encoder_->createEncodeStateBatch();
             size_t capabilities_size;
-            encoder_->getCapabilities(nullptr, &capabilities_size);
             const nvimgcdcsCapability_t* capabilities_ptr;
             encoder_->getCapabilities(&capabilities_ptr, &capabilities_size);
-            is_input_expected_in_device_ =
-                std::find(capabilities_ptr, capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-                    NVIMGCDCS_CAPABILITY_DEVICE_INPUT) != capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+            if (capabilities_size)
+                is_input_expected_in_device_ =
+                    std::find(capabilities_ptr, capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                        NVIMGCDCS_CAPABILITY_DEVICE_INPUT) != capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+            else
+                is_input_expected_in_device_ = false;
         }
     }
     return encoder_.get();
@@ -406,7 +404,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
 
-    IImageEncoder* encoder = getEncoder(device_id_);
+    IImageEncoder* encoder = getEncoder();
     std::vector<bool> mask(work->code_streams_.size());
     std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
     if (encoder) {
@@ -480,35 +478,55 @@ ImageGenericEncoder::~ImageGenericEncoder()
 {
 }
 
-std::unique_ptr<IEncodeState> ImageGenericEncoder::createEncodeStateBatch() const
+void ImageGenericEncoder::canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
+    const nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status, bool force_format)
 {
-    return std::make_unique<EncodeStateBatch>();
-}
-
-void ImageGenericEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    NVIMGCDCS_LOG_TRACE("generic_get_capabilities");
-
-    if (capabilities) {
-        *capabilities = capabilities_.data();
+    std::map<const ICodec*, std::vector<int>> codec2indices;
+    for (size_t i = 0; i < code_streams.size(); i++) {
+        ICodec* codec = code_streams[i]->getCodec();
+        if (!codec || codec->getEncodersNum() == 0) {
+            processing_status[i] = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            continue;
+        }        
+        auto it = codec2indices.find(codec);
+        if (it == codec2indices.end())
+            it = codec2indices.insert(std::pair<const ICodec*, std::vector<int>>(codec, std::vector<int>())).first;
+        it->second.push_back(i);
     }
 
-    if (size) {
-        *size = capabilities_.size();
-    } else {
-        throw Exception(INVALID_PARAMETER, "Could not get encoder capabilities since size pointer is null", "");
+    for (auto& entry : codec2indices) {
+        std::vector<ICodeStream*> codec_code_streams(entry.second.size());
+        std::vector<IImage*> codec_images(entry.second.size());
+        std::vector<int> org_idx(entry.second.size());
+        for (size_t i = 0; i < entry.second.size(); ++i) {
+            org_idx[i] = entry.second[i];
+            codec_code_streams[i] = code_streams[entry.second[i]];
+            codec_images[i] = images[entry.second[i]];
+        }
+        auto worker = getWorker(entry.first, device_id_);
+        while (worker && codec_code_streams.size() != 0) {
+            auto encoder = worker->getEncoder();
+            std::vector<bool> mask(codec_code_streams.size());
+            std::vector<nvimgcdcsProcessingStatus_t> status(codec_code_streams.size());
+            encoder->canEncode(codec_images, codec_code_streams, params, &mask, &status);
+            //filter out ready items
+            int removed = 0;
+            for (size_t i = 0; i < codec_code_streams.size() + removed; ++i) {
+                processing_status[org_idx[i - removed]] = status[i];
+                bool can_decode_with_other_format_or_params = (static_cast<unsigned int>(status[i]) & 0b11) == 0b01;
+                if (status[i] == NVIMGCDCS_PROCESSING_STATUS_SUCCESS || (!force_format && can_decode_with_other_format_or_params)) {
+                    codec_code_streams.erase(codec_code_streams.begin() + i - removed);
+                    codec_images.erase(codec_images.begin() + i - removed);
+                    org_idx.erase(org_idx.begin() + i - removed);
+                    ++removed;
+                }
+            }
+            worker = worker->getFallback();
+        }
     }
 }
 
-void ImageGenericEncoder::canEncode([[maybe_unused]] const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
-    [[maybe_unused]] const nvimgcdcsEncodeParams_t* params, std::vector<bool>* result,
-    std::vector<nvimgcdcsProcessingStatus_t>* status) const
-{
-    result->resize(code_streams.size(), true);
-    status->resize(code_streams.size(), NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
-}
-
-std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(IEncodeState* encode_state_batch,
+std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(
     const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params)
 {
     int N = images.size();
@@ -518,7 +536,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(IEncodeStat
     auto future = results.getFuture();
 
     auto work = createNewWork(std::move(results), params);
-    work->init(encode_state_batch, code_streams, images);
+    work->init(code_streams, images);
 
     distributeWork(std::move(work));
 

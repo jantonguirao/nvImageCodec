@@ -22,6 +22,8 @@ set(SRCS
     extensions/nvjpeg_ext_decoder_test.cpp
     extensions/nvjpeg2k_ext_encoder_test.cpp
     extensions/nvjpeg2k_ext_decoder_test.cpp
+    api/can_decode_test.cpp
+    api/can_encode_test.cpp
 )
 # Headers file are located here:
 include_directories(

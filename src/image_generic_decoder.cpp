@@ -206,7 +206,7 @@ struct IWorkManager::Work
  * DecodeResultsPromise. If it fails, it goes to fallback and only if all fallbacks fail, it is
  * marked in the DecodeResultsPromise as a failure.
  */
-class ImageGenericDecoder:: Worker
+class ImageGenericDecoder::Worker
 {
   public:
     /**
@@ -232,7 +232,7 @@ class ImageGenericDecoder:: Worker
     void addWork(std::unique_ptr<Work> work);
 
     ImageGenericDecoder::Worker* getFallback();
-    IImageDecoder* getDecoder(int device_id);
+    IImageDecoder* getDecoder();
 
   private:
     /**
@@ -282,19 +282,21 @@ ImageGenericDecoder::Worker* ImageGenericDecoder::Worker::getFallback()
     return fallback_.get();
 }
 
-IImageDecoder* ImageGenericDecoder::Worker::getDecoder(int device_id)
+IImageDecoder* ImageGenericDecoder::Worker::getDecoder()
 {
     if (!decoder_) {
-        decoder_ = codec_->createDecoder(index_, device_id);
+        decoder_ = codec_->createDecoder(index_, device_id_);
         if (decoder_) {
             decode_state_batch_ = decoder_->createDecodeStateBatch();
             size_t capabilities_size;
-            decoder_->getCapabilities(nullptr, &capabilities_size);
             const nvimgcdcsCapability_t* capabilities_ptr;
             decoder_->getCapabilities(&capabilities_ptr, &capabilities_size);
-            is_device_output_ =
-                std::find(capabilities_ptr, capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-                    NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+            if (capabilities_size)
+                is_device_output_ =
+                    std::find(capabilities_ptr, capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
+                        NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
+            else
+                is_device_output_ = false;
         }
     }
     return decoder_.get();
@@ -392,7 +394,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
 
-    IImageDecoder* decoder = getDecoder(device_id_);
+    IImageDecoder* decoder = getDecoder();
     std::vector<bool> mask(work->code_streams_.size());
     std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
     if (decoder) {
@@ -413,8 +415,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     } else {
         filter_work(work.get(), mask);
         for (size_t i = 0; i < mask.size(); i++) {
-            if (!mask[i])
-            {
+            if (!mask[i]) {
                 work->results_.set(work->indices_[i], ProcessingResult::failure(status[i]));
             }
         }
@@ -460,8 +461,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
 //ImageGenericDecoder
 
 ImageGenericDecoder::ImageGenericDecoder(ICodecRegistry* codec_registry, int device_id)
-    : capabilities_{NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT, NVIMGCDCS_CAPABILITY_HOST_OUTPUT}
-    , codec_registry_(codec_registry)
+    : codec_registry_(codec_registry)
     , device_id_(device_id)
 {
 }
@@ -470,35 +470,56 @@ ImageGenericDecoder::~ImageGenericDecoder()
 {
 }
 
-std::unique_ptr<IDecodeState> ImageGenericDecoder::createDecodeStateBatch() const
+void ImageGenericDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
+    const nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status, bool force_format)
 {
-    return std::make_unique<DecodeStateBatch>();
-}
-
-void ImageGenericDecoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    NVIMGCDCS_LOG_TRACE("generic_get_capabilities");
-
-    if (capabilities) {
-        *capabilities = capabilities_.data();
+    std::map<const ICodec*, std::vector<int>> codec2indices;
+    for (size_t i = 0; i < code_streams.size(); i++) {
+        ICodec* codec = code_streams[i]->getCodec();
+        if (!codec || codec->getDecodersNum() == 0) {
+            processing_status[i] = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            continue;
+        }
+        auto it = codec2indices.find(codec);
+        if (it == codec2indices.end())
+            it = codec2indices.insert(std::pair<const ICodec*, std::vector<int>>(codec, std::vector<int>())).first;
+        it->second.push_back(i);
     }
+    for (auto& entry : codec2indices) {
+        std::vector<ICodeStream*> codec_code_streams(entry.second.size());
+        std::vector<IImage*> codec_images(entry.second.size());
+        std::vector<int> org_idx(entry.second.size());
+        for (size_t i = 0; i < entry.second.size(); ++i) {
+            org_idx[i] = entry.second[i];
+            codec_code_streams[i] = code_streams[entry.second[i]];
+            codec_images[i] = images[entry.second[i]];
+        }
+        auto worker = getWorker(entry.first, device_id_);
+        while (worker && codec_code_streams.size() != 0) {
+            auto decoder = worker->getDecoder();
 
-    if (size) {
-        *size = capabilities_.size();
-    } else {
-        throw Exception(INVALID_PARAMETER, "Could not get decoder capabilities since size pointer is null", "");
+            std::vector<bool> mask(codec_code_streams.size());
+            std::vector<nvimgcdcsProcessingStatus_t> status(codec_code_streams.size());
+            decoder->canDecode(codec_code_streams, codec_images, params, &mask, &status);
+
+            //filter out ready items
+            int removed = 0;
+            for (size_t i = 0; i < codec_code_streams.size() + removed; ++i) {
+                processing_status[org_idx[i - removed]] = status[i];
+                bool can_decode_with_other_format_or_params = (static_cast<unsigned int>(status[i]) & 0b11) == 0b01;
+                if (status[i] == NVIMGCDCS_PROCESSING_STATUS_SUCCESS || (!force_format && can_decode_with_other_format_or_params)) {
+                    codec_code_streams.erase(codec_code_streams.begin() + i - removed);
+                    codec_images.erase(codec_images.begin() + i - removed);
+                    org_idx.erase(org_idx.begin() + i - removed);
+                    ++removed;
+                }
+            }
+            worker = worker->getFallback();
+        }
     }
 }
 
-void ImageGenericDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, [[maybe_unused]] const std::vector<IImage*>& images,
-    [[maybe_unused]] const nvimgcdcsDecodeParams_t* params, std::vector<bool>* result,
-    std::vector<nvimgcdcsProcessingStatus_t>* status) const
-{
-    result->resize(code_streams.size(), true);
-    status->resize(code_streams.size(), NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
-}
-
-std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode([[maybe_unused]] IDecodeState* decode_state_batch,
+std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode(
     const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params)
 {
     int N = images.size();

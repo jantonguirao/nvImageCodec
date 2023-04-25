@@ -7,16 +7,6 @@
 
 #include "log.h"
 
-struct nvimgcdcsEncoder
-{
-    std::vector<nvimgcdcsCapability_t> capabilities_ = {NVIMGCDCS_CAPABILITY_HOST_INPUT};
-};
-
-struct nvimgcdcsEncodeState
-{};
-
-namespace nvpxm {
-
 #define XM_CHECK_CUDA(call)                                    \
     {                                                          \
         cudaError_t _e = (call);                               \
@@ -27,10 +17,16 @@ namespace nvpxm {
         }                                                      \
     }
 
-static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
+
+struct nvimgcdcsEncoder
+{
+    std::vector<nvimgcdcsCapability_t> capabilities_ = {NVIMGCDCS_CAPABILITY_HOST_INPUT};
+};
+
+static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
     nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
-    NVIMGCDCS_E_LOG_TRACE("pxm_can_encode");
+    NVIMGCDCS_E_LOG_TRACE("pnm_can_encode");
     auto result = status;
     auto code_stream = code_streams;
     auto image = images;
@@ -39,8 +35,8 @@ static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
         char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
         (*code_stream)->getCodecName((*code_stream)->instance, codec_name);
 
-        if (strcmp(codec_name, "pxm") != 0) {
-            NVIMGCDCS_E_LOG_INFO("cannot encode because it is not pxm codec but " << codec_name);
+        if (strcmp(codec_name, "pnm") != 0) {
+            NVIMGCDCS_E_LOG_INFO("cannot encode because it is not pnm codec but " << codec_name);
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
@@ -55,22 +51,41 @@ static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
         if (*result != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
             continue;
         }
-        if ((*image) != nullptr) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*image)->getImageInfo((*image)->instance, &image_info);
+        if (params->mct_mode != NVIMGCDCS_MCT_MODE_RGB) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED;
+        }
 
-            //Assumed planar format
-            if ((image_info.num_planes > 4 || image_info.num_planes == 2)) {
-                NVIMGCDCS_E_LOG_INFO("cannot encode because not supported number of components");
-                *result = NVIMGCDCS_PROCESSING_STATUS_NUM_COMPONENTS_UNSUPPORTED;
-                continue;
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*image)->getImageInfo((*image)->instance, &image_info);
+        nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
+
+        if (image_info.color_spec != NVIMGCDCS_COLORSPEC_SRGB) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+        }
+        if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_NONE) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if (out_image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_NONE) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if ((image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_RGB)) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+        if (((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.num_planes != 3)) ||
+            ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) && (image_info.num_planes != 1))) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+        }
+
+        for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+            if (image_info.plane_info[p].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 &&
+                (image_info.plane_info[p].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
             }
 
-            if ((image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) &&
-                image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16) {
-                NVIMGCDCS_E_LOG_INFO("cannot encode because not supported data type #" << image_info.plane_info[0].sample_type);
-                *result = NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
-                continue;
+            if (((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.plane_info[p].num_channels != 1)) ||
+                ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) && (image_info.plane_info[p].num_channels != 3))) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
             }
         }
     }
@@ -78,23 +93,23 @@ static nvimgcdcsStatus_t pxm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pxm_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
+static nvimgcdcsStatus_t pnm_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
 {
-    NVIMGCDCS_E_LOG_TRACE("pxm_create_encoder");
+    NVIMGCDCS_E_LOG_TRACE("pnm_create_encoder");
     *encoder = new nvimgcdcsEncoder();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pxm_destroy(nvimgcdcsEncoder_t encoder)
+static nvimgcdcsStatus_t pnm_destroy(nvimgcdcsEncoder_t encoder)
 {
-    NVIMGCDCS_E_LOG_TRACE("pxm_destroy_encoder");
+    NVIMGCDCS_E_LOG_TRACE("pnm_destroy_encoder");
     delete encoder;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t pxm_get_capabilities(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
+nvimgcdcsStatus_t pnm_get_capabilities(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
-    NVIMGCDCS_E_LOG_TRACE("pxm_get_capabilities");
+    NVIMGCDCS_E_LOG_TRACE("pnm_get_capabilities");
     if (encoder == 0)
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
@@ -111,7 +126,7 @@ nvimgcdcsStatus_t pxm_get_capabilities(nvimgcdcsEncoder_t encoder, const nvimgcd
 }
 
 template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
-int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB,
+int write_pnm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB,
     size_t pitchB, const D* chanA, size_t pitchA, int width, int height, int num_components, uint8_t precision)
 {
     size_t written_size;
@@ -189,35 +204,40 @@ int write_pxm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
     return 0;
 }
 
-static nvimgcdcsStatus_t pxm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t image,
+static nvimgcdcsStatus_t pnm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t image,
     nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
-    NVIMGCDCS_E_LOG_TRACE("pxm_encode");
+    NVIMGCDCS_E_LOG_TRACE("pnm_encode");
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     image->getImageInfo(image->instance, &image_info);
     unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
     if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
-        write_pxm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
+        write_pnm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
             NULL, 0, NULL, 0, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
             image_info.plane_info[0].num_channels, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
-    } else {
-        write_pxm<unsigned char>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
+        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
+    } else if (NVIMGCDCS_SAMPLEFORMAT_P_RGB == image_info.sample_format) {
+        write_pnm<unsigned char>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
             host_buffer + image_info.plane_info[0].row_stride * image_info.plane_info[0].height, image_info.plane_info[1].row_stride,
             host_buffer + +image_info.plane_info[0].row_stride * image_info.plane_info[0].height +
                 image_info.plane_info[1].row_stride * image_info.plane_info[0].height,
             image_info.plane_info[2].row_stride, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
             image_info.num_planes, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
+        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
+    } else {
+        image->imageReady(
+            image->instance, NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED | NVIMGCDCS_PROCESSING_STATUS_FAIL);
+
     }
-    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pxm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
+static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
     int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
-        NVIMGCDCS_E_LOG_TRACE("pxm_encode_batch");
+        NVIMGCDCS_E_LOG_TRACE("pnm_encode_batch");
 
         if (batch_size < 1) {
             NVIMGCDCS_D_LOG_ERROR("Batch size lower than 1");
@@ -225,79 +245,33 @@ static nvimgcdcsStatus_t pxm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsI
         }
         nvimgcdcsStatus_t result = NVIMGCDCS_STATUS_SUCCESS;
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            result = pxm_encode(encoder, nullptr, images[sample_idx], code_streams[sample_idx], params);
+            result = pnm_encode(encoder, images[sample_idx], code_streams[sample_idx], params);
             if (result != NVIMGCDCS_STATUS_SUCCESS) {
                 return result;
             }
         }
         return result;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not encode pxm batch - " << e.what());
+        NVIMGCDCS_D_LOG_ERROR("Could not encode pnm batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
-            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
 
 // clang-format off
-struct nvimgcdcsEncoderDesc ppm_encoder = {
+struct nvimgcdcsEncoderDesc nvpnm_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
     NULL,                // instance     
-    "nvpxm",             // id           
+    "nvpnm",             // id           
     0x00000100,          // version     
-    "pxm",               // codec_type   
-    pxm_create,
-    pxm_destroy,
-    pxm_get_capabilities,
-    pxm_can_encode,
-    pxm_encode_batch
+    "pnm",               // codec_type   
+    pnm_create,
+    pnm_destroy,
+    pnm_get_capabilities,
+    pnm_can_encode,
+    pnm_encode_batch
 };
 // clang-format on
-
-nvimgcdcsStatus_t extension_create(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
-{
-    Logger::get().registerLogFunc(framework->instance, framework->log);
-    NVIMGCDCS_LOG_TRACE("extension_create");
-
-    framework->registerEncoder(framework->instance, &ppm_encoder);
-
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t extension_destroy(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
-{
-    NVIMGCDCS_LOG_TRACE("extension_destroy");
-    Logger::get().unregisterLogFunc();
-
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-// clang-format off
-nvimgcdcsExtensionDesc_t nvpxm_extension = {
-    NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
-    NULL,
-
-    "nvpxm_extension",  // id
-     0x00000100,        // version
-
-    extension_create,
-    extension_destroy
-};
-// clang-format on  
-
-nvimgcdcsStatus_t get_nvpxm_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc)
-{
-    if (ext_desc == nullptr) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-
-    if (ext_desc->type != NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-
-    *ext_desc = nvpxm_extension;
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-} //namespace

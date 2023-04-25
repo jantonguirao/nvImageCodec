@@ -296,7 +296,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_get_image_info(
 
 static auto pnm_parser_plugin = PNMParserPlugin();
 
-nvimgcdcsStatus_t pnm_parser_extension_create(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t pnm_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     NVIMGCDCS_LOG_TRACE("extension_create");
 
@@ -305,7 +305,7 @@ nvimgcdcsStatus_t pnm_parser_extension_create(const nvimgcdcsFrameworkDesc_t fra
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t pnm_parser_extension_destroy(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t pnm_parser_extension_destroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("pnm_parser_extension_destroy");
 
@@ -317,6 +317,7 @@ nvimgcdcsExtensionDesc_t pnm_parser_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
+    NULL,
     "pnm_parser_extension",  // id
      0x00000100,             // version
 

@@ -81,8 +81,6 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         io_stream->raw_data(io_stream->instance, &encoded_stream_data);
         io_stream->size(io_stream->instance, &encoded_stream_data_size);
 
-        // TODO - does this condition need to be checked again when accessing encoded_stream_data
-        // in decodeBatch function?
         if (!encoded_stream_data) {
             io_stream->seek(io_stream->instance, 0, SEEK_SET);
             size_t read_nbytes = 0;
@@ -393,7 +391,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
         for (auto& elem : sample_meta) {
             int sample_idx = std::get<2>(elem);
             nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[sample_idx].image;
-            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
@@ -424,7 +422,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsD
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
-            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
