@@ -16,6 +16,15 @@
 namespace nvimgcdcs {
 namespace test {
 
+cv::Mat rgb2bgr(const cv::Mat& img) {
+  cv::Mat bgr;
+  cv::cvtColor(img, bgr, cv::COLOR_RGB2BGR);
+  return bgr;
+}
+
+cv::Mat bgr2rgb(const cv::Mat& img) {
+  return rgb2bgr(img);
+}
 
 int write_bmp(const char* filename, const unsigned char* chanR, int pitchR, const unsigned char* chanG, int pitchG,
     const unsigned char* chanB, int pitchB, int width, int height)
