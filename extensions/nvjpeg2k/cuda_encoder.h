@@ -27,20 +27,27 @@ class NvJpeg2kEncoderPlugin
     struct Encoder;
     struct EncodeState
     {
-        explicit EncodeState(NvJpeg2kEncoderPlugin::Encoder* encoder);
+        explicit EncodeState(nvjpeg2kEncoder_t handle, int num_threads);
         ~EncodeState();
 
-        nvjpeg2kEncodeState_t handle_;
-        std::vector<unsigned char> compressed_data_; //TODO it should be created with pinned allocator
-        nvimgcdcsImageDesc_t image_;
-        cudaStream_t stream_;
-        cudaEvent_t event_;
-        Encoder* encoder_;
-        nvimgcdcsCodeStreamDesc_t code_stream_;
-
-        //TODO this is temporary solution and should be changed to per thread resources similarly as it is in decoder
-        EncodeState* getSampleEncodeState(int sample_idx);
-        std::vector<std::unique_ptr<EncodeState>> per_sample_encode_state_;
+        struct PerThreadResources
+        {
+            cudaStream_t stream_;
+            cudaEvent_t event_;
+            nvjpeg2kEncodeState_t state_;
+            std::vector<unsigned char> compressed_data_; //TODO it should be created with pinned allocator
+        };
+        
+        struct Sample
+        {
+            nvimgcdcsCodeStreamDesc_t code_stream;
+            nvimgcdcsImageDesc_t image;
+            const nvimgcdcsEncodeParams_t* params;
+        };
+        
+        nvjpeg2kEncoder_t handle_;
+        std::vector<PerThreadResources> per_thread_;
+        std::vector<Sample> samples_;
     };
 
     struct Encoder
@@ -51,8 +58,8 @@ class NvJpeg2kEncoderPlugin
         nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
         nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
             nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
-        nvimgcdcsStatus_t encode(EncodeState* encode_state, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream,
-            const nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t encode(int sample_idx);
+        nvimgcdcsStatus_t encodeBatch();
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsEncoder_t encoder);
         static nvimgcdcsStatus_t static_get_capabilities(
