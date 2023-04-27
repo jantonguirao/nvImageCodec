@@ -12,20 +12,20 @@
 
 #include <memory>
 #include "processing_results.h"
+#include "work.h"
 
 namespace nvimgcdcs {
 
+template<typename T>
 class IWorkManager
 {
   public:
-    struct Work;
-
     virtual ~IWorkManager() = default;
-    virtual std::unique_ptr<Work> createNewWork(
+    virtual std::unique_ptr<Work<T>> createNewWork(
         const ProcessingResultsPromise& results, const void* params) = 0;
-    virtual void recycleWork(std::unique_ptr<IWorkManager::Work> work) = 0;
+    virtual void recycleWork(std::unique_ptr<Work<T>> work) = 0;
     virtual void combineWork(
-        IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source) = 0;
+        Work<T>* target, std::unique_ptr<Work<T>> source) = 0;
 };
 
 } // namespace nvimgcdcs

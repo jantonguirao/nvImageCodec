@@ -22,176 +22,9 @@
 #include "iimage_decoder.h"
 #include "log.h"
 #include "processing_results.h"
+#include "work.h"
 
 namespace nvimgcdcs {
-
-// Work
-
-/**
- * @brief Describes a sub-batch of work to be processed
- *
- * This object contains a (shared) promise from the original request containing the full batch
- * and a mapping of indices from this sub-batch to the full batch.
- * It also contains a subset of relevant sample views, sources, etc.
- */
-struct IWorkManager::Work
-{
-    Work(const ProcessingResultsPromise& results, const nvimgcdcsDecodeParams_t* params)
-        : results_(std::move(results))
-        , params_(std::move(params))
-    {
-    }
-
-    void clear()
-    {
-        indices_.clear();
-        code_streams_.clear();
-        images_.clear();
-        host_temp_buffers_.clear();
-        device_temp_buffers_.clear();
-        idx2orig_buffer_.clear();
-    }
-
-    int getSamplesNum() const { return indices_.size(); }
-
-    bool empty() const { return indices_.empty(); }
-
-    void resize(int num_samples)
-    {
-        indices_.resize(num_samples);
-        code_streams_.resize(num_samples);
-        if (!images_.empty())
-            images_.resize(num_samples);
-    }
-
-    void init(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images)
-    {
-        int N = images.size();
-
-        indices_.reserve(N);
-        for (int i = 0; i < N; i++)
-            indices_.push_back(i);
-
-        images_.reserve(N);
-        for (auto o : images)
-            images_.push_back(o);
-
-        code_streams_.reserve(N);
-        for (auto cs : code_streams)
-            code_streams_.push_back(cs);
-    }
-
-    /**
-   * @brief Moves one work entry from another work to this one
-   */
-    void moveEntry(Work* from, int which)
-    {
-        code_streams_.push_back(from->code_streams_[which]);
-        indices_.push_back(from->indices_[which]);
-        if (!from->images_.empty())
-            images_.push_back(from->images_[which]);
-        if (!from->host_temp_buffers_.empty())
-            host_temp_buffers_.push_back(std::move(from->host_temp_buffers_[which]));
-        if (!from->device_temp_buffers_.empty())
-            device_temp_buffers_.push_back(std::move(from->device_temp_buffers_[which]));
-        if (from->idx2orig_buffer_.find(which) != from->idx2orig_buffer_.end()) {
-            auto entry = from->idx2orig_buffer_.extract(which);
-            idx2orig_buffer_.insert(std::move(entry));
-        }
-    }
-
-    /**
-   * @brief Allocates temporary CPU outputs for this sub-batch
-   *
-   * This function is used when falling back from GPU to CPU decoder.
-   */
-
-    void alloc_host_temp_outputs()
-    {
-        host_temp_buffers_.clear();
-        for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            images_[i]->getImageInfo(&image_info);
-            void* h_pinned = nullptr;
-            CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.buffer_size));
-            std::unique_ptr<void, decltype(&cudaFreeHost)> h_ptr(h_pinned, &cudaFreeHost);
-            host_temp_buffers_.push_back(std::move(h_ptr));
-        }
-    }
-
-    void alloc_device_temp_outputs()
-    {
-        device_temp_buffers_.clear();
-        for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            images_[i]->getImageInfo(&image_info);
-            void* device_buffer = nullptr;
-            CHECK_CUDA(cudaMalloc(&device_buffer, image_info.buffer_size));
-            std::unique_ptr<void, decltype(&cudaFree)> d_ptr(device_buffer, &cudaFree);
-            device_temp_buffers_.push_back(std::move(d_ptr));
-        }
-    }
-
-    void ensure_expected_buffer_for_each_image(bool is_device_output)
-    {
-        for (size_t i = 0; i < images_.size(); ++i) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            images_[i]->getImageInfo(&image_info);
-
-            if (!is_device_output && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
-                if (host_temp_buffers_.empty()) {
-                    alloc_host_temp_outputs();
-                }
-                idx2orig_buffer_[i] = image_info.buffer;
-                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
-                image_info.buffer = host_temp_buffers_[i].get();
-                images_[i]->setImageInfo(&image_info);
-            }
-            if (is_device_output && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-                if (device_temp_buffers_.empty()) {
-                    alloc_device_temp_outputs();
-                }
-                idx2orig_buffer_[i] = image_info.buffer;
-                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
-                image_info.buffer = device_temp_buffers_[i].get();
-                images_[i]->setImageInfo(&image_info);
-            }
-        }
-    }
-
-    void copy_buffer_if_necessary(bool is_device_output, int sub_idx, cudaStream_t stream, ProcessingResult* r)
-    {
-        auto it = idx2orig_buffer_.find(sub_idx);
-        try {
-            if (it != idx2orig_buffer_.end()) {
-                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-                images_[sub_idx]->getImageInfo(&image_info);
-                auto copy_direction = is_device_output ? cudaMemcpyDeviceToHost : cudaMemcpyHostToDevice;
-                CHECK_CUDA(cudaMemcpyAsync(it->second, image_info.buffer, image_info.buffer_size, copy_direction, stream));
-                image_info.buffer = it->second;
-                image_info.buffer_kind = image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE
-                                             ? NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST
-                                             : NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
-                images_[sub_idx]->setImageInfo(&image_info);
-                idx2orig_buffer_.erase(it);
-            }
-        } catch (...) {
-            *r = ProcessingResult::failure(std::current_exception());
-        }
-    }
-
-    // The original promise
-    ProcessingResultsPromise results_;
-    // The indices in the original request
-    std::vector<int> indices_;
-    std::vector<ICodeStream*> code_streams_;
-    std::vector<IImage*> images_;
-    std::vector<std::unique_ptr<void, decltype(&cudaFreeHost)>> host_temp_buffers_;
-    std::vector<std::unique_ptr<void, decltype(&cudaFree)>> device_temp_buffers_;
-    std::map<int, void*> idx2orig_buffer_;
-    const nvimgcdcsDecodeParams_t* params_;
-    std::unique_ptr<Work> next_;
-};
 
 // Worker
 
@@ -229,7 +62,7 @@ class ImageGenericDecoder::Worker
 
     void start();
     void stop();
-    void addWork(std::unique_ptr<Work> work);
+    void addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work);
 
     ImageGenericDecoder::Worker* getFallback();
     IImageDecoder* getDecoder();
@@ -241,7 +74,7 @@ class ImageGenericDecoder::Worker
    * The work is scheduled and the results are waited for. Any failed samples will be added
    * to a fallback work, if a fallback decoder is present.
    */
-    void processBatch(std::unique_ptr<Work> work) noexcept;
+    void processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work) noexcept;
 
     /**
    * @brief The main loop of the worker thread.
@@ -252,7 +85,7 @@ class ImageGenericDecoder::Worker
     std::mutex mtx_;
     std::condition_variable cv_;
 
-    std::unique_ptr<Work> work_;
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work_;
     std::thread worker_;
     bool stop_requested_ = false;
     std::once_flag started_;
@@ -337,7 +170,7 @@ void ImageGenericDecoder::Worker::run()
     }
 }
 
-void ImageGenericDecoder::Worker::addWork(std::unique_ptr<Work> work)
+void ImageGenericDecoder::Worker::addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work)
 {
     assert(work->getSamplesNum() > 0);
     {
@@ -354,7 +187,7 @@ void ImageGenericDecoder::Worker::addWork(std::unique_ptr<Work> work)
     start();
 }
 
-static void move_work_to_fallback(IWorkManager::Work* fb, IWorkManager::Work* work, const std::vector<bool>& keep)
+static void move_work_to_fallback(Work<nvimgcdcsDecodeParams_t>* fb, Work<nvimgcdcsDecodeParams_t>* work, const std::vector<bool>& keep)
 {
     int moved = 0;
     size_t n = work->code_streams_.size();
@@ -384,12 +217,12 @@ static void move_work_to_fallback(IWorkManager::Work* fb, IWorkManager::Work* wo
         work->resize(n - moved);
 }
 
-static void filter_work(IWorkManager::Work* work, const std::vector<bool>& keep)
+static void filter_work(Work<nvimgcdcsDecodeParams_t>* work, const std::vector<bool>& keep)
 {
     move_work_to_fallback(nullptr, work, keep);
 }
 
-void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexcept
+void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work) noexcept
 {
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
@@ -405,7 +238,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
         work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
         return;
     }
-    std::unique_ptr<IWorkManager::Work> fallback_work;
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> fallback_work;
     auto fallback_worker = getFallback();
     if (fallback_worker) {
         fallback_work = work_manager_->createNewWork(work->results_, work->params_);
@@ -422,7 +255,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     }
 
     if (!work->code_streams_.empty()) {
-        work->ensure_expected_buffer_for_each_image(is_device_output_);
+        work->ensure_expected_buffer_for_decode_each_image(is_device_output_);
         auto future = decoder_->decode(decode_state_batch_.get(), work->code_streams_, work->images_, work->params_);
 
         for (;;) {
@@ -535,7 +368,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode(
     return future;
 }
 
-std::unique_ptr<ImageGenericDecoder::Work> ImageGenericDecoder::createNewWork(const ProcessingResultsPromise& results, const void* params)
+std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> ImageGenericDecoder::createNewWork(
+    const ProcessingResultsPromise& results, const void* params)
 {
     if (free_work_items_) {
         std::lock_guard<std::mutex> g(work_mutex_);
@@ -549,10 +383,10 @@ std::unique_ptr<ImageGenericDecoder::Work> ImageGenericDecoder::createNewWork(co
         }
     }
 
-    return std::make_unique<Work>(std::move(results), reinterpret_cast<const nvimgcdcsDecodeParams_t*>(params));
+    return std::make_unique<Work<nvimgcdcsDecodeParams_t>>(std::move(results), reinterpret_cast<const nvimgcdcsDecodeParams_t*>(params));
 }
 
-void ImageGenericDecoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)
+void ImageGenericDecoder::recycleWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work)
 {
     std::lock_guard<std::mutex> g(work_mutex_);
     work->clear();
@@ -560,18 +394,18 @@ void ImageGenericDecoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)
     free_work_items_ = std::move(work);
 }
 
-void ImageGenericDecoder::combineWork(IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source)
+void ImageGenericDecoder::combineWork(Work<nvimgcdcsDecodeParams_t>* target, std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> source)
 {
     //if only one has temporary CPU  storage, allocate it in the other
     if (target->host_temp_buffers_.empty() && !source->host_temp_buffers_.empty())
-        target->alloc_host_temp_outputs();
+        target->alloc_host_temps();
     else if (!target->host_temp_buffers_.empty() && source->host_temp_buffers_.empty())
-        source->alloc_host_temp_outputs();
+        source->alloc_host_temps();
     //if only one has temporary GPU storage, allocate it in the other
     if (target->device_temp_buffers_.empty() && !source->device_temp_buffers_.empty())
-        target->alloc_device_temp_outputs();
+        target->alloc_device_temps();
     else if (!target->device_temp_buffers_.empty() && source->device_temp_buffers_.empty())
-        source->alloc_device_temp_outputs();
+        source->alloc_device_temps();
 
     auto move_append = [](auto& dst, auto& src) {
         dst.reserve(dst.size() + src.size());
@@ -599,9 +433,9 @@ ImageGenericDecoder::Worker* ImageGenericDecoder::getWorker(const ICodec* codec,
     return it->second.get();
 }
 
-void ImageGenericDecoder::distributeWork(std::unique_ptr<IWorkManager::Work> work)
+void ImageGenericDecoder::distributeWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work)
 {
-    std::map<const ICodec*, std::unique_ptr<Work>> dist;
+    std::map<const ICodec*, std::unique_ptr<Work<nvimgcdcsDecodeParams_t>>> dist;
     for (int i = 0; i < work->getSamplesNum(); i++) {
         ICodec* codec = work->code_streams_[i]->getCodec();
         if (!codec) {
