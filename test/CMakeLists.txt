@@ -17,15 +17,28 @@ set(SRCS
     parsers/png_test.cpp
     parsers/pnm_test.cpp
     parsers/webp_test.cpp
-    extensions/nvjpeg_ext_parser_test.cpp
-    extensions/nvjpeg_ext_encoder_test.cpp
-    extensions/nvjpeg_ext_decoder_test.cpp
-    extensions/nvjpeg2k_ext_encoder_test.cpp
-    extensions/nvjpeg2k_ext_decoder_test.cpp
-    extensions/libjpeg_turbo_ext_decoder_test.cpp
     api/can_decode_test.cpp
     api/can_encode_test.cpp
 )
+
+if (BUILD_NVJPEG_EXT)
+    list(APPEND SRCS extensions/nvjpeg_ext_parser_test.cpp)
+    list(APPEND SRCS extensions/nvjpeg_ext_encoder_test.cpp)
+    list(APPEND SRCS extensions/nvjpeg_ext_decoder_test.cpp)
+endif()
+
+
+if (BUILD_NVJPEG2K_EXT)
+    list(APPEND SRCS extensions/nvjpeg2k_ext_encoder_test.cpp)
+    list(APPEND SRCS extensions/nvjpeg2k_ext_decoder_test.cpp)
+endif()
+
+
+if (BUILD_LIBJPEG_TURBO_EXT)
+    list(APPEND SRCS extensions/libjpeg_turbo_ext_decoder_test.cpp)
+endif()
+
+
 # Headers file are located here:
 include_directories(
     .
@@ -55,7 +68,6 @@ if (NOT DEFINED OpenCV_VERSION)
   endif()
 
   message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} (found suitable version \"${OpenCV_VERSION}\", minimum required is \"3.0\")")
-  include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
   message("OpenCV libraries: ${OpenCV_LIBRARIES}")
 endif()
 

@@ -73,10 +73,10 @@ class Logger
     } while (0)
 
 //TODO set correct version
-#define NVIMGCDCS_M_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvbmp-module", 0, msg)
-#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvbmp-parser", 0, msg)
-#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvbmp-encoder", 0, msg)
-#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvbmp-decoder", 0, msg)
+#define NVIMGCDCS_M_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-module", 0, msg)
+#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-parser", 0, msg)
+#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-encoder", 0, msg)
+#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-decoder", 0, msg)
 
 #define NVIMGCDCS_LOG_TRACE(...) \
     NVIMGCDCS_M_LOG(             \

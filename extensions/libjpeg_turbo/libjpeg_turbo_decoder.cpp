@@ -42,7 +42,6 @@ struct DecoderImpl
     nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
     nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
         int batch_size, const nvimgcdcsDecodeParams_t* params);
-    // nvimgcdcsStatus_t decodeImpl(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params);
     nvimgcdcsStatus_t decodeBatch(nvimgcdcsCodeStreamDesc_t* code_streams,
         nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
