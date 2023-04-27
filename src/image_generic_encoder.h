@@ -20,6 +20,7 @@
 #include "iimage_encoder.h"
 #include "iwork_manager.h"
 #include "processing_results.h"
+#include "work.h"
 
 namespace nvimgcdcs {
 
@@ -29,7 +30,7 @@ class ICodeStream;
 class ICodecRegistry;
 class ICodec;
 
-class ImageGenericEncoder: public IWorkManager
+class ImageGenericEncoder: public IWorkManager<nvimgcdcsEncodeParams_t>
 {
   public:
     explicit ImageGenericEncoder(ICodecRegistry* codec_registry, int device_id);
@@ -43,14 +44,14 @@ class ImageGenericEncoder: public IWorkManager
     class Worker;
     ImageGenericEncoder::Worker* getWorker(const ICodec* codec, int device_id);
 
-    std::unique_ptr<IWorkManager::Work> createNewWork(
+    std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> createNewWork(
         const ProcessingResultsPromise& results, const void* params);
-    void recycleWork(std::unique_ptr<IWorkManager::Work> work) override;
-    void combineWork(IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source);
-    void distributeWork(std::unique_ptr<Work> work);
+    void recycleWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work) override;
+    void combineWork(Work<nvimgcdcsEncodeParams_t>* target, std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> source);
+    void distributeWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work);
 
     std::mutex work_mutex_;
-    std::unique_ptr<Work> free_work_items_;
+    std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> free_work_items_;
     std::map<const ICodec*, std::unique_ptr<Worker>> workers_;
     std::vector<nvimgcdcsCapability_t> capabilities_;
     ICodecRegistry* codec_registry_;

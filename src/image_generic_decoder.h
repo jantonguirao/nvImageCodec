@@ -29,7 +29,7 @@ class ICodeStream;
 class ICodecRegistry;
 class ICodec;
 
-class ImageGenericDecoder : public IWorkManager
+class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
 {
   public:
     explicit ImageGenericDecoder(ICodecRegistry* codec_registry, int device_id);
@@ -43,14 +43,13 @@ class ImageGenericDecoder : public IWorkManager
     class Worker;
     ImageGenericDecoder::Worker *getWorker(const ICodec* codec, int device_id);
 
-    std::unique_ptr<IWorkManager::Work> createNewWork(
-        const ProcessingResultsPromise& results, const void* params);
-    void recycleWork(std::unique_ptr<IWorkManager::Work> work) override;
-    void combineWork(IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source);
-    void distributeWork(std::unique_ptr<Work> work);
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> createNewWork(const ProcessingResultsPromise& results, const void* params);
+    void recycleWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work) override;
+    void combineWork(Work<nvimgcdcsDecodeParams_t>* target, std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> source);
+    void distributeWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work);
 
     std::mutex work_mutex_;
-    std::unique_ptr<Work> free_work_items_;
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> free_work_items_;
     std::map<const ICodec*, std::unique_ptr<Worker>> workers_;
     ICodecRegistry* codec_registry_;
     int device_id_;

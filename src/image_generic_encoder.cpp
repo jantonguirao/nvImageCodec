@@ -24,186 +24,6 @@
 
 namespace nvimgcdcs {
 
-// Work
-
-/**
- * @brief Describes a sub-batch of work to be processed
- *
- * This object contains a (shared) promise from the original request containing the full batch
- * and a mapping of indices from this sub-batch to the full batch.
- * It also contains a subset of relevant sample views, sources, etc.
- */
-struct IWorkManager::Work
-{
-    Work(const ProcessingResultsPromise& results, const nvimgcdcsEncodeParams_t* params)
-        : results_(std::move(results))
-        , params_(std::move(params))
-    {
-    }
-
-    void clear()
-    {
-        indices_.clear();
-        code_streams_.clear();
-        images_.clear();
-        host_temp_buffers_.clear();
-        device_temp_buffers_.clear();
-        idx2orig_buffer_.clear();
-    }
-
-    int getSamplesNum() const { return indices_.size(); }
-
-    bool empty() const { return indices_.empty(); }
-
-    void resize(int num_samples)
-    {
-        indices_.resize(num_samples);
-        code_streams_.resize(num_samples);
-        if (!images_.empty())
-            images_.resize(num_samples);
-    }
-
-    void init(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images)
-    {
-        int N = images.size();
-
-        indices_.reserve(N);
-        for (int i = 0; i < N; i++)
-            indices_.push_back(i);
-
-        images_.reserve(N);
-        for (auto o : images)
-            images_.push_back(o);
-
-        code_streams_.reserve(N);
-        for (auto cs : code_streams)
-            code_streams_.push_back(cs);
-    }
-
-    /**
-   * @brief Moves one work entry from another work to this one
-   */
-    void moveEntry(Work* from, int which)
-    {
-        code_streams_.push_back(from->code_streams_[which]);
-        indices_.push_back(from->indices_[which]);
-        if (!from->images_.empty())
-            images_.push_back(from->images_[which]);
-        if (!from->host_temp_buffers_.empty())
-            host_temp_buffers_.push_back(std::move(from->host_temp_buffers_[which]));
-        if (!from->device_temp_buffers_.empty())
-            device_temp_buffers_.push_back(std::move(from->device_temp_buffers_[which]));
-        if (from->idx2orig_buffer_.find(which) != from->idx2orig_buffer_.end()) {
-            auto entry = from->idx2orig_buffer_.extract(which);
-            idx2orig_buffer_.insert(std::move(entry));
-        }
-    }
-
-    /**
-   * @brief Allocates temporary CPU outputs for this sub-batch
-   *
-   * This function is used when falling back from GPU to CPU encoder.
-   */
-
-    void alloc_host_temp_inputs()
-    {
-        host_temp_buffers_.clear();
-        for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            images_[i]->getImageInfo(&image_info);
-            void* h_pinned = nullptr;
-            CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.buffer_size));
-            std::unique_ptr<void, decltype(&cudaFreeHost)> h_ptr(h_pinned, &cudaFreeHost);
-            host_temp_buffers_.push_back(std::move(h_ptr));
-        }
-    }
-
-    void alloc_device_temp_inputs()
-    {
-        device_temp_buffers_.clear();
-        for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            images_[i]->getImageInfo(&image_info);
-            void* device_buffer = nullptr;
-            CHECK_CUDA(cudaMalloc(&device_buffer, image_info.buffer_size));
-            std::unique_ptr<void, decltype(&cudaFree)> d_ptr(device_buffer, &cudaFree);
-            device_temp_buffers_.push_back(std::move(d_ptr));
-        }
-    }
-
-    void ensure_expected_buffer_for_each_image(bool is_input_expected_in_device)
-    {
-        cudaEvent_t event;
-        CHECK_CUDA(cudaEventCreate(&event));
-
-        for (size_t i = 0; i < images_.size(); ++i) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            images_[i]->getImageInfo(&image_info);
-
-            if (!is_input_expected_in_device && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
-                if (host_temp_buffers_.empty()) {
-                    alloc_host_temp_inputs();
-                }
-                idx2orig_buffer_[i] = image_info.buffer;
-                image_info.buffer = host_temp_buffers_[i].get();
-                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
-                images_[i]->setImageInfo(&image_info);
-
-                CHECK_CUDA(cudaMemcpyAsync(image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyDeviceToHost));
-            }
-            if (is_input_expected_in_device && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-                if (device_temp_buffers_.empty()) {
-                    alloc_device_temp_inputs();
-                }
-                idx2orig_buffer_[i] = image_info.buffer;
-                image_info.buffer = device_temp_buffers_[i].get();
-                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
-                images_[i]->setImageInfo(&image_info);
-
-                CHECK_CUDA(cudaMemcpyAsync(image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyHostToDevice));
-            }
-            images_[i]->setImageInfo(&image_info);
-        }
-
-        CHECK_CUDA(cudaEventRecord(event));
-        CHECK_CUDA(cudaEventSynchronize(event));
-        CHECK_CUDA(cudaEventDestroy(event));
-    }
-
-    void clean_after_encoding(bool is_input_expected_in_device, int sub_idx, ProcessingResult* r)
-    {
-        auto it = idx2orig_buffer_.find(sub_idx);
-        if (it != idx2orig_buffer_.end()) {
-            try {
-                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-                images_[sub_idx]->getImageInfo(&image_info);
-                image_info.buffer = it->second;
-                image_info.buffer_kind = image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE
-                                             ? NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST
-                                             : NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
-                images_[sub_idx]->setImageInfo(&image_info);
-                idx2orig_buffer_.erase(it);
-            } catch (...) {
-                *r = ProcessingResult::failure(std::current_exception());
-            }
-        }
-    }
- 
-    // The original promise
-    ProcessingResultsPromise results_;
-    // The indices in the original request
-    std::vector<int> indices_;
-    std::vector<ICodeStream*> code_streams_;
-    std::vector<IImage*> images_;
-    std::vector<std::unique_ptr<void, decltype(&cudaFreeHost)>> host_temp_buffers_;
-    std::vector<std::unique_ptr<void, decltype(&cudaFree)>> device_temp_buffers_;
-    std::map<int, void*> idx2orig_buffer_;
-    const nvimgcdcsEncodeParams_t* params_;
-    std::unique_ptr<Work> next_;
-};
-
-// Worker
-
 /**
  * @brief A worker that processes sub-batches of work to be processed by a particular encoder.
  *
@@ -238,7 +58,7 @@ class ImageGenericEncoder::Worker
 
     void start();
     void stop();
-    void addWork(std::unique_ptr<Work> work);
+    void addWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work);
 
     ImageGenericEncoder::Worker* getFallback();
     IImageEncoder* getEncoder();
@@ -250,7 +70,7 @@ class ImageGenericEncoder::Worker
    * The work is scheduled and the results are waited for. Any failed samples will be added
    * to a fallback work, if a fallback encoder is present.
    */
-    void processBatch(std::unique_ptr<Work> work) noexcept;
+    void processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work) noexcept;
 
     /**
    * @brief The main loop of the worker thread.
@@ -261,7 +81,7 @@ class ImageGenericEncoder::Worker
     std::mutex mtx_;
     std::condition_variable cv_;
 
-    std::unique_ptr<Work> work_;
+    std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work_;
     std::thread worker_;
     bool stop_requested_ = false;
     std::once_flag started_;
@@ -346,7 +166,7 @@ void ImageGenericEncoder::Worker::run()
     }
 }
 
-void ImageGenericEncoder::Worker::addWork(std::unique_ptr<Work> work)
+void ImageGenericEncoder::Worker::addWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
 {
     assert(work->getSamplesNum() > 0);
     {
@@ -363,7 +183,7 @@ void ImageGenericEncoder::Worker::addWork(std::unique_ptr<Work> work)
     start();
 }
 
-static void move_work_to_fallback(IWorkManager::Work* fb, IWorkManager::Work* work, const std::vector<bool>& keep)
+static void move_work_to_fallback(Work<nvimgcdcsEncodeParams_t>* fb, Work<nvimgcdcsEncodeParams_t>* work, const std::vector<bool>& keep)
 {
     int moved = 0;
     size_t n = work->code_streams_.size();
@@ -393,12 +213,12 @@ static void move_work_to_fallback(IWorkManager::Work* fb, IWorkManager::Work* wo
         work->resize(n - moved);
 }
 
-static void filter_work(IWorkManager::Work* work, const std::vector<bool>& keep)
+static void filter_work(Work<nvimgcdcsEncodeParams_t>* work, const std::vector<bool>& keep)
 {
     move_work_to_fallback(nullptr, work, keep);
 }
 
-void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexcept
+void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work) noexcept
 {
     NVIMGCDCS_LOG_TRACE("processBatch");
     assert(work->getSamplesNum() > 0);
@@ -415,7 +235,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
         work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
         return;
     }
-    std::unique_ptr<IWorkManager::Work> fallback_work;
+    std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> fallback_work;
     auto fallback_worker = getFallback();
     if (fallback_worker) {
         fallback_work = work_manager_->createNewWork(work->results_, work->params_);
@@ -431,7 +251,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work> work) noexc
     }
 
     if (!work->code_streams_.empty()) {
-        work->ensure_expected_buffer_for_each_image(is_input_expected_in_device_);
+        work->ensure_expected_buffer_for_encode_each_image(is_input_expected_in_device_);
         auto future = encoder_->encode(encode_state_batch_.get(), work->images_, work->code_streams_, work->params_);
 
         for (;;) {
@@ -487,7 +307,7 @@ void ImageGenericEncoder::canEncode(const std::vector<IImage*>& images, const st
         if (!codec || codec->getEncodersNum() == 0) {
             processing_status[i] = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
-        }        
+        }
         auto it = codec2indices.find(codec);
         if (it == codec2indices.end())
             it = codec2indices.insert(std::pair<const ICodec*, std::vector<int>>(codec, std::vector<int>())).first;
@@ -543,7 +363,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(
     return future;
 }
 
-std::unique_ptr<ImageGenericEncoder::Work> ImageGenericEncoder::createNewWork(const ProcessingResultsPromise& results, const void* params)
+std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> ImageGenericEncoder::createNewWork(
+    const ProcessingResultsPromise& results, const void* params)
 {
     if (free_work_items_) {
         std::lock_guard<std::mutex> g(work_mutex_);
@@ -556,10 +377,10 @@ std::unique_ptr<ImageGenericEncoder::Work> ImageGenericEncoder::createNewWork(co
         }
     }
 
-    return std::make_unique<Work>(std::move(results), reinterpret_cast<const nvimgcdcsEncodeParams_t*>(params));
+    return std::make_unique<Work<nvimgcdcsEncodeParams_t>>(std::move(results), reinterpret_cast<const nvimgcdcsEncodeParams_t*>(params));
 }
 
-void ImageGenericEncoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)
+void ImageGenericEncoder::recycleWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
 {
     std::lock_guard<std::mutex> g(work_mutex_);
     work->clear();
@@ -567,18 +388,18 @@ void ImageGenericEncoder::recycleWork(std::unique_ptr<IWorkManager::Work> work)
     free_work_items_ = std::move(work);
 }
 
-void ImageGenericEncoder::combineWork(IWorkManager::Work* target, std::unique_ptr<IWorkManager::Work> source)
+void ImageGenericEncoder::combineWork(Work<nvimgcdcsEncodeParams_t>* target, std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> source)
 {
     //if only one has temporary CPU  storage, allocate it in the other
     if (target->host_temp_buffers_.empty() && !source->host_temp_buffers_.empty())
-        target->alloc_host_temp_inputs();
+        target->alloc_host_temps();
     else if (!target->host_temp_buffers_.empty() && source->host_temp_buffers_.empty())
-        source->alloc_host_temp_inputs();
+        source->alloc_host_temps();
     //if only one has temporary GPU storage, allocate it in the other
     if (target->device_temp_buffers_.empty() && !source->device_temp_buffers_.empty())
-        target->alloc_device_temp_inputs();
+        target->alloc_device_temps();
     else if (!target->device_temp_buffers_.empty() && source->device_temp_buffers_.empty())
-        source->alloc_device_temp_inputs();
+        source->alloc_device_temps();
 
     auto move_append = [](auto& dst, auto& src) {
         dst.reserve(dst.size() + src.size());
@@ -606,10 +427,10 @@ ImageGenericEncoder::Worker* ImageGenericEncoder::getWorker(const ICodec* codec,
     return it->second.get();
 }
 
-void ImageGenericEncoder::distributeWork(std::unique_ptr<IWorkManager::Work> work)
+void ImageGenericEncoder::distributeWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
 {
     NVIMGCDCS_LOG_TRACE("distributeWork");
-    std::map<const ICodec*, std::unique_ptr<Work>> dist;
+    std::map<const ICodec*, std::unique_ptr<Work<nvimgcdcsEncodeParams_t>>> dist;
     for (int i = 0; i < work->getSamplesNum(); i++) {
         ICodec* codec = work->code_streams_[i]->getCodec();
         if (!codec) {
