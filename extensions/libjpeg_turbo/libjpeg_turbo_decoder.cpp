@@ -92,17 +92,28 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
+
+        if (params->backends != nullptr) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
+            for (int b = 0; b < params->num_backends; ++b) {
+                if (params->backends[b].use_cpu) {
+                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+                }
+            }
+        }
+
         // This codec doesn't support planar layouts (yet)
         nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*image)->getImageInfo((*image)->instance, &info);
+
         switch(info.sample_format) {
             case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
             case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
             case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:  // TODO(janton): support?
             case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
-                *result = NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
-                continue;
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+                break;
             case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
             case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_P_Y:
@@ -110,24 +121,19 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
                 break;  // supported
         }
 
+        if (info.num_planes != 1) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+        }
         if (info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
-            continue;
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+        }
+        if (info.plane_info[0].num_channels != 3 && info.plane_info[0].num_channels != 1) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
         }
 
         // This codec doesn't apply EXIF orientation
         if (params->enable_orientation && (info.orientation.flip_x || info.orientation.flip_y || info.orientation.rotated != 0)) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
-            continue;
-        }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].use_cpu) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                    continue;
-                }
-            }
+            *result |= NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
         }
     }
     return NVIMGCDCS_STATUS_SUCCESS;
