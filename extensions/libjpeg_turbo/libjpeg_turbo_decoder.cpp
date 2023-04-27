@@ -106,8 +106,6 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
         (*image)->getImageInfo((*image)->instance, &info);
 
         switch(info.sample_format) {
-            case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
-            case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
             case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:  // TODO(janton): support?
             case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
@@ -115,12 +113,14 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
                 break;
             case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
             case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+            case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+            case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_P_Y:
             default:
                 break;  // supported
         }
 
-        if (info.num_planes != 1) {
+        if (info.num_planes != 1 && info.num_planes != 3) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
         }
         if (info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
@@ -256,6 +256,8 @@ nvimgcdcsStatus_t decodeImpl(
     switch(flags.sample_format) {
         case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
         case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+        case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+        case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
             flags.components = 3;
             break;
         case NVIMGCDCS_SAMPLEFORMAT_P_Y:
@@ -310,6 +312,12 @@ nvimgcdcsStatus_t decodeImpl(
         encoded_data = buffer.data();
     }
 
+    auto orig_sample_format = flags.sample_format;
+    if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
+        flags.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
+    } else if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR) {
+        flags.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_BGR;
+    }
     auto decoded_image = libjpeg_turbo::Uncompress(encoded_data, data_size, flags);
     if (decoded_image == nullptr) {
         return NVIMGCDCS_STATUS_INTERNAL_ERROR;
@@ -319,9 +327,19 @@ nvimgcdcsStatus_t decodeImpl(
 
     const uint8_t* src = decoded_image.get();
     uint8_t* dst = reinterpret_cast<uint8_t*>(info.buffer);
-    uint32_t row_size = info.plane_info[0].width * flags.components * sizeof(uint8_t);
-    for (uint32_t y = 0; y < info.plane_info[0].height; y++, dst += info.plane_info[0].row_stride, src += row_size) {
-        std::memcpy(dst, src, row_size);
+    if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB || orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR) {
+        const int num_channels = 3;
+        uint32_t plane_size = info.plane_info[0].height * info.plane_info[0].width;
+        for (uint32_t i = 0; i < info.plane_info[0].height * info.plane_info[0].width; i++) {
+            *(dst + plane_size * 0 + i) = *(src + 0 + i * num_channels);
+            *(dst + plane_size * 1 + i) = *(src + 1 + i * num_channels);
+            *(dst + plane_size * 2 + i) = *(src + 2 + i * num_channels);
+        }
+    } else {
+        uint32_t row_size_bytes = info.plane_info[0].width * flags.components * sizeof(uint8_t);
+        for (uint32_t y = 0; y < info.plane_info[0].height; y++, dst += info.plane_info[0].row_stride, src += row_size_bytes) {
+            std::memcpy(dst, src, row_size_bytes);
+        }
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }

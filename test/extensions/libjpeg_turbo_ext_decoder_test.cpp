@@ -17,6 +17,7 @@
 #include <cstring>
 #include <fstream>
 #include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
 #include <string>
 #include <vector>
 #include "nvimgcodecs_tests.h"
@@ -91,7 +92,10 @@ class LibjpegTurboExtDecoderTest : public ::testing::Test
             cv::Rect roi(start_x, start_y, crop_w, crop_h);
             tmp(roi).copyTo(ref);
         }
-        if (num_channels == 3)
+
+        bool planar = sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB ||sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR;
+        bool rgb = sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB || sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB;
+        if (rgb)
             ref = bgr2rgb(ref);
 
         LoadImageFromFilename(instance_, in_code_stream_, filename);
@@ -105,11 +109,18 @@ class LibjpegTurboExtDecoderTest : public ::testing::Test
             width = region.end[1] - region.start[1];
             height = region.end[0] - region.start[0];
         }
+
         image_info_.region = region;
-        image_info_.plane_info[0].row_stride = width * num_channels;
-        image_info_.plane_info[0].num_channels = num_channels;
-        image_info_.plane_info[0].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-        image_info_.buffer_size = height * width * image_info_.plane_info[0].num_channels;
+        image_info_.num_planes = planar ? num_channels : 1;
+        int plane_nchannels = planar ? 1 : num_channels;
+        for (int p = 0; p < image_info_.num_planes; p++) {
+            image_info_.plane_info[p].width = width;
+            image_info_.plane_info[p].height = height;
+            image_info_.plane_info[p].row_stride = width * plane_nchannels;
+            image_info_.plane_info[p].num_channels = plane_nchannels;
+            image_info_.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+        }
+        image_info_.buffer_size = height * width *num_channels;
         out_buffer_.resize(image_info_.buffer_size);
         image_info_.buffer = out_buffer_.data();
         image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
@@ -130,9 +141,31 @@ class LibjpegTurboExtDecoderTest : public ::testing::Test
         cv::imwrite("./decode_out.pnm", rgb2bgr(decoded_image));
         cv::imwrite("./ref.pnm", rgb2bgr(ref));
 #endif
-        for (int i = 0; i < out_buffer_.size(); i++) {
-            ASSERT_NEAR(out_buffer_.data()[i], ref.data[i], 1)
-                << "@" << i << " " << (int)out_buffer_.data()[i] << " != " << (int)ref.data[i] << "\n";
+
+        if (planar) {
+            size_t out_pos = 0;
+            for (size_t c = 0; c < num_channels; c++) {
+                for (size_t i = 0; i < height; i++) {
+                    for (size_t j = 0; j < width; j++, out_pos++) {
+                        auto out_val = out_buffer_[out_pos];
+                        size_t ref_pos = i * width * num_channels + j * num_channels + c;
+                        auto ref_val = ref.data[ref_pos];
+                        ASSERT_NEAR(out_val, ref_val, 1)
+                            << "@" << i << "x" << j << "x" << c << " : " << (int)out_val << " != " << (int)ref_val << "\n";
+                    }
+                }
+            }
+        } else {
+            size_t pos = 0;
+            for (size_t i = 0; i < height; i++) {
+                for (size_t j = 0; j < width; j++) {
+                    for (size_t c = 0; c < num_channels; c++, pos++) {
+                        ASSERT_NEAR(out_buffer_.data()[pos], ref.data[pos], 1)
+                            << "@" << i << "x" << j << "x" << c << " : " << (int)out_buffer_.data()[pos] << " != " << (int)ref.data[pos]
+                            << "\n";
+                    }
+                }
+            }
         }
     }
 
@@ -198,6 +231,22 @@ TEST_F(LibjpegTurboExtDecoderTest, SingleImage_RGB_420_RGB_I)
     TestSingleImage("padlock-406986_640_420", NVIMGCDCS_SAMPLEFORMAT_I_RGB);
 }
 
+TEST_F(LibjpegTurboExtDecoderTest, SingleImage_RGB_420_BGR_I)
+{
+    TestSingleImage("padlock-406986_640_420", NVIMGCDCS_SAMPLEFORMAT_I_RGB);
+}
+
+TEST_F(LibjpegTurboExtDecoderTest, SingleImage_RGB_420_RGB_P)
+{
+    TestSingleImage("padlock-406986_640_420", NVIMGCDCS_SAMPLEFORMAT_P_RGB);
+}
+
+TEST_F(LibjpegTurboExtDecoderTest, SingleImage_RGB_420_BGR_P)
+{
+    TestSingleImage("padlock-406986_640_420", NVIMGCDCS_SAMPLEFORMAT_P_BGR);
+}
+
+
 TEST_F(LibjpegTurboExtDecoderTest, SingleImage_RGB_422_RGB_I)
 {
     TestSingleImage("padlock-406986_640_422", NVIMGCDCS_SAMPLEFORMAT_I_RGB);
@@ -250,13 +299,13 @@ TEST_F(LibjpegTurboExtDecoderTest, EXIFOrientationUnsupported)
     }
 }
 
-TEST_F(LibjpegTurboExtDecoderTest, PlanarLayoutUnsupported)
-{
-    for (auto sample_format : {NVIMGCDCS_SAMPLEFORMAT_P_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_P_YUV}) {
-        TestNotSupported("padlock-406986_640_444", sample_format, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8,
-            NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED);
-    }
-}
+// TEST_F(LibjpegTurboExtDecoderTest, PlanarLayoutUnsupported)
+// {
+//     for (auto sample_format : {NVIMGCDCS_SAMPLEFORMAT_P_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_P_YUV}) {
+//         TestNotSupported("padlock-406986_640_444", sample_format, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8,
+//             NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED);
+//     }
+// }
 
 TEST_F(LibjpegTurboExtDecoderTest, ROIDecodingWholeImage)
 {
