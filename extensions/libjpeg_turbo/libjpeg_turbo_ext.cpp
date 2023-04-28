@@ -27,9 +27,7 @@ struct LibjpegTurboImgCodecsExtension
 
 } // namespace libjpeg_turbo
 
-
-
-nvimgcdcsStatus_t libjpegTurboExtensionCreate(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t* extension)
+nvimgcdcsStatus_t libjpegTurboExtensionCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");
@@ -43,11 +41,10 @@ nvimgcdcsStatus_t libjpegTurboExtensionCreate(const nvimgcdcsFrameworkDesc_t fra
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t libjpegTurboExtensionDestroy(const nvimgcdcsFrameworkDesc_t framework, nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t libjpegTurboExtensionDestroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionDestroy");
     try {
-        XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
         auto ext_handle = reinterpret_cast<libjpeg_turbo::LibjpegTurboImgCodecsExtension*>(extension);
         delete ext_handle;
@@ -63,6 +60,7 @@ nvimgcdcsExtensionDesc_t libjpeg_turbo_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
+    NULL,
     "libjpeg_turbo_extension",  // id
      0x00000100,        // version
 

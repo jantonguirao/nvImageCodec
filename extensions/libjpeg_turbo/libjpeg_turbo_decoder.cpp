@@ -358,7 +358,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
     framework_->getExecutor(framework_->instance, &executor);
     for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
         executor->launch(executor->instance, -1 /*device_id*/, sample_idx, decode_state_batch_.get(),
-            [](int tid, int sample_idx, void* context) -> void { 
+            [](int tid, int sample_idx, void* context) -> void {
                 nvtx3::scoped_range marker{"libjpeg_turbo decode " + std::to_string(sample_idx)};
                 auto* decode_state = reinterpret_cast<DecodeState*>(context);
                 auto& sample = decode_state->samples_[sample_idx];
@@ -367,7 +367,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
                 if (result == NVIMGCDCS_STATUS_SUCCESS) {
                     sample.image->imageReady(sample.image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
                 } else {
-                    sample.image->imageReady(sample.image->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+                    sample.image->imageReady(sample.image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                 }
             });
     }
@@ -393,7 +393,7 @@ nvimgcdcsStatus_t DecoderImpl::static_decode_batch(nvimgcdcsDecoder_t decoder, n
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
-            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_ERROR);
+            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
