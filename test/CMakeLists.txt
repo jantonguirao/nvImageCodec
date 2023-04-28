@@ -17,14 +17,28 @@ set(SRCS
     parsers/png_test.cpp
     parsers/pnm_test.cpp
     parsers/webp_test.cpp
-    extensions/nvjpeg_ext_parser_test.cpp
-    extensions/nvjpeg_ext_encoder_test.cpp
-    extensions/nvjpeg_ext_decoder_test.cpp
-    extensions/nvjpeg2k_ext_encoder_test.cpp
-    extensions/nvjpeg2k_ext_decoder_test.cpp
     api/can_decode_test.cpp
     api/can_encode_test.cpp
 )
+
+if (BUILD_NVJPEG_EXT)
+    list(APPEND SRCS extensions/nvjpeg_ext_parser_test.cpp)
+    list(APPEND SRCS extensions/nvjpeg_ext_encoder_test.cpp)
+    list(APPEND SRCS extensions/nvjpeg_ext_decoder_test.cpp)
+endif()
+
+
+if (BUILD_NVJPEG2K_EXT)
+    list(APPEND SRCS extensions/nvjpeg2k_ext_encoder_test.cpp)
+    list(APPEND SRCS extensions/nvjpeg2k_ext_decoder_test.cpp)
+endif()
+
+
+if (BUILD_LIBJPEG_TURBO_EXT)
+    list(APPEND SRCS extensions/libjpeg_turbo_ext_decoder_test.cpp)
+endif()
+
+
 # Headers file are located here:
 include_directories(
     .
@@ -41,6 +55,29 @@ find_package(CUDAToolkit REQUIRED)
 if(NOT DEFINED NVJPEG2K_LIBRARY)
     find_library(NVJPEG2K_LIBRARY NAMES nvjpeg2k)
 endif()
+
+if (NOT DEFINED JPEG_LIBRARY)
+    find_package(JPEG 62 REQUIRED) # 1.5.3 version
+    message("Using libjpeg-turbo at ${JPEG_LIBRARY}")
+endif()
+
+if (NOT DEFINED OpenCV_VERSION)
+  find_package(OpenCV 4.0 QUIET COMPONENTS core imgproc imgcodecs)
+  if(NOT OpenCV_FOUND)
+    find_package(OpenCV 3.0 REQUIRED COMPONENTS core imgproc imgcodecs)
+  endif()
+
+  message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} (found suitable version \"${OpenCV_VERSION}\", minimum required is \"3.0\")")
+  message("OpenCV libraries: ${OpenCV_LIBRARIES}")
+endif()
+
+
+include_directories(
+  ../../include
+  SYSTEM ${JPEG_INCLUDE_DIR}
+  SYSTEM ${OpenCV_INCLUDE_DIRS}
+  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+)
 
 # Find all dependencies
 include(Dependencies)
@@ -60,6 +97,9 @@ foreach(testapp nvimgcodecs_tests)
         nvimgcodecs_static
         nvjpeg_ext_static
         nvjpeg2k_ext_static
+        libjpeg_turbo_ext_static
+        ${JPEG_LIBRARY}
+        ${OpenCV_LIBRARIES}
         ${NVJPEG2K_LIBRARY}
         CUDA::nvjpeg
         CUDA::cudart

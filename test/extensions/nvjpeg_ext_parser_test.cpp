@@ -11,6 +11,7 @@
 #include <extensions/nvjpeg/nvjpeg_ext.h>
 #include <gtest/gtest.h>
 #include <nvimgcodecs.h>
+#include <parsers/jpeg.h>
 #include <parsers/parser_test_utils.h>
 #include <cstring>
 #include <fstream>
@@ -43,6 +44,11 @@ class NvJpegExtParserTest : public ::testing::Test
         nvjpeg_extension_desc_.next = nullptr;
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvjpeg_extension_desc(&nvjpeg_extension_desc_));
         nvimgcdcsExtensionCreate(instance_, &nvjpeg_extension_, &nvjpeg_extension_desc_);
+
+        jpeg_parser_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
+            get_jpeg_parser_extension_desc(&jpeg_parser_extension_desc_));
+        nvimgcdcsExtensionCreate(instance_, &jpeg_parser_extension_, &jpeg_parser_extension_desc_);
     }
 
     void TearDown() override
@@ -56,7 +62,9 @@ class NvJpegExtParserTest : public ::testing::Test
     }
 
     nvimgcdcsInstance_t instance_;
+    nvimgcdcsExtensionDesc_t jpeg_parser_extension_desc_{};
     nvimgcdcsExtensionDesc_t nvjpeg_extension_desc_{};
+    nvimgcdcsExtension_t jpeg_parser_extension_;
     nvimgcdcsExtension_t nvjpeg_extension_;
     nvimgcdcsCodeStream_t stream_handle_ = nullptr;
     nvimgcdcsCodeStream_t out_stream_handle_ = nullptr;

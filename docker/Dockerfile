@@ -37,7 +37,63 @@ RUN python3 -m pip install numba \
 RUN  apt-get update \
     && apt-get -y install nvjpeg2k
 
-# Allow using this image in systems without proper CUDA runtime/driver support.
+RUN export LIBJPEG_TURBO_VERSION=2.1.91 && cd /tmp && \
+    wget https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/${LIBJPEG_TURBO_VERSION}.tar.gz && \
+    tar xzvf ${LIBJPEG_TURBO_VERSION}.tar.gz && cd libjpeg-turbo-${LIBJPEG_TURBO_VERSION} && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_SHARED=FALSE && \
+    make -j8 && make install && \
+    cd && rm -rf /tmp/${LIBJPEG_TURBO_VERSION}.tar.gz /tmp/libjpeg-turbo-${LIBJPEG_TURBO_VERSION}
+
+RUN export OPENCV_VERSION=4.7.0 && cd /tmp && \
+    wget https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz && \
+    tar xzvf ${OPENCV_VERSION}.tar.gz && cd opencv-${OPENCV_VERSION} && mkdir build && cd build && \
+    cmake -DCMAKE_BUILD_TYPE=Release \
+      -DVIBRANTE_PDK:STRING=/ \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DBUILD_LIST=core,improc,imgcodecs \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DWITH_ADE=OFF \
+      -DWITH_CUDA=OFF \
+      -DWITH_1394=OFF \
+      -DWITH_IPP=OFF \
+      -DWITH_OPENCL=OFF \
+      -DWITH_GTK=OFF \
+      -DBUILD_JPEG=OFF \
+      -DWITH_JPEG=ON \
+      -DBUILD_TIFF=ON \
+      -DWITH_TIFF=OFF \
+      -DBUILD_JASPER=OFF \
+      -DBUILD_DOCS=OFF \
+      -DBUILD_TESTS=OFF \
+      -DBUILD_PERF_TESTS=OFF \
+      -DBUILD_PNG=ON \
+      -DWITH_WEBP=ON \
+      -DBUILD_opencv_cudalegacy=OFF \
+      -DBUILD_opencv_stitching=OFF \
+      -DWITH_TBB=OFF \
+      -DWITH_QUIRC=OFF \
+      -DWITH_OPENMP=OFF \
+      -DWITH_PTHREADS_PF=OFF \
+      -DBUILD_EXAMPLES=OFF \
+      -DBUILD_opencv_java=OFF \
+      -DBUILD_opencv_python2=OFF \
+      -DBUILD_opencv_python3=OFF \
+      -DWITH_PROTOBUF=OFF \
+      -DWITH_FFMPEG=OFF \
+      -DWITH_GSTREAMER=OFF \
+      -DWITH_GSTREAMER_0_10=OFF \
+      -DWITH_VTK=OFF \
+      -DWITH_OPENEXR=OFF \
+      -DINSTALL_C_EXAMPLES=OFF \
+      -DINSTALL_TESTS=OFF \
+      -DVIBRANTE=TRUE \
+      -DWITH_CSTRIPES=OFF \
+      -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX} \
+      VERBOSE=1 .. && \
+      make -j8 && make install && \
+      cd && rm -rf /tmp/${OPENCV_VERSION}.tar.gz /tmp/opencv-${OPENCV_VERSION}
+
+# Allow using this image in systems2.1.91.tar.gz without proper CUDA runtime/driver support.
 # We'll be using this image only for building, don't need strict CUDA checks.
 ENV NVIDIA_DISABLE_REQUIRE=true
 

@@ -38,3 +38,6 @@ if(BUILD_NVPNM_EXT)
     add_subdirectory(nvpnm)
 endif()
 
+if(BUILD_LIBJPEG_TURBO_EXT)
+    add_subdirectory(libjpeg_turbo)
+endif ()
