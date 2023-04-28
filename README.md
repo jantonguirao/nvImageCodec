@@ -33,12 +33,14 @@ There are following known limitation:
 - git lfs (images used for testing are stored as lfs files) 
 - CMake >= 3.14
 - gcc >= 9.4 
-- NVIDIA CUDA >= 11.8 
+- NVIDIA CUDA >= 11.8
+- libjpeg-turbo >= 2.0.0
+- opencv >= 3.0.0
 - Python for tests and examples
 - Supported systems:
   - Windows >= 10 
   - Ubuntu >= 20.04
-  - WSL2 with Ubuntu >= 20.04 
+  - WSL2 with Ubuntu >= 20.04
 
 ## Build
 
