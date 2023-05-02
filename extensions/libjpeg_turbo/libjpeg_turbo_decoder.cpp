@@ -246,14 +246,8 @@ nvimgcdcsStatus_t decodeImpl(
     std::vector<uint8_t>& buffer)
 {
     libjpeg_turbo::UncompressFlags flags;
-
-    nvimgcdcsImageInfo_t stream_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    auto ret = image->getImageInfo(image->instance, &stream_info);
-    if (ret != NVIMGCDCS_STATUS_SUCCESS)
-        return ret;
-
     nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    ret = image->getImageInfo(image->instance, &info);
+    auto ret = image->getImageInfo(image->instance, &info);
     if (ret != NVIMGCDCS_STATUS_SUCCESS)
         return ret;
 
@@ -285,9 +279,8 @@ nvimgcdcsStatus_t decodeImpl(
         flags.crop_height = info.region.end[0] - info.region.start[0];
         flags.crop_width = info.region.end[1] - info.region.start[1];
 
-        if (flags.crop_height < 0 || flags.crop_width < 0 || flags.crop_x < 0 || flags.crop_y < 0 ||
-            static_cast<uint32_t>(flags.crop_y + flags.crop_height) > stream_info.plane_info[0].height ||
-            static_cast<uint32_t>(flags.crop_x + flags.crop_width) > stream_info.plane_info[0].width) {
+        if (flags.crop_x < 0 || flags.crop_y < 0 || flags.crop_height != static_cast<int>(info.plane_info[0].height) ||
+            flags.crop_width != static_cast<int>(info.plane_info[0].width)) {
             NVIMGCDCS_D_LOG_ERROR("Region of interest is out of bounds");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }

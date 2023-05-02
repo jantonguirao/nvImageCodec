@@ -444,6 +444,8 @@ extern "C"
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL =
             24, // Message about behavior that is invalid and may cause crashes and forcing to shutdown application
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL = 0x0FFFFFFF, //Used in case filtering out by message severity
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT =
+            NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL,
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsDebugMessageSeverity_t;
 
