@@ -38,6 +38,9 @@ if (BUILD_LIBJPEG_TURBO_EXT)
     list(APPEND SRCS extensions/libjpeg_turbo_ext_decoder_test.cpp)
 endif()
 
+if (BUILD_OPENCV_EXT)
+    list(APPEND SRCS extensions/opencv_ext_decoder_test.cpp)
+endif()
 
 # Headers file are located here:
 include_directories(
@@ -93,11 +96,22 @@ foreach(testapp nvimgcodecs_tests)
         set(PTHREAD pthread)
     endif()
 
+    set(TARGET_LIBS nvimgcodecs_static)
+    if (BUILD_NVJPEG_EXT)
+        list(APPEND TARGET_LIBS nvjpeg_ext_static)
+    endif()
+    if (BUILD_NVJPEG2K_EXT)
+        list(APPEND TARGET_LIBS nvjpeg2k_ext_static)
+    endif()
+    if (BUILD_LIBJPEG_TURBO_EXT)
+        list(APPEND TARGET_LIBS libjpeg_turbo_ext_static)
+    endif()
+    if (BUILD_OPENCV_EXT)
+        list(APPEND TARGET_LIBS opencv_ext_static)
+    endif()
+
     target_link_libraries(${testapp} PUBLIC
-        nvimgcodecs_static
-        nvjpeg_ext_static
-        nvjpeg2k_ext_static
-        libjpeg_turbo_ext_static
+        ${TARGET_LIBS}
         ${JPEG_LIBRARY}
         ${OpenCV_LIBRARIES}
         ${NVJPEG2K_LIBRARY}

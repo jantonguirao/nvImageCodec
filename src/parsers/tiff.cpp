@@ -157,6 +157,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
+    io_stream->seek(io_stream->instance, 0, SEEK_SET);
     if (length < 4) {
         *result = false;
         return NVIMGCDCS_STATUS_SUCCESS;
