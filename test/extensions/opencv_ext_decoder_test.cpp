@@ -41,10 +41,9 @@ class OpenCVExtDecoderTest : public ::testing::Test
     void SetUp() override
     {
         nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-        create_info.num_cpu_threads = 3;
+        create_info.num_cpu_threads = 1;
         create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
-
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
 
@@ -174,7 +173,7 @@ class OpenCVExtDecoderTest : public ::testing::Test
         ASSERT_EQ(ref.size[0], height);
         ASSERT_EQ(ref.size[1], width);
         ASSERT_EQ(ref.type(), cv_type);
-#ifdef DEBUG_DUMP_DECODE_OUTPUT
+#if DEBUG_DUMP_DECODE_OUTPUT
         cv::Mat decoded_image(height, width, cv_type, static_cast<void*>(out_buffer_.data()));
         cv::imwrite("./decode_out.pnm", rgb2bgr(decoded_image));
         cv::imwrite("./ref.pnm", rgb2bgr(ref));
@@ -420,21 +419,6 @@ TEST_F(OpenCVExtDecoderTest, BMP_SingleImage_Grayscale)
     TestSingleImage("bmp/cat-111793_640.bmp", NVIMGCDCS_SAMPLEFORMAT_P_Y);
 }
 
-TEST_F(OpenCVExtDecoderTest, TIFF_SingleImage_RGB_I)
-{
-    TestSingleImage("tiff/cat-1245673_640.tiff", NVIMGCDCS_SAMPLEFORMAT_I_RGB);
-}
-
-TEST_F(OpenCVExtDecoderTest, TIFF_SingleImage_RGB_P)
-{
-    TestSingleImage("tiff/cat-1245673_640.tiff", NVIMGCDCS_SAMPLEFORMAT_P_RGB);
-}
-
-TEST_F(OpenCVExtDecoderTest, TIFF_SingleImage_Grayscale)
-{
-    TestSingleImage("tiff/cat-1245673_640.tiff", NVIMGCDCS_SAMPLEFORMAT_P_Y);
-}
-
 TEST_F(OpenCVExtDecoderTest, Webp_SingleImage_RGB_I)
 {
     TestSingleImage("webp/lossy/cat-3113513_640.webp", NVIMGCDCS_SAMPLEFORMAT_I_RGB);
@@ -463,6 +447,21 @@ TEST_F(OpenCVExtDecoderTest, PNM_SingleImage_RGB_P)
 TEST_F(OpenCVExtDecoderTest, PNM_SingleImage_Grayscale)
 {
     TestSingleImage("pnm/cat-1245673_640.pgm", NVIMGCDCS_SAMPLEFORMAT_P_Y);
+}
+
+TEST_F(OpenCVExtDecoderTest, TIFF_SingleImage_RGB_I)
+{
+    TestSingleImage("tiff/cat-1245673_640.tiff", NVIMGCDCS_SAMPLEFORMAT_I_RGB);
+}
+
+TEST_F(OpenCVExtDecoderTest, TIFF_SingleImage_RGB_P)
+{
+    TestSingleImage("tiff/cat-1245673_640.tiff", NVIMGCDCS_SAMPLEFORMAT_P_RGB);
+}
+
+TEST_F(OpenCVExtDecoderTest, TIFF_SingleImage_Grayscale)
+{
+    TestSingleImage("tiff/cat-1245673_640.tiff", NVIMGCDCS_SAMPLEFORMAT_P_Y);
 }
 
 }} // namespace nvimgcdcs::test

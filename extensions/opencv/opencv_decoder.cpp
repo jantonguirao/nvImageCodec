@@ -14,14 +14,16 @@
 
 namespace opencv {
 
-static cv::Mat rgb2bgr(cv::Mat &img) {
-    cv::Mat bgr;
-    cv::cvtColor(img, bgr, cv::COLOR_RGB2BGR);
-    return bgr;
+static void rgb2bgr(cv::Mat &img) {
+    NVIMGCDCS_D_LOG_TRACE("Before cvtColor - " << img.rows << " x " << img.cols);
+    if (img.data == nullptr || img.rows == 0 || img.cols == 0)
+        throw std::runtime_error("Invalid input image");
+    cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
+    NVIMGCDCS_D_LOG_TRACE("After cvtColor");
 }
 
-static cv::Mat bgr2rgb(cv::Mat &img) {
-    return rgb2bgr(img);
+static void bgr2rgb(cv::Mat &img) {
+    rgb2bgr(img);
 }
 
 struct DecodeState
@@ -306,10 +308,17 @@ nvimgcdcsStatus_t decodeImpl(
     if (!params->enable_orientation)
         flags |= cv::IMREAD_IGNORE_ORIENTATION;
     auto decoded = cv::imdecode(cv::_InputArray(encoded_data, encoded_length), flags);
+
+    if (decoded.data == nullptr) {
+        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+    } else if (info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+
     switch(info.sample_format) {
         case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
         case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
-            decoded = bgr2rgb(decoded);  // opencv decodes as BGR layout
+            bgr2rgb(decoded);  // opencv decodes as BGR layout
             break;
         case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
         case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
@@ -318,12 +327,6 @@ nvimgcdcsStatus_t decodeImpl(
         default:
             NVIMGCDCS_D_LOG_ERROR("Unsupported sample_format: " << info.sample_format);
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-
-    if (decoded.data == nullptr) {
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
-    } else if (info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
     if (info.region.ndim == 2) {

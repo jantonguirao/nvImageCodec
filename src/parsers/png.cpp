@@ -333,7 +333,7 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::createParseState(nvimgcdcsParseState_
 nvimgcdcsStatus_t PNGParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("JPEG create_parse_state");
+        NVIMGCDCS_LOG_TRACE("PNG create_parse_state");
         CHECK_NULL(parser);
         CHECK_NULL(parse_state);
         auto handle = reinterpret_cast<PNGParserPlugin::Parser*>(parser);

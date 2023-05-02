@@ -38,7 +38,6 @@ class LibjpegTurboExtDecoderTest : public ::testing::Test
         create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
 
-
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
 
         jpeg_parser_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
@@ -139,7 +138,7 @@ class LibjpegTurboExtDecoderTest : public ::testing::Test
         ASSERT_EQ(ref.size[0], height);
         ASSERT_EQ(ref.size[1], width);
         ASSERT_EQ(ref.type(), cv_type);
-#ifdef DEBUG_DUMP_DECODE_OUTPUT
+#if DEBUG_DUMP_DECODE_OUTPUT
         cv::Mat decoded_image(height, width, cv_type, static_cast<void*>(out_buffer_.data()));
         cv::imwrite("./decode_out.pnm", rgb2bgr(decoded_image));
         cv::imwrite("./ref.pnm", rgb2bgr(ref));
