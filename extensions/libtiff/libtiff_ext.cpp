@@ -1,5 +1,5 @@
 #include <nvimgcodecs.h>
-#include "libjpeg_turbo_decoder.h"
+#include "libtiff_decoder.h"
 #include "log.h"
 
 #define XM_CHECK_NULL(ptr)                            \
@@ -8,45 +8,45 @@
             throw std::runtime_error("null pointer"); \
     }
 
-namespace libjpeg_turbo {
+namespace libtiff {
 
-struct LibjpegTurboImgCodecsExtension
+struct LibtiffImgCodecsExtension
 {
   public:
-    explicit LibjpegTurboImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit LibtiffImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
-        , jpeg_decoder_(framework)
+        , tiff_decoder_(framework)
     {
-        framework->registerDecoder(framework->instance, jpeg_decoder_.getDecoderDesc());
+        framework->registerDecoder(framework->instance, tiff_decoder_.getDecoderDesc());
     }
 
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
-    LibjpegTurboDecoderPlugin jpeg_decoder_;
+    LibtiffDecoderPlugin tiff_decoder_;
 };
 
-} // namespace libjpeg_turbo
+} // namespace libtiff
 
-nvimgcdcsStatus_t libjpegTurboExtensionCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t libtiffExtensionCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");
     try {
         XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new libjpeg_turbo::LibjpegTurboImgCodecsExtension(framework));
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new libtiff::LibtiffImgCodecsExtension(framework));
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t libjpegTurboExtensionDestroy(nvimgcdcsExtension_t extension)
+nvimgcdcsStatus_t libtiffExtensionDestroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionDestroy");
     try {
         XM_CHECK_NULL(extension)
-        auto ext_handle = reinterpret_cast<libjpeg_turbo::LibjpegTurboImgCodecsExtension*>(extension);
+        auto ext_handle = reinterpret_cast<libtiff::LibtiffImgCodecsExtension*>(extension);
         delete ext_handle;
         Logger::get().unregisterLogFunc();
     } catch (const std::runtime_error& e) {
@@ -56,20 +56,20 @@ nvimgcdcsStatus_t libjpegTurboExtensionDestroy(nvimgcdcsExtension_t extension)
 }
 
 // clang-format off
-nvimgcdcsExtensionDesc_t libjpeg_turbo_extension = {
+nvimgcdcsExtensionDesc_t libtiff_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
     NULL,
-    "libjpeg_turbo_extension",  // id
+    "libtiff_extension",  // id
      0x00000100,        // version
 
-    libjpegTurboExtensionCreate,
-    libjpegTurboExtensionDestroy
+    libtiffExtensionCreate,
+    libtiffExtensionDestroy
 };
 // clang-format on
 
-nvimgcdcsStatus_t get_libjpeg_turbo_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc)
+nvimgcdcsStatus_t get_libtiff_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc)
 {
     if (ext_desc == nullptr) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
@@ -79,6 +79,6 @@ nvimgcdcsStatus_t get_libjpeg_turbo_extension_desc(nvimgcdcsExtensionDesc_t* ext
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
-    *ext_desc = libjpeg_turbo_extension;
+    *ext_desc = libtiff_extension;
     return NVIMGCDCS_STATUS_SUCCESS;
 }

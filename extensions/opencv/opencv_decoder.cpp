@@ -6,10 +6,10 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#define XM_CHECK_NULL(ptr)                      \
-    {                                           \
-        if (!ptr)                               \
-            std::runtime_error("null pointer"); \
+#define XM_CHECK_NULL(ptr)                            \
+    {                                                 \
+        if (!ptr)                                     \
+            throw std::runtime_error("null pointer"); \
     }
 
 namespace opencv {

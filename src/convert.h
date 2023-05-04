@@ -15,11 +15,11 @@
 #pragma once
 
 #include <cuda_runtime.h>
+#include <cmath>
 #include <cstdint>
 #include <limits>
 #include <type_traits>
 #include "host_dev.h"
-
 namespace nvimgcdcs {
 
 template <typename T>

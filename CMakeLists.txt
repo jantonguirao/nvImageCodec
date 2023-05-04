@@ -30,6 +30,7 @@ option(BUILD_NVJPEG2K_EXT "Build nvjpeg2k extensions module" ON)
 option(BUILD_NVBMP_EXT "Build nvbmp extensions module" ON)
 option(BUILD_NVPNM_EXT "Build nvpnm extensions module" ON)
 option(BUILD_LIBJPEG_TURBO_EXT "Build libjpeg-turbo extensions module" ON)
+option(BUILD_LIBTIFF_EXT "Build libtiff extensions module" ON)
 option(BUILD_OPENCV_EXT "Build opencv extensions module" ON)
 option(BUILD_PYTHON "Build Python binding" ON)
 

@@ -359,10 +359,10 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                     nvjpegExifOrientation_t orientation = nvimgcdcs_to_nvjpeg_orientation(image_info.orientation);
 
                     // TODO(janton): TO BE REMOVED This is a workaround for a bug in nvjpeg.
-                    if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
-                        orientation = NVJPEG_ORIENTATION_ROTATE_270;
-                    else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
-                        orientation = NVJPEG_ORIENTATION_ROTATE_90;
+                    // if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
+                    //     orientation = NVJPEG_ORIENTATION_ROTATE_270;
+                    // else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
+                    //     orientation = NVJPEG_ORIENTATION_ROTATE_90;
 
                     if (orientation == NVJPEG_ORIENTATION_UNKNOWN) {
                         image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED);

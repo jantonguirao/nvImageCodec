@@ -33,9 +33,12 @@ if (BUILD_NVJPEG2K_EXT)
     list(APPEND SRCS extensions/nvjpeg2k_ext_decoder_test.cpp)
 endif()
 
-
 if (BUILD_LIBJPEG_TURBO_EXT)
     list(APPEND SRCS extensions/libjpeg_turbo_ext_decoder_test.cpp)
+endif()
+
+if (BUILD_LIBTIFF_EXT)
+    list(APPEND SRCS extensions/libtiff_ext_decoder_test.cpp)
 endif()
 
 if (BUILD_OPENCV_EXT)
@@ -62,6 +65,11 @@ endif()
 if (NOT DEFINED JPEG_LIBRARY)
     find_package(JPEG 62 REQUIRED) # 1.5.3 version
     message("Using libjpeg-turbo at ${JPEG_LIBRARY}")
+endif()
+
+if (NOT DEFINED TIFF_LIBRARY)
+    find_package(TIFF REQUIRED)
+    message("Using libtiff at ${TIFF_LIBRARY}")
 endif()
 
 if (NOT DEFINED OpenCV_VERSION)
@@ -105,6 +113,9 @@ foreach(testapp nvimgcodecs_tests)
     endif()
     if (BUILD_LIBJPEG_TURBO_EXT)
         list(APPEND TARGET_LIBS libjpeg_turbo_ext_static)
+    endif()
+    if (BUILD_LIBTIFF_EXT)
+        list(APPEND TARGET_LIBS libtiff_ext_static)
     endif()
     if (BUILD_OPENCV_EXT)
         list(APPEND TARGET_LIBS opencv_ext_static)

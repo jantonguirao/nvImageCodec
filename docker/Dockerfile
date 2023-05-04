@@ -46,7 +46,7 @@ RUN export LIBJPEG_TURBO_VERSION=2.1.91 && cd /tmp && \
 
 RUN export LIBTIFF_VERSION=4.5.0; cd /tmp && wget https://download.osgeo.org/libtiff/tiff-${LIBTIFF_VERSION}.tar.gz && \
     tar xzvf tiff-${LIBTIFF_VERSION}.tar.gz && cd tiff-${LIBTIFF_VERSION} && \
-    mkdir rel_build && cd rel_build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/usr/local -Djbig=OFF .. && \
+    mkdir rel_build && cd rel_build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local -Djbig=OFF .. && \
     make -j8 && make install && \
     cd && rm -rf /tmp/tiff-${LIBTIFF_VERSION}.tar.gz /tmp/tiff-${LIBTIFF_VERSION}
 
