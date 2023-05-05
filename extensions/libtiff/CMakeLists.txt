@@ -5,9 +5,11 @@ set(NVIMGCDCS_LIBTIFF_EXT_SRC
   libtiff_decoder.cpp
   )
 
-
 find_package(TIFF REQUIRED)
 message("Using libtiff at ${TIFF_LIBRARY}")
+
+find_package(JPEG REQUIRED)
+message("Using libjpeg-turbo at ${JPEG_LIBRARY}")
 
 include_directories(
   ../../include
@@ -20,7 +22,7 @@ include_directories(
 add_library(${NVIMGCDCS_LIBTIFF_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_LIBTIFF_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_LIBTIFF_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_LIBTIFF_EXT_SRC})
 
-target_link_libraries(${NVIMGCDCS_LIBTIFF_EXT_LIBRARY_NAME} PUBLIC ${TIFF_LIBRARY})
+target_link_libraries(${NVIMGCDCS_LIBTIFF_EXT_LIBRARY_NAME} PUBLIC ${TIFF_LIBRARY} ${JPEG_LIBRARY})
 
 if(UNIX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")

@@ -12,7 +12,7 @@ RUN  apt-get update \
         cmake \
         curl \
         scons \
-	wget \
+        wget \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.sh \
@@ -26,7 +26,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
          python3 \
-	 python3-dev \
+         python3-dev \
          python3-pytest \
          python3-pip \
     && rm -rf /var/lib/apt/lists/*
@@ -40,7 +40,7 @@ RUN  apt-get update \
 RUN export LIBJPEG_TURBO_VERSION=2.1.91 && cd /tmp && \
     wget https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/${LIBJPEG_TURBO_VERSION}.tar.gz && \
     tar xzvf ${LIBJPEG_TURBO_VERSION}.tar.gz && cd libjpeg-turbo-${LIBJPEG_TURBO_VERSION} && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_SHARED=FALSE && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_SHARED=FALSE -DENABLE_STATIC=TRUE && \
     make -j8 && make install && \
     cd && rm -rf /tmp/${LIBJPEG_TURBO_VERSION}.tar.gz /tmp/libjpeg-turbo-${LIBJPEG_TURBO_VERSION}
 
