@@ -207,7 +207,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     size_t status_size;
     nvimgcdcsProcessingStatus_t decode_status;
     nvimgcdcsFutureGetProcessingStatus(decode_future, &decode_status, &status_size);
-    decode_time = wtime() - decode_time; //TODO add gpu time
+    CHECK_CUDA(cudaDeviceSynchronize()); // makes GPU wait until all decoding is finished
+    decode_time = wtime() - decode_time; // record wall clock time on CPU (now includes GPU time as well)
     if (decode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during decoding - processing status: " << decode_status << std::endl;
     }
@@ -239,7 +240,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     nvimgcdcsProcessingStatus_t encode_status;
     nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status, &status_size);
-    encode_time = wtime() - encode_time; //TODO add gpu time
+    CHECK_CUDA(cudaDeviceSynchronize());
+    encode_time = wtime() - encode_time;
     if (encode_status != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during encoding" << std::endl;
     }
@@ -530,6 +532,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
 
         size_t status_size;
         nvimgcdcsFutureGetProcessingStatus(decode_future, nullptr, &status_size);
+        CHECK_CUDA(cudaDeviceSynchronize());
         double decode_time = wtime() - start_decoding_time; //TODO add gpu time
 
         std::vector<nvimgcdcsProcessingStatus_t> decode_status(status_size);
@@ -558,6 +561,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
             encoder, images.data(), out_code_streams.data(), out_code_streams.size(), &encode_params, &encode_future));
 
         nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);
+        CHECK_CUDA(cudaDeviceSynchronize());
         double encode_time = wtime() - start_encoding_time; //TODO add gpu time
         std::vector<nvimgcdcsProcessingStatus_t> encode_status(status_size);
         nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
