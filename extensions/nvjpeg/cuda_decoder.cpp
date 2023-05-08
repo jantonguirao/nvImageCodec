@@ -431,7 +431,11 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_NVJPEG(nvjpegDecodeJpegTransferToDevice(handle, decoder, state, p.parse_state_.nvjpeg_stream_, t.stream_));
                 XM_CHECK_NVJPEG(nvjpegDecodeJpegDevice(handle, decoder, state, &nvjpeg_image, t.stream_));
 
+                // this captures the state of t.stream_ in the cuda event t.event_
                 XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));
+                // this is so that any post processing on image waits for t.event_ i.e. decoding to finish,
+                // without this the post-processing tasks such as encoding, would not know that deocding has finished on this
+                // particular image
                 XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, t.event_));
 
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
