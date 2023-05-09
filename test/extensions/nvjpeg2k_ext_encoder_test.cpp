@@ -16,67 +16,29 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <tuple>
+
 #include "nvimgcodecs_tests.h"
+#include "nvjpeg2k_ext_test_common.h"
+
+using ::testing::Bool;
+using ::testing::Combine;
+using ::testing::TestWithParam;
+using ::testing::Values;
+using ::testing::ValuesIn;
 
 namespace nvimgcdcs { namespace test {
 
-class NvJpeg2kExtEncoderTest : public ::testing::Test
+class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase 
 {
   public:
-    NvJpeg2kExtEncoderTest() {}
+    NvJpeg2kExtEncoderTestBase() {}
 
     void SetUp() override
     {
-        nvimgcdcsInstanceCreateInfo_t create_info;
-        create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        create_info.next = nullptr;
-        create_info.device_allocator = nullptr;
-        create_info.pinned_allocator = nullptr;
-        create_info.load_builtin_modules = false;
-        create_info.load_extension_modules = false;
-        create_info.executor = nullptr;
-        create_info.num_cpu_threads = 1;
-        create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
-        create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
-
-
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
-
-        nvjpeg2k_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
-        nvjpeg2k_extension_desc_.next = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvjpeg2k_extension_desc(&nvjpeg2k_extension_desc_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &nvjpeg2k_extension_, &nvjpeg2k_extension_desc_));
-
-        image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        jpeg_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
-        image_info_.next = &jpeg_info_;
-
-        image_info_.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-        image_info_.num_planes = 3;
-        image_info_.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-        image_info_.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
-        for (int p = 0; p < image_info_.num_planes; p++) {
-            image_info_.plane_info[p].height = 320;
-            image_info_.plane_info[p].width = 320;
-            image_info_.plane_info[p].num_channels = 1;
-            image_info_.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-        }
-        image_info_.buffer_size = image_info_.num_planes * image_info_.plane_info[0].height * image_info_.plane_info[0].width;
-
-        in_buffer_.resize(image_info_.buffer_size);
-        image_info_.buffer = in_buffer_.data();
-        image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
-
-        out_buffer_.resize(image_info_.buffer_size);
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-            nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, out_buffer_.data(), out_buffer_.size(), "jpeg2k", &image_info_));
-
+        NvJpeg2kExtTestBase::SetUp();
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT));
-        images_.clear();
-        images_.push_back(in_image_);
-        streams_.clear();
-        streams_.push_back(out_code_stream_);
+
         jpeg2k_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
         jpeg2k_enc_params_.stream_type = NVIMGCDCS_JPEG2K_STREAM_J2K;
         jpeg2k_enc_params_.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP;
@@ -93,98 +55,290 @@ class NvJpeg2kExtEncoderTest : public ::testing::Test
 
     void TearDown() override
     {
-        if (future_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureDestroy(future_));
         if (encoder_)
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderDestroy(encoder_));
-        if (out_code_stream_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(out_code_stream_));
-        if (in_image_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageDestroy(in_image_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(nvjpeg2k_extension_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
+        NvJpeg2kExtTestBase::TearDown();
     }
 
-    nvimgcdcsInstance_t instance_;
-    nvimgcdcsExtensionDesc_t nvjpeg2k_extension_desc_{};
-    nvimgcdcsExtension_t nvjpeg2k_extension_;
-    std::vector<unsigned char> in_buffer_;
-    std::vector<unsigned char> out_buffer_;
-    nvimgcdcsImageInfo_t image_info_;
-    nvimgcdcsJpegImageInfo_t jpeg_info_;
-    nvimgcdcsImage_t in_image_;
-    nvimgcdcsCodeStream_t out_code_stream_= nullptr;
-    std::vector<nvimgcdcsImage_t> images_;
-    std::vector<nvimgcdcsCodeStream_t> streams_;
     nvimgcdcsEncoder_t encoder_;
     nvimgcdcsJpeg2kEncodeParams_t jpeg2k_enc_params_;
     nvimgcdcsEncodeParams_t params_;
-    nvimgcdcsFuture_t future_;
+
 };
 
-TEST_F(NvJpeg2kExtEncoderTest, Encode_LRCP)
+class NvJpeg2kExtEncoderTestSingleImage
+    : public NvJpeg2kExtEncoderTestBase,
+      public NvJpeg2kTestBase,
+      public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
+          nvimgcdcsChromaSubsampling_t, nvimgcdcsChromaSubsampling_t, nvimgcdcsJpeg2kProgOrder_t>>
 {
-    jpeg2k_enc_params_.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP;
+  public:
+    virtual ~NvJpeg2kExtEncoderTestSingleImage() = default;
 
+  protected:
+    void SetUp() override
+    {
+        NvJpeg2kExtEncoderTestBase::SetUp();
+        NvJpeg2kTestBase::SetUp();
+        image_file_ = std::get<0>(GetParam());
+        color_spec_ = std::get<1>(GetParam());
+        sample_format_ = std::get<2>(GetParam());
+        chroma_subsampling_ = std::get<3>(GetParam());
+        encoded_chroma_subsampling_ = std::get<4>(GetParam());
+        jpeg2k_enc_params_.prog_order = std::get<5>(GetParam());
+    }
+
+    virtual void TearDown()
+    {
+        NvJpeg2kTestBase::TearDown();
+        NvJpeg2kExtEncoderTestBase::TearDown();
+    }
+
+    nvimgcdcsChromaSubsampling_t encoded_chroma_subsampling_;
+};
+
+TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
+{
+    nvimgcdcsImageInfo_t ref_cs_image_info;
+    bool enable_color_conversion = !(sample_format_ == NVIMGCDCS_SAMPLEFORMAT_P_YUV || sample_format_ == NVIMGCDCS_SAMPLEFORMAT_P_Y);
+    DecodeReference(resources_dir, image_file_, sample_format_, enable_color_conversion, &ref_cs_image_info);
+    image_info_.plane_info[0] = ref_cs_image_info.plane_info[0];
+    PrepareImageForFormat();
+    memcpy(image_buffer_.data(), reinterpret_cast<void*>(ref_buffer_.data()), ref_buffer_.size());
+
+    nvimgcdcsImageInfo_t cs_image_info(image_info_);
+    cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
+    code_stream_buffer_.resize(image_info_.buffer_size);
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, code_stream_buffer_.data(),
+                                            code_stream_buffer_.size(), "jpeg2k", &cs_image_info));
+    images_.push_back(in_image_);
+    streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
     nvimgcdcsProcessingStatus_t encode_status;
     size_t status_size;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(status_size, 1);
+    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+
+    LoadImageFromHostMemory(instance_, in_code_stream_, code_stream_buffer_.data(), code_stream_buffer_.size());
+    nvimgcdcsImageInfo_t load_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcdcsJpegImageInfo_t load_jpeg_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+    load_info.next = &load_jpeg_info;
+
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &load_info));
+    //TODO uncomment when generic jpeg2k parser is in place EXPECT_EQ(cs_image_info.chroma_subsampling, load_info.chroma_subsampling);
+
 }
+// clang-format off
 
-TEST_F(NvJpeg2kExtEncoderTest, Encode_RLCP)
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_VALID_SRGB_INPUT_FORMATS_WITH_VARIOUS_PROG_ORDERS, NvJpeg2kExtEncoderTestSingleImage,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SRGB),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
+        Values(NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP, NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP, NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL, NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL,
+    NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL)));
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_VALID_SYCC_INPUT_FORMATS_WITH_CSS444, NvJpeg2kExtEncoderTestSingleImage,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP)));
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_VALID_SYCC_INPUT_FORMATS_WITH_CSS422, NvJpeg2kExtEncoderTestSingleImage,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_422),
+        Values(NVIMGCDCS_SAMPLING_422),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP)));
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_VALID_SYCC_INPUT_FORMATS_WITH_CSS420, NvJpeg2kExtEncoderTestSingleImage,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_420),
+        Values(NVIMGCDCS_SAMPLING_420),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP)));
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_VALID_GRAY_AND_SYCC_WITH_P_Y, NvJpeg2kExtEncoderTestSingleImage,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640_gray.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_GRAY),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
+        Values(NVIMGCDCS_SAMPLING_GRAY),
+        Values(NVIMGCDCS_SAMPLING_GRAY),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP)));
+// clang-format on
+
+class NvJpeg2kExtEncoderTestSingleImageWithStatus
+    : public NvJpeg2kExtEncoderTestBase,
+      public NvJpeg2kTestBase,
+      public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t, nvimgcdcsChromaSubsampling_t,
+          nvimgcdcsChromaSubsampling_t, nvimgcdcsJpeg2kProgOrder_t, nvimgcdcsProcessingStatus_t>>
 {
-    jpeg2k_enc_params_.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP;
+  public:
+    virtual ~NvJpeg2kExtEncoderTestSingleImageWithStatus() = default;
 
+  protected:
+    void SetUp() override
+    {
+        NvJpeg2kExtEncoderTestBase::SetUp();
+        NvJpeg2kTestBase::SetUp();
+        image_file_ = std::get<0>(GetParam());
+        color_spec_ = std::get<1>(GetParam());
+        sample_format_ = std::get<2>(GetParam());
+        chroma_subsampling_ = std::get<3>(GetParam());
+        encoded_chroma_subsampling_ = std::get<4>(GetParam());
+        jpeg2k_enc_params_.prog_order = std::get<5>(GetParam());
+        expected_status_ = std::get<6>(GetParam());
+    }
+
+    virtual void TearDown()
+    {
+        NvJpeg2kTestBase::TearDown();
+        NvJpeg2kExtEncoderTestBase::TearDown();
+    }
+
+    nvimgcdcsChromaSubsampling_t encoded_chroma_subsampling_;
+    nvimgcdcsProcessingStatus_t expected_status_;
+};
+
+TEST_P(NvJpeg2kExtEncoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
+{
+    nvimgcdcsImageInfo_t ref_cs_image_info;
+    DecodeReference(resources_dir, image_file_, sample_format_, true, &ref_cs_image_info);
+    image_info_.plane_info[0] = ref_cs_image_info.plane_info[0];
+    PrepareImageForFormat();
+    memcpy(image_buffer_.data(), reinterpret_cast<void*>(ref_buffer_.data()), ref_buffer_.size());
+
+    nvimgcdcsImageInfo_t cs_image_info(image_info_);
+    cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
+    code_stream_buffer_.resize(image_info_.buffer_size);
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, code_stream_buffer_.data(),
+                                            code_stream_buffer_.size(), "jpeg2k", &cs_image_info));
+    images_.push_back(in_image_);
+    streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
     nvimgcdcsProcessingStatus_t encode_status;
     size_t status_size;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(status_size, 1);
+    ASSERT_EQ(expected_status_, encode_status);
+    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
 }
 
-TEST_F(NvJpeg2kExtEncoderTest, Encode_RPCL)
-{
-    jpeg2k_enc_params_.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL;
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_SAMPLE_FORMATS, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SRGB),
+        Values(NVIMGCDCS_SAMPLEFORMAT_I_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
+        Values(NVIMGCDCS_SAMPLING_NONE),
+        Values(NVIMGCDCS_SAMPLING_NONE),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
-    nvimgcdcsProcessingStatus_t encode_status;
-    size_t status_size;
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(status_size, 1);
-}
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_INPUT_CHROMA, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_410V),
+        Values(NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
 
-TEST_F(NvJpeg2kExtEncoderTest, Encode_PCRL)
-{
-    jpeg2k_enc_params_.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL;
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_OUTPUT_CHROMA, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_410V),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
-    nvimgcdcsProcessingStatus_t encode_status;
-    size_t status_size;
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(status_size, 1);
-}
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_CHROMA_NO_RESAMPLING_FROM_CSS444, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_422),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
 
-TEST_F(NvJpeg2kExtEncoderTest, Encode_CPRL)
-{
-    jpeg2k_enc_params_.prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL;
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_CHROMA_NO_RESAMPLING_FROM_CSS422, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_422),
+        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_420),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
-    nvimgcdcsProcessingStatus_t encode_status;
-    size_t status_size;
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
-    ASSERT_EQ(status_size, 1);
-}
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_CHROMA_NO_RESAMPLING_FROM_CSS420, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_420),
+        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_CHROMA_NO_RESAMPLING_TO_CSS420, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_422,  NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_SAMPLING_420),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_CHROMA_NO_RESAMPLING_TO_CSS422, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_420,  NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_SAMPLING_422),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_CHROMA_NO_RESAMPLING_TO_CSS444, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCDCS_SAMPLING_420,  NVIMGCDCS_SAMPLING_422),
+        Values(NVIMGCDCS_SAMPLING_444),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));     
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_COLOR_SPEC_FOR_P_Y, NvJpeg2kExtEncoderTestSingleImageWithStatus,
+    Combine(
+        Values("jpeg2k/tiled-cat-1046544_640_gray.jp2"),
+        Values(NVIMGCDCS_COLORSPEC_SYCC),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
+        Values(NVIMGCDCS_SAMPLING_GRAY),
+        Values(NVIMGCDCS_SAMPLING_GRAY),
+        Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),
+        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED | NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED)));
+
+// clang-format on
 
 }} // namespace nvimgcdcs::test

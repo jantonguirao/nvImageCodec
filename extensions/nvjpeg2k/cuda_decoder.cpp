@@ -66,11 +66,14 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
         }
-        static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{
-            NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420};
-        if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
-            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_YUV) {
+            static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{
+                NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420};
+            if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+            }
         }
+
         static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
             NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED,
             NVIMGCDCS_SAMPLEFORMAT_P_RGB,

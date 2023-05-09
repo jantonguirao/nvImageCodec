@@ -3,10 +3,10 @@
 #include <cstring>
 #include <future>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <set>
 
 #include <nvjpeg.h>
 #include <nvtx3/nvtx3.hpp>
@@ -66,8 +66,8 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessin
             jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
         if (jpeg_image_info) {
 
-            static const std::set<nvimgcdcsJpegEncoding_t> supported_encoding{NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT,
-               NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN};
+            static const std::set<nvimgcdcsJpegEncoding_t> supported_encoding{
+                NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN};
             if (supported_encoding.find(jpeg_image_info->encoding) == supported_encoding.end()) {
                 *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
                 continue;
@@ -85,8 +85,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessin
             *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
         }
         static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422,
-            NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY,
-            NVIMGCDCS_SAMPLING_410V};
+            NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY};
         if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
         }
@@ -99,9 +98,23 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessin
             NVIMGCDCS_SAMPLEFORMAT_I_RGB,
             NVIMGCDCS_SAMPLEFORMAT_P_BGR,
             NVIMGCDCS_SAMPLEFORMAT_I_BGR,
+            NVIMGCDCS_SAMPLEFORMAT_P_YUV,
+            NVIMGCDCS_SAMPLEFORMAT_P_Y,
         };
         if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+
+        if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y) {
+            if ((image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_GRAY) ||
+                (out_image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_GRAY)) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+            }
+            if ((image_info.color_spec != NVIMGCDCS_COLORSPEC_GRAY) && (image_info.color_spec != NVIMGCDCS_COLORSPEC_SYCC)) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+                *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+            }
         }
 
         for (uint32_t p = 0; p < image_info.num_planes; ++p) {
@@ -265,23 +278,23 @@ NvJpegCudaEncoderPlugin::EncodeState::EncodeState(nvjpegHandle_t handle, int num
 NvJpegCudaEncoderPlugin::EncodeState::~EncodeState()
 {
     for (auto& res : per_thread_) {
-        try {
+    try {
             if (res.event_) {
                 XM_CHECK_CUDA(cudaEventDestroy(res.event_));
-            }
+        }
 
             if (res.stream_) {
                 XM_CHECK_CUDA(cudaStreamDestroy(res.stream_));
-            }
+        }
 
             if (res.state_) {
                 XM_CHECK_NVJPEG(nvjpegEncoderStateDestroy(res.state_));
-            }
-
-        } catch (const std::runtime_error& e) {
-            NVIMGCDCS_E_LOG_ERROR("Could not destroy encode state - " << e.what());
         }
+
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_E_LOG_ERROR("Could not destroy encode state - " << e.what());
     }
+}
 }
 
 nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
@@ -299,79 +312,81 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
             auto& t = encode_state->per_thread_[tid];
             auto &jpeg_state_ = t.state_;
             try {
-                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-                image->getImageInfo(image->instance, &image_info);
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    image->getImageInfo(image->instance, &image_info);
 
-                nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-                code_stream->getImageInfo(code_stream->instance, &out_image_info);
+    nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    code_stream->getImageInfo(code_stream->instance, &out_image_info);
 
-                if (image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
-                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED);
-                    NVIMGCDCS_E_LOG_ERROR("Unsupported sample data type. Only UINT8 is supported.");
+    if (image_info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
+        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED);
+        NVIMGCDCS_E_LOG_ERROR("Unsupported sample data type. Only UINT8 is supported.");
                     return;
-                }
+    }
 
-                unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
+    unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-                nvjpegEncoderParams_t encode_params_;
+    nvjpegEncoderParams_t encode_params_;
                 XM_CHECK_NVJPEG(nvjpegEncoderParamsCreate(handle_, &encode_params_, t.stream_));
-                std::unique_ptr<std::remove_pointer<nvjpegEncoderParams_t>::type, decltype(&nvjpegEncoderParamsDestroy)> encode_params(
-                    encode_params_, &nvjpegEncoderParamsDestroy);
-                int nvjpeg_format = nvimgcdcs_to_nvjpeg_format(image_info.sample_format);
-                if (nvjpeg_format < 0) {
-                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED);
+    std::unique_ptr<std::remove_pointer<nvjpegEncoderParams_t>::type, decltype(&nvjpegEncoderParamsDestroy)> encode_params(
+        encode_params_, &nvjpegEncoderParamsDestroy);
+    int nvjpeg_format = nvimgcdcs_to_nvjpeg_format(image_info.sample_format);
+    if (nvjpeg_format < 0) {
+        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED);
                     return;
-                }
-                nvjpegInputFormat_t input_format = static_cast<nvjpegInputFormat_t>(nvjpeg_format);
+    }
+    nvjpegInputFormat_t input_format = static_cast<nvjpegInputFormat_t>(nvjpeg_format);
 
-                nvjpegImage_t input_image;
-                unsigned char* ptr = device_buffer;
-                for (uint32_t p = 0; p < image_info.num_planes; ++p) {
-                    input_image.channel[p] = ptr;
-                    input_image.pitch[p] = image_info.plane_info[p].row_stride;
-                    ptr += input_image.pitch[p] * image_info.plane_info[p].height;
-                }
+    nvjpegImage_t input_image;
+    unsigned char* ptr = device_buffer;
+    for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+        input_image.channel[p] = ptr;
+        input_image.pitch[p] = image_info.plane_info[p].row_stride;
+        ptr += input_image.pitch[p] * image_info.plane_info[p].height;
+    }
 
                 XM_CHECK_NVJPEG(nvjpegEncoderParamsSetQuality(encode_params.get(), static_cast<int>(params->quality), t.stream_));
-                NVIMGCDCS_E_LOG_DEBUG(" - quality: " << static_cast<int>(params->quality));
+    NVIMGCDCS_E_LOG_DEBUG(" - quality: " << static_cast<int>(params->quality));
 
-                auto jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(out_image_info.next);
-                while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
-                    jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
-                if (jpeg_image_info) {
-                    nvjpegJpegEncoding_t encoding = nvimgcdcs_to_nvjpeg_encoding(jpeg_image_info->encoding);
-                    NVIMGCDCS_E_LOG_DEBUG(" - encoding: " << encoding);
+    auto jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(out_image_info.next);
+    while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+        jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
+    if (jpeg_image_info) {
+        nvjpegJpegEncoding_t encoding = nvimgcdcs_to_nvjpeg_encoding(jpeg_image_info->encoding);
+        NVIMGCDCS_E_LOG_DEBUG(" - encoding: " << encoding);
                     XM_CHECK_NVJPEG(nvjpegEncoderParamsSetEncoding(encode_params.get(), encoding, t.stream_));
-                }
+    }
 
-                auto jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(params->next);
-                while (jpeg_encode_params && jpeg_encode_params->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS)
-                    jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(jpeg_encode_params->next);
-                if (jpeg_encode_params) {
-                    NVIMGCDCS_E_LOG_DEBUG(" - optimized huffman: " << jpeg_encode_params->optimized_huffman);
-                    if (jpeg_encode_params->optimized_huffman) {
-                        XM_CHECK_NVJPEG(nvjpegEncoderParamsSetOptimizedHuffman(encode_params.get(), 1, NULL));
-                    }
-                }
-                nvjpegChromaSubsampling_t chroma_subsampling = nvimgcdcs_to_nvjpeg_css(out_image_info.chroma_subsampling);
-                if (chroma_subsampling != NVJPEG_CSS_UNKNOWN) {
-                    XM_CHECK_NVJPEG(nvjpegEncoderParamsSetSamplingFactors(encode_params.get(), chroma_subsampling, NULL));
-                }
-                if (image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC || image_info.color_spec == NVIMGCDCS_COLORSPEC_YCCK) {
-                    nvjpegChromaSubsampling_t input_chroma_subsampling = nvimgcdcs_to_nvjpeg_css(image_info.chroma_subsampling);
+    auto jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(params->next);
+    while (jpeg_encode_params && jpeg_encode_params->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS)
+        jpeg_encode_params = static_cast<nvimgcdcsJpegEncodeParams_t*>(jpeg_encode_params->next);
+    if (jpeg_encode_params) {
+        NVIMGCDCS_E_LOG_DEBUG(" - optimized huffman: " << jpeg_encode_params->optimized_huffman);
+        if (jpeg_encode_params->optimized_huffman) {
+            XM_CHECK_NVJPEG(nvjpegEncoderParamsSetOptimizedHuffman(encode_params.get(), 1, NULL));
+        }
+    }
+    nvjpegChromaSubsampling_t chroma_subsampling = nvimgcdcs_to_nvjpeg_css(out_image_info.chroma_subsampling);
+    if (chroma_subsampling != NVJPEG_CSS_UNKNOWN) {
+        XM_CHECK_NVJPEG(nvjpegEncoderParamsSetSamplingFactors(encode_params.get(), chroma_subsampling, NULL));
+    }
+    if (((image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC) &&
+            ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_YUV) || (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y))) ||
+        ((image_info.color_spec == NVIMGCDCS_COLORSPEC_GRAY) && (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y))) {
+        nvjpegChromaSubsampling_t input_chroma_subsampling = nvimgcdcs_to_nvjpeg_css(image_info.chroma_subsampling);
                     XM_CHECK_NVJPEG(nvjpegEncodeYUV(handle_, jpeg_state_, encode_params.get(), &input_image, input_chroma_subsampling,
                         image_info.plane_info[0].width, image_info.plane_info[0].height, t.stream_));
-                } else {
+    } else {
                     XM_CHECK_NVJPEG(nvjpegEncodeImage(handle_, jpeg_state_, encode_params.get(), &input_image, input_format,
                         image_info.plane_info[0].width, image_info.plane_info[0].height, t.stream_));
-                }
+    }
 
                 XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));
 
                 XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 
-                size_t length;
-                XM_CHECK_NVJPEG(nvjpegEncodeRetrieveBitstream(
+            size_t length;
+            XM_CHECK_NVJPEG(nvjpegEncodeRetrieveBitstream(
                     handle_, jpeg_state_, NULL, &length, t.stream_));
 
                 t.compressed_data_.resize(length);
@@ -380,8 +395,8 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
                     t.compressed_data_.data(), &length, t.stream_));
 
                 nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
-                size_t output_size;
-                io_stream->seek(io_stream->instance, 0, SEEK_SET);
+            size_t output_size;
+            io_stream->seek(io_stream->instance, 0, SEEK_SET);
                 io_stream->write(io_stream->instance, &output_size, static_cast<void*>(&t.compressed_data_[0]),
                     t.compressed_data_.size());
 

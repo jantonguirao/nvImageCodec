@@ -17,21 +17,18 @@
 
 #include <extensions/nvjpeg/nvjpeg_ext.h>
 #include <nvjpeg.h>
+#include "common.h"
 
 namespace nvimgcdcs { namespace test {
 
-class NvJpegExtTestBase
+class NvJpegExtTestBase :  public ExtensionTestBase
 {
   public:
     virtual ~NvJpegExtTestBase() = default;
 
     virtual void SetUp()
     {
-        nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-        create_info.num_cpu_threads = 1;
-
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
-
+        ExtensionTestBase::SetUp();
         nvjpeg_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
         nvjpeg_extension_desc_.next = nullptr;
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvjpeg_extension_desc(&nvjpeg_extension_desc_));
@@ -40,42 +37,19 @@ class NvJpegExtTestBase
         image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         jpeg_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
         image_info_.next = &jpeg_info_;
-
-        images_.clear();
-        streams_.clear();
     }
 
     virtual void TearDown()
     {
-        if (future_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureDestroy(future_));
-        if (in_image_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageDestroy(in_image_));
-        if (out_image_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageDestroy(out_image_));
-        if (in_code_stream_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(in_code_stream_));
-        if (out_code_stream_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(out_code_stream_));
+        TearDownCodecResources();
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(nvjpeg_extension_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
+        ExtensionTestBase::TearDown();
     }
 
-    nvimgcdcsInstance_t instance_;
+
     nvimgcdcsExtensionDesc_t nvjpeg_extension_desc_{};
     nvimgcdcsExtension_t nvjpeg_extension_;
-
-    nvimgcdcsCodeStream_t in_code_stream_ = nullptr;
-    nvimgcdcsCodeStream_t out_code_stream_ = nullptr;
-    std::vector<unsigned char> in_buffer_;
-    std::vector<unsigned char> out_buffer_;
-    nvimgcdcsImageInfo_t image_info_;
     nvimgcdcsJpegImageInfo_t jpeg_info_;
-    nvimgcdcsImage_t in_image_ = nullptr;
-    nvimgcdcsImage_t out_image_ = nullptr;
-    std::vector<nvimgcdcsImage_t> images_;
-    std::vector<nvimgcdcsCodeStream_t> streams_;
-    nvimgcdcsFuture_t future_ = nullptr;
 };
 
 constexpr bool is_interleaved(nvjpegOutputFormat_t format)
@@ -155,9 +129,35 @@ class NvJpegTestBase
         }
     };
 
-    virtual void decodeReference(const std::string& file_name, nvjpegOutputFormat_t output_format)
+    virtual void DecodeReference(const std::string& resources_dir, const std::string& file_name, nvimgcdcsSampleFormat_t output_format,
+        bool enable_color_convert, nvimgcdcsImageInfo_t* cs_image_info = nullptr)
     {
-        std::ifstream input_stream(file_name.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
+        std::string file_path(resources_dir + '/' + file_name);
+        auto nvimgcdcs_to_nvjpeg_format = [](nvimgcdcsSampleFormat_t nvimgcdcs_format) -> nvjpegOutputFormat_t {
+            switch (nvimgcdcs_format) {
+            case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
+                return NVJPEG_OUTPUT_UNCHANGED;
+            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
+                return NVJPEG_OUTPUT_UNCHANGED;
+            case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+                return NVJPEG_OUTPUT_RGB;
+            case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+                return NVJPEG_OUTPUT_RGBI;
+            case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+                return NVJPEG_OUTPUT_BGR;
+            case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+                return NVJPEG_OUTPUT_BGRI;
+            case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+                return NVJPEG_OUTPUT_Y;
+            case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
+                return NVJPEG_OUTPUT_YUV;
+            default:
+                return NVJPEG_OUTPUT_UNCHANGED;
+            }
+        };
+
+        nvjpegOutputFormat_t jpeg_output_format = nvimgcdcs_to_nvjpeg_format(output_format);
+        std::ifstream input_stream(file_path.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
         ASSERT_EQ(true, input_stream.is_open());
         std::streamsize file_size = input_stream.tellg();
         input_stream.seekg(0, std::ios::beg);
@@ -183,22 +183,29 @@ class NvJpegTestBase
         ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegJpegStreamGetExifOrientation(nvjpeg_jpeg_stream_, &orientation_flag));
 
         ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetExifOrientation(nvjpeg_decode_params_, orientation_flag));
-        ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetOutputFormat(nvjpeg_decode_params_, output_format));
-        ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetAllowCMYK(nvjpeg_decode_params_, 1));
+        ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetOutputFormat(nvjpeg_decode_params_, jpeg_output_format));
+        ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetAllowCMYK(nvjpeg_decode_params_, enable_color_convert));
 
         if (orientation_flag >= NVJPEG_ORIENTATION_TRANSPOSE) {
             std::swap(frame_width, frame_height);
         }
+        if (cs_image_info) {
+            cs_image_info->plane_info[0].width = frame_width;
+            cs_image_info->plane_info[0].height = frame_height;
+        }
 
-        unsigned int output_format_num_components = format_to_num_components(output_format, nComponent);
+        unsigned int output_format_num_components = format_to_num_components(jpeg_output_format, nComponent);
 
         unsigned char* pBuffer = NULL;
         size_t buffer_size = frame_width * frame_height * output_format_num_components;
         ASSERT_EQ(cudaSuccess, cudaMalloc(reinterpret_cast<void**>(&pBuffer), buffer_size));
-        nvjpegImage_t imgdesc = {{pBuffer, pBuffer + frame_width * frame_height, pBuffer + frame_width * frame_height * 2,
-                                     pBuffer + frame_width * frame_height * 3},
-            {(unsigned int)(is_interleaved(output_format) ? frame_width * 3 : frame_width), (unsigned int)frame_width,
-                (unsigned int)frame_width, (unsigned int)frame_width}};
+        nvjpegImage_t imgdesc;
+        auto plane_buf = pBuffer;
+        for (unsigned int i = 0; i < output_format_num_components; i++) {
+            imgdesc.channel[i] = plane_buf;
+            imgdesc.pitch[i] = (unsigned int)(is_interleaved(jpeg_output_format) ? frame_width * 3 : frame_width);
+            plane_buf += frame_width * frame_height;
+        }
 
         cudaDeviceSynchronize();
         ASSERT_EQ(NVJPEG_STATUS_SUCCESS,

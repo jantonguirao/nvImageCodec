@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include <gtest/gtest.h>
 
@@ -56,9 +57,13 @@ class NvJpeg2kExtDecoderTestBase : public NvJpeg2kExtTestBase
 
     nvimgcdcsDecoder_t decoder_;
     nvimgcdcsDecodeParams_t params_;
+    std::string image_file_;
 };
 
-class NvJpeg2kExtDecoderTestSingleImage : public NvJpeg2kExtDecoderTestBase, public NvJpeg2kTestBase, public TestWithParam<const char*>
+class NvJpeg2kExtDecoderTestSingleImage : public NvJpeg2kExtDecoderTestBase,
+                                          public NvJpeg2kTestBase,
+                                          public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
+                                              nvimgcdcsChromaSubsampling_t, nvimgcdcsSampleFormat_t, bool>>
 {
   public:
     virtual ~NvJpeg2kExtDecoderTestSingleImage() = default;
@@ -66,39 +71,29 @@ class NvJpeg2kExtDecoderTestSingleImage : public NvJpeg2kExtDecoderTestBase, pub
   protected:
     void SetUp() override
     {
-        image_file_ = GetParam();
+        image_file_ = std::get<0>(GetParam());
+        color_spec_ = std::get<1>(GetParam());
+        sample_format_ = std::get<2>(GetParam());
+        chroma_subsampling_ = std::get<3>(GetParam());
+        reference_output_format_ = std::get<4>(GetParam());
         NvJpeg2kExtDecoderTestBase::SetUp();
         NvJpeg2kTestBase::SetUp();
+        params_.enable_color_conversion = std::get<5>(GetParam());
     }
 
-    virtual void TearDown()
+    void TearDown() override
     {
         NvJpeg2kTestBase::TearDown();
         NvJpeg2kExtDecoderTestBase::TearDown();
     }
 
-    std::string image_file_;
 };
 
-TEST_P(NvJpeg2kExtDecoderTestSingleImage, SingleImage)
+TEST_P(NvJpeg2kExtDecoderTestSingleImage, ValidFormatAndParameters)
 {
     LoadImageFromFilename(instance_, in_code_stream_, resources_dir + image_file_);
-
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &image_info_));
-    image_info_.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-    image_info_.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-    image_info_.num_planes = 3;
-    for (int p = 0; p < image_info_.num_planes; p++) {
-        image_info_.plane_info[p].height = image_info_.plane_info[0].height;
-        image_info_.plane_info[p].width = image_info_.plane_info[0].width;
-        image_info_.plane_info[p].row_stride = image_info_.plane_info[0].width;
-        image_info_.plane_info[p].num_channels = 1;
-        image_info_.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-    }
-    image_info_.buffer_size = image_info_.plane_info[0].height * image_info_.plane_info[0].width * image_info_.num_planes;
-    out_buffer_.resize(image_info_.buffer_size);
-    image_info_.buffer = out_buffer_.data();
-    image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
+    PrepareImageForFormat();
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &out_image_, &image_info_));
     streams_.push_back(in_code_stream_);
     images_.push_back(out_image_);
@@ -110,11 +105,12 @@ TEST_P(NvJpeg2kExtDecoderTestSingleImage, SingleImage)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, status);
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
-    decodeReference(resources_dir + '/' + image_file_);
+    DecodeReference(resources_dir, image_file_, reference_output_format_, params_.enable_color_conversion);
+    ConvertToPlanar();
     if (NV_DEVELOPER_DUMP_OUTPUT_IMAGE_TO_BMP) {
-        write_bmp("./out.bmp", out_buffer_.data(), image_info_.plane_info[0].width,
-            out_buffer_.data() + (image_info_.plane_info[0].height * image_info_.plane_info[0].width), image_info_.plane_info[0].width,
-            out_buffer_.data() + (image_info_.plane_info[0].height * image_info_.plane_info[0].width) * 2, image_info_.plane_info[0].width,
+        write_bmp("./out.bmp", image_buffer_.data(), image_info_.plane_info[0].width,
+            image_buffer_.data() + (image_info_.plane_info[0].height * image_info_.plane_info[0].width), image_info_.plane_info[0].width,
+            image_buffer_.data() + (image_info_.plane_info[0].height * image_info_.plane_info[0].width) * 2, image_info_.plane_info[0].width,
             image_info_.plane_info[0].width, image_info_.plane_info[0].height);
 
         write_bmp("./ref.bmp", ref_buffer_.data(), image_info_.plane_info[0].width,
@@ -122,8 +118,8 @@ TEST_P(NvJpeg2kExtDecoderTestSingleImage, SingleImage)
             ref_buffer_.data() + (image_info_.plane_info[0].height * image_info_.plane_info[0].width) * 2, image_info_.plane_info[0].width,
             image_info_.plane_info[0].width, image_info_.plane_info[0].height);
     }
-    ASSERT_EQ(out_buffer_.size(), ref_buffer_.size());
-    ASSERT_EQ(0, memcmp(reinterpret_cast<void*>(ref_buffer_.data()), reinterpret_cast<void*>(out_buffer_.data()), out_buffer_.size()));
+    ASSERT_EQ(image_buffer_.size(), ref_buffer_.size());
+    ASSERT_EQ(0, memcmp(reinterpret_cast<void*>(ref_buffer_.data()), reinterpret_cast<void*>(image_buffer_.data()), image_buffer_.size()));
 }
 
 static const char* css_filenames[] = {"/jpeg2k/chroma_420/artificial_420_8b3c_dwt97CPRL.jp2",
@@ -134,6 +130,100 @@ static const char* css_filenames[] = {"/jpeg2k/chroma_420/artificial_420_8b3c_dw
     "/jpeg2k/chroma_422/deer_422_8b3c_dwt53RPCL.j2k", "/jpeg2k/chroma_422/deer_422_8b3c_dwt53RPCL.jp2",
     "/jpeg2k/chroma_422/leavesISO200_422_8b3c_dwt97PCRL.jp2"};
 
-INSTANTIATE_TEST_SUITE_P(DECODE_CHROMA_SUBSAMPLING, NvJpeg2kExtDecoderTestSingleImage, ::testing::ValuesIn(css_filenames));
+// clang-format off
+INSTANTIATE_TEST_SUITE_P(NVJPEG2K_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_FORMATS, NvJpeg2kExtDecoderTestSingleImage,
+    Combine(::testing::ValuesIn(css_filenames),
+        Values(NVIMGCDCS_COLORSPEC_SRGB),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),//NVIMGCDCS_SAMPLEFORMAT_I_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
+        //Various output chroma subsampling are ignored for SRGB 
+         Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
+                NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
+        Values(true)));
+
+ INSTANTIATE_TEST_SUITE_P(NVJPEG2K_DECODE_VARIOUS_CHROMA_WITH_VALID_SYCC_OUTPUT_FORMATS, NvJpeg2kExtDecoderTestSingleImage,
+     Combine(::testing::ValuesIn(css_filenames),
+         Values(NVIMGCDCS_COLORSPEC_SYCC),
+         Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+         //Chroma subsampling should be the same as file chroma (there is not chroma convert) but nvjpeg2k accepts only 444, 422, 420 
+         Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420), 
+         Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+         Values(true)));
+
+
+
+class NvJpeg2kExtDecoderTestSingleImageWithStatus
+    : public NvJpeg2kExtDecoderTestBase,
+      public TestWithParam<
+          std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t, nvimgcdcsChromaSubsampling_t, bool, nvimgcdcsProcessingStatus_t >>
+{
+  public:
+    virtual ~NvJpeg2kExtDecoderTestSingleImageWithStatus() = default;
+
+  protected:
+    void SetUp() override
+    {
+        image_file_ = std::get<0>(GetParam());
+        color_spec_ = std::get<1>(GetParam());
+        sample_format_ = std::get<2>(GetParam());
+        chroma_subsampling_ = std::get<3>(GetParam());
+        NvJpeg2kExtDecoderTestBase::SetUp();
+        params_.enable_color_conversion = std::get<4>(GetParam());
+        expected_status_ =  std::get<5>(GetParam());
+    }
+
+    virtual void TearDown()
+    {
+        NvJpeg2kExtDecoderTestBase::TearDown();
+    }
+    nvimgcdcsProcessingStatus_t expected_status_;
+};
+
+TEST_P(NvJpeg2kExtDecoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
+{
+    LoadImageFromFilename(instance_, in_code_stream_, resources_dir + image_file_);
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &image_info_));
+    PrepareImageForFormat();
+
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &out_image_, &image_info_));
+    streams_.push_back(in_code_stream_);
+    images_.push_back(out_image_);
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDecode(decoder_, streams_.data(), images_.data(), 1, &params_, &future_));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
+    cudaDeviceSynchronize();
+    nvimgcdcsProcessingStatus_t status;
+    size_t status_size;
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
+    ASSERT_EQ(expected_status_, status);
+    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+}
+
+ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_INVALID_OUTPUT_CHROMA, NvJpeg2kExtDecoderTestSingleImageWithStatus,
+     Combine(::testing::ValuesIn(css_filenames),
+         Values(NVIMGCDCS_COLORSPEC_SYCC),
+         Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+         Values(NVIMGCDCS_SAMPLING_440, 
+                NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
+         Values(true),
+         Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
+
+ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_INVALID_OUTPUT_FORMAT, NvJpeg2kExtDecoderTestSingleImageWithStatus,
+     Combine(::testing::ValuesIn(css_filenames),
+         Values(NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_SYCC),
+         Values(NVIMGCDCS_SAMPLEFORMAT_I_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR,  NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED),
+         Values(NVIMGCDCS_SAMPLING_444), 
+         Values(true),
+         Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
+
+ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_INVALID_COLORSPEC, NvJpeg2kExtDecoderTestSingleImageWithStatus,
+     Combine(::testing::ValuesIn(css_filenames),
+         Values(NVIMGCDCS_COLORSPEC_CMYK, NVIMGCDCS_COLORSPEC_YCCK),
+         Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
+         Values(NVIMGCDCS_SAMPLING_444), 
+         Values(true),
+         Values(NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED)));
+
+
+// clang-format on       
 
 }} // namespace nvimgcdcs::test
