@@ -101,7 +101,6 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             }
         }
 
-        // This codec doesn't support planar layouts (yet)
         nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*image)->getImageInfo((*image)->instance, &info);
 
@@ -357,7 +356,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
     nvimgcdcsExecutorDesc_t executor;
     framework_->getExecutor(framework_->instance, &executor);
     for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-        executor->launch(executor->instance, -1 /*device_id*/, sample_idx, decode_state_batch_.get(),
+        executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(),
             [](int tid, int sample_idx, void* context) -> void {
                 nvtx3::scoped_range marker{"libjpeg_turbo decode " + std::to_string(sample_idx)};
                 auto* decode_state = reinterpret_cast<DecodeState*>(context);
