@@ -10,10 +10,10 @@
 
 #pragma once
 
-#define XM_CHECK_NULL(ptr)                      \
-    {                                           \
-        if (!ptr)                               \
-            std::runtime_error("null pointer"); \
+#define XM_CHECK_NULL(ptr)                            \
+    {                                                 \
+        if (!ptr)                                     \
+            throw std::runtime_error("null pointer"); \
     }
 
 #define XM_CHECK_CUDA(call)                                    \

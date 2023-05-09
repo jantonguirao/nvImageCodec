@@ -29,6 +29,9 @@ class NvJpeg2kExtTestBase
     {
         nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
         create_info.num_cpu_threads = 1;
+        create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
+        create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
+
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
 

@@ -8,7 +8,7 @@
 #include <set>
 #include <sstream>
 #include <vector>
-
+#include <library_types.h>
 #include "errors_handling.h"
 #include "log.h"
 #include "parser.h"
@@ -355,14 +355,22 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                 nvjpegOutputFormat_t nvjpeg_format = nvimgcdcs_to_nvjpeg_format(image_info.sample_format);
                 XM_CHECK_NVJPEG(nvjpegDecodeParamsSetOutputFormat(nvjpeg_params.get(), nvjpeg_format));
                 XM_CHECK_NVJPEG(nvjpegDecodeParamsSetAllowCMYK(nvjpeg_params.get(), params->enable_color_conversion));
+
                 if (params->enable_orientation) {
                     nvjpegExifOrientation_t orientation = nvimgcdcs_to_nvjpeg_orientation(image_info.orientation);
 
-                    // TODO(janton): TO BE REMOVED This is a workaround for a bug in nvjpeg.
-                    if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
-                        orientation = NVJPEG_ORIENTATION_ROTATE_270;
-                    else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
-                        orientation = NVJPEG_ORIENTATION_ROTATE_90;
+                    // This is a workaround for a known bug in nvjpeg.
+                    int major, minor, ver;
+                    if (NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MAJOR_VERSION, &major) &&
+                        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor)) {
+                        ver = major * 1000 + minor;
+                        if (ver < 12001) {  // TODO(janton): double check the version that includes the fix
+                            if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
+                                orientation = NVJPEG_ORIENTATION_ROTATE_270;
+                            else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
+                                orientation = NVJPEG_ORIENTATION_ROTATE_90;
+                        }
+                    }
 
                     if (orientation == NVJPEG_ORIENTATION_UNKNOWN) {
                         image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED);

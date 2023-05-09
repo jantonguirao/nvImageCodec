@@ -1,4 +1,4 @@
-image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x64:ubuntu-20.04-cuda-11.8-v3
+image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x64:ubuntu-20.04-cuda-11.8-v4
 
 variables:
     GIT_SUBMODULE_STRATEGY: recursive
@@ -45,7 +45,7 @@ build:nvimagecodec:
         - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
         - nice -n 19 make -j8
         - nvidia-smi
-        - ctest
+        - ctest --verbose
 
 
 

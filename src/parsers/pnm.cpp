@@ -142,6 +142,7 @@ nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
     nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
+    io_stream->seek(io_stream->instance, 0, SEEK_SET);
     if (length < 3) {
         *result = false;
         return NVIMGCDCS_STATUS_SUCCESS;
@@ -243,7 +244,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::createParseState(nvimgcdcsParseState_
 nvimgcdcsStatus_t PNMParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("JPEG create_parse_state");
+        NVIMGCDCS_LOG_TRACE("PNM create_parse_state");
         CHECK_NULL(parser);
         CHECK_NULL(parse_state);
         auto handle = reinterpret_cast<PNMParserPlugin::Parser*>(parser);

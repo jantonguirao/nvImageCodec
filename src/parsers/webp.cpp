@@ -181,6 +181,7 @@ nvimgcdcsStatus_t WebpParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
+    io_stream->seek(io_stream->instance, 0, SEEK_SET);
 
     if (length < (4 + 4 + 4)) { // RIFF + file size + WEBP
         *result = false;
@@ -302,7 +303,7 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::createParseState(nvimgcdcsParseState
 nvimgcdcsStatus_t WebpParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("JPEG create_parse_state");
+        NVIMGCDCS_LOG_TRACE("WEBP create_parse_state");
         CHECK_NULL(parser);
         CHECK_NULL(parse_state);
         auto handle = reinterpret_cast<WebpParserPlugin::Parser*>(parser);

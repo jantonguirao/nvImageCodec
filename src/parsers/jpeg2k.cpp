@@ -178,7 +178,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::static_create(void* instance, nvimgcdcsPar
         auto handle = reinterpret_cast<JPEG2KParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create jpeg parser - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not create jpeg2k parser - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -192,7 +192,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_destroy(nvimgcdcsParser_t p
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg parser - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg2k parser - " << e.what());
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -223,7 +223,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_get_capabilities(
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve jpeg parser capabilites - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not retrieve jpeg2k parser capabilites - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -237,13 +237,13 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::createParseState(nvimgcdcsParseSta
 nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("JPEG create_parse_state");
+        NVIMGCDCS_LOG_TRACE("JPEG2K create_parse_state");
         CHECK_NULL(parser);
         CHECK_NULL(parse_state);
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         return handle->createParseState(parse_state);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create jpeg parse state - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not create jpeg2k parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -251,12 +251,12 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_create_parse_state(nvimgcdc
 nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg_destroy_parse_state");
+        NVIMGCDCS_LOG_TRACE("jpeg2k_destroy_parse_state");
         CHECK_NULL(parse_state);
         // TODO(janton): remove this API
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg parse state - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg2k parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -435,7 +435,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
             image_info->plane_info[p].sample_type = BitsPerComponentToType(Ssiz[p]);
         }
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg stream - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg2k stream - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR;
     }
 
@@ -453,7 +453,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_get_image_info(
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg code stream - " << e.what());
+        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg2k code stream - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

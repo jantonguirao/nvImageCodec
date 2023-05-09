@@ -41,3 +41,11 @@ endif()
 if(BUILD_LIBJPEG_TURBO_EXT)
     add_subdirectory(libjpeg_turbo)
 endif ()
+
+if(BUILD_LIBTIFF_EXT)
+    add_subdirectory(libtiff)
+endif ()
+
+if(BUILD_OPENCV_EXT)
+    add_subdirectory(opencv)
+endif ()

@@ -20,7 +20,6 @@ nvimgcdcsStatus_t nvbmp_extension_create(void* instance, nvimgcdcsExtension_t* e
 
 nvimgcdcsStatus_t nvbmp_extension_destroy(nvimgcdcsExtension_t extension)
 {
-    NVIMGCDCS_LOG_TRACE("nvbmp_extension_destroy");
     Logger::get().unregisterLogFunc();
     return NVIMGCDCS_STATUS_SUCCESS;
 }

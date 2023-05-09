@@ -12,7 +12,7 @@ RUN  apt-get update \
         cmake \
         curl \
         scons \
-	wget \
+        wget \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.sh \
@@ -26,7 +26,7 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
          python3 \
-	 python3-dev \
+         python3-dev \
          python3-pytest \
          python3-pip \
     && rm -rf /var/lib/apt/lists/*
@@ -40,9 +40,15 @@ RUN  apt-get update \
 RUN export LIBJPEG_TURBO_VERSION=2.1.91 && cd /tmp && \
     wget https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/${LIBJPEG_TURBO_VERSION}.tar.gz && \
     tar xzvf ${LIBJPEG_TURBO_VERSION}.tar.gz && cd libjpeg-turbo-${LIBJPEG_TURBO_VERSION} && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_SHARED=FALSE && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_SHARED=FALSE -DENABLE_STATIC=TRUE && \
     make -j8 && make install && \
     cd && rm -rf /tmp/${LIBJPEG_TURBO_VERSION}.tar.gz /tmp/libjpeg-turbo-${LIBJPEG_TURBO_VERSION}
+
+RUN export LIBTIFF_VERSION=4.5.0; cd /tmp && wget https://download.osgeo.org/libtiff/tiff-${LIBTIFF_VERSION}.tar.gz && \
+    tar xzvf tiff-${LIBTIFF_VERSION}.tar.gz && cd tiff-${LIBTIFF_VERSION} && \
+    mkdir rel_build && cd rel_build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local -Djbig=OFF .. && \
+    make -j8 && make install && \
+    cd && rm -rf /tmp/tiff-${LIBTIFF_VERSION}.tar.gz /tmp/tiff-${LIBTIFF_VERSION}
 
 RUN export OPENCV_VERSION=4.7.0 && cd /tmp && \
     wget https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz && \
@@ -60,8 +66,8 @@ RUN export OPENCV_VERSION=4.7.0 && cd /tmp && \
       -DWITH_GTK=OFF \
       -DBUILD_JPEG=OFF \
       -DWITH_JPEG=ON \
-      -DBUILD_TIFF=ON \
-      -DWITH_TIFF=OFF \
+      -DBUILD_TIFF=OFF \
+      -DWITH_TIFF=ON \
       -DBUILD_JASPER=OFF \
       -DBUILD_DOCS=OFF \
       -DBUILD_TESTS=OFF \

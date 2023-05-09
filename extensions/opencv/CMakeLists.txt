@@ -1,0 +1,60 @@
+set(NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME opencv_ext)
+
+set(NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC
+  opencv_ext.cpp
+  opencv_decoder.cpp
+  )
+
+if (NOT DEFINED OpenCV_VERSION)
+  find_package(OpenCV 4.0 QUIET COMPONENTS core imgproc imgcodecs)
+  if(NOT OpenCV_FOUND)
+    find_package(OpenCV 3.0 REQUIRED COMPONENTS core imgproc imgcodecs)
+  endif()
+  message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} (found suitable version \"${OpenCV_VERSION}\", minimum required is \"3.0\")")
+  message("OpenCV libraries: ${OpenCV_LIBRARIES}")
+endif()
+
+find_package(JPEG 62 REQUIRED) # 1.5.3 version
+message("Using OpenCV at ${JPEG_LIBRARY}")
+
+include_directories(
+  ../../include
+  SYSTEM ../../external/NVTX/c/include
+  SYSTEM ${JPEG_INCLUDE_DIR}
+  SYSTEM ${OpenCV_INCLUDE_DIRS}
+  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+)
+
+add_library(${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC} ext_module.cpp)
+add_library(${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC})
+
+target_link_libraries(${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME} PUBLIC ${OpenCV_LIBRARIES})
+
+if(UNIX)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
+  set_target_properties(${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME} PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR})
+else()
+  set_target_properties(${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME} PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    VERSION ${PROJECT_VERSION}
+    OUTPUT_NAME ${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME}_${PROJECT_VERSION_MAJOR}
+    ARCHIVE_OUTPUT_NAME ${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME})
+endif()
+
+if(UNIX)
+  install(TARGETS ${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME}
+    LIBRARY DESTINATION plugins
+    PUBLIC_HEADER DESTINATION include
+  )
+
+else()
+  install(TARGETS ${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME}
+    RUNTIME DESTINATION plugins
+    LIBRARY DESTINATION lib64
+    ARCHIVE DESTINATION lib64
+    PUBLIC_HEADER DESTINATION include
+  )
+endif()

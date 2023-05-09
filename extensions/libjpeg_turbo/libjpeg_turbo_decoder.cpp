@@ -5,10 +5,10 @@
 #include <cstring>
 #include <nvtx3/nvtx3.hpp>
 
-#define XM_CHECK_NULL(ptr)                      \
-    {                                           \
-        if (!ptr)                               \
-            std::runtime_error("null pointer"); \
+#define XM_CHECK_NULL(ptr)                            \
+    {                                                 \
+        if (!ptr)                                     \
+            throw std::runtime_error("null pointer"); \
     }
 
 namespace libjpeg_turbo {
@@ -101,7 +101,6 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             }
         }
 
-        // This codec doesn't support planar layouts (yet)
         nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*image)->getImageInfo((*image)->instance, &info);
 
@@ -246,7 +245,6 @@ nvimgcdcsStatus_t decodeImpl(
     std::vector<uint8_t>& buffer)
 {
     libjpeg_turbo::UncompressFlags flags;
-
     nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     auto ret = image->getImageInfo(image->instance, &info);
     if (ret != NVIMGCDCS_STATUS_SUCCESS)
@@ -279,8 +277,9 @@ nvimgcdcsStatus_t decodeImpl(
         flags.crop_x = info.region.start[1];
         flags.crop_height = info.region.end[0] - info.region.start[0];
         flags.crop_width = info.region.end[1] - info.region.start[1];
-        if (flags.crop_height < 0 || static_cast<uint32_t>(flags.crop_height) > info.plane_info[0].height ||
-            flags.crop_width < 0 || static_cast<uint32_t>(flags.crop_width) > info.plane_info[0].width) {
+
+        if (flags.crop_x < 0 || flags.crop_y < 0 || flags.crop_height != static_cast<int>(info.plane_info[0].height) ||
+            flags.crop_width != static_cast<int>(info.plane_info[0].width)) {
             NVIMGCDCS_D_LOG_ERROR("Region of interest is out of bounds");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
@@ -357,7 +356,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
     nvimgcdcsExecutorDesc_t executor;
     framework_->getExecutor(framework_->instance, &executor);
     for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-        executor->launch(executor->instance, -1 /*device_id*/, sample_idx, decode_state_batch_.get(),
+        executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(),
             [](int tid, int sample_idx, void* context) -> void {
                 nvtx3::scoped_range marker{"libjpeg_turbo decode " + std::to_string(sample_idx)};
                 auto* decode_state = reinterpret_cast<DecodeState*>(context);
