@@ -246,12 +246,12 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work<nvimgcdcsDec
         if (!fallback_work->empty())
             fallback_worker->addWork(std::move(fallback_work));
     } else {
-        filter_work(work.get(), mask);
         for (size_t i = 0; i < mask.size(); i++) {
             if (!mask[i]) {
                 work->results_.set(work->indices_[i], ProcessingResult::failure(status[i]));
             }
         }
+        filter_work(work.get(), mask);
     }
 
     if (!work->code_streams_.empty()) {
