@@ -28,10 +28,11 @@ class Logger
         const nvimgcdcsDebugMessageType_t message_type, const std::string& codec_id,
         uint32_t codec_version, const std::string& message)
     {
- 
-        const nvimgcdcsDebugMessageData_t data{NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr,
-            message.c_str(), 0, nullptr, codec_id.c_str(), codec_version};
-        log_func_(plugin_framework_instance_, message_severity, message_type, &data);
+        if (log_func_) {
+            const nvimgcdcsDebugMessageData_t data{NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr,
+                message.c_str(), 0, nullptr, codec_id.c_str(), codec_version};
+            log_func_(plugin_framework_instance_, message_severity, message_type, &data);
+        }
     }
 
     void registerLogFunc(void* plugin_framework_instance, nvimgcdcsLogFunc_t log_func)
