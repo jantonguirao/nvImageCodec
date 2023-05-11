@@ -413,9 +413,15 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle, static_cast<const unsigned char*>(encoded_stream_data),
                     encoded_stream_data_size, false, false, p.parse_state_.nvjpeg_stream_));
 
+                nvjpegJpegEncoding_t jpeg_encoding;
+                nvjpegJpegStreamGetJpegEncoding(p.parse_state_.nvjpeg_stream_, &jpeg_encoding);
+
                 int is_gpu_hybrid_supported = -1; // zero means is supported
-                XM_CHECK_NVJPEG(nvjpegDecoderJpegSupported(p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID].decoder, p.parse_state_.nvjpeg_stream_,
-                    nvjpeg_params.get(), &is_gpu_hybrid_supported));
+                if (jpeg_encoding == NVJPEG_ENCODING_BASELINE_DCT) { //gpu hybrid is not supported for progressive
+                    XM_CHECK_NVJPEG(nvjpegDecoderJpegSupported(p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID].decoder,
+                        p.parse_state_.nvjpeg_stream_, nvjpeg_params.get(), &is_gpu_hybrid_supported));
+                }
+    
                 auto& decoder_data =
                     (image_info.plane_info[0].height * image_info.plane_info[0].width) > (256u * 256u) && is_gpu_hybrid_supported == 0
                         ? p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID]
