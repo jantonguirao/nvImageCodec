@@ -33,12 +33,10 @@ class ExtensionTestBase
         streams_.clear();
     }
 
-    virtual void TearDown()
-    {
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
-    }
+    virtual void TearDown() { ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_)); }
 
-    virtual void TearDownCodecResources() {
+    virtual void TearDownCodecResources()
+    {
         if (future_)
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureDestroy(future_));
         if (in_image_)
@@ -51,7 +49,7 @@ class ExtensionTestBase
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(out_code_stream_));
     }
 
-        void PrepareImageForPlanarFormat(int num_planes = 3)
+    void PrepareImageForPlanarFormat(int num_planes = 3)
     {
         image_info_.num_planes = num_planes;
         for (int p = 0; p < image_info_.num_planes; p++) {
@@ -67,7 +65,7 @@ class ExtensionTestBase
         image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
     }
 
-    void PrepareImageForIterleavedFormat()
+    void PrepareImageForInterleavedFormat()
     {
         image_info_.num_planes = 1;
         image_info_.plane_info[0].num_channels = 3;
@@ -103,7 +101,7 @@ class ExtensionTestBase
         }
         case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
         case NVIMGCDCS_SAMPLEFORMAT_I_RGB: {
-            PrepareImageForIterleavedFormat();
+            PrepareImageForInterleavedFormat();
             break;
         }
         default: {

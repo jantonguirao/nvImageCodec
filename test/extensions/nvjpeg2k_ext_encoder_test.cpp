@@ -130,6 +130,10 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &load_info));
     //TODO uncomment when generic jpeg2k parser is in place EXPECT_EQ(cs_image_info.chroma_subsampling, load_info.chroma_subsampling);
 
+    std::vector<unsigned char> ref_out_buffer;
+    EncodeReference(image_info_, params_, jpeg2k_enc_params_, cs_image_info, &ref_out_buffer);
+    ASSERT_EQ(0,
+        memcmp(reinterpret_cast<void*>(ref_out_buffer.data()), reinterpret_cast<void*>(code_stream_buffer_.data()), ref_out_buffer.size()));
 }
 // clang-format off
 

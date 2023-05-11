@@ -13,10 +13,12 @@
 #include <nvimgcodecs.h>
 #include <parsers/parser_test_utils.h>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <string>
-#include <vector>
 #include <tuple>
+#include <vector>
+
 #include "nvimgcodecs_tests.h"
 #include "nvjpeg_ext_test_common.h"
 
@@ -26,20 +28,23 @@ using ::testing::TestWithParam;
 using ::testing::Values;
 using ::testing::ValuesIn;
 
+#define NV_DEVELOPER_DUMP_OUTPUT_CODE_STREAM 0
+#define NV_DEVELOPER_DEBUG_DUMP_DECODE_OUTPUT 0
+
 namespace nvimgcdcs { namespace test {
 
-class NvJpegExtEncoderTestBase: public NvJpegExtTestBase
+class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
 {
   public:
     NvJpegExtEncoderTestBase() {}
 
-    virtual void SetUp() 
+    virtual void SetUp()
     {
         NvJpegExtTestBase::SetUp();
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT));
 
         jpeg_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
-        jpeg_enc_params_.optimized_huffman= false;
+        jpeg_enc_params_.optimized_huffman = false;
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         params_.next = &jpeg_enc_params_;
         params_.quality = 95;
@@ -82,7 +87,6 @@ class NvJpegExtEncoderTestSingleImage : public NvJpegExtEncoderTestBase,
         encoded_chroma_subsampling_ = std::get<4>(GetParam());
         out_jpeg_image_info_.encoding = std::get<5>(GetParam());
         image_info_.next = &out_jpeg_image_info_;
-
     }
 
     void TearDown() override
@@ -112,11 +116,15 @@ TEST_P(NvJpegExtEncoderTestSingleImage, ValidFormatAndParameters)
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
-    nvimgcdcsProcessingStatus_t encode_status;
+    nvimgcdcsProcessingStatus_t status;
     size_t status_size;
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, encode_status);
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
+    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, status);
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+    if (NV_DEVELOPER_DUMP_OUTPUT_CODE_STREAM) {
+        std::ofstream b_stream("./encoded_out.jpg", std::fstream::out | std::fstream::binary);
+        b_stream.write(reinterpret_cast<char*>(code_stream_buffer_.data()), code_stream_buffer_.size());
+    }
 
     LoadImageFromHostMemory(instance_, in_code_stream_, code_stream_buffer_.data(), code_stream_buffer_.size());
     nvimgcdcsImageInfo_t load_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -126,13 +134,11 @@ TEST_P(NvJpegExtEncoderTestSingleImage, ValidFormatAndParameters)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &load_info));
     EXPECT_EQ(out_jpeg_image_info_.encoding, load_jpeg_info.encoding);
     EXPECT_EQ(cs_image_info.chroma_subsampling, load_info.chroma_subsampling);
-    
-    //Decode
-    images_.clear();
-    streams_.clear();
 
-    images_.push_back(out_image_);
-    streams_.push_back(in_code_stream_);
+    std::vector<unsigned char> ref_out_buffer;
+    EncodeReference(image_info_, params_, jpeg_enc_params_, cs_image_info, out_jpeg_image_info_, &ref_out_buffer);
+    ASSERT_EQ(0,
+        memcmp(reinterpret_cast<void*>(ref_out_buffer.data()), reinterpret_cast<void*>(code_stream_buffer_.data()), ref_out_buffer.size()));
 }
 
 // clang-format off

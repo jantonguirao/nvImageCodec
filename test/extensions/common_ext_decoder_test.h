@@ -23,7 +23,7 @@
 #include <vector>
 #include "nvimgcodecs_tests.h"
 
-#define DEBUG_DUMP_DECODE_OUTPUT 1
+#define DEBUG_DUMP_DECODE_OUTPUT 0
 
 namespace nvimgcdcs { namespace test {
 
