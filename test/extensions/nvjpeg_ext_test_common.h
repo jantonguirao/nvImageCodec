@@ -332,7 +332,7 @@ class NvJpegTestBase
         ASSERT_EQ(cudaSuccess, cudaFree(dev_buffer));
     }
 
-    nvjpegBackend_t backend_ = NVJPEG_BACKEND_DEFAULT;
+    nvjpegBackend_t backend_ = NVJPEG_BACKEND_GPU_HYBRID;
     nvjpegHandle_t nvjpeg_handle_ = nullptr;
     nvjpegJpegDecoder_t nvjpeg_decoder_ = nullptr;
     nvjpegBufferPinned_t nvjpeg_pinned_buffer_ = nullptr;
