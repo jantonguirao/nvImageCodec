@@ -28,18 +28,12 @@ class PNMParserPlugin
         Parser();
 
         nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
-        nvimgcdcsStatus_t createParseState(nvimgcdcsParseState_t* parse_state);
-        nvimgcdcsStatus_t destroyParseSate(nvimgcdcsParseState_t parse_state);
-
         nvimgcdcsStatus_t getImageInfo(
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsParser_t parser);
         static nvimgcdcsStatus_t static_get_capabilities(
             nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size);
-        static nvimgcdcsStatus_t static_create_parse_state(
-            nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state);
-        static nvimgcdcsStatus_t static_destroy_parse_state(nvimgcdcsParseState_t parse_state);
         static nvimgcdcsStatus_t static_get_image_info(nvimgcdcsParser_t parser,
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
 

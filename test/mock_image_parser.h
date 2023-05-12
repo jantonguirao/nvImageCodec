@@ -14,7 +14,6 @@
 #include <gtest/gtest.h>
 #include <nvimgcodecs.h>
 #include "../src/iimage_parser.h"
-#include "../src/iparse_state.h"
 #include <memory>
 
 namespace nvimgcdcs { namespace test {
@@ -26,7 +25,6 @@ class MockImageParser : public IImageParser
     MOCK_METHOD(std::string, getCodecName,(), (const, override));
     MOCK_METHOD(nvimgcdcsStatus_t, getImageInfo,(
         nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info) ,(override));
-    MOCK_METHOD(std::unique_ptr<IParseState>, createParseState,(),(override));
 };
 
 }} // namespace nvimgcdcs::test

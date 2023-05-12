@@ -19,7 +19,6 @@
 #include "mock_codec_registry.h"
 #include "mock_image_parser.h"
 #include "mock_iostream_factory.h"
-#include "mock_parse_state.h"
 
 namespace nvimgcdcs { namespace test {
 
@@ -36,15 +35,7 @@ TEST(CodeStreamTest, test_parse_from_file)
     MockCodec codec;
     EXPECT_CALL(codec, name()).WillRepeatedly(ReturnRef(codec_name));
 
-    nvimgcdcsParseState_t nvimg_parse_state = nullptr;
-
-    std::unique_ptr<MockParseState> parse_state = std::make_unique<MockParseState>();
-    EXPECT_CALL(*parse_state.get(), getInternalParseState())
-        .WillRepeatedly(Return(nvimg_parse_state));
-
     std::unique_ptr<MockImageParser> parser = std::make_unique<MockImageParser>();
-    EXPECT_CALL(*parser.get(), createParseState())
-        .WillRepeatedly(Return(ByMove(std::move(parse_state))));
 
     MockCodecRegistry codec_registry;
     EXPECT_CALL(codec_registry, getParser(_))
@@ -64,16 +55,7 @@ TEST(CodeStreamTest, test_parse_from_mem)
     MockCodec codec;
     EXPECT_CALL(codec, name()).WillRepeatedly(ReturnRef(codec_name));
 
-    nvimgcdcsParseState_t nvimg_parse_state = nullptr;
-
-    std::unique_ptr<MockParseState> parse_state = std::make_unique<MockParseState>();
-    EXPECT_CALL(*parse_state.get(), getInternalParseState())
-        .WillRepeatedly(Return(nvimg_parse_state));
-
     std::unique_ptr<MockImageParser> parser = std::make_unique<MockImageParser>();
-    EXPECT_CALL(*parser.get(), createParseState())
-        .WillRepeatedly(Return(ByMove(std::move(parse_state))));
-
     MockCodecRegistry codec_registry;
     EXPECT_CALL(codec_registry, getParser(_))
         .Times(1)

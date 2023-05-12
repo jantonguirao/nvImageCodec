@@ -22,7 +22,6 @@ namespace nvimgcdcs {
 
 namespace {
 
-
 enum BmpCompressionType
 {
     BMP_COMPRESSION_RGB = 0,
@@ -49,8 +48,7 @@ struct BitmapInfoHeader
 };
 static_assert(sizeof(BitmapInfoHeader) == 40);
 
-static bool is_color_palette(
-    nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, int palette_entry_size)
+static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, int palette_entry_size)
 {
     std::vector<uint8_t> entry;
     entry.resize(palette_entry_size);
@@ -65,8 +63,8 @@ static bool is_color_palette(
     return false;
 }
 
-static int number_of_channels(nvimgcdcsIoStreamDesc_t io_stream, int bpp, int compression_type,
-    size_t ncolors = 0, int palette_entry_size = 0)
+static int number_of_channels(
+    nvimgcdcsIoStreamDesc_t io_stream, int bpp, int compression_type, size_t ncolors = 0, int palette_entry_size = 0)
 {
     if (compression_type == BMP_COMPRESSION_RGB || compression_type == BMP_COMPRESSION_RLE8) {
         if (bpp <= 8 && ncolors <= static_cast<unsigned int>(1u << bpp)) {
@@ -86,18 +84,17 @@ static int number_of_channels(nvimgcdcsIoStreamDesc_t io_stream, int bpp, int co
     return 0;
 }
 
-
 } // namespace
 
 BMPParserPlugin::BMPParserPlugin()
     : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr,
-          this,            // instance
+          this,         // instance
           "bmp_parser", // id
-          0x00000100,      // version
+          0x00000100,   // version
           "bmp",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_create_parse_state, Parser::static_destroy_parse_state,
-          Parser::static_get_image_info, Parser::static_get_capabilities}
-{}
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
+{
+}
 
 struct nvimgcdcsParserDesc* BMPParserPlugin::getParserDesc()
 {
@@ -144,7 +141,8 @@ nvimgcdcsStatus_t BMPParserPlugin::static_can_parse(void* instance, bool* result
 }
 
 BMPParserPlugin::Parser::Parser()
-{}
+{
+}
 
 nvimgcdcsStatus_t BMPParserPlugin::create(nvimgcdcsParser_t* parser)
 {
@@ -211,39 +209,6 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::static_get_capabilities(
     }
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::Parser::createParseState(nvimgcdcsParseState_t* parse_state)
-{
-    // TODO(janton): remove this API
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t BMPParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("BMP create_parse_state");
-        CHECK_NULL(parser);
-        CHECK_NULL(parse_state);
-        auto handle = reinterpret_cast<BMPParserPlugin::Parser*>(parser);
-        return handle->createParseState(parse_state);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create bmp parse state - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t BMPParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("bmp_destroy_parse_state");
-        CHECK_NULL(parse_state);
-        // TODO(janton): remove this API
-        return NVIMGCDCS_STATUS_SUCCESS;
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy bmp parse state - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
 nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     // https://en.wikipedia.org/wiki/BMP_file_format#DIB_header_(bitmap_information_header)
@@ -285,7 +250,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
             }
         } else if (length >= 50 && header_size >= 40) {
             BitmapInfoHeader header = ReadValue<BitmapInfoHeader>(io_stream);
-            io_stream->skip(io_stream->instance, header_size - sizeof(header));  // Skip the ignored part of header
+            io_stream->skip(io_stream->instance, header_size - sizeof(header)); // Skip the ignored part of header
             image_info->plane_info[0].width = abs(header.width);
             image_info->plane_info[0].height = abs(header.heigth);
             bpp = header.bpp;
@@ -302,7 +267,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
         }
 
         // sanity check
-        if (palette_start != 0) {  // this silences a warning about unused variable
+        if (palette_start != 0) { // this silences a warning about unused variable
             assert(palette_start + (ncolors * palette_entry_size) <= length);
         }
 
@@ -322,7 +287,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
         }
         image_info->orientation = {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
         image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
-        
+
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve image info from bmp stream - " << e.what());

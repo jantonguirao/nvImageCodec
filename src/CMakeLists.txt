@@ -14,7 +14,6 @@ set(NVIMGCDCS_SRCS
     file_io_stream.cpp
     std_file_io_stream.cpp
     image.cpp
-    parse_state.cpp
     logger.cpp
     default_debug_messenger.cpp
     image_parser_factory.cpp

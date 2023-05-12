@@ -13,11 +13,11 @@
 #include <vector>
 
 #include "exception.h"
+#include "exif_orientation.h"
 #include "log.h"
 #include "logger.h"
 #include "parsers/byte_io.h"
 #include "parsers/exif.h"
-#include "exif_orientation.h"
 
 namespace nvimgcdcs {
 
@@ -50,7 +50,7 @@ void SkipSpaces(nvimgcdcsIoStreamDesc_t io_stream)
             break;
     }
     // return the nonspace byte to the stream
-    io_stream->seek(io_stream->instance, pos-1, SEEK_SET);
+    io_stream->seek(io_stream->instance, pos - 1, SEEK_SET);
 }
 
 int ParseInt(nvimgcdcsIoStreamDesc_t io_stream)
@@ -69,7 +69,7 @@ int ParseInt(nvimgcdcsIoStreamDesc_t io_stream)
             break;
     }
     // return the nondigit byte to the stream
-    io_stream->seek(io_stream->instance, pos-1, SEEK_SET);
+    io_stream->seek(io_stream->instance, pos - 1, SEEK_SET);
     return int_value;
 }
 
@@ -84,14 +84,14 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
         NVIMGCDCS_LOG_ERROR("Unexpected structure type");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
-    
+
     // http://netpbm.sourceforge.net/doc/ppm.html
 
     if (io_stream_length < 3) {
         NVIMGCDCS_LOG_ERROR("Unexpected end of stream");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
-    
+
     std::array<uint8_t, 3> header = ReadValue<std::array<uint8_t, 3>>(io_stream);
     bool is_pnm = header[0] == 'P' && header[1] >= '1' && header[1] <= '6' && isspace(header[2]);
     if (!is_pnm) {
@@ -124,13 +124,13 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
 
 PNMParserPlugin::PNMParserPlugin()
     : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr,
-          this,          // instance
+          this,         // instance
           "pnm_parser", // id
-          0x00000100,    // version
+          0x00000100,   // version
           "pnm",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_create_parse_state, Parser::static_destroy_parse_state,
-          Parser::static_get_image_info, Parser::static_get_capabilities}
-{}
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
+{
+}
 
 struct nvimgcdcsParserDesc* PNMParserPlugin::getParserDesc()
 {
@@ -168,7 +168,8 @@ nvimgcdcsStatus_t PNMParserPlugin::static_can_parse(void* instance, bool* result
 }
 
 PNMParserPlugin::Parser::Parser()
-{}
+{
+}
 
 nvimgcdcsStatus_t PNMParserPlugin::create(nvimgcdcsParser_t* parser)
 {
@@ -231,39 +232,6 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_get_capabilities(
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve pnm parser capabilites - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t PNMParserPlugin::Parser::createParseState(nvimgcdcsParseState_t* parse_state)
-{
-    // TODO(janton): remove this API
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t PNMParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("PNM create_parse_state");
-        CHECK_NULL(parser);
-        CHECK_NULL(parse_state);
-        auto handle = reinterpret_cast<PNMParserPlugin::Parser*>(parser);
-        return handle->createParseState(parse_state);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create pnm parse state - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t PNMParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("pnm_destroy_parse_state");
-        CHECK_NULL(parse_state);
-        // TODO(janton): remove this API
-        return NVIMGCDCS_STATUS_SUCCESS;
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy pnm parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

@@ -67,7 +67,6 @@ static constexpr chunk_type_field_t IEND_TAG{'I', 'E', 'N', 'D'};
 using png_signature_t = std::array<uint8_t, 8>;
 static constexpr png_signature_t PNG_SIGNATURE = {137, 80, 78, 71, 13, 10, 26, 10};
 
-
 nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
 
@@ -114,57 +113,57 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
     image_info->plane_info[0].height = ReadValueBE<uint32_t>(io_stream);
     uint8_t bitdepth = ReadValueBE<uint8_t>(io_stream);
     nvimgcdcsSampleDataType_t sample_format;
-    switch(bitdepth) {
-        case 1:
-        case 2:
-        case 4:
-        case 8:
-            sample_format = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-            break;
-        case 16:
-            sample_format = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
-            break;
-        default:
-            NVIMGCDCS_LOG_ERROR("Unexpected bitdepth: " << bitdepth);
-            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+    switch (bitdepth) {
+    case 1:
+    case 2:
+    case 4:
+    case 8:
+        sample_format = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+        break;
+    case 16:
+        sample_format = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+        break;
+    default:
+        NVIMGCDCS_LOG_ERROR("Unexpected bitdepth: " << bitdepth);
+        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
     // see Table 11.1
     auto color_type = static_cast<ColorType>(ReadValueBE<uint8_t>(io_stream));
     switch (color_type) {
-        case PNG_COLOR_TYPE_GRAY:
-            image_info->num_planes = 1;
-            break;
-        case PNG_COLOR_TYPE_RGB:
-            image_info->num_planes = 3;
-            if (bitdepth != 8 && bitdepth != 16) {
-                NVIMGCDCS_LOG_ERROR("Unexpected bitdepth for RGB color type: " << bitdepth);
-                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
-            }
-            break;
-        case PNG_COLOR_TYPE_PALETTE:
-            image_info->num_planes = 3;
-            if (bitdepth == 16) {
-                NVIMGCDCS_LOG_ERROR("Unexpected bitdepth for palette color type: " << bitdepth);
-                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
-            }
-            break;
-        case PNG_COLOR_TYPE_GRAY_ALPHA:
-            image_info->num_planes = 2;
-            if (bitdepth != 8 && bitdepth != 16) {
-                NVIMGCDCS_LOG_ERROR("Unexpected bitdepth for Gray with alpha color type: " << bitdepth);
-                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
-            }
-            break;
-        case PNG_COLOR_TYPE_RGBA:
-            image_info->num_planes = 4;
-            if (bitdepth != 8 && bitdepth != 16) {
-                NVIMGCDCS_LOG_ERROR("Unexpected bitdepth for RGBA color type: " << bitdepth);
-                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
-            }
-            break;
-        default:
-            NVIMGCDCS_LOG_ERROR("Unexpected color type: " << color_type);
+    case PNG_COLOR_TYPE_GRAY:
+        image_info->num_planes = 1;
+        break;
+    case PNG_COLOR_TYPE_RGB:
+        image_info->num_planes = 3;
+        if (bitdepth != 8 && bitdepth != 16) {
+            NVIMGCDCS_LOG_ERROR("Unexpected bitdepth for RGB color type: " << bitdepth);
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        }
+        break;
+    case PNG_COLOR_TYPE_PALETTE:
+        image_info->num_planes = 3;
+        if (bitdepth == 16) {
+            NVIMGCDCS_LOG_ERROR("Unexpected bitdepth for palette color type: " << bitdepth);
+            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        }
+        break;
+    case PNG_COLOR_TYPE_GRAY_ALPHA:
+        image_info->num_planes = 2;
+        if (bitdepth != 8 && bitdepth != 16) {
+            NVIMGCDCS_LOG_ERROR("Unexpected bitdepth for Gray with alpha color type: " << bitdepth);
+            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        }
+        break;
+    case PNG_COLOR_TYPE_RGBA:
+        image_info->num_planes = 4;
+        if (bitdepth != 8 && bitdepth != 16) {
+            NVIMGCDCS_LOG_ERROR("Unexpected bitdepth for RGBA color type: " << bitdepth);
+            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        }
+        break;
+    default:
+        NVIMGCDCS_LOG_ERROR("Unexpected color type: " << color_type);
+        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
     image_info->sample_format = image_info->num_planes >= 3 ? NVIMGCDCS_SAMPLEFORMAT_P_RGB : NVIMGCDCS_SAMPLEFORMAT_P_Y;
     image_info->color_spec = image_info->num_planes >= 3 ? NVIMGCDCS_COLORSPEC_SRGB : NVIMGCDCS_COLORSPEC_GRAY;
@@ -181,7 +180,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
     while (true) {
         uint32_t chunk_length = ReadValueBE<uint32_t>(io_stream);
         auto chunk_type = ReadValue<chunk_type_field_t>(io_stream);
-        
+
         if (chunk_type == IEND_TAG)
             break;
 
@@ -201,9 +200,9 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
                     image_info->orientation = FromExifOrientation(static_cast<ExifOrientation>(entry.field_u16));
                 }
             }
-            io_stream->skip(io_stream->instance, 4);  // 4 bytes of CRC
+            io_stream->skip(io_stream->instance, 4);                // 4 bytes of CRC
         } else {
-            io_stream->skip(io_stream->instance, chunk_length + 4);  // + 4 bytes of CRC
+            io_stream->skip(io_stream->instance, chunk_length + 4); // + 4 bytes of CRC
         }
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -217,9 +216,9 @@ PNGParserPlugin::PNGParserPlugin()
           "png_parser", // id
           0x00000100,   // version
           "png",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_create_parse_state, Parser::static_destroy_parse_state,
-          Parser::static_get_image_info, Parser::static_get_capabilities}
-{}
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
+{
+}
 
 struct nvimgcdcsParserDesc* PNGParserPlugin::getParserDesc()
 {
@@ -257,7 +256,8 @@ nvimgcdcsStatus_t PNGParserPlugin::static_can_parse(void* instance, bool* result
 }
 
 PNGParserPlugin::Parser::Parser()
-{}
+{
+}
 
 nvimgcdcsStatus_t PNGParserPlugin::create(nvimgcdcsParser_t* parser)
 {
@@ -320,39 +320,6 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::static_get_capabilities(
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve png parser capabilites - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t PNGParserPlugin::Parser::createParseState(nvimgcdcsParseState_t* parse_state)
-{
-    // TODO(janton): remove this API
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t PNGParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("PNG create_parse_state");
-        CHECK_NULL(parser);
-        CHECK_NULL(parse_state);
-        auto handle = reinterpret_cast<PNGParserPlugin::Parser*>(parser);
-        return handle->createParseState(parse_state);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create png parse state - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t PNGParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("png_destroy_parse_state");
-        CHECK_NULL(parse_state);
-        // TODO(janton): remove this API
-        return NVIMGCDCS_STATUS_SUCCESS;
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy png parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

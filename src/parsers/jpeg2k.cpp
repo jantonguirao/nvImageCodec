@@ -115,7 +115,7 @@ JPEG2KParserPlugin::JPEG2KParserPlugin()
           "jpeg2k_parser", // id
           0x00000100,      // version
           "jpeg2k",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_create_parse_state, Parser::static_destroy_parse_state,
+          static_can_parse, static_create, Parser::static_destroy, 
           Parser::static_get_image_info, Parser::static_get_capabilities}
 {}
 
@@ -224,39 +224,6 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_get_capabilities(
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve jpeg2k parser capabilites - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::createParseState(nvimgcdcsParseState_t* parse_state)
-{
-    // TODO(janton): remove this API
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("JPEG2K create_parse_state");
-        CHECK_NULL(parser);
-        CHECK_NULL(parse_state);
-        auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
-        return handle->createParseState(parse_state);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create jpeg2k parse state - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("jpeg2k_destroy_parse_state");
-        CHECK_NULL(parse_state);
-        // TODO(janton): remove this API
-        return NVIMGCDCS_STATUS_SUCCESS;
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg2k parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

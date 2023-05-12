@@ -11,7 +11,6 @@
 #include <cassert>
 #include <iostream>
 #include "log.h"
-#include "parse_state.h"
 
 namespace nvimgcdcs {
 
@@ -42,12 +41,6 @@ nvimgcdcsStatus_t ImageParser::getImageInfo(
     assert(code_stream);
     assert(parser_desc_->getImageInfo);
     return parser_desc_->getImageInfo(parser_, image_info, code_stream);
-}
-
-std::unique_ptr<IParseState> ImageParser::createParseState()
-{
-    NVIMGCDCS_LOG_TRACE("ImageParser::createParseState");
-    return std::make_unique<ParseState>(parser_desc_, parser_);
 }
 
 } // namespace nvimgcdcs
