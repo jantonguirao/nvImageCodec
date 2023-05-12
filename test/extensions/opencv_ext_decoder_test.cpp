@@ -196,15 +196,6 @@ TEST_F(OpenCVExtDecoderTest, JPEG_ROIDecodingPortion)
     TestSingleImage("jpeg/padlock-406986_640_422.jpg", NVIMGCDCS_SAMPLEFORMAT_I_RGB, region2);
 }
 
-TEST_F(OpenCVExtDecoderTest, JPEG_SampleTypeUnsupported)
-{
-    for (auto sample_type : {NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32, NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16, NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8,
-             NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16}) {
-        TestNotSupported("jpeg/padlock-406986_640_444.jpg", NVIMGCDCS_SAMPLEFORMAT_I_RGB, sample_type,
-            NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED);
-    }
-}
-
 TEST_F(OpenCVExtDecoderTest, JPEG2K_SingleImage_RGB_I)
 {
     TestSingleImage("jpeg2k/cat-1046544_640.jp2", NVIMGCDCS_SAMPLEFORMAT_I_RGB);

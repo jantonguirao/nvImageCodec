@@ -15,18 +15,15 @@
 
 namespace opencv {
 
-static void rgb2bgr(cv::Mat& img)
+
+
+static void color_convert(cv::Mat& img, cv::ColorConversionCodes conversion)
 {
     NVIMGCDCS_D_LOG_TRACE("Before cvtColor - " << img.rows << " x " << img.cols);
     if (img.data == nullptr || img.rows == 0 || img.cols == 0)
         throw std::runtime_error("Invalid input image");
     cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
     NVIMGCDCS_D_LOG_TRACE("After cvtColor");
-}
-
-static void bgr2rgb(cv::Mat& img)
-{
-    rgb2bgr(img);
 }
 
 template <typename DestType, typename SrcType>
@@ -132,7 +129,9 @@ nvimgcdcsStatus_t ConvertInterleaved(nvimgcdcsImageInfo_t& info, const cv::Mat& 
 
 nvimgcdcsStatus_t Convert(nvimgcdcsImageInfo_t& info, const cv::Mat& decoded)
 {
-    if (info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB || info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR) {
+    if (info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB ||
+        info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR ||
+        info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED) {
         return ConvertPlanar(info, decoded);
     } else {
         return ConvertInterleaved(info, decoded);
@@ -235,8 +234,6 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
 
         switch (info.sample_format) {
         case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
-        case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED: // TODO(janton): support?
-        case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED: // TODO(janton): support?
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
             break;
         case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
@@ -244,17 +241,21 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
         case NVIMGCDCS_SAMPLEFORMAT_P_Y:
         case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
         case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+        case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
+        case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
         default:
             break; // supported
         }
 
-        if (info.num_planes == 3) {
+        if (info.num_planes > 1) {
             for (size_t p = 0; p < info.num_planes; p++) {
                 if (info.plane_info[p].num_channels != 1)
                     *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
             }
         } else if (info.num_planes == 1) {
-            if (info.plane_info[0].num_channels != 3 && info.plane_info[0].num_channels != 1)
+            if (info.plane_info[0].num_channels != 3
+                && info.plane_info[0].num_channels != 4
+                && info.plane_info[0].num_channels != 1)
                 *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
         } else {
             *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
@@ -272,7 +273,6 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             break;
         default:
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
-            break;
             break;
         }
     }
@@ -421,6 +421,8 @@ nvimgcdcsStatus_t decodeImpl(
 
     int num_channels = std::max(info.num_planes, info.plane_info[0].num_channels);
     int flags = num_channels > 1 ? cv::IMREAD_COLOR : cv::IMREAD_GRAYSCALE;
+    if (num_channels > 3)
+        flags |= cv::IMREAD_UNCHANGED;
     if (!params->enable_orientation)
         flags |= cv::IMREAD_IGNORE_ORIENTATION;
     if (info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
@@ -430,20 +432,6 @@ nvimgcdcsStatus_t decodeImpl(
     if (decoded.data == nullptr) {
         return NVIMGCDCS_STATUS_INTERNAL_ERROR;
     } else if (info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-
-    switch (info.sample_format) {
-    case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
-    case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
-        bgr2rgb(decoded); // opencv decodes as BGR layout
-        break;
-    case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
-    case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
-    case NVIMGCDCS_SAMPLEFORMAT_P_Y:
-        break;
-    default:
-        NVIMGCDCS_D_LOG_ERROR("Unsupported sample_format: " << info.sample_format);
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
@@ -461,6 +449,25 @@ nvimgcdcsStatus_t decodeImpl(
         cv::Mat tmp;
         decoded(roi).copyTo(tmp);
         std::swap(tmp, decoded);
+    }
+
+    switch (info.sample_format) {
+    case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+    case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+        color_convert(decoded, cv::COLOR_BGR2RGB); // opencv decodes as BGR layout
+        break;
+    case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
+    case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
+        if (num_channels == 4)
+            color_convert(decoded, cv::COLOR_BGRA2RGBA);
+        break;
+    case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+    case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+    case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+        break;
+    default:
+        NVIMGCDCS_D_LOG_ERROR("Unsupported sample_format: " << info.sample_format);
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
     return Convert(info, decoded);
