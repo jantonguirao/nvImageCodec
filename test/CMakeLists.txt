@@ -22,7 +22,6 @@ set(SRCS
 )
 
 if (BUILD_NVJPEG_EXT)
-    list(APPEND SRCS extensions/nvjpeg_ext_parser_test.cpp)
     list(APPEND SRCS extensions/nvjpeg_ext_encoder_test.cpp)
     list(APPEND SRCS extensions/nvjpeg_ext_decoder_test.cpp)
 endif()

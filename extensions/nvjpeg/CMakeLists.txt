@@ -4,7 +4,6 @@ set(NVIMGCDCS_NVJPEG_EXT_SRC
   cuda_decoder.cpp
   hw_decoder.cpp
   cuda_encoder.cpp
-  parser.cpp
   type_convert.cpp
   nvjpeg_ext.cpp
 )

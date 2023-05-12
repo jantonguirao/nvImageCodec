@@ -4,7 +4,6 @@ set(NVIMGCDCS_NVBMP_EXT_SRC
       nvbmp_ext.cpp
       encoder.cpp
       decoder.cpp
-      parser.cpp
 )
 include_directories(
   ../../include

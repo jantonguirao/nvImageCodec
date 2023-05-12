@@ -4,7 +4,6 @@ set(NVIMGCDCS_NVJPEG2K_EXT_SRC
   nvjpeg2k_ext.cpp
   cuda_encoder.cpp
   cuda_decoder.cpp
-  parser.cpp
 )
 
 find_package(CUDAToolkit REQUIRED)

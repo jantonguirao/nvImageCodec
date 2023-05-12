@@ -1,7 +1,6 @@
 #include <nvimgcodecs.h>
 #include "log.h"
 
-extern nvimgcdcsParserDesc nvbmp_parser;
 extern nvimgcdcsEncoderDesc nvbmp_encoder;
 extern nvimgcdcsDecoderDesc nvbmp_decoder;
 
@@ -11,7 +10,6 @@ nvimgcdcsStatus_t nvbmp_extension_create(void* instance, nvimgcdcsExtension_t* e
     Logger::get().registerLogFunc(framework->instance, framework->log);
 
     NVIMGCDCS_LOG_TRACE("nvbmp_extension_create");
-    framework->registerParser(framework->instance, &nvbmp_parser);
     framework->registerEncoder(framework->instance, &nvbmp_encoder);
     framework->registerDecoder(framework->instance, &nvbmp_decoder);
 

@@ -57,7 +57,7 @@ nvimgcdcsChromaSubsampling_t chroma_subsampling_from_factors(
     int ncomponents, uint8_t yh, uint8_t yv, uint8_t uh, uint8_t uv, uint8_t vh, uint8_t vv)
 {
     if (ncomponents == 1)
-        return NVIMGCDCS_SAMPLING_NONE;
+        return NVIMGCDCS_SAMPLING_GRAY;
 
     if (ncomponents == 3) {
         uint8_t minh = std::min(yh, std::min(uh, vh));

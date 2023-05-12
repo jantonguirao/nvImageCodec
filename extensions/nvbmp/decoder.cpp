@@ -1,9 +1,9 @@
 #include <cuda_runtime_api.h>
 #include <nvimgcodecs.h>
 #include <cstring>
+#include <vector>
 #include "exceptions.h"
 #include "log.h"
-#include "parser.h"
 
 struct nvimgcdcsDecoder
 {

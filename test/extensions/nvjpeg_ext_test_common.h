@@ -18,6 +18,7 @@
 #include <extensions/nvjpeg/nvjpeg_ext.h>
 #include <nvjpeg.h>
 #include "common.h"
+#include "parsers/jpeg.h"
 
 namespace nvimgcdcs { namespace test {
 
@@ -34,6 +35,10 @@ class NvJpegExtTestBase : public ExtensionTestBase
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvjpeg_extension_desc(&nvjpeg_extension_desc_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &nvjpeg_extension_, &nvjpeg_extension_desc_));
 
+        nvimgcdcsExtensionDesc_t jpeg_parser_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_jpeg_parser_extension_desc(&jpeg_parser_extension_desc));
+        nvimgcdcsExtensionCreate(instance_, &jpeg_parser_extension_, &jpeg_parser_extension_desc);
+
         image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         jpeg_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
         image_info_.next = &jpeg_info_;
@@ -42,12 +47,14 @@ class NvJpegExtTestBase : public ExtensionTestBase
     virtual void TearDown()
     {
         TearDownCodecResources();
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(jpeg_parser_extension_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(nvjpeg_extension_));
         ExtensionTestBase::TearDown();
     }
 
     nvimgcdcsExtensionDesc_t nvjpeg_extension_desc_{};
     nvimgcdcsExtension_t nvjpeg_extension_;
+    nvimgcdcsExtension_t jpeg_parser_extension_;
     nvimgcdcsJpegImageInfo_t jpeg_info_;
 };
 

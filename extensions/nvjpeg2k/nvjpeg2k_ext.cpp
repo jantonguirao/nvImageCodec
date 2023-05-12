@@ -3,7 +3,6 @@
 #include "cuda_encoder.h"
 #include "error_handling.h"
 #include "log.h"
-#include "parser.h"
 
 namespace nvjpeg2k {
 
@@ -14,9 +13,7 @@ struct NvJpeg2kImgCodecsExtension
         : framework_(framework)
         , jpeg2k_decoder_(framework)
         , jpeg2k_encoder_(framework)
-        , jpeg2k_parser_(framework)
     {
-        framework->registerParser(framework->instance, jpeg2k_parser_.getParserDesc());
         framework->registerEncoder(framework->instance, jpeg2k_encoder_.getEncoderDesc());
         framework->registerDecoder(framework->instance, jpeg2k_decoder_.getDecoderDesc());
     }
@@ -25,7 +22,6 @@ struct NvJpeg2kImgCodecsExtension
     const nvimgcdcsFrameworkDesc_t framework_;
     NvJpeg2kDecoderPlugin jpeg2k_decoder_;
     NvJpeg2kEncoderPlugin jpeg2k_encoder_;
-    NvJpeg2kParserPlugin jpeg2k_parser_;
 };
 
 } // namespace nvjpeg2k

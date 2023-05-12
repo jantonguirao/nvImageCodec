@@ -13,7 +13,6 @@
 
 #include "errors_handling.h"
 #include "log.h"
-#include "parser.h"
 #include "type_convert.h"
 
 namespace nvjpeg {
