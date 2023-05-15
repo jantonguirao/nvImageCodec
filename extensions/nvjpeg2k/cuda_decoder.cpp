@@ -55,6 +55,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
+            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
+                continue;
         }
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -367,19 +369,43 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, true));
                 size_t row_nbytes;
                 size_t component_nbytes;
+                if (num_components != image_info.num_planes) {
+                    NVIMGCDCS_D_LOG_ERROR("Unexpected number of planes");
+                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                }
+                for (size_t p = 0; p < num_components; p++) {
+                    if (image_info.plane_info[p].sample_type != orig_data_type) {
+                        NVIMGCDCS_D_LOG_ERROR("Unexpected sample data type");
+                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                    }
+                }
                 if (params->enable_roi && image_info.region.ndim > 0) {
                     auto region = image_info.region;
                     NVIMGCDCS_D_LOG_DEBUG(
                         "Setting up ROI :" << region.start[0] << ", " << region.start[1] << ", " << region.end[0] << ", " << region.end[1]);
-                    auto roi_width = region.end[1] - region.start[1];
-                    auto roi_height = region.end[0] - region.start[0];
+                    uint32_t roi_width = region.end[1] - region.start[1];
+                    uint32_t roi_height = region.end[0] - region.start[0];
                     XM_CHECK_NVJPEG2K(
                         nvjpeg2kDecodeParamsSetDecodeArea(decode_params, region.start[1], region.end[1], region.start[0], region.end[0]));
+                    for (size_t p = 0; p < num_components; p++) {
+                        if (roi_height != image_info.plane_info[p].height ||
+                            roi_width != image_info.plane_info[p].width) {
+                            NVIMGCDCS_D_LOG_ERROR("Unexpected plane info dimensions");
+                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                        }
+                    }
                     row_nbytes = roi_width * bytes_per_sample;
                     component_nbytes = roi_height * row_nbytes;
                 } else {
-                    row_nbytes = image_info.plane_info[0].width * bytes_per_sample;
-                    component_nbytes = image_info.plane_info[0].height * row_nbytes;
+                    for (size_t p = 0; p < num_components; p++) {
+                        if (height != image_info.plane_info[p].height ||
+                            width != image_info.plane_info[p].width) {
+                            NVIMGCDCS_D_LOG_ERROR("Unexpected plane info dimensions");
+                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                        }
+                    }
+                    row_nbytes = width * bytes_per_sample;
+                    component_nbytes =height * row_nbytes;
                 }
 
                 // Allocate temporary buffer asynchronously

@@ -22,12 +22,12 @@ static void color_convert(cv::Mat& img, cv::ColorConversionCodes conversion)
     NVIMGCDCS_D_LOG_TRACE("Before cvtColor - " << img.rows << " x " << img.cols);
     if (img.data == nullptr || img.rows == 0 || img.cols == 0)
         throw std::runtime_error("Invalid input image");
-    cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
+    cv::cvtColor(img, img, conversion);
     NVIMGCDCS_D_LOG_TRACE("After cvtColor");
 }
 
 template <typename DestType, typename SrcType>
-nvimgcdcsStatus_t ConvertPlanar(DestType* destinationBuffer, uint32_t plane_stride, uint32_t row_stride, const cv::Mat& image)
+nvimgcdcsStatus_t ConvertPlanar(DestType* destinationBuffer, uint32_t plane_stride, uint32_t row_stride_bytes, const cv::Mat& image)
 {
     using nvimgcdcs::ConvertSatNorm;
     std::vector<cv::Mat> planes;
@@ -40,7 +40,8 @@ nvimgcdcsStatus_t ConvertPlanar(DestType* destinationBuffer, uint32_t plane_stri
         DestType* destPlanePtr = destinationBuffer + ch * plane_stride;
         for (size_t i = 0; i < height; ++i) {
             const SrcType* srcRow = srcPlanePtr + i * width;
-            DestType* destRow = destPlanePtr + i * row_stride;
+            DestType* destRow = reinterpret_cast<DestType*>(
+                reinterpret_cast<uint8_t*>(destPlanePtr) + i * row_stride_bytes);
             for (size_t j = 0; j < width; ++j) {
                 destRow[j] = ConvertSatNorm<DestType>(srcRow[j]);
             }
@@ -50,7 +51,7 @@ nvimgcdcsStatus_t ConvertPlanar(DestType* destinationBuffer, uint32_t plane_stri
 }
 
 template <typename DestType, typename SrcType>
-nvimgcdcsStatus_t ConvertInterleaved(DestType* destinationBuffer, uint32_t row_stride, const cv::Mat& image)
+nvimgcdcsStatus_t ConvertInterleaved(DestType* destinationBuffer, uint32_t row_stride_bytes, const cv::Mat& image)
 {
     using nvimgcdcs::ConvertSatNorm;
     size_t height = image.size[0];
@@ -58,7 +59,8 @@ nvimgcdcsStatus_t ConvertInterleaved(DestType* destinationBuffer, uint32_t row_s
     size_t channels = image.channels();
     for (size_t i = 0; i < height; ++i) {
         const SrcType* srcRow = image.ptr<SrcType>() + i * width * channels;
-        DestType* destRow = destinationBuffer + i * row_stride;
+        DestType* destRow = reinterpret_cast<DestType*>(
+            reinterpret_cast<uint8_t*>(destinationBuffer) + i * row_stride_bytes);
         for (size_t j = 0; j < width; ++j) {
             for (size_t c = 0; c < channels; c++) {
                 destRow[j * channels + c] = ConvertSatNorm<DestType>(srcRow[j * channels + c]);
@@ -227,6 +229,8 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
+            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
+                continue;
         }
 
         nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
