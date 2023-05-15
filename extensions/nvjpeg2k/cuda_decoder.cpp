@@ -82,7 +82,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         }
 
         static const std::set<nvimgcdcsSampleDataType_t> supported_sample_type{
-            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16};
+            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16};
         for (uint32_t p = 0; p < image_info.num_planes; ++p) {
             auto sample_type = image_info.plane_info[p].sample_type;
             if (supported_sample_type.find(sample_type) == supported_sample_type.end()) {
@@ -150,7 +150,7 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
-    decode_state_batch_ = std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(handle_, pinned_allocator_, device_allocator_, num_threads);
+    decode_state_batch_ = std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(handle_, num_threads);
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id)
@@ -228,11 +228,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_get_capabilities(
     }
 }
 
-NvJpeg2kDecoderPlugin::DecodeState::DecodeState(
-    nvjpeg2kHandle_t handle, nvjpeg2kPinnedAllocatorV2_t pinned_alloc, nvjpeg2kDeviceAllocatorV2_t dev_alloc, int num_threads)
+NvJpeg2kDecoderPlugin::DecodeState::DecodeState(nvjpeg2kHandle_t handle, int num_threads)
     : handle_(handle)
-    , pinned_allocator_(pinned_alloc)
-    , device_allocator_(dev_alloc)
 {
     per_thread_.reserve(num_threads);
     for (int i = 0; i < num_threads; i++) {
@@ -304,7 +301,6 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                     return;
                 }
-                // TODO(janton): remove
                 unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
                 nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
@@ -330,14 +326,15 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_NVJPEG2K(nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data),
                     encoded_stream_data_size, false, false, parse_state->nvjpeg2k_stream_));
 
-                XM_CHECK_NVJPEG2K(nvjpeg2kStreamGetImageInfo(parse_state->nvjpeg2k_stream_, &parse_state->image_info_));
+                nvjpeg2kImageInfo_t jpeg2k_info;
+                XM_CHECK_NVJPEG2K(nvjpeg2kStreamGetImageInfo(parse_state->nvjpeg2k_stream_, &jpeg2k_info));
 
                 nvjpeg2kImageComponentInfo_t comp;
                 XM_CHECK_NVJPEG2K(nvjpeg2kStreamGetImageComponentInfo(parse_state->nvjpeg2k_stream_, &comp, 0));
                 auto height = comp.component_height;
                 auto width = comp.component_width;
                 auto bpp = comp.precision;
-                auto num_components = parse_state->image_info_.num_components;
+                auto num_components = jpeg2k_info.num_components;
                 if(bpp > 16) {
                     NVIMGCDCS_D_LOG_ERROR("Unexpected bitdepth");
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);

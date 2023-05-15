@@ -32,19 +32,15 @@ class NvJpeg2kDecoderPlugin
         ~ParseState();
 
         nvjpeg2kStream_t nvjpeg2k_stream_;
-        nvjpeg2kImageInfo_t image_info_;
         std::vector<unsigned char> buffer_;
     };
     
     struct DecodeState
     {
-        DecodeState(
-            nvjpeg2kHandle_t handle, nvjpeg2kPinnedAllocatorV2_t pinned_alloc, nvjpeg2kDeviceAllocatorV2_t dev_alloc, int num_threads);
+        explicit DecodeState(nvjpeg2kHandle_t handle, int num_threads);
         ~DecodeState();
 
         nvjpeg2kHandle_t handle_ = nullptr;
-        nvjpeg2kPinnedAllocatorV2_t pinned_allocator_;
-        nvjpeg2kDeviceAllocatorV2_t device_allocator_;
 
         struct PerThreadResources
         {

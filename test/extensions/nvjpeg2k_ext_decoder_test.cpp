@@ -30,7 +30,7 @@ using ::testing::Combine;
 using ::testing::TestWithParam;
 using ::testing::Values;
 
-#define NV_DEVELOPER_DUMP_OUTPUT_IMAGE_TO_BMP 1
+#define NV_DEVELOPER_DUMP_OUTPUT_IMAGE_TO_BMP 0
 
 namespace nvimgcdcs { namespace test {
 
