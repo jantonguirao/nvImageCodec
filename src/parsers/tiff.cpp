@@ -302,7 +302,7 @@ class TiffParserExtension
     explicit TiffParserExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~TiffParserExtension() { framework_->unregisterParser(framework_->instance, tiff_parser_plugin_.getParserDesc()); }
 

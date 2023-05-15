@@ -326,7 +326,7 @@ class WebpParserExtension
     explicit WebpParserExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~WebpParserExtension() { framework_->unregisterParser(framework_->instance, webp_parser_plugin_.getParserDesc()); }
 

@@ -375,7 +375,7 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-       
+
         bool optimized_huffman;
     } nvimgcdcsJpegEncodeParams_t;
 
@@ -432,6 +432,18 @@ extern "C"
 
     struct nvimgcdcsDebugMessenger;
     typedef struct nvimgcdcsDebugMessenger* nvimgcdcsDebugMessenger_t;
+
+    typedef enum
+    {
+        NVIMGCDCS_PRIORITY_HIGHEST = 0,
+        NVIMGCDCS_PRIORITY_VERY_HIGH = 100,     
+        NVIMGCDCS_PRIORITY_HIGH = 200,          
+        NVIMGCDCS_PRIORITY_NORMAL = 300,        
+        NVIMGCDCS_PRIORITY_LOW = 400,           
+        NVIMGCDCS_PRIORITY_VERY_LOW = 500,      
+        NVIMGCDCS_PRIORITY_LOWEST = 1000,
+        NVIMGCDCS_PRIORITY_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsPriority_t;
 
     typedef enum
     {
@@ -528,8 +540,8 @@ extern "C"
         nvimgcdcsStructureType_t type;
         const void* next;
 
-        void* instance; // plugin instance pointer which will be passed back in functions
-        const char* id; // named identifier e.g. nvJpeg2000
+        void* instance;    // plugin instance pointer which will be passed back in functions
+        const char* id;    // named identifier e.g. nvJpeg2000
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
@@ -545,8 +557,8 @@ extern "C"
         nvimgcdcsStructureType_t type;
         const void* next;
 
-        void* instance; // plugin instance pointer which will be passed back in functions
-        const char* id; // named identifier e.g. nvJpeg2000
+        void* instance;    // plugin instance pointer which will be passed back in functions
+        const char* id;    // named identifier e.g. nvJpeg2000
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
@@ -569,8 +581,8 @@ extern "C"
         nvimgcdcsStructureType_t type;
         const void* next;
 
-        void* instance; // plugin instance pointer which will be passed back in functions
-        const char* id; // named identifier e.g. nvJpeg2000
+        void* instance;    // plugin instance pointer which will be passed back in functions
+        const char* id;    // named identifier e.g. nvJpeg2000
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
@@ -617,11 +629,11 @@ extern "C"
         nvimgcdcsDeviceAllocator_t* device_allocator;
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
 
-        nvimgcdcsStatus_t (*registerEncoder)(void* instance, const nvimgcdcsEncoderDesc_t desc);
+        nvimgcdcsStatus_t (*registerEncoder)(void* instance, const nvimgcdcsEncoderDesc_t desc, float priority);
         nvimgcdcsStatus_t (*unregisterEncoder)(void* instance, const nvimgcdcsEncoderDesc_t desc);
-        nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc);
+        nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc, float priority);
         nvimgcdcsStatus_t (*unregisterDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc);
-        nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
+        nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc, float priority);
         nvimgcdcsStatus_t (*unregisterParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
 
         nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t* result);
@@ -735,13 +747,13 @@ extern "C"
 
     typedef enum
     {
-        NVIMGCDCS_IMWRITE_DEVICE_ID = 0, //value  device id to process on (default 0)
-        NVIMGCDCS_IMWRITE_MCT_MODE = 1,  // value  nvimgcdcsMctMode_t (default NVIMGCDCS_MCT_MODE_RGB )
+        NVIMGCDCS_IMWRITE_DEVICE_ID = 0,                //value  device id to process on (default 0)
+        NVIMGCDCS_IMWRITE_MCT_MODE = 1,                 // value  nvimgcdcsMctMode_t (default NVIMGCDCS_MCT_MODE_RGB )
 
-        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 100,         // value 0-100 default 95
-        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 101,     // flag NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN
-        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 102,        // flag optimized_huffman
-        NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 103, // value nvimgcdcsImWriteSamplingFactor_t
+        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 100,           // value 0-100 default 95
+        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 101,       // flag NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN
+        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 102,          // flag optimized_huffman
+        NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 103,   // value nvimgcdcsImWriteSamplingFactor_t
 
         NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 200,     // value default 50
         NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 201,     // value num_decomps default 5

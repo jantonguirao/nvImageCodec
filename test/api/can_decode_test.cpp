@@ -104,7 +104,7 @@ struct MockCodecExtensionFactory
         {
             for (auto& item : *statuses_) {
                 decoders_.emplace_back(framework, item);
-                framework->registerDecoder(framework->instance, decoders_.back().getDecoderDesc());
+                framework->registerDecoder(framework->instance, decoders_.back().getDecoderDesc(), NVIMGCDCS_PRIORITY_NORMAL);
             }
         }
         ~Extension()

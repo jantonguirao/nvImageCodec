@@ -52,22 +52,22 @@ PluginFramework::~PluginFramework()
     unregisterAllExtensions();
 }
 
-nvimgcdcsStatus_t PluginFramework::static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc)
+nvimgcdcsStatus_t PluginFramework::static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc, float priority)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
-    return handle->registerEncoder(desc);
+    return handle->registerEncoder(desc, priority);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_register_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc)
+nvimgcdcsStatus_t PluginFramework::static_register_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc, float priority)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
-    return handle->registerDecoder(desc);
+    return handle->registerDecoder(desc, priority);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_register_parser(void* instance, const struct nvimgcdcsParserDesc* desc)
+nvimgcdcsStatus_t PluginFramework::static_register_parser(void* instance, const struct nvimgcdcsParserDesc* desc, float priority)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
-    return handle->registerParser(desc);
+    return handle->registerParser(desc, priority);
 }
 
 nvimgcdcsStatus_t PluginFramework::static_unregister_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc)
@@ -249,7 +249,7 @@ ICodec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
     return codec;
 }
 
-nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t desc)
+nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t desc, float priority)
 {
     NVIMGCDCS_LOG_INFO("Framework is registering encoder");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
@@ -257,7 +257,7 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t 
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
     std::unique_ptr<IImageEncoderFactory> encoder_factory = std::make_unique<ImageEncoderFactory>(desc);
-    codec->registerEncoderFactory(std::move(encoder_factory), 1);
+    codec->registerEncoderFactory(std::move(encoder_factory), priority);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -275,7 +275,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterEncoder(const nvimgcdcsEncoderDesc_
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t desc)
+nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t desc, float priority)
 {
     NVIMGCDCS_LOG_INFO("Framework is registering decoder");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
@@ -283,7 +283,7 @@ nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t 
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
     std::unique_ptr<IImageDecoderFactory> decoder_factory = std::make_unique<ImageDecoderFactory>(desc);
-    codec->registerDecoderFactory(std::move(decoder_factory), 1);
+    codec->registerDecoderFactory(std::move(decoder_factory), priority);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -301,7 +301,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterDecoder(const nvimgcdcsDecoderDesc_
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDesc* desc)
+nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDesc* desc, float priority)
 {
     NVIMGCDCS_LOG_INFO("Framework is registering parser");
     NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
@@ -309,7 +309,7 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDe
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
     std::unique_ptr<IImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
-    codec->registerParserFactory(std::move(parser_factory), 1);
+    codec->registerParserFactory(std::move(parser_factory), priority);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

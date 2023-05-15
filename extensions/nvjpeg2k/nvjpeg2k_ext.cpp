@@ -14,8 +14,8 @@ struct NvJpeg2kImgCodecsExtension
         , jpeg2k_decoder_(framework)
         , jpeg2k_encoder_(framework)
     {
-        framework->registerEncoder(framework->instance, jpeg2k_encoder_.getEncoderDesc());
-        framework->registerDecoder(framework->instance, jpeg2k_decoder_.getDecoderDesc());
+        framework->registerEncoder(framework->instance, jpeg2k_encoder_.getEncoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
+        framework->registerDecoder(framework->instance, jpeg2k_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
     }
     ~NvJpeg2kImgCodecsExtension(){
         framework_->unregisterEncoder(framework_->instance, jpeg2k_encoder_.getEncoderDesc());

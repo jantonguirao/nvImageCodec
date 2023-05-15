@@ -58,22 +58,22 @@ class PluginFramework
 
     ICodec* ensureExistsAndRetrieveCodec(const char* codec_name);
 
-    nvimgcdcsStatus_t registerEncoder(const nvimgcdcsEncoderDesc_t desc);
+    nvimgcdcsStatus_t registerEncoder(const nvimgcdcsEncoderDesc_t desc, float priority);
     nvimgcdcsStatus_t unregisterEncoder(const nvimgcdcsEncoderDesc_t desc);
-    nvimgcdcsStatus_t registerDecoder(const nvimgcdcsDecoderDesc_t desc);
+    nvimgcdcsStatus_t registerDecoder(const nvimgcdcsDecoderDesc_t desc, float priority);
     nvimgcdcsStatus_t unregisterDecoder(const nvimgcdcsDecoderDesc_t desc);
-    nvimgcdcsStatus_t registerParser(const struct nvimgcdcsParserDesc* desc);
+    nvimgcdcsStatus_t registerParser(const struct nvimgcdcsParserDesc* desc, float priority);
     nvimgcdcsStatus_t unregisterParser(const struct nvimgcdcsParserDesc* desc);
 
     nvimgcdcsStatus_t getExecutor(nvimgcdcsExecutorDesc_t* result);
     nvimgcdcsStatus_t log(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
-    static nvimgcdcsStatus_t static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc);
+    static nvimgcdcsStatus_t static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc, float priority);
     static nvimgcdcsStatus_t static_unregister_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc);
-    static nvimgcdcsStatus_t static_register_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc);
+    static nvimgcdcsStatus_t static_register_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc, float priority);
     static nvimgcdcsStatus_t static_unregister_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc);
-    static nvimgcdcsStatus_t static_register_parser(void* instance, const struct nvimgcdcsParserDesc* desc);
+    static nvimgcdcsStatus_t static_register_parser(void* instance, const struct nvimgcdcsParserDesc* desc, float priority);
     static nvimgcdcsStatus_t static_unregister_parser(void* instance, const struct nvimgcdcsParserDesc* desc);
 
     static nvimgcdcsStatus_t static_get_executor(void* instance, nvimgcdcsExecutorDesc_t* result);

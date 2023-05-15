@@ -359,7 +359,7 @@ class PngParserExtension
     explicit PngParserExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~PngParserExtension() { framework_->unregisterParser(framework_->instance, png_parser_plugin_.getParserDesc()); }
 

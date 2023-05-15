@@ -269,7 +269,7 @@ class PnmParserExtension
     explicit PnmParserExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~PnmParserExtension() { framework_->unregisterParser(framework_->instance, pnm_parser_plugin_.getParserDesc()); }
 

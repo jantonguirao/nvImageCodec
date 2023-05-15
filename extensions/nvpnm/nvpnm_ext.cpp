@@ -22,7 +22,7 @@ struct PnmImgCodecsExtension
     explicit PnmImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerEncoder(framework->instance, &nvpnm_encoder);
+        framework->registerEncoder(framework->instance, &nvpnm_encoder, NVIMGCDCS_PRIORITY_VERY_LOW);
     }
     ~PnmImgCodecsExtension() 
     { 
