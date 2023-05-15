@@ -47,7 +47,10 @@ std::unique_ptr<IImageDecoder> Codec::createDecoder(int index, int device_id) co
     auto it = decoders_.begin();
     for (int i = 0; i < index; ++i)
         it++;
-    return it->second->createDecoder(device_id);
+    if (it != decoders_.end())
+        return it->second->createDecoder(device_id);
+    else
+        return std::unique_ptr<IImageDecoder>();
 }
 
 int Codec::getEncodersNum() const
@@ -78,6 +81,17 @@ void Codec::registerParserFactory(
     parsers_.emplace(priority, std::move(parserFactory));
 }
 
+void Codec::unregisterParserFactory(const std::string parser_id)
+{
+    NVIMGCDCS_LOG_TRACE("Codec::unregisterParser");
+    for (auto it = parsers_.begin(); it != parsers_.end(); ++it) {
+        if (it->second->getParserId() == parser_id) {
+            parsers_.erase(it);
+            return;
+        }
+    }
+}
+
 void Codec::registerEncoderFactory(
     std::unique_ptr<IImageEncoderFactory> encoderFactory, float priority)
 {
@@ -85,11 +99,33 @@ void Codec::registerEncoderFactory(
     encoders_.emplace(priority, std::move(encoderFactory));
 }
 
+void Codec::unregisterEncoderFactory(const std::string encoder_id)
+{
+    NVIMGCDCS_LOG_TRACE("Codec::unregisterEncoder");
+    for (auto it = encoders_.begin(); it != encoders_.end(); ++it) {
+        if (it->second->getEncoderId() == encoder_id) {
+            encoders_.erase(it);
+            return;
+        }
+    }
+}
+
 void Codec::registerDecoderFactory(
     std::unique_ptr<IImageDecoderFactory> decoderFactory, float priority)
 {
     NVIMGCDCS_LOG_TRACE("Codec::registerDecoder");
     decoders_.emplace(priority, std::move(decoderFactory));
+}
+
+void Codec::unregisterDecoderFactory(const std::string decoder_id)
+{
+    NVIMGCDCS_LOG_TRACE("Codec::unregisterDecoder");
+    for (auto it = decoders_.begin(); it != decoders_.end(); ++it) {
+        if (it->second->getDecoderId() == decoder_id) {
+            decoders_.erase(it);
+            return;
+        }
+    }
 }
 
 } // namespace nvimgcdcs

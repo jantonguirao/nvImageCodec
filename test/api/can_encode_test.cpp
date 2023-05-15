@@ -103,7 +103,12 @@ struct MockCodecExtensionFactory
                 framework->registerEncoder(framework->instance, encoders_.back().getEncoderDesc());
             }
         }
-
+        ~Extension()
+        {
+            for (auto& item : encoders_) {
+                framework_->unregisterEncoder(framework_->instance, item.getEncoderDesc());
+            }
+        }
         const nvimgcdcsFrameworkDesc_t framework_;
         std::vector<MockEncoderPlugin> encoders_;
         const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses_;

@@ -313,21 +313,47 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::static_get_image_info(
     }
 }
 
-static auto bmp_parser_plugin = BMPParserPlugin();
+class BmpParserExtension
+{
+  public:
+    explicit BmpParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+        : framework_(framework)
+    {
+        framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc());
+    }
+    ~BmpParserExtension()
+    {
+         framework_->unregisterParser(framework_->instance, bmp_parser_plugin_.getParserDesc());
+    }
+
+  private:
+    const nvimgcdcsFrameworkDesc_t framework_;
+    BMPParserPlugin bmp_parser_plugin_;
+};
 
 nvimgcdcsStatus_t bmp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
-    NVIMGCDCS_LOG_TRACE("extension_create");
-
-    framework->registerParser(framework->instance, bmp_parser_plugin.getParserDesc());
-
+    NVIMGCDCS_LOG_TRACE("bmp_parser_extension_create");
+    try {
+        CHECK_NULL(framework)
+        CHECK_NULL(extension)
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new BmpParserExtension(framework));
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t bmp_parser_extension_destroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("bmp_parser_extension_destroy");
-
+    try {
+        CHECK_NULL(extension)
+        auto ext_handle = reinterpret_cast<nvimgcdcs::BmpParserExtension*>(extension);
+        delete ext_handle;
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

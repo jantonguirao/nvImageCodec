@@ -618,8 +618,12 @@ extern "C"
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
 
         nvimgcdcsStatus_t (*registerEncoder)(void* instance, const nvimgcdcsEncoderDesc_t desc);
+        nvimgcdcsStatus_t (*unregisterEncoder)(void* instance, const nvimgcdcsEncoderDesc_t desc);
         nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc);
+        nvimgcdcsStatus_t (*unregisterDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
+        nvimgcdcsStatus_t (*unregisterParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
+
         nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t* result);
         nvimgcdcsLogFunc_t log;
     };

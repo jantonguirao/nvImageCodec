@@ -19,7 +19,11 @@ struct LibjpegTurboImgCodecsExtension
     {
         framework->registerDecoder(framework->instance, jpeg_decoder_.getDecoderDesc());
     }
+    ~LibjpegTurboImgCodecsExtension()
+    {
+        framework_->unregisterDecoder(framework_->instance, jpeg_decoder_.getDecoderDesc());
 
+    }
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
     LibjpegTurboDecoderPlugin jpeg_decoder_;

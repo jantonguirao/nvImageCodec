@@ -17,7 +17,10 @@ struct NvJpeg2kImgCodecsExtension
         framework->registerEncoder(framework->instance, jpeg2k_encoder_.getEncoderDesc());
         framework->registerDecoder(framework->instance, jpeg2k_decoder_.getDecoderDesc());
     }
-
+    ~NvJpeg2kImgCodecsExtension(){
+        framework_->unregisterEncoder(framework_->instance, jpeg2k_encoder_.getEncoderDesc());
+        framework_->unregisterDecoder(framework_->instance, jpeg2k_decoder_.getDecoderDesc());
+    }
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
     NvJpeg2kDecoderPlugin jpeg2k_decoder_;

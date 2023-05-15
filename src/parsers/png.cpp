@@ -353,21 +353,44 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::static_get_image_info(
     }
 }
 
-static auto png_parser_plugin = PNGParserPlugin();
+class PngParserExtension
+{
+  public:
+    explicit PngParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+        : framework_(framework)
+    {
+        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc());
+    }
+    ~PngParserExtension() { framework_->unregisterParser(framework_->instance, png_parser_plugin_.getParserDesc()); }
+
+  private:
+    const nvimgcdcsFrameworkDesc_t framework_;
+    PNGParserPlugin png_parser_plugin_;
+};
 
 nvimgcdcsStatus_t png_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
-    NVIMGCDCS_LOG_TRACE("extension_create");
-
-    framework->registerParser(framework->instance, png_parser_plugin.getParserDesc());
-
+    NVIMGCDCS_LOG_TRACE("png_parser_extension_create");
+    try {
+        CHECK_NULL(framework)
+        CHECK_NULL(extension)
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new PngParserExtension(framework));
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t png_parser_extension_destroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("png_parser_extension_destroy");
-
+    try {
+        CHECK_NULL(extension)
+        auto ext_handle = reinterpret_cast<nvimgcdcs::PngParserExtension*>(extension);
+        delete ext_handle;
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

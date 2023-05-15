@@ -32,6 +32,16 @@ struct OpenCVImgCodecsExtension
         framework->registerDecoder(framework->instance, webp_decoder_.getDecoderDesc());
     }
 
+    ~OpenCVImgCodecsExtension()
+    {
+        framework_->unregisterDecoder(framework_->instance, jpeg_decoder_.getDecoderDesc());
+        framework_->unregisterDecoder(framework_->instance, jpeg2k_decoder_.getDecoderDesc());
+        framework_->unregisterDecoder(framework_->instance, png_decoder_.getDecoderDesc());
+        framework_->unregisterDecoder(framework_->instance, bmp_decoder_.getDecoderDesc());
+        framework_->unregisterDecoder(framework_->instance, pnm_decoder_.getDecoderDesc());
+        framework_->unregisterDecoder(framework_->instance, tiff_decoder_.getDecoderDesc());
+        framework_->unregisterDecoder(framework_->instance, webp_decoder_.getDecoderDesc());
+    }
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
     OpenCVDecoderPlugin jpeg_decoder_;

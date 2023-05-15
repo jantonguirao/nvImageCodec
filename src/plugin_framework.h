@@ -15,8 +15,8 @@
 #include <string>
 #include <vector>
 #include "idirectory_scaner.h"
-#include "ilibrary_loader.h"
 #include "iexecutor.h"
+#include "ilibrary_loader.h"
 
 namespace nvimgcdcs {
 
@@ -26,14 +26,11 @@ class ICodec;
 class PluginFramework
 {
   public:
-    explicit PluginFramework(ICodecRegistry* codec_registry,
-        std::unique_ptr<IDirectoryScaner> directory_scaner,
-        std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
-        nvimgcdcsDeviceAllocator_t* device_allocator,
+    explicit PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr<IDirectoryScaner> directory_scaner,
+        std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor, nvimgcdcsDeviceAllocator_t* device_allocator,
         nvimgcdcsPinnedAllocator_t* pinned_allocator);
     ~PluginFramework();
-    nvimgcdcsStatus_t registerExtension(
-        nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc);
+    nvimgcdcsStatus_t registerExtension(nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc);
     nvimgcdcsStatus_t unregisterExtension(nvimgcdcsExtension_t extension);
     void unregisterAllExtensions();
 
@@ -56,31 +53,32 @@ class PluginFramework
     };
 
     nvimgcdcsStatus_t registerExtension(
-        nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc,
-        const Module& module);
+        nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc, const Module& module);
     nvimgcdcsStatus_t unregisterExtension(std::vector<Extension>::const_iterator it);
 
     ICodec* ensureExistsAndRetrieveCodec(const char* codec_name);
 
     nvimgcdcsStatus_t registerEncoder(const nvimgcdcsEncoderDesc_t desc);
+    nvimgcdcsStatus_t unregisterEncoder(const nvimgcdcsEncoderDesc_t desc);
     nvimgcdcsStatus_t registerDecoder(const nvimgcdcsDecoderDesc_t desc);
+    nvimgcdcsStatus_t unregisterDecoder(const nvimgcdcsDecoderDesc_t desc);
     nvimgcdcsStatus_t registerParser(const struct nvimgcdcsParserDesc* desc);
+    nvimgcdcsStatus_t unregisterParser(const struct nvimgcdcsParserDesc* desc);
+
     nvimgcdcsStatus_t getExecutor(nvimgcdcsExecutorDesc_t* result);
-    nvimgcdcsStatus_t log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type,
+    nvimgcdcsStatus_t log(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
-    static nvimgcdcsStatus_t static_register_encoder(
-        void* instance, const nvimgcdcsEncoderDesc_t desc);
-    static nvimgcdcsStatus_t static_register_decoder(
-        void* instance, const nvimgcdcsDecoderDesc_t desc);
-    static nvimgcdcsStatus_t static_register_parser(
-        void* instance, const struct nvimgcdcsParserDesc* desc);
+    static nvimgcdcsStatus_t static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc);
+    static nvimgcdcsStatus_t static_unregister_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc);
+    static nvimgcdcsStatus_t static_register_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc);
+    static nvimgcdcsStatus_t static_unregister_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc);
+    static nvimgcdcsStatus_t static_register_parser(void* instance, const struct nvimgcdcsParserDesc* desc);
+    static nvimgcdcsStatus_t static_unregister_parser(void* instance, const struct nvimgcdcsParserDesc* desc);
+
     static nvimgcdcsStatus_t static_get_executor(void* instance, nvimgcdcsExecutorDesc_t* result);
-    static nvimgcdcsStatus_t static_log(void* instance,
-        const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type,
-        const nvimgcdcsDebugMessageData_t* callback_data);
+    static nvimgcdcsStatus_t static_log(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* callback_data);
 
     std::unique_ptr<IDirectoryScaner> directory_scaner_;
     std::unique_ptr<ILibraryLoader> library_loader_;

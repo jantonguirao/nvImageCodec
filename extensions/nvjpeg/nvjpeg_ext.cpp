@@ -31,6 +31,12 @@ struct NvJpegImgCodecsExtension
             framework->registerDecoder(framework->instance, jpeg_hw_decoder_.getDecoderDesc());
         framework->registerDecoder(framework->instance, jpeg_cuda_decoder_.getDecoderDesc());
     }
+    ~NvJpegImgCodecsExtension(){
+        framework_->unregisterEncoder(framework_->instance, jpeg_cuda_encoder_.getEncoderDesc());
+        if (jpeg_hw_decoder_.isPlatformSupported())
+            framework_->unregisterDecoder(framework_->instance, jpeg_hw_decoder_.getDecoderDesc());
+        framework_->unregisterDecoder(framework_->instance, jpeg_cuda_decoder_.getDecoderDesc());
+    }
 
   private:
     const nvimgcdcsFrameworkDesc_t framework_;

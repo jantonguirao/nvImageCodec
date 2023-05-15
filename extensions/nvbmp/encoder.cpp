@@ -3,7 +3,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
-#include "exceptions.h"
+#include "error_handling.h"
 #include "log.h"
 
 struct nvimgcdcsEncoder
@@ -289,4 +289,6 @@ nvimgcdcsEncoderDesc nvbmp_encoder = {
     nvbmp_encoder_can_encode,
     nvbmp_encoder_encode_batch
 };
-// clang-format on    
+// clang-format on   
+
+

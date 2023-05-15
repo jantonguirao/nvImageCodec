@@ -19,6 +19,10 @@ struct LibtiffImgCodecsExtension
     {
         framework->registerDecoder(framework->instance, tiff_decoder_.getDecoderDesc());
     }
+    ~LibtiffImgCodecsExtension()
+    {
+      framework_->unregisterDecoder(framework_->instance, tiff_decoder_.getDecoderDesc());   
+    }
 
   private:
     const nvimgcdcsFrameworkDesc_t framework_;

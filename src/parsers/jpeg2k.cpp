@@ -425,21 +425,44 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_get_image_info(
     }
 }
 
-static auto jpeg2k_parser_plugin = JPEG2KParserPlugin();
+class Jpeg2kParserExtension
+{
+  public:
+    explicit Jpeg2kParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+        : framework_(framework)
+    {
+        framework->registerParser(framework->instance, jpeg2k_parser_plugin_.getParserDesc());
+    }
+    ~Jpeg2kParserExtension() { framework_->unregisterParser(framework_->instance, jpeg2k_parser_plugin_.getParserDesc()); }
+
+  private:
+    const nvimgcdcsFrameworkDesc_t framework_;
+    JPEG2KParserPlugin jpeg2k_parser_plugin_;
+};
 
 nvimgcdcsStatus_t jpeg2k_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
-    NVIMGCDCS_LOG_TRACE("extension_create");
-
-    framework->registerParser(framework->instance, jpeg2k_parser_plugin.getParserDesc());
-
+    NVIMGCDCS_LOG_TRACE("jpeg2k_parser_extension_create");
+    try {
+        CHECK_NULL(framework)
+        CHECK_NULL(extension)
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new Jpeg2kParserExtension(framework));
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t jpeg2k_parser_extension_destroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("jpeg2k_parser_extension_destroy");
-
+    try {
+        CHECK_NULL(extension)
+        auto ext_handle = reinterpret_cast<nvimgcdcs::Jpeg2kParserExtension*>(extension);
+        delete ext_handle;
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
