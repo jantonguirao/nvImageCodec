@@ -1,4 +1,5 @@
 #include "cuda_decoder.h"
+#include <library_types.h>
 #include <nvimgcodecs.h>
 #include <cstring>
 #include <iostream>
@@ -8,7 +9,6 @@
 #include <set>
 #include <sstream>
 #include <vector>
-#include <library_types.h>
 #include "errors_handling.h"
 #include "log.h"
 #include "parser.h"
@@ -366,7 +366,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                     if (NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MAJOR_VERSION, &major) &&
                         NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor)) {
                         ver = major * 1000 + minor;
-                        if (ver < 12001) {  // TODO(janton): double check the version that includes the fix
+                        if (ver < 12001) { // TODO(janton): double check the version that includes the fix
                             if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
                                 orientation = NVJPEG_ORIENTATION_ROTATE_270;
                             else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
@@ -416,12 +416,12 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                 nvjpegJpegEncoding_t jpeg_encoding;
                 nvjpegJpegStreamGetJpegEncoding(p.parse_state_.nvjpeg_stream_, &jpeg_encoding);
 
-                int is_gpu_hybrid_supported = -1; // zero means is supported
+                int is_gpu_hybrid_supported = -1;                    // zero means is supported
                 if (jpeg_encoding == NVJPEG_ENCODING_BASELINE_DCT) { //gpu hybrid is not supported for progressive
                     XM_CHECK_NVJPEG(nvjpegDecoderJpegSupported(p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID].decoder,
                         p.parse_state_.nvjpeg_stream_, nvjpeg_params.get(), &is_gpu_hybrid_supported));
                 }
-    
+
                 auto& decoder_data =
                     (image_info.plane_info[0].height * image_info.plane_info[0].width) > (256u * 256u) && is_gpu_hybrid_supported == 0
                         ? p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID]

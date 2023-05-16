@@ -2,18 +2,18 @@
 #include <nvimgcodecs.h>
 #include <array>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <cstring>
 
 #include <nvtx3/nvtx3.hpp>
 
+#include <nvjpeg.h>
 #include "errors_handling.h"
+#include "log.h"
 #include "parser.h"
 #include "type_convert.h"
-#include "log.h"
-#include <nvjpeg.h>
 
 namespace nvjpeg {
 
@@ -23,17 +23,10 @@ NvJpegParserPlugin::NvJpegParserPlugin(const nvimgcdcsFrameworkDesc_t framework)
           "nvjpeg_parser", // id
           0x00000100,      // version
           "jpeg",          // codec_type
-          static_can_parse, static_create, Parser::static_destroy,
-          Parser::static_create_parse_state, Parser::static_destroy_parse_state,
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_create_parse_state, Parser::static_destroy_parse_state,
           Parser::static_get_image_info, Parser::static_get_capabilities}
-    , capabilities_{
-        NVIMGCDCS_CAPABILITY_ORIENTATION,
-        NVIMGCDCS_CAPABILITY_ROI,
-        NVIMGCDCS_CAPABILITY_HOST_INPUT,
-        NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT,
-        NVIMGCDCS_CAPABILITY_LAYOUT_PLANAR,
-        NVIMGCDCS_CAPABILITY_LAYOUT_INTERLEAVED
-        }
+    , capabilities_{NVIMGCDCS_CAPABILITY_ORIENTATION, NVIMGCDCS_CAPABILITY_ROI, NVIMGCDCS_CAPABILITY_HOST_INPUT,
+          NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT, NVIMGCDCS_CAPABILITY_LAYOUT_PLANAR, NVIMGCDCS_CAPABILITY_LAYOUT_INTERLEAVED}
     , framework_(framework)
 {
 }
@@ -63,8 +56,7 @@ nvimgcdcsStatus_t NvJpegParserPlugin::canParse(bool* result, nvimgcdcsCodeStream
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegParserPlugin::static_can_parse(
-    void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t NvJpegParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     try {
         NVIMGCDCS_P_LOG_TRACE("jpeg_parser_can_parse");
@@ -79,8 +71,7 @@ nvimgcdcsStatus_t NvJpegParserPlugin::static_can_parse(
     }
 }
 
-NvJpegParserPlugin::Parser::Parser(const std::vector<nvimgcdcsCapability_t>& capabilities,
-    const nvimgcdcsFrameworkDesc_t framework)
+NvJpegParserPlugin::Parser::Parser(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework)
     : capabilities_(capabilities)
     , framework_(framework)
 {
@@ -98,8 +89,7 @@ NvJpegParserPlugin::Parser::~Parser()
 
 nvimgcdcsStatus_t NvJpegParserPlugin::create(nvimgcdcsParser_t* parser)
 {
-    *parser = reinterpret_cast<nvimgcdcsParser_t>(
-        new NvJpegParserPlugin::Parser(capabilities_, framework_));
+    *parser = reinterpret_cast<nvimgcdcsParser_t>(new NvJpegParserPlugin::Parser(capabilities_, framework_));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -132,8 +122,7 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_destroy(nvimgcdcsParser_t p
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getCapabilities(
-    const nvimgcdcsCapability_t** capabilities, size_t* size)
+nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
     if (capabilities) {
         *capabilities = capabilities_.data();
@@ -171,8 +160,7 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::createParseState(nvimgcdcsParseSta
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_create_parse_state(
-    nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
+nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
 {
     try {
         NVIMGCDCS_P_LOG_TRACE("nvjpeg_create_parse_state");
@@ -186,8 +174,7 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_create_parse_state(
     }
 }
 
-nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_destroy_parse_state(
-    nvimgcdcsParseState_t parse_state)
+nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
 {
     try {
         NVIMGCDCS_P_LOG_TRACE("jpeg_destroy_parse_state");
@@ -204,16 +191,13 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_destroy_parse_state(
     }
 }
 
-
-nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getImageInfo(
-    nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     NVIMGCDCS_P_LOG_TRACE("jpeg_parser_get_image_info");
     nvtx3::scoped_range marker{"getImageInfo"};
     try {
         size_t encoded_stream_data_size = 0;
-        auto parse_state =
-            reinterpret_cast<NvJpegParserPlugin::ParseState*>(code_stream->parse_state);
+        auto parse_state = reinterpret_cast<NvJpegParserPlugin::ParseState*>(code_stream->parse_state);
         nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
         io_stream->size(io_stream->instance, &encoded_stream_data_size);
         const void* encoded_stream_data = nullptr;
@@ -234,14 +218,14 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getImageInfo(
         XM_CHECK_NVJPEG(nvjpegJpegStreamParseHeader(
             handle_, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size, parse_state->nvjpeg_stream_));
 
-         XM_CHECK_NVJPEG(nvjpegJpegStreamGetFrameDimensions(
+        XM_CHECK_NVJPEG(nvjpegJpegStreamGetFrameDimensions(
             parse_state->nvjpeg_stream_, &image_info->plane_info[0].width, &image_info->plane_info[0].height));
 
         XM_CHECK_NVJPEG(nvjpegJpegStreamGetComponentsNum(parse_state->nvjpeg_stream_, &image_info->num_planes));
 
         image_info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
         image_info->color_spec = NVIMGCDCS_COLORSPEC_UNKNOWN;
-        auto sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8; 
+        auto sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
         for (uint32_t p = 0; p < image_info->num_planes; ++p) {
             XM_CHECK_NVJPEG(nvjpegJpegStreamGetComponentDimensions(
                 parse_state->nvjpeg_stream_, p, &image_info->plane_info[p].width, &image_info->plane_info[p].height));
@@ -265,18 +249,16 @@ nvimgcdcsStatus_t NvJpegParserPlugin::Parser::getImageInfo(
             jpeg_image_info->encoding = nvjpeg_to_nvimgcdcs_encoding(jpeg_encoding);
         }
 
-        }
-        catch (const std::runtime_error& e)
-        {
-            NVIMGCDCS_P_LOG_ERROR("Could not retrieve image info from jpeg stream - " << e.what());
-            return NVIMGCDCS_STATUS_INTERNAL_ERROR;
-        }
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_P_LOG_ERROR("Could not retrieve image info from jpeg stream - " << e.what());
+        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+    }
 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_get_image_info(nvimgcdcsParser_t parser,
-    nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t NvJpegParserPlugin::Parser::static_get_image_info(
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     try {
         NVIMGCDCS_P_LOG_TRACE("jpeg_parser_get_image_info");

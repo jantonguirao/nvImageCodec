@@ -26,7 +26,8 @@ NvJpeg2kDecoderPlugin::NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t fram
           Decoder::static_decode_batch}
     , capabilities_{NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT}
     , framework_(framework)
-{}
+{
+}
 
 nvimgcdcsDecoderDesc_t NvJpeg2kDecoderPlugin::getDecoderDesc()
 {
@@ -338,7 +339,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 auto width = comp.component_width;
                 auto bpp = comp.precision;
                 auto num_components = jpeg2k_info.num_components;
-                if(bpp > 16) {
+                if (bpp > 16) {
                     NVIMGCDCS_D_LOG_ERROR("Unexpected bitdepth");
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                     return;
@@ -388,8 +389,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                     XM_CHECK_NVJPEG2K(
                         nvjpeg2kDecodeParamsSetDecodeArea(decode_params, region.start[1], region.end[1], region.start[0], region.end[0]));
                     for (size_t p = 0; p < num_components; p++) {
-                        if (roi_height != image_info.plane_info[p].height ||
-                            roi_width != image_info.plane_info[p].width) {
+                        if (roi_height != image_info.plane_info[p].height || roi_width != image_info.plane_info[p].width) {
                             NVIMGCDCS_D_LOG_ERROR("Unexpected plane info dimensions");
                             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                         }
@@ -398,18 +398,16 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                     component_nbytes = roi_height * row_nbytes;
                 } else {
                     for (size_t p = 0; p < num_components; p++) {
-                        if (height != image_info.plane_info[p].height ||
-                            width != image_info.plane_info[p].width) {
+                        if (height != image_info.plane_info[p].height || width != image_info.plane_info[p].width) {
                             NVIMGCDCS_D_LOG_ERROR("Unexpected plane info dimensions");
                             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                         }
                     }
                     row_nbytes = width * bytes_per_sample;
-                    component_nbytes =height * row_nbytes;
+                    component_nbytes = height * row_nbytes;
                 }
 
-                if (image_info.buffer_size < component_nbytes * num_components ||
-                    image_info.num_planes != num_components) {
+                if (image_info.buffer_size < component_nbytes * num_components || image_info.num_planes != num_components) {
                     NVIMGCDCS_D_LOG_ERROR("The provided buffer can't hold the decoded image : " << num_components);
                     return;
                 }

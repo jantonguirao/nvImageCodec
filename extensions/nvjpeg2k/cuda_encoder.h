@@ -37,14 +37,14 @@ class NvJpeg2kEncoderPlugin
             nvjpeg2kEncodeState_t state_;
             std::vector<unsigned char> compressed_data_; //TODO it should be created with pinned allocator
         };
-        
+
         struct Sample
         {
             nvimgcdcsCodeStreamDesc_t code_stream;
             nvimgcdcsImageDesc_t image;
             const nvimgcdcsEncodeParams_t* params;
         };
-        
+
         nvjpeg2kEncoder_t handle_;
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;

@@ -112,8 +112,7 @@ nvimgcdcsJpegEncoding_t nvjpeg_to_nvimgcdcs_encoding(nvjpegJpegEncoding_t nvjpeg
 
 nvimgcdcsSampleDataType_t precision_to_sample_type(int precision)
 {
-    return precision == 8 ? NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8
-                          : NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
+    return precision == 8 ? NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 : NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
 }
 
 nvimgcdcsChromaSubsampling_t nvjpeg_to_nvimgcdcs_css(nvjpegChromaSubsampling_t nvjpeg_css)

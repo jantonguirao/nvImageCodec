@@ -12,5 +12,4 @@
 
 #include <nvimgcodecs.h>
 
-
 nvimgcdcsStatus_t get_nvjpeg_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);

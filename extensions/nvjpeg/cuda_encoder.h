@@ -11,9 +11,9 @@
 #pragma once
 
 #include <nvimgcodecs.h>
+#include <nvjpeg.h>
 #include <future>
 #include <vector>
-#include <nvjpeg.h>
 
 namespace nvjpeg {
 
@@ -44,7 +44,7 @@ class NvJpegCudaEncoderPlugin
             nvimgcdcsImageDesc_t image_;
             const nvimgcdcsEncodeParams_t* params;
         };
-        
+
         nvjpegHandle_t handle_;
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
@@ -52,8 +52,7 @@ class NvJpegCudaEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework,
-            int device_id);
+        Encoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id);
         ~Encoder();
 
         nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
