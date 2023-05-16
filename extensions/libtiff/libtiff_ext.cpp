@@ -17,7 +17,7 @@ struct LibtiffImgCodecsExtension
         : framework_(framework)
         , tiff_decoder_(framework)
     {
-        framework->registerDecoder(framework->instance, tiff_decoder_.getDecoderDesc());
+        framework->registerDecoder(framework->instance, tiff_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~LibtiffImgCodecsExtension()
     {

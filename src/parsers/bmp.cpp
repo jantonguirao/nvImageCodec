@@ -319,7 +319,7 @@ class BmpParserExtension
     explicit BmpParserExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~BmpParserExtension()
     {

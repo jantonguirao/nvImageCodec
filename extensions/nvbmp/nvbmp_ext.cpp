@@ -13,8 +13,8 @@ struct BmpImgCodecsExtension
     explicit BmpImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerEncoder(framework->instance, &nvbmp_encoder);
-        framework->registerDecoder(framework->instance, &nvbmp_decoder);
+        framework->registerEncoder(framework->instance, &nvbmp_encoder, NVIMGCDCS_PRIORITY_VERY_LOW);
+        framework->registerDecoder(framework->instance, &nvbmp_decoder, NVIMGCDCS_PRIORITY_VERY_LOW);
     }
     ~BmpImgCodecsExtension()
     {
@@ -36,7 +36,8 @@ nvimgcdcsStatus_t nvbmp_extension_create(void* instance, nvimgcdcsExtension_t* e
     try {
         XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new nvimgcdcs::BmpImgCodecsExtension(framework));
+        *extension =
+            reinterpret_cast<nvimgcdcsExtension_t>(new nvimgcdcs::BmpImgCodecsExtension(framework));
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }

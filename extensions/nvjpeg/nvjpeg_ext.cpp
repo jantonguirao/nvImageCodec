@@ -26,10 +26,10 @@ struct NvJpegImgCodecsExtension
         , jpeg_cuda_decoder_(framework)
         , jpeg_cuda_encoder_(framework)
     {
-        framework->registerEncoder(framework->instance, jpeg_cuda_encoder_.getEncoderDesc());
+        framework->registerEncoder(framework->instance, jpeg_cuda_encoder_.getEncoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
         if (jpeg_hw_decoder_.isPlatformSupported())
-            framework->registerDecoder(framework->instance, jpeg_hw_decoder_.getDecoderDesc());
-        framework->registerDecoder(framework->instance, jpeg_cuda_decoder_.getDecoderDesc());
+            framework->registerDecoder(framework->instance, jpeg_hw_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_VERY_HIGH);
+        framework->registerDecoder(framework->instance, jpeg_cuda_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
     }
     ~NvJpegImgCodecsExtension(){
         framework_->unregisterEncoder(framework_->instance, jpeg_cuda_encoder_.getEncoderDesc());

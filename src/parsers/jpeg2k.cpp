@@ -431,7 +431,7 @@ class Jpeg2kParserExtension
     explicit Jpeg2kParserExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerParser(framework->instance, jpeg2k_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, jpeg2k_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~Jpeg2kParserExtension() { framework_->unregisterParser(framework_->instance, jpeg2k_parser_plugin_.getParserDesc()); }
 

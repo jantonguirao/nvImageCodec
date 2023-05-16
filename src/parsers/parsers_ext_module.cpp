@@ -27,13 +27,13 @@ class ParsersExtension
     explicit ParsersExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
     {
-        framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc());
-        framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc());
-        framework->registerParser(framework->instance, jpeg2k_parser_plugin_.getParserDesc());
-        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc());
-        framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc());
-        framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc());
-        framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, jpeg2k_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~ParsersExtension() {
         framework_->unregisterParser(framework_->instance, bmp_parser_plugin_.getParserDesc());

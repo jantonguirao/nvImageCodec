@@ -23,13 +23,13 @@ struct OpenCVImgCodecsExtension
         , tiff_decoder_("tiff", framework)
         , webp_decoder_("webp", framework)
     {
-        framework->registerDecoder(framework->instance, jpeg_decoder_.getDecoderDesc());
-        framework->registerDecoder(framework->instance, jpeg2k_decoder_.getDecoderDesc());
-        framework->registerDecoder(framework->instance, png_decoder_.getDecoderDesc());
-        framework->registerDecoder(framework->instance, bmp_decoder_.getDecoderDesc());
-        framework->registerDecoder(framework->instance, pnm_decoder_.getDecoderDesc());
-        framework->registerDecoder(framework->instance, tiff_decoder_.getDecoderDesc());
-        framework->registerDecoder(framework->instance, webp_decoder_.getDecoderDesc());
+        framework->registerDecoder(framework->instance, jpeg_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
+        framework->registerDecoder(framework->instance, jpeg2k_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
+        framework->registerDecoder(framework->instance, png_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
+        framework->registerDecoder(framework->instance, bmp_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
+        framework->registerDecoder(framework->instance, pnm_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
+        framework->registerDecoder(framework->instance, tiff_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
+        framework->registerDecoder(framework->instance, webp_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
     }
 
     ~OpenCVImgCodecsExtension()
