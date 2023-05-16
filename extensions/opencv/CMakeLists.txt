@@ -19,6 +19,7 @@ message("Using OpenCV at ${JPEG_LIBRARY}")
 
 include_directories(
   ../../include
+  ../../src
   SYSTEM ../../external/NVTX/c/include
   SYSTEM ${JPEG_INCLUDE_DIR}
   SYSTEM ${OpenCV_INCLUDE_DIRS}

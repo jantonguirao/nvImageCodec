@@ -55,6 +55,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
+            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
+                continue;
         }
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -117,7 +119,6 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(
     , framework_(framework)
     , device_id_(device_id)
 {
-
     if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
         device_allocator_.device_ctx = framework->device_allocator->device_ctx;
         device_allocator_.device_malloc = framework->device_allocator->device_malloc;
@@ -294,6 +295,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
             try {
                 nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 image->getImageInfo(image->instance, &image_info);
+
+                if (image_info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+                    NVIMGCDCS_D_LOG_ERROR("Unexpected buffer kind");
+                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                    return;
+                }
                 unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
                 nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
@@ -318,18 +325,36 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 
                 XM_CHECK_NVJPEG2K(nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data),
                     encoded_stream_data_size, false, false, parse_state->nvjpeg2k_stream_));
-                std::vector<unsigned char*> decode_output(image_info.num_planes);
-                std::vector<size_t> pitch_in_bytes(image_info.num_planes);
+
+                nvjpeg2kImageInfo_t jpeg2k_info;
+                XM_CHECK_NVJPEG2K(nvjpeg2kStreamGetImageInfo(parse_state->nvjpeg2k_stream_, &jpeg2k_info));
+
+                nvjpeg2kImageComponentInfo_t comp;
+                XM_CHECK_NVJPEG2K(nvjpeg2kStreamGetImageComponentInfo(parse_state->nvjpeg2k_stream_, &comp, 0));
+                auto height = comp.component_height;
+                auto width = comp.component_width;
+                auto bpp = comp.precision;
+                auto num_components = jpeg2k_info.num_components;
+                if(bpp > 16) {
+                    NVIMGCDCS_D_LOG_ERROR("Unexpected bitdepth");
+                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                    return;
+                }
+
+                std::vector<unsigned char*> decode_output(num_components);
+                std::vector<size_t> pitch_in_bytes(num_components);
                 nvjpeg2kImage_t output_image;
 
                 size_t bytes_per_sample;
-                if (image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
-                    bytes_per_sample = 1;
+                nvimgcdcsSampleDataType_t orig_data_type;
+                if (bpp <= 8) {
                     output_image.pixel_type = NVJPEG2K_UINT8;
-                } else if (image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 ||
-                           image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16) {
-                    bytes_per_sample = 2;
+                    orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+                    bytes_per_sample = 1;
+                } else if (bpp <= 16) {
                     output_image.pixel_type = NVJPEG2K_UINT16;
+                    orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+                    bytes_per_sample = 2;
                 } else {
                     NVIMGCDCS_D_LOG_ERROR("bit depth not supported");
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
@@ -341,26 +366,56 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, params->enable_color_conversion));
                 size_t row_nbytes;
                 size_t component_nbytes;
+                if (num_components != image_info.num_planes) {
+                    NVIMGCDCS_D_LOG_ERROR("Unexpected number of planes");
+                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                }
+                for (size_t p = 0; p < num_components; p++) {
+                    if (image_info.plane_info[p].sample_type != orig_data_type) {
+                        NVIMGCDCS_D_LOG_ERROR("Unexpected sample data type");
+                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                    }
+                }
                 if (params->enable_roi && image_info.region.ndim > 0) {
                     auto region = image_info.region;
                     NVIMGCDCS_D_LOG_DEBUG(
                         "Setting up ROI :" << region.start[0] << ", " << region.start[1] << ", " << region.end[0] << ", " << region.end[1]);
-                    auto roi_width = region.end[1] - region.start[1];
-                    auto roi_height = region.end[0] - region.start[0];
+                    uint32_t roi_width = region.end[1] - region.start[1];
+                    uint32_t roi_height = region.end[0] - region.start[0];
                     XM_CHECK_NVJPEG2K(
                         nvjpeg2kDecodeParamsSetDecodeArea(decode_params, region.start[1], region.end[1], region.start[0], region.end[0]));
+                    for (size_t p = 0; p < num_components; p++) {
+                        if (roi_height != image_info.plane_info[p].height ||
+                            roi_width != image_info.plane_info[p].width) {
+                            NVIMGCDCS_D_LOG_ERROR("Unexpected plane info dimensions");
+                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                        }
+                    }
                     row_nbytes = roi_width * bytes_per_sample;
                     component_nbytes = roi_height * row_nbytes;
                 } else {
-                    row_nbytes = image_info.plane_info[0].width * bytes_per_sample;
-                    component_nbytes = image_info.plane_info[0].height * row_nbytes;
+                    for (size_t p = 0; p < num_components; p++) {
+                        if (height != image_info.plane_info[p].height ||
+                            width != image_info.plane_info[p].width) {
+                            NVIMGCDCS_D_LOG_ERROR("Unexpected plane info dimensions");
+                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                        }
+                    }
+                    row_nbytes = width * bytes_per_sample;
+                    component_nbytes =height * row_nbytes;
                 }
-                for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+
+                if (image_info.buffer_size < component_nbytes * num_components ||
+                    image_info.num_planes != num_components) {
+                    NVIMGCDCS_D_LOG_ERROR("The provided buffer can't hold the decoded image : " << num_components);
+                    return;
+                }
+
+                for (uint32_t p = 0; p < num_components; ++p) {
                     decode_output[p] = device_buffer + p * component_nbytes;
                     pitch_in_bytes[p] = row_nbytes;
                 }
-
-                output_image.num_components = image_info.num_planes; //assumed planar
+                output_image.num_components = num_components;
                 output_image.pixel_data = (void**)&decode_output[0];
                 output_image.pitch_in_bytes = &pitch_in_bytes[0];
 
@@ -387,48 +442,6 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decodeBatch()
 {
-    //NVTX3_FUNC_RANGE();
-
-    /*
-    auto subsampling_score = [](nvimgcdcsChromaSubsampling_t subsampling) -> uint32_t {
-        switch (subsampling) {
-        case NVIMGCDCS_SAMPLING_444:
-            return 8;
-        case NVIMGCDCS_SAMPLING_422:
-            return 7;
-        case NVIMGCDCS_SAMPLING_420:
-            return 6;
-        case NVIMGCDCS_SAMPLING_440:
-            return 5;
-        case NVIMGCDCS_SAMPLING_411:
-            return 4;
-        case NVIMGCDCS_SAMPLING_410:
-            return 3;
-        case NVIMGCDCS_SAMPLING_GRAY:
-            return 2;
-        case NVIMGCDCS_SAMPLING_410V:
-        default:
-            return 1;
-        }
-    };
-
-    int nsamples = decode_state_batch_->samples_.size();
-    using sort_elem_t = std::tuple<uint32_t, uint64_t, int>;
-    std::vector<sort_elem_t> sample_meta(nsamples);
-    for (int i = 0; i < nsamples; i++) {
-        nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[i].image;
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        image->getImageInfo(image->instance, &image_info);
-        uint64_t area = image_info.plane_info[0].height * image_info.plane_info[0].width;
-        sample_meta[i] = sort_elem_t{subsampling_score(image_info.chroma_subsampling), area, i};
-    }
-    auto order = [](const sort_elem_t& lhs, const sort_elem_t& rhs) { return lhs > rhs; };
-    std::sort(sample_meta.begin(), sample_meta.end(), order);
-    for (auto& elem : sample_meta) {
-        int sample_idx = std::get<2>(elem);
-        this->decode(sample_idx);
-    }
-    */
     int batch_size = decode_state_batch_->samples_.size();
     for (int i = 0; i < batch_size; i++) {
         this->decode(i);

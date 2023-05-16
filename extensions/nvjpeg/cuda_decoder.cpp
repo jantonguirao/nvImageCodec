@@ -56,6 +56,8 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
+            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
+                continue;
         }
         nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);

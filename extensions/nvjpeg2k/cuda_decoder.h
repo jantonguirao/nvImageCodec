@@ -41,7 +41,7 @@ class NvJpeg2kDecoderPlugin
         ~DecodeState();
 
         nvjpeg2kHandle_t handle_ = nullptr;
-        
+
         struct PerThreadResources
         {
             cudaStream_t stream_;

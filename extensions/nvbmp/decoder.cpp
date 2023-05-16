@@ -35,6 +35,8 @@ static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsP
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
+            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
+                continue;
         }
         if (params->enable_roi) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED;

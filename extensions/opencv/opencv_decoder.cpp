@@ -1,10 +1,11 @@
-#include "nvimgcodecs.h"
 #include "opencv_decoder.h"
-#include "log.h"
 #include <cstring>
 #include <nvtx3/nvtx3.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include "convert.h"
+#include "log.h"
+#include "nvimgcodecs.h"
 
 #define XM_CHECK_NULL(ptr)                            \
     {                                                 \
@@ -14,22 +15,136 @@
 
 namespace opencv {
 
-static void rgb2bgr(cv::Mat &img) {
+
+
+static void color_convert(cv::Mat& img, cv::ColorConversionCodes conversion)
+{
     NVIMGCDCS_D_LOG_TRACE("Before cvtColor - " << img.rows << " x " << img.cols);
     if (img.data == nullptr || img.rows == 0 || img.cols == 0)
         throw std::runtime_error("Invalid input image");
-    cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
+    cv::cvtColor(img, img, conversion);
     NVIMGCDCS_D_LOG_TRACE("After cvtColor");
 }
 
-static void bgr2rgb(cv::Mat &img) {
-    rgb2bgr(img);
+template <typename DestType, typename SrcType>
+nvimgcdcsStatus_t ConvertPlanar(DestType* destinationBuffer, uint32_t plane_stride, uint32_t row_stride_bytes, const cv::Mat& image)
+{
+    using nvimgcdcs::ConvertSatNorm;
+    std::vector<cv::Mat> planes;
+    cv::split(image, planes);
+    size_t height = image.size[0];
+    size_t width = image.size[1];
+    for (size_t ch = 0; ch < planes.size(); ++ch) {
+        const cv::Mat& srcPlane = planes[ch];
+        const SrcType* srcPlanePtr = srcPlane.ptr<SrcType>();
+        DestType* destPlanePtr = destinationBuffer + ch * plane_stride;
+        for (size_t i = 0; i < height; ++i) {
+            const SrcType* srcRow = srcPlanePtr + i * width;
+            DestType* destRow = reinterpret_cast<DestType*>(
+                reinterpret_cast<uint8_t*>(destPlanePtr) + i * row_stride_bytes);
+            for (size_t j = 0; j < width; ++j) {
+                destRow[j] = ConvertSatNorm<DestType>(srcRow[j]);
+            }
+        }
+    }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+template <typename DestType, typename SrcType>
+nvimgcdcsStatus_t ConvertInterleaved(DestType* destinationBuffer, uint32_t row_stride_bytes, const cv::Mat& image)
+{
+    using nvimgcdcs::ConvertSatNorm;
+    size_t height = image.size[0];
+    size_t width = image.size[1];
+    size_t channels = image.channels();
+    for (size_t i = 0; i < height; ++i) {
+        const SrcType* srcRow = image.ptr<SrcType>() + i * width * channels;
+        DestType* destRow = reinterpret_cast<DestType*>(
+            reinterpret_cast<uint8_t*>(destinationBuffer) + i * row_stride_bytes);
+        for (size_t j = 0; j < width; ++j) {
+            for (size_t c = 0; c < channels; c++) {
+                destRow[j * channels + c] = ConvertSatNorm<DestType>(srcRow[j * channels + c]);
+            }
+        }
+    }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t ConvertPlanar(nvimgcdcsImageInfo_t& info, const cv::Mat& decoded)
+{
+
+#define CaseConvertPlanar(OUT_SAMPLE_TYPE, OutType, img_info, image)                                                          \
+    case OUT_SAMPLE_TYPE:                                                                                                     \
+        switch (image.depth()) {                                                                                              \
+        case CV_8U:                                                                                                           \
+            return ConvertPlanar<OutType, uint8_t>(reinterpret_cast<OutType*>(img_info.buffer),                               \
+                img_info.plane_info[0].row_stride * img_info.plane_info[0].height, img_info.plane_info[0].row_stride, image); \
+        case CV_16U:                                                                                                          \
+            return ConvertPlanar<OutType, uint16_t>(reinterpret_cast<OutType*>(img_info.buffer),                              \
+                img_info.plane_info[0].row_stride * img_info.plane_info[0].height, img_info.plane_info[0].row_stride, image); \
+        default:                                                                                                              \
+            return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;                                                               \
+        }                                                                                                                     \
+        break;
+
+    switch (info.plane_info[0].sample_type) {
+        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, uint8_t, info, decoded);
+        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8, int8_t, info, decoded);
+        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, uint16_t, info, decoded);
+        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16, int16_t, info, decoded);
+        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32, float, info, decoded);
+    default:
+        return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
+    }
+#undef CaseConvertPlanar
+}
+
+nvimgcdcsStatus_t ConvertInterleaved(nvimgcdcsImageInfo_t& info, const cv::Mat& decoded)
+{
+
+#define CaseConvertInterleaved(OUT_SAMPLE_TYPE, OutType, img_info, image)                               \
+    case OUT_SAMPLE_TYPE:                                                                               \
+        switch (image.depth()) {                                                                        \
+        case CV_8U:                                                                                     \
+            return ConvertInterleaved<OutType, uint8_t>(                                                \
+                reinterpret_cast<OutType*>(img_info.buffer), img_info.plane_info[0].row_stride, image); \
+        case CV_16U:                                                                                    \
+            return ConvertInterleaved<OutType, uint16_t>(                                               \
+                reinterpret_cast<OutType*>(img_info.buffer), img_info.plane_info[0].row_stride, image); \
+        default:                                                                                        \
+            return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;                                         \
+        }                                                                                               \
+        break;
+
+    switch (info.plane_info[0].sample_type) {
+        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, uint8_t, info, decoded);
+        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8, int8_t, info, decoded);
+        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, uint16_t, info, decoded);
+        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16, int16_t, info, decoded);
+        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32, float, info, decoded);
+    default:
+        return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
+    }
+
+#undef CaseConvertInterleaved
+}
+
+nvimgcdcsStatus_t Convert(nvimgcdcsImageInfo_t& info, const cv::Mat& decoded)
+{
+    if (info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB ||
+        info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR ||
+        info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED) {
+        return ConvertPlanar(info, decoded);
+    } else {
+        return ConvertInterleaved(info, decoded);
+    }
 }
 
 struct DecodeState
 {
     DecodeState(int num_threads)
-        : per_thread_(num_threads) {}
+        : per_thread_(num_threads)
+    {}
     ~DecodeState() = default;
 
     struct PerThreadResources
@@ -55,8 +170,8 @@ struct DecoderImpl
     nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
     nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
         int batch_size, const nvimgcdcsDecodeParams_t* params);
-    nvimgcdcsStatus_t decodeBatch(nvimgcdcsCodeStreamDesc_t* code_streams,
-        nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+    nvimgcdcsStatus_t decodeBatch(
+        nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
     static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
     static nvimgcdcsStatus_t static_get_capabilities(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -74,16 +189,15 @@ struct DecoderImpl
 OpenCVDecoderPlugin::OpenCVDecoderPlugin(const char* codec_name, const nvimgcdcsFrameworkDesc_t framework)
     : codec_name_(codec_name)
     , decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
-          this,                    // instance
-          "opencv_decoder",        // id
-          0x00000100,              // version
-          codec_name_,             // codec_type
+          this,             // instance
+          "opencv_decoder", // id
+          0x00000100,       // version
+          codec_name_,      // codec_type
           static_create, DecoderImpl::static_destroy, DecoderImpl::static_get_capabilities, DecoderImpl::static_can_decode,
           DecoderImpl::static_decode_batch}
     , capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT}
     , framework_(framework)
-{
-}
+{}
 
 nvimgcdcsDecoderDesc_t OpenCVDecoderPlugin::getDecoderDesc()
 {
@@ -101,12 +215,8 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
         char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
         (*code_stream)->getCodecName((*code_stream)->instance, codec_name);
 
-        if (strcmp(codec_name, "jpeg") != 0 &&
-            strcmp(codec_name, "jpeg2k") != 0 &&
-            strcmp(codec_name, "png") != 0 &&
-            strcmp(codec_name, "tiff") != 0 &&
-            strcmp(codec_name, "bmp") != 0 &&
-            strcmp(codec_name, "pnm") != 0 && 
+        if (strcmp(codec_name, "jpeg") != 0 && strcmp(codec_name, "jpeg2k") != 0 && strcmp(codec_name, "png") != 0 &&
+            strcmp(codec_name, "tiff") != 0 && strcmp(codec_name, "bmp") != 0 && strcmp(codec_name, "pnm") != 0 &&
             strcmp(codec_name, "webp") != 0) {
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
@@ -119,41 +229,55 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
+            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
+                continue;
         }
 
         nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*image)->getImageInfo((*image)->instance, &info);
 
-        switch(info.sample_format) {
-            case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
-            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:  // TODO(janton): support?
-            case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:  // TODO(janton): support?
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
-                break;
-            case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
-            case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
-            case NVIMGCDCS_SAMPLEFORMAT_P_Y:
-            case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
-            case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
-            default:
-                break;  // supported
+        switch (info.sample_format) {
+        case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+            break;
+        case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+        case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+        case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+        case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+        case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+        case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
+        case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
+        default:
+            break; // supported
         }
 
-        if (info.num_planes == 3) {
+        if (info.num_planes > 1) {
             for (size_t p = 0; p < info.num_planes; p++) {
                 if (info.plane_info[p].num_channels != 1)
                     *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
             }
         } else if (info.num_planes == 1) {
-            if (info.plane_info[0].num_channels != 3 && info.plane_info[0].num_channels != 1)
+            if (info.plane_info[0].num_channels != 3
+                && info.plane_info[0].num_channels != 4
+                && info.plane_info[0].num_channels != 1)
                 *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
         } else {
             *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
         }
-        for (size_t p = 0; p < info.num_planes; p++) {
-            if (info.plane_info[p].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
+
+        auto sample_type = info.plane_info[0].sample_type;
+        for (size_t p = 1; p < info.num_planes; p++) {
+            if (info.plane_info[p].sample_type != sample_type) {
                 *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
             }
+        }
+        switch (sample_type) {
+        case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
+        case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
+            break;
+        default:
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+            break;
         }
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -177,8 +301,7 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
     }
 }
 
-DecoderImpl::DecoderImpl(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
+DecoderImpl::DecoderImpl(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
     : capabilities_(capabilities)
     , framework_(framework)
     , device_id_(device_id)
@@ -246,8 +369,7 @@ nvimgcdcsStatus_t DecoderImpl::getCapabilities(const nvimgcdcsCapability_t** cap
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t DecoderImpl::static_get_capabilities(
-    nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
+nvimgcdcsStatus_t DecoderImpl::static_get_capabilities(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("opencv_get_capabilities");
@@ -263,8 +385,7 @@ nvimgcdcsStatus_t DecoderImpl::static_get_capabilities(
 }
 
 nvimgcdcsStatus_t decodeImpl(
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params,
-    std::vector<uint8_t>& buffer)
+    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params, std::vector<uint8_t>& buffer)
 {
     nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     auto ret = image->getImageInfo(image->instance, &info);
@@ -283,7 +404,7 @@ nvimgcdcsStatus_t decodeImpl(
         return ret;
     }
 
-    const void *ptr;
+    const void* ptr;
     ret = io_stream->raw_data(io_stream->instance, &ptr);
     if (ret != NVIMGCDCS_STATUS_SUCCESS) {
         return ret;
@@ -304,8 +425,12 @@ nvimgcdcsStatus_t decodeImpl(
 
     int num_channels = std::max(info.num_planes, info.plane_info[0].num_channels);
     int flags = num_channels > 1 ? cv::IMREAD_COLOR : cv::IMREAD_GRAYSCALE;
+    if (num_channels > 3)
+        flags |= cv::IMREAD_UNCHANGED;
     if (!params->enable_orientation)
         flags |= cv::IMREAD_IGNORE_ORIENTATION;
+    if (info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
+        flags |= cv::IMREAD_ANYDEPTH;
     auto decoded = cv::imdecode(cv::_InputArray(encoded_data, encoded_length), flags);
 
     if (decoded.data == nullptr) {
@@ -314,27 +439,12 @@ nvimgcdcsStatus_t decodeImpl(
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
-    switch(info.sample_format) {
-        case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
-        case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
-            bgr2rgb(decoded);  // opencv decodes as BGR layout
-            break;
-        case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
-        case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
-        case NVIMGCDCS_SAMPLEFORMAT_P_Y:
-            break;
-        default:
-            NVIMGCDCS_D_LOG_ERROR("Unsupported sample_format: " << info.sample_format);
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-
     if (info.region.ndim == 2) {
         int start_y = info.region.start[0];
         int start_x = info.region.start[1];
         int crop_h = info.region.end[0] - info.region.start[0];
         int crop_w = info.region.end[1] - info.region.start[1];
-        if (crop_h < 0 || crop_w < 0 || start_x < 0 || start_y < 0 ||
-            (start_y + crop_h) > decoded.rows ||
+        if (crop_h < 0 || crop_w < 0 || start_x < 0 || start_y < 0 || (start_y + crop_h) > decoded.rows ||
             (start_x + crop_w) > decoded.cols) {
             NVIMGCDCS_D_LOG_ERROR("Region of interest is out of bounds");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
@@ -345,22 +455,26 @@ nvimgcdcsStatus_t decodeImpl(
         std::swap(tmp, decoded);
     }
 
-    const uint8_t* src = decoded.data;
-    uint8_t* dst = reinterpret_cast<uint8_t*>(info.buffer);
-    if (info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB || info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR) {
-        uint32_t plane_size = info.plane_info[0].height * info.plane_info[0].width;
-        for (uint32_t i = 0; i < info.plane_info[0].height * info.plane_info[0].width; i++) {
-            *(dst + plane_size * 0 + i) = *(src + 0 + i * num_channels);
-            *(dst + plane_size * 1 + i) = *(src + 1 + i * num_channels);
-            *(dst + plane_size * 2 + i) = *(src + 2 + i * num_channels);
-        }
-    } else {
-        uint32_t row_size_bytes = info.plane_info[0].width * num_channels * sizeof(uint8_t);
-        for (uint32_t y = 0; y < info.plane_info[0].height; y++, dst += info.plane_info[0].row_stride, src += row_size_bytes) {
-            std::memcpy(dst, src, row_size_bytes);
-        }
+    switch (info.sample_format) {
+    case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+    case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+        color_convert(decoded, cv::COLOR_BGR2RGB); // opencv decodes as BGR layout
+        break;
+    case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
+    case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
+        if (num_channels == 4)
+            color_convert(decoded, cv::COLOR_BGRA2RGBA);
+        break;
+    case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+    case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+    case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+        break;
+    default:
+        NVIMGCDCS_D_LOG_ERROR("Unsupported sample_format: " << info.sample_format);
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+
+    return Convert(info, decoded);
 }
 
 nvimgcdcsStatus_t DecoderImpl::decodeBatch(
@@ -377,7 +491,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
     framework_->getExecutor(framework_->instance, &executor);
     for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
         executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(),
-            [](int tid, int sample_idx, void* context) -> void { 
+            [](int tid, int sample_idx, void* context) -> void {
                 nvtx3::scoped_range marker{"opencv decode " + std::to_string(sample_idx)};
                 auto* decode_state = reinterpret_cast<DecodeState*>(context);
                 auto& sample = decode_state->samples_[sample_idx];
