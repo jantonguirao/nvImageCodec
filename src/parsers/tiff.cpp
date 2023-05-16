@@ -13,11 +13,11 @@
 #include <vector>
 
 #include "exception.h"
+#include "exif_orientation.h"
 #include "log.h"
 #include "logger.h"
 #include "parsers/byte_io.h"
 #include "parsers/exif.h"
-#include "exif_orientation.h"
 
 namespace nvimgcdcs {
 
@@ -143,9 +143,9 @@ TIFFParserPlugin::TIFFParserPlugin()
           "tiff_parser", // id
           0x00000100,    // version
           "tiff",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_create_parse_state, Parser::static_destroy_parse_state,
-          Parser::static_get_image_info, Parser::static_get_capabilities}
-{}
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
+{
+}
 
 struct nvimgcdcsParserDesc* TIFFParserPlugin::getParserDesc()
 {
@@ -183,7 +183,8 @@ nvimgcdcsStatus_t TIFFParserPlugin::static_can_parse(void* instance, bool* resul
 }
 
 TIFFParserPlugin::Parser::Parser()
-{}
+{
+}
 
 nvimgcdcsStatus_t TIFFParserPlugin::create(nvimgcdcsParser_t* parser)
 {
@@ -246,39 +247,6 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_get_capabilities(
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve tiff parser capabilites - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t TIFFParserPlugin::Parser::createParseState(nvimgcdcsParseState_t* parse_state)
-{
-    // TODO(janton): remove this API
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("TIFF create_parse_state");
-        CHECK_NULL(parser);
-        CHECK_NULL(parse_state);
-        auto handle = reinterpret_cast<TIFFParserPlugin::Parser*>(parser);
-        return handle->createParseState(parse_state);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create tiff parse state - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("tiff_destroy_parse_state");
-        CHECK_NULL(parse_state);
-        // TODO(janton): remove this API
-        return NVIMGCDCS_STATUS_SUCCESS;
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy tiff parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

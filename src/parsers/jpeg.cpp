@@ -57,7 +57,7 @@ nvimgcdcsChromaSubsampling_t chroma_subsampling_from_factors(
     int ncomponents, uint8_t yh, uint8_t yv, uint8_t uh, uint8_t uv, uint8_t vh, uint8_t vv)
 {
     if (ncomponents == 1)
-        return NVIMGCDCS_SAMPLING_NONE;
+        return NVIMGCDCS_SAMPLING_GRAY;
 
     if (ncomponents == 3) {
         uint8_t minh = std::min(yh, std::min(uh, vh));
@@ -107,8 +107,7 @@ JPEGParserPlugin::JPEGParserPlugin()
           "jpeg_parser", // id
           0x00000100,    // version
           "jpeg",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_create_parse_state, Parser::static_destroy_parse_state,
-          Parser::static_get_image_info, Parser::static_get_capabilities}
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
 {
 }
 
@@ -206,39 +205,6 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_capabilities(
         return handle->getCapabilities(capabilities, size);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve jpeg parser capabilites - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::createParseState(nvimgcdcsParseState_t* parse_state)
-{
-    // TODO(janton): remove this API
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_create_parse_state(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("JPEG create_parse_state");
-        CHECK_NULL(parser);
-        CHECK_NULL(parse_state);
-        auto handle = reinterpret_cast<JPEGParserPlugin::Parser*>(parser);
-        return handle->createParseState(parse_state);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create jpeg parse state - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-}
-
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy_parse_state(nvimgcdcsParseState_t parse_state)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("jpeg_destroy_parse_state");
-        CHECK_NULL(parse_state);
-        // TODO(janton): remove this API
-        return NVIMGCDCS_STATUS_SUCCESS;
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg parse state - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }

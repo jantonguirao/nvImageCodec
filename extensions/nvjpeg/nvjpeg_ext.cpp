@@ -14,7 +14,6 @@
 #include "errors_handling.h"
 #include "hw_decoder.h"
 #include "log.h"
-#include "parser.h"
 
 namespace nvjpeg {
 
@@ -23,12 +22,10 @@ struct NvJpegImgCodecsExtension
   public:
     explicit NvJpegImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
         : framework_(framework)
-        , jpeg_parser_(framework)
         , jpeg_hw_decoder_(framework)
         , jpeg_cuda_decoder_(framework)
         , jpeg_cuda_encoder_(framework)
     {
-        framework->registerParser(framework->instance, jpeg_parser_.getParserDesc());
         framework->registerEncoder(framework->instance, jpeg_cuda_encoder_.getEncoderDesc());
         if (jpeg_hw_decoder_.isPlatformSupported())
             framework->registerDecoder(framework->instance, jpeg_hw_decoder_.getDecoderDesc());
@@ -37,7 +34,6 @@ struct NvJpegImgCodecsExtension
 
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
-    NvJpegParserPlugin jpeg_parser_;
     NvJpegHwDecoderPlugin jpeg_hw_decoder_;
     NvJpegCudaDecoderPlugin jpeg_cuda_decoder_;
     NvJpegCudaEncoderPlugin jpeg_cuda_encoder_;

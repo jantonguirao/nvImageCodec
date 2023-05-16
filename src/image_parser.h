@@ -16,7 +16,6 @@
 #include "iimage_parser.h"
 
 namespace nvimgcdcs {
-class IParseState;
 class ImageParser : public IImageParser
 {
   public:
@@ -25,8 +24,6 @@ class ImageParser : public IImageParser
     std::string getParserId() const override;
     std::string getCodecName() const override;
     nvimgcdcsStatus_t getImageInfo(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info) override;
-    std::unique_ptr<IParseState> createParseState() override;
-
   private:
     const struct nvimgcdcsParserDesc* parser_desc_;
     nvimgcdcsParser_t parser_;

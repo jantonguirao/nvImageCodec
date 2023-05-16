@@ -246,7 +246,7 @@ TEST_F(JPEGParserPluginTest, Gray) {
     EXPECT_EQ(NVIMGCDCS_SAMPLEFORMAT_P_Y, info.sample_format);
     EXPECT_EQ(1, info.num_planes);
     EXPECT_EQ(NVIMGCDCS_COLORSPEC_GRAY, info.color_spec);
-    EXPECT_EQ(NVIMGCDCS_SAMPLING_NONE, info.chroma_subsampling);
+    EXPECT_EQ(NVIMGCDCS_SAMPLING_GRAY, info.chroma_subsampling);
     EXPECT_EQ(0, info.orientation.rotated);
     EXPECT_FALSE(info.orientation.flip_x);
     EXPECT_FALSE(info.orientation.flip_y);

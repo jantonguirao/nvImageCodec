@@ -14,7 +14,6 @@
 #include <string>
 #include <memory>
 #include "io_stream.h"
-#include "iparse_state.h"
 #include "iimage_parser.h"
 #include "icode_stream.h"
 #include "iiostream_factory.h"
@@ -73,6 +72,5 @@ class CodeStream : public ICodeStream
     nvimgcdcsIOStreamDesc io_stream_desc_;
     nvimgcdcsCodeStreamDesc code_stream_desc_;
     std::unique_ptr<nvimgcdcsImageInfo_t> image_info_;
-    std::unique_ptr<IParseState> parse_state_;
 };
 } // namespace nvimgcdcs

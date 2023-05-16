@@ -495,9 +495,6 @@ extern "C"
     struct nvimgcdcsParser;
     typedef struct nvimgcdcsParser* nvimgcdcsParser_t;
 
-    struct nvimgcdcsParseState;
-    typedef struct nvimgcdcsParseState* nvimgcdcsParseState_t;
-
     struct nvimgcdcsCodeStreamDesc
     {
         nvimgcdcsStructureType_t type;
@@ -506,7 +503,6 @@ extern "C"
         void* instance;
 
         nvimgcdcsIoStreamDesc_t io_stream;
-        nvimgcdcsParseState_t parse_state;
 
         nvimgcdcsStatus_t (*getCodecName)(void* instance, char* codec_name);
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
@@ -540,12 +536,7 @@ extern "C"
         nvimgcdcsStatus_t (*canParse)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream);
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsParser_t parser);
-
-        nvimgcdcsStatus_t (*createParseState)(nvimgcdcsParser_t parser, nvimgcdcsParseState_t* parse_state);
-        nvimgcdcsStatus_t (*destroyParseState)(nvimgcdcsParseState_t parse_state);
-
         nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result, nvimgcdcsCodeStreamDesc_t code_stream);
-
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size);
     };
 

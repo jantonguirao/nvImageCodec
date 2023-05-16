@@ -26,10 +26,9 @@ CodeStream::CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStream
     , io_stream_(nullptr)
     , io_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static, write_static, putc_static, skip_static,
           seek_static, tell_static, size_static, raw_data_static}
-    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, &io_stream_desc_, nullptr, static_get_codec_name,
+    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, &io_stream_desc_, static_get_codec_name,
           static_get_image_info}
     , image_info_(nullptr)
-    , parse_state_(nullptr)
 {
 }
 
@@ -48,8 +47,6 @@ void CodeStream::parse()
 
     parser_ = std::move(parser);
     codec_name_ = parser_->getCodecName();
-    parse_state_ = parser_->createParseState();
-    code_stream_desc_.parse_state = parse_state_->getInternalParseState();
 }
 
 void CodeStream::parseFromFile(const std::string& file_name)

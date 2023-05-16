@@ -19,6 +19,7 @@
 #include <nvjpeg2k.h>
 
 #include "common.h"
+#include "parsers/jpeg2k.h"
 
 namespace nvimgcdcs { namespace test {
 
@@ -35,18 +36,24 @@ class NvJpeg2kExtTestBase : public ExtensionTestBase
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvjpeg2k_extension_desc(&nvjpeg2k_extension_desc_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &nvjpeg2k_extension_, &nvjpeg2k_extension_desc_));
 
+        nvimgcdcsExtensionDesc_t jpeg2k_parser_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_jpeg2k_parser_extension_desc(&jpeg2k_parser_extension_desc));
+        nvimgcdcsExtensionCreate(instance_, &jpeg2k_parser_extension_, &jpeg2k_parser_extension_desc);
+
         image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     }
 
     virtual void TearDown()
     {
         TearDownCodecResources();
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(jpeg2k_parser_extension_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(nvjpeg2k_extension_));
         ExtensionTestBase::TearDown();
     }
 
     nvimgcdcsExtensionDesc_t nvjpeg2k_extension_desc_{};
     nvimgcdcsExtension_t nvjpeg2k_extension_;
+    nvimgcdcsExtension_t jpeg2k_parser_extension_;
 };
 
 class NvJpeg2kTestBase
