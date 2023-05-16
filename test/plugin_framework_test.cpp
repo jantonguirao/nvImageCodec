@@ -64,9 +64,11 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
         .Times(3)
         .WillOnce(Return("libnvjpeg.so.22.11.0.0"))
         .WillOnce(Return("libnvjpeg2k.so.0.6.0.0"))
+        .WillOnce(Return("~libtiff.so.0.6.0.0"))
         .WillOnce(Return("libnvjpeg2k.so.0"));
     EXPECT_CALL(*directory_scaner.get(), symlinkStatus(_))
         .Times(3)
+        .WillOnce(Return(fs::file_status(fs::file_type::regular)))
         .WillOnce(Return(fs::file_status(fs::file_type::regular)))
         .WillOnce(Return(fs::file_status(fs::file_type::regular)))
         .WillOnce(Return(fs::file_status(fs::file_type::symlink)));

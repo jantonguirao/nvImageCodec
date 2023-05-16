@@ -180,6 +180,11 @@ void PluginFramework::unregisterAllExtensions()
     }
 }
 
+bool is_extension_disabled(fs::path dir_entry_path)
+{
+    return dir_entry_path.filename().string().front() == '~';
+}
+
 void PluginFramework::discoverAndLoadExtModules()
 {
     for (const auto& dir : plugin_dirs_) {
@@ -188,7 +193,9 @@ void PluginFramework::discoverAndLoadExtModules()
             fs::path dir_entry_path = directory_scaner_->next();
             auto status = directory_scaner_->symlinkStatus(dir_entry_path);
             if (fs::is_regular_file(status)) {
-                //TODO check and filter out entries
+                if (is_extension_disabled(dir_entry_path)) {
+                    continue;
+                }
                 const std::string module_path(dir_entry_path.string());
                 loadExtModule(module_path);
             }
