@@ -11,9 +11,9 @@
 #pragma once
 
 #include <nvimgcodecs.h>
+#include <nvjpeg2k.h>
 #include <memory>
 #include <vector>
-#include <nvjpeg2k.h>
 
 namespace nvjpeg2k {
 
@@ -25,7 +25,7 @@ class NvJpeg2kDecoderPlugin
 
   private:
     struct Decoder;
-    
+
     struct ParseState
     {
         explicit ParseState();
@@ -34,7 +34,7 @@ class NvJpeg2kDecoderPlugin
         nvjpeg2kStream_t nvjpeg2k_stream_;
         std::vector<unsigned char> buffer_;
     };
-    
+
     struct DecodeState
     {
         explicit DecodeState(nvjpeg2kHandle_t handle, int num_threads);
@@ -49,18 +49,17 @@ class NvJpeg2kDecoderPlugin
             nvjpeg2kDecodeState_t state_;
             std::unique_ptr<ParseState> parse_state_;
         };
-        
+
         struct Sample
         {
             nvimgcdcsCodeStreamDesc_t code_stream;
             nvimgcdcsImageDesc_t image;
             const nvimgcdcsDecodeParams_t* params;
         };
-        
+
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
     };
-
 
     struct Decoder
     {

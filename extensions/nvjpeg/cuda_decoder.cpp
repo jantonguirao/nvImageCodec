@@ -1,4 +1,5 @@
 #include "cuda_decoder.h"
+#include <library_types.h>
 #include <nvimgcodecs.h>
 #include <cstring>
 #include <iostream>
@@ -8,7 +9,6 @@
 #include <set>
 #include <sstream>
 #include <vector>
-#include <library_types.h>
 #include "errors_handling.h"
 #include "log.h"
 #include "parser.h"
@@ -77,8 +77,8 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*image)->getImageInfo((*image)->instance, &image_info);
-        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
-            NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
+        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY,
+            NVIMGCDCS_COLORSPEC_SYCC, NVIMGCDCS_COLORSPEC_CMYK, NVIMGCDCS_COLORSPEC_YCCK};
         if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
         }
@@ -366,7 +366,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                     if (NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MAJOR_VERSION, &major) &&
                         NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor)) {
                         ver = major * 1000 + minor;
-                        if (ver < 12001) {  // TODO(janton): double check the version that includes the fix
+                        if (ver < 12001) { // TODO(janton): double check the version that includes the fix
                             if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
                                 orientation = NVJPEG_ORIENTATION_ROTATE_270;
                             else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
@@ -413,9 +413,15 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle, static_cast<const unsigned char*>(encoded_stream_data),
                     encoded_stream_data_size, false, false, p.parse_state_.nvjpeg_stream_));
 
-                int is_gpu_hybrid_supported = -1; // zero means is supported
-                XM_CHECK_NVJPEG(nvjpegDecoderJpegSupported(p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID].decoder, p.parse_state_.nvjpeg_stream_,
-                    nvjpeg_params.get(), &is_gpu_hybrid_supported));
+                nvjpegJpegEncoding_t jpeg_encoding;
+                nvjpegJpegStreamGetJpegEncoding(p.parse_state_.nvjpeg_stream_, &jpeg_encoding);
+
+                int is_gpu_hybrid_supported = -1;                    // zero means is supported
+                if (jpeg_encoding == NVJPEG_ENCODING_BASELINE_DCT) { //gpu hybrid is not supported for progressive
+                    XM_CHECK_NVJPEG(nvjpegDecoderJpegSupported(p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID].decoder,
+                        p.parse_state_.nvjpeg_stream_, nvjpeg_params.get(), &is_gpu_hybrid_supported));
+                }
+
                 auto& decoder_data =
                     (image_info.plane_info[0].height * image_info.plane_info[0].width) > (256u * 256u) && is_gpu_hybrid_supported == 0
                         ? p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID]

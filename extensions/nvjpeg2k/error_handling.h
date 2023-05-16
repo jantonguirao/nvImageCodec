@@ -34,4 +34,3 @@
             throw std::runtime_error(_error.str());                \
         }                                                          \
     }
-    

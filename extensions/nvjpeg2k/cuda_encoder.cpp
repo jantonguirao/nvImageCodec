@@ -3,11 +3,11 @@
 #include <cstring>
 #include <future>
 #include <iostream>
+#include <nvtx3/nvtx3.hpp>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <nvtx3/nvtx3.hpp>
 
 #include "cuda_encoder.h"
 #include "error_handling.h"
@@ -86,7 +86,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
             *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
         }
         static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{
-            NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420};
+            NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_GRAY};
         if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
         }
@@ -102,6 +102,18 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
         };
         if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+
+        if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y) {
+            if ((image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_GRAY) ||
+                (out_image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_GRAY)) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+            }
+            if (image_info.color_spec != NVIMGCDCS_COLORSPEC_GRAY) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+                *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+            }
         }
 
         static const std::set<nvimgcdcsSampleDataType_t> supported_sample_type{
@@ -146,7 +158,7 @@ NvJpeg2kEncoderPlugin::Encoder::Encoder(
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
-    encode_state_batch_ = std::make_unique<NvJpeg2kEncoderPlugin::EncodeState>(handle_ ,num_threads);
+    encode_state_batch_ = std::make_unique<NvJpeg2kEncoderPlugin::EncodeState>(handle_, num_threads);
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, int device_id)
@@ -272,11 +284,33 @@ static void fill_encode_config(nvjpeg2kEncodeConfig_t* encode_config, const nvim
     }
 }
 
+static nvjpeg2kColorSpace_t nvimgcdcs_to_nvjpeg2k_color_spec(nvimgcdcsColorSpec_t nvimgcdcs_color_spec)
+{
+    switch (nvimgcdcs_color_spec) {
+    case NVIMGCDCS_COLORSPEC_UNKNOWN:
+        return NVJPEG2K_COLORSPACE_UNKNOWN;
+    case NVIMGCDCS_COLORSPEC_SRGB:
+        return NVJPEG2K_COLORSPACE_SRGB;
+    case NVIMGCDCS_COLORSPEC_GRAY:
+        return NVJPEG2K_COLORSPACE_GRAY;
+    case NVIMGCDCS_COLORSPEC_SYCC:
+        return NVJPEG2K_COLORSPACE_SYCC;
+    case NVIMGCDCS_COLORSPEC_CMYK:
+        return NVJPEG2K_COLORSPACE_NOT_SUPPORTED;
+    case NVIMGCDCS_COLORSPEC_YCCK:
+        return NVJPEG2K_COLORSPACE_NOT_SUPPORTED;
+    case NVIMGCDCS_COLORSPEC_UNSUPPORTED:
+        return NVJPEG2K_COLORSPACE_NOT_SUPPORTED;
+    default:
+        return NVJPEG2K_COLORSPACE_UNKNOWN;
+    }
+}
+
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 {
     nvimgcdcsExecutorDesc_t executor;
     framework_->getExecutor(framework_->instance, &executor);
-    
+
     executor->launch(
         executor->instance, device_id_, sample_idx, encode_state_batch_.get(), [](int tid, int sample_idx, void* task_context) -> void {
             nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
@@ -305,12 +339,12 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     image_comp_info[c].component_height = image_info.plane_info[c].height;
                     image_comp_info[c].precision = image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16;
                     image_comp_info[c].sgn = (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8) ||
-                                            (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16);
+                                             (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16);
                 }
 
                 nvjpeg2kEncodeConfig_t encode_config;
                 memset(&encode_config, 0, sizeof(encode_config));
-                encode_config.color_space = NVJPEG2K_COLORSPACE_SRGB; // input image is in RGB format
+                encode_config.color_space = nvimgcdcs_to_nvjpeg2k_color_spec(image_info.color_spec);
                 encode_config.image_width = image_info.plane_info[0].width;
                 encode_config.image_height = image_info.plane_info[0].height;
                 encode_config.num_components = image_info.num_planes; //assumed planar
@@ -347,7 +381,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 input_image.num_components = image_info.num_planes; //assumed planar
                 input_image.pixel_data = reinterpret_cast<void**>(&encode_input[0]);
                 input_image.pitch_in_bytes = pitch_in_bytes.data();
-                input_image.pixel_type = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? NVJPEG2K_UINT8 : NVJPEG2K_UINT16;
+                input_image.pixel_type =
+                    image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? NVJPEG2K_UINT8 : NVJPEG2K_UINT16;
                 NVIMGCDCS_E_LOG_DEBUG("before encode ");
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncode(handle, state_handle, encode_params.get(), &input_image, t.stream_));
                 XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));
@@ -355,19 +390,16 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 
                 XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
                 size_t length;
-                XM_CHECK_NVJPEG2K(nvjpeg2kEncodeRetrieveBitstream(
-                    handle, state_handle, NULL, &length, t.stream_));
+                XM_CHECK_NVJPEG2K(nvjpeg2kEncodeRetrieveBitstream(handle, state_handle, NULL, &length, t.stream_));
 
                 t.compressed_data_.resize(length);
 
-                XM_CHECK_NVJPEG2K(nvjpeg2kEncodeRetrieveBitstream(handle, state_handle,
-                    t.compressed_data_.data(), &length, t.stream_));
+                XM_CHECK_NVJPEG2K(nvjpeg2kEncodeRetrieveBitstream(handle, state_handle, t.compressed_data_.data(), &length, t.stream_));
 
                 nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
                 size_t output_size;
                 io_stream->seek(io_stream->instance, 0, SEEK_SET);
-                io_stream->write(io_stream->instance, &output_size, static_cast<void*>(&t.compressed_data_[0]),
-                    t.compressed_data_.size());
+                io_stream->write(io_stream->instance, &output_size, static_cast<void*>(&t.compressed_data_[0]), t.compressed_data_.size());
 
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             } catch (const std::runtime_error& e) {
@@ -387,7 +419,6 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encodeBatch()
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
-
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
     nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)

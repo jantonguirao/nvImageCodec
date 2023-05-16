@@ -2,16 +2,16 @@
 
 #include <nvimgcodecs.h>
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <cstring>
 
 #include <nvjpeg2k.h>
 #include "error_handling.h"
 #include "log.h"
 
-    namespace nvjpeg2k {
+namespace nvjpeg2k {
 
 NvJpeg2kParserPlugin::NvJpeg2kParserPlugin(const nvimgcdcsFrameworkDesc_t framework)
     : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, NULL,
