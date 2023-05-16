@@ -363,7 +363,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 
                 nvjpeg2kDecodeParams_t decode_params;
                 nvjpeg2kDecodeParamsCreate(&decode_params);
-                XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, true));
+                XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, params->enable_color_conversion));
                 size_t row_nbytes;
                 size_t component_nbytes;
                 if (num_components != image_info.num_planes) {
@@ -405,7 +405,6 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                     component_nbytes =height * row_nbytes;
                 }
 
-                // Allocate temporary buffer asynchronously
                 if (image_info.buffer_size < component_nbytes * num_components ||
                     image_info.num_planes != num_components) {
                     NVIMGCDCS_D_LOG_ERROR("The provided buffer can't hold the decoded image : " << num_components);
