@@ -14,9 +14,9 @@
 #include <memory>
 #include <string>
 
-#include "iimage_parser_factory.h"
-#include "iimage_encoder_factory.h"
 #include "iimage_decoder_factory.h"
+#include "iimage_encoder_factory.h"
+#include "iimage_parser_factory.h"
 
 #include "icodec.h"
 
@@ -36,12 +36,13 @@ class Codec : public ICodec
     std::unique_ptr<IImageDecoder> createDecoder(int index, int device_id) const override;
     int getEncodersNum() const override;
     std::unique_ptr<IImageEncoder> createEncoder(int index, int device_id) const override;
-    void registerParserFactory(
-        std::unique_ptr<IImageParserFactory> factory, float priority) override;
-    void registerEncoderFactory(
-        std::unique_ptr<IImageEncoderFactory> factory, float priority) override;
-    void registerDecoderFactory(
-        std::unique_ptr<IImageDecoderFactory> factory, float priority) override;
+    void registerEncoderFactory(std::unique_ptr<IImageEncoderFactory> factory, float priority) override;
+    void unregisterEncoderFactory(const std::string encoder_id) override;
+    void registerDecoderFactory(std::unique_ptr<IImageDecoderFactory> factory, float priority) override;
+    void unregisterDecoderFactory(const std::string decoder_id) override;
+    void registerParserFactory(std::unique_ptr<IImageParserFactory> factory, float priority) override;
+    void unregisterParserFactory(const std::string parser_id) override;
+
   private:
     std::string name_;
     std::multimap<float, std::unique_ptr<IImageParserFactory>> parsers_;

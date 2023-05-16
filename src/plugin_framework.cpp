@@ -40,7 +40,8 @@ PluginFramework::PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr
     , library_loader_(std::move(library_loader))
     , executor_(std::move(executor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, this, "nvImageCodecs", 0x000100, device_allocator, pinned_allocator,
-          &static_register_encoder, &static_register_decoder, &static_register_parser, &static_get_executor, &static_log}
+          &static_register_encoder, &static_unregister_encoder, &static_register_decoder, &static_unregister_decoder,
+          &static_register_parser, &static_unregister_parser, &static_get_executor, &static_log}
     , codec_registry_(codec_registry)
     , plugin_dirs_{defaultModuleDir}
 {
@@ -67,6 +68,24 @@ nvimgcdcsStatus_t PluginFramework::static_register_parser(void* instance, const 
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerParser(desc);
+}
+
+nvimgcdcsStatus_t PluginFramework::static_unregister_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc)
+{
+    PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
+    return handle->unregisterEncoder(desc);
+}
+
+nvimgcdcsStatus_t PluginFramework::static_unregister_decoder(void* instance, const nvimgcdcsDecoderDesc_t desc)
+{
+    PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
+    return handle->unregisterDecoder(desc);
+}
+
+nvimgcdcsStatus_t PluginFramework::static_unregister_parser(void* instance, const struct nvimgcdcsParserDesc* desc)
+{
+    PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
+    return handle->unregisterParser(desc);
 }
 
 nvimgcdcsStatus_t PluginFramework::static_get_executor(void* instance, nvimgcdcsExecutorDesc_t* result)
@@ -242,6 +261,20 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
+nvimgcdcsStatus_t PluginFramework::unregisterEncoder(const nvimgcdcsEncoderDesc_t desc)
+{
+    NVIMGCDCS_LOG_INFO("Framework is unregistering encoder");
+    NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
+    NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
+    ICodec* codec = codec_registry_->getCodecByName(desc->codec);
+    if (codec == nullptr) {
+        NVIMGCDCS_LOG_WARNING("Codec " << desc->codec << " not registered");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+    codec->unregisterEncoderFactory(desc->id);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
 nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t desc)
 {
     NVIMGCDCS_LOG_INFO("Framework is registering decoder");
@@ -254,6 +287,20 @@ nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
+nvimgcdcsStatus_t PluginFramework::unregisterDecoder(const nvimgcdcsDecoderDesc_t desc)
+{
+    NVIMGCDCS_LOG_INFO("Framework is unregistering decoder");
+    NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
+    NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
+    ICodec* codec = codec_registry_->getCodecByName(desc->codec);
+    if (codec == nullptr) {
+        NVIMGCDCS_LOG_WARNING("Codec " << desc->codec << " not registered");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+    codec->unregisterDecoderFactory(desc->id);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
 nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDesc* desc)
 {
     NVIMGCDCS_LOG_INFO("Framework is registering parser");
@@ -263,6 +310,20 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDe
     NVIMGCDCS_LOG_INFO("Registering " << desc->id);
     std::unique_ptr<IImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
     codec->registerParserFactory(std::move(parser_factory), 1);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t PluginFramework::unregisterParser(const struct nvimgcdcsParserDesc* desc)
+{
+    NVIMGCDCS_LOG_INFO("Framework is unregistering parser");
+    NVIMGCDCS_LOG_INFO(" - id:" << desc->id);
+    NVIMGCDCS_LOG_INFO(" - codec:" << desc->codec);
+    ICodec* codec = codec_registry_->getCodecByName(desc->codec);
+    if (codec == nullptr) {
+        NVIMGCDCS_LOG_WARNING("Codec " << desc->codec << " not registered");
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
+    codec->unregisterParserFactory(desc->id);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

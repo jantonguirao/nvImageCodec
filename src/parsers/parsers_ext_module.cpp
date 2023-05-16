@@ -9,6 +9,7 @@
  */
 
 #include <nvimgcodecs.h>
+#include "exception.h"
 #include "log.h"
 #include "parsers/bmp.h"
 #include "parsers/jpeg.h"
@@ -20,32 +21,64 @@
 
 namespace nvimgcdcs {
 
+class ParsersExtension
+{
+  public:
+    explicit ParsersExtension(const nvimgcdcsFrameworkDesc_t framework)
+        : framework_(framework)
+    {
+        framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, jpeg2k_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc());
+        framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc());
+    }
+    ~ParsersExtension() {
+        framework_->unregisterParser(framework_->instance, bmp_parser_plugin_.getParserDesc());
+        framework_->unregisterParser(framework_->instance, jpeg_parser_plugin_.getParserDesc());
+        framework_->unregisterParser(framework_->instance, jpeg2k_parser_plugin_.getParserDesc());
+        framework_->unregisterParser(framework_->instance, png_parser_plugin_.getParserDesc());
+        framework_->unregisterParser(framework_->instance, pnm_parser_plugin_.getParserDesc());
+        framework_->unregisterParser(framework_->instance, tiff_parser_plugin_.getParserDesc());
+        framework_->unregisterParser(framework_->instance, webp_parser_plugin_.getParserDesc());
+    }
+
+  private:
+    const nvimgcdcsFrameworkDesc_t framework_;
+    BMPParserPlugin bmp_parser_plugin_;
+    JPEGParserPlugin jpeg_parser_plugin_;
+    JPEG2KParserPlugin jpeg2k_parser_plugin_;
+    PNGParserPlugin png_parser_plugin_;
+    PNMParserPlugin pnm_parser_plugin_;
+    TIFFParserPlugin tiff_parser_plugin_;
+    WebpParserPlugin webp_parser_plugin_;
+};
+
 nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     NVIMGCDCS_LOG_TRACE("parsers_extension_create");
-
-    static auto bmp_parser_plugin = BMPParserPlugin();
-    framework->registerParser(framework->instance, bmp_parser_plugin.getParserDesc());
-    static auto jpeg_parser_plugin = JPEGParserPlugin();
-    framework->registerParser(framework->instance, jpeg_parser_plugin.getParserDesc());
-    static auto jpeg2k_parser_plugin = JPEG2KParserPlugin();
-    framework->registerParser(framework->instance, jpeg2k_parser_plugin.getParserDesc());
-    static auto png_parser_plugin = PNGParserPlugin();
-    framework->registerParser(framework->instance, png_parser_plugin.getParserDesc());
-    static auto pnm_parser_plugin = PNMParserPlugin();
-    framework->registerParser(framework->instance, pnm_parser_plugin.getParserDesc());
-    static auto tiff_parser_plugin = TIFFParserPlugin();
-    framework->registerParser(framework->instance, tiff_parser_plugin.getParserDesc());
-    static auto webp_parser_plugin = WebpParserPlugin();
-    framework->registerParser(framework->instance, webp_parser_plugin.getParserDesc());
-
+    try {
+        CHECK_NULL(framework)
+        CHECK_NULL(extension)
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new ParsersExtension(framework));
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t parsers_extension_destroy(nvimgcdcsExtension_t extension)
 {
     NVIMGCDCS_LOG_TRACE("parsers_extension_destroy");
-
+    try {
+        CHECK_NULL(extension)
+        auto ext_handle = reinterpret_cast<nvimgcdcs::ParsersExtension*>(extension);
+        delete ext_handle;
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

@@ -2,7 +2,7 @@
 #include <nvimgcodecs.h>
 #include <cstring>
 #include <vector>
-#include "exceptions.h"
+#include "error_handling.h"
 #include "log.h"
 
 struct nvimgcdcsDecoder
@@ -182,3 +182,4 @@ nvimgcdcsDecoderDesc nvbmp_decoder = {
     nvbmp_decoder_decode_batch
 };
 // clang-format on
+

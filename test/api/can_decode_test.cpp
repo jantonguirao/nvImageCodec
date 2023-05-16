@@ -107,6 +107,12 @@ struct MockCodecExtensionFactory
                 framework->registerDecoder(framework->instance, decoders_.back().getDecoderDesc());
             }
         }
+        ~Extension()
+        {
+            for (auto& item : decoders_) {
+                framework_->unregisterDecoder(framework_->instance, item.getDecoderDesc());
+            }
+        }
 
         const nvimgcdcsFrameworkDesc_t framework_;
         std::vector<MockDecoderPlugin> decoders_;
@@ -155,17 +161,16 @@ class NvImageCodecsCanDecodeApiTest : public TestWithParam < std::tuple<test_cas
         create_info.next = nullptr;
         create_info.device_allocator = nullptr;
         create_info.pinned_allocator = nullptr;
+        create_info.load_builtin_modules = true;
         create_info.load_extension_modules = false;
         create_info.executor = nullptr;
         create_info.num_cpu_threads = 1;
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
+
         if (register_extension_) {
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &extension_, mock_extension_->getExtensionDesc()));
         }
-
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_bmp_parser_extension_desc(&bmp_parser_extension_desc_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &bmp_parser_extension_, &bmp_parser_extension_desc_));
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
@@ -198,7 +203,6 @@ class NvImageCodecsCanDecodeApiTest : public TestWithParam < std::tuple<test_cas
         }
         if (decoder_)
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDestroy(decoder_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(bmp_parser_extension_));
         if (extension_)
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(extension_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
@@ -206,8 +210,6 @@ class NvImageCodecsCanDecodeApiTest : public TestWithParam < std::tuple<test_cas
     }
 
     nvimgcdcsInstance_t instance_;
-    nvimgcdcsExtensionDesc_t bmp_parser_extension_desc_{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
-    nvimgcdcsExtension_t bmp_parser_extension_;
     nvimgcdcsExtension_t extension_ = nullptr;
     std::unique_ptr<MockCodecExtensionFactory> mock_extension_;
     std::vector<unsigned char> out_buffer_;

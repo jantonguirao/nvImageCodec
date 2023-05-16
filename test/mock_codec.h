@@ -36,12 +36,15 @@ class MockCodec : public ICodec
     MOCK_METHOD(int, getEncodersNum, (), (const, override));
     MOCK_METHOD(std::unique_ptr<IImageEncoder>, createEncoder,
         (int index, int device_id), (const, override));
-    MOCK_METHOD(void, registerParserFactory,
-        (std::unique_ptr<IImageParserFactory> factory, float priority), (override));
     MOCK_METHOD(void, registerEncoderFactory,
         (std::unique_ptr<IImageEncoderFactory> factory, float priority), (override));
+    MOCK_METHOD(void, unregisterEncoderFactory,(const std::string encoder_id), (override));
     MOCK_METHOD(void, registerDecoderFactory,
         (std::unique_ptr<IImageDecoderFactory> factory, float priority), (override));
+    MOCK_METHOD(void, unregisterDecoderFactory, (const std::string decoder_id), (override));
+    MOCK_METHOD(void, registerParserFactory,
+        (std::unique_ptr<IImageParserFactory> factory, float priority), (override));
+    MOCK_METHOD(void, unregisterParserFactory, (const std::string parser_id) ,(override));
 };
 
 }} // namespace nvimgcdcs::test
