@@ -30,6 +30,7 @@ class DirectoryScaner : public IDirectoryScaner
         return tmp;
     }
     fs::file_status symlinkStatus(const fs::path& p) override { return fs::symlink_status(p); }
+    bool exists(const fs::path& p) override { return std::filesystem::exists(p); }
 
   private:
     fs::directory_iterator dir_it_;

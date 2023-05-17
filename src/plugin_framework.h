@@ -22,13 +22,23 @@ namespace nvimgcdcs {
 
 class ICodecRegistry;
 class ICodec;
+class IEnvironment;
+
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
+constexpr std::string_view DefaultExtensionsPath = "/usr/lib/nvimgcodecs/extensions";
+constexpr char PathSeparator = ':';
+#elif defined(_WIN32) || defined(_WIN64)
+constexpr std::string_view DefaultExtensionsPath = "C:/Program Files/nvimgcodecs/extensions";
+constexpr char PathSeparator = ';';
+#endif
 
 class PluginFramework
 {
   public:
-    explicit PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr<IDirectoryScaner> directory_scaner,
-        std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor, nvimgcdcsDeviceAllocator_t* device_allocator,
-        nvimgcdcsPinnedAllocator_t* pinned_allocator);
+    explicit PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr<IEnvironment> env,
+        std::unique_ptr<IDirectoryScaner> directory_scaner, std::unique_ptr<ILibraryLoader> library_loader,
+        std::unique_ptr<IExecutor> executor, nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator,
+        const std::string& extensions_path);
     ~PluginFramework();
     nvimgcdcsStatus_t registerExtension(nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc);
     nvimgcdcsStatus_t unregisterExtension(nvimgcdcsExtension_t extension);
@@ -80,12 +90,13 @@ class PluginFramework
     static nvimgcdcsStatus_t static_log(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* callback_data);
 
+    std::unique_ptr<IEnvironment> env_;
     std::unique_ptr<IDirectoryScaner> directory_scaner_;
     std::unique_ptr<ILibraryLoader> library_loader_;
     std::vector<Extension> extensions_;
     std::unique_ptr<IExecutor> executor_;
     struct nvimgcdcsFrameworkDesc framework_desc_;
     ICodecRegistry* codec_registry_;
-    std::vector<std::string_view> plugin_dirs_;
+    std::vector<std::string> extension_paths_;
 };
 } // namespace nvimgcdcs

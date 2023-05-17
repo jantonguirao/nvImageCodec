@@ -9,17 +9,19 @@
  */
 
 #include "nvimgcodecs_director.h"
+#include "builtin_modules.h"
+#include "default_executor.h"
 #include "directory_scaner.h"
 #include "image_generic_decoder.h"
 #include "image_generic_encoder.h"
 #include "library_loader.h"
-#include "default_executor.h"
 #include "user_executor.h"
-#include "builtin_modules.h"
+#include "environment.h"
 
 namespace nvimgcdcs {
 
-static std::unique_ptr<IExecutor> GetExecutor(nvimgcdcsInstanceCreateInfo_t create_info) {
+static std::unique_ptr<IExecutor> GetExecutor(nvimgcdcsInstanceCreateInfo_t create_info)
+{
     std::unique_ptr<IExecutor> exec;
     if (create_info.executor)
         exec = std::make_unique<UserExecutor>(create_info.executor);
@@ -34,10 +36,9 @@ NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_in
     , debug_messenger_(create_info.message_severity, create_info.message_type)
     , registrator_(&debug_messenger_)
     , codec_registry_()
-    , plugin_framework_(&codec_registry_, std::move(std::make_unique<DirectoryScaner>()),
-          std::move(std::make_unique<LibraryLoader>()),
-          std::move(GetExecutor(create_info)),
-          device_allocator_, pinned_allocator_)
+    , plugin_framework_(&codec_registry_, std::move(std::make_unique<Environment>()), std::move(std::make_unique<DirectoryScaner>()),
+          std::move(std::make_unique<LibraryLoader>()), std::move(GetExecutor(create_info)), device_allocator_, pinned_allocator_,
+          create_info.extension_modules_path ? create_info.extension_modules_path : "")
 {
     if (create_info.load_builtin_modules) {
         for (auto builtin_ext : get_builtin_modules())
