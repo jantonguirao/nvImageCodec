@@ -10,6 +10,7 @@
 
 #include "plugin_framework.h"
 
+#include <sstream>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
@@ -17,6 +18,7 @@
 
 #include "codec.h"
 #include "codec_registry.h"
+#include "ienvironment.h"
 #include "image_decoder_factory.h"
 #include "image_encoder.h"
 #include "image_encoder_factory.h"
@@ -27,24 +29,30 @@ namespace fs = std::filesystem;
 
 namespace nvimgcdcs {
 
-#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-constexpr std::string_view defaultModuleDir = "/usr/lib/nvimgcodecs/plugins";
-#elif defined(_WIN32) || defined(_WIN64)
-constexpr std::string_view defaultModuleDir = "C:/Program Files/nvimgcodecs/plugins";
-#endif
-
-PluginFramework::PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr<IDirectoryScaner> directory_scaner,
-    std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor, nvimgcdcsDeviceAllocator_t* device_allocator,
-    nvimgcdcsPinnedAllocator_t* pinned_allocator)
-    : directory_scaner_(std::move(directory_scaner))
+PluginFramework::PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr<IEnvironment> env,
+    std::unique_ptr<IDirectoryScaner> directory_scaner, std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
+    nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator, const std::string& extensions_path)
+    : env_(std::move(env))
+    , directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
     , executor_(std::move(executor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, this, "nvImageCodecs", 0x000100, device_allocator, pinned_allocator,
           &static_register_encoder, &static_unregister_encoder, &static_register_decoder, &static_unregister_decoder,
           &static_register_parser, &static_unregister_parser, &static_get_executor, &static_log}
     , codec_registry_(codec_registry)
-    , plugin_dirs_{defaultModuleDir}
+    , extension_paths_{}
 {
+
+    std::string effective_ext_path = extensions_path;
+    if (effective_ext_path.empty()) {
+        std::string env_extensions_path = env_->getVariable("NVIMGCODECS_EXTENSIONS_PATH");
+        effective_ext_path = env_extensions_path.empty() ? DefaultExtensionsPath : std::string(env_extensions_path);
+    }
+    std::stringstream ss(effective_ext_path);
+    std::string current_path;
+    while (getline(ss, current_path, PathSeparator)) {
+        extension_paths_.push_back(current_path);
+    }
 }
 
 PluginFramework::~PluginFramework()
@@ -180,15 +188,27 @@ void PluginFramework::unregisterAllExtensions()
     }
 }
 
+bool is_extension_disabled(fs::path dir_entry_path)
+{
+    return dir_entry_path.filename().string().front() == '~';
+}
+
 void PluginFramework::discoverAndLoadExtModules()
 {
-    for (const auto& dir : plugin_dirs_) {
+    for (const auto& dir : extension_paths_) {
+
+        if (!directory_scaner_->exists(dir)) {
+            NVIMGCDCS_LOG_DEBUG("Plugin dir does not exists [" << dir << "]");
+            continue;
+        }
         directory_scaner_->start(dir);
         while (directory_scaner_->hasMore()) {
             fs::path dir_entry_path = directory_scaner_->next();
             auto status = directory_scaner_->symlinkStatus(dir_entry_path);
             if (fs::is_regular_file(status)) {
-                //TODO check and filter out entries
+                if (is_extension_disabled(dir_entry_path)) {
+                    continue;
+                }
                 const std::string module_path(dir_entry_path.string());
                 loadExtModule(module_path);
             }

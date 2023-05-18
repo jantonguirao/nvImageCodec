@@ -72,7 +72,7 @@ sudo ./install.sh
 ```
 
 After execution there should be:
-- all plugins in /usr/lib/nvimgcodecs/plugins (it is default directory for plugin discovery)
+- all extension modules in /usr/lib/nvimgcodecs/extensions (it is default directory for plugin discovery)
 - libnvimgcodecs.so in /usr/lib/x86_64-linux-gnu
 
 ### Windows
@@ -109,7 +109,7 @@ C:\Program Files\nvimgcodecs
 │       nvjpeg.lib
 │       nvjpeg2k.lib
 │
-├───plugins
+├───extensions
 │       nvbmp_0.dll
 │       nvjpeg2k_0.dll
 │       nvjpeg64_22.dll

@@ -669,6 +669,7 @@ extern "C"
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
         bool load_builtin_modules;    //Load default modules
         bool load_extension_modules;  //Discover and load extension modules on start
+        const char* extension_modules_path; //There may be several paths separated by : on Linux or ; on Windows
         bool default_debug_messenger; //Create default debug messenger
         uint32_t message_severity;    //Severity for default debug messenger
         uint32_t message_type;        //Message type for default debug messenger

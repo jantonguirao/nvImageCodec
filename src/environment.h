@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * NVIDIA CORPORATION and its licensors retain all intellectual property
  * and proprietary rights in and to this software, related documentation
@@ -10,16 +10,21 @@
 
 #pragma once
 
-#include <gmock/gmock.h>
-#include "../src/iexecutor.h"
+#include <cstdlib>
+#include <string>
+#include "ienvironment.h"
 
 namespace nvimgcdcs {
 
-
-class MockExecutor : public IExecutor
+class Environment : public IEnvironment
 {
   public:
-    MOCK_METHOD(nvimgcdcsExecutorDesc_t, getExecutorDesc, (), (override));
+    virtual ~Environment() = default;
+    std::string getVariable(const std::string& env_var) override
+    {
+        char* v = std::getenv(env_var.c_str());
+        return v ? std::string(v) : "";
+    };
 };
 
 } // namespace nvimgcdcs

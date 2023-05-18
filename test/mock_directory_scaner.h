@@ -26,6 +26,7 @@ class MockDirectoryScaner : public IDirectoryScaner
     MOCK_METHOD(bool, hasMore, (), (override));
     MOCK_METHOD(fs::path, next, (), (override));
     MOCK_METHOD(fs::file_status, symlinkStatus, (const fs::path& p), (override));
+    MOCK_METHOD(bool, exists, (const fs::path& p), (override));
 };
 
 } // namespace nvimgcdcs

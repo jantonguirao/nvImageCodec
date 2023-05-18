@@ -29,13 +29,13 @@ endif()
 
 if(UNIX)
         install(TARGETS ${NVIMGCDCS_NVBMP_EXT_LIBRARY_NAME}
-                LIBRARY DESTINATION plugins
+                LIBRARY DESTINATION extensions
                 PUBLIC_HEADER DESTINATION include
         )
 
 else()
 install(TARGETS  ${NVIMGCDCS_NVBMP_EXT_LIBRARY_NAME}
-    RUNTIME DESTINATION plugins
+    RUNTIME DESTINATION extensions
     LIBRARY DESTINATION lib64
     ARCHIVE DESTINATION lib64
     PUBLIC_HEADER DESTINATION include 

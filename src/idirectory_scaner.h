@@ -24,6 +24,7 @@ class IDirectoryScaner
     virtual bool hasMore() = 0;
     virtual fs::path next() = 0;
     virtual fs::file_status symlinkStatus(const fs::path& p) = 0;
+    virtual bool exists(const fs::path& p) = 0;
 };
 
 } // namespace nvimgcdcs
