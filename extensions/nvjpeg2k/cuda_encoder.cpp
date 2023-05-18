@@ -20,7 +20,6 @@ NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t fram
     : encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL,
           this,               // instance
           "nvjpeg2k_encoder", // id
-          0x00000100,         // version
           "jpeg2k",           // codec_type
           static_create, Encoder::static_destroy, Encoder::static_get_capabilities, Encoder::static_can_encode,
           Encoder::static_encode_batch}

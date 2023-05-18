@@ -19,10 +19,7 @@ struct LibtiffImgCodecsExtension
     {
         framework->registerDecoder(framework->instance, tiff_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
-    ~LibtiffImgCodecsExtension()
-    {
-      framework_->unregisterDecoder(framework_->instance, tiff_decoder_.getDecoderDesc());   
-    }
+    ~LibtiffImgCodecsExtension() { framework_->unregisterDecoder(framework_->instance, tiff_decoder_.getDecoderDesc()); }
 
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
@@ -65,8 +62,9 @@ nvimgcdcsExtensionDesc_t libtiff_extension = {
     NULL,
 
     NULL,
-    "libtiff_extension",  // id
-     0x00000100,        // version
+    "libtiff_extension",
+    NVIMGCDCS_VER,
+    NVIMGCDCS_EXT_API_VER,
 
     libtiffExtensionCreate,
     libtiffExtensionDestroy

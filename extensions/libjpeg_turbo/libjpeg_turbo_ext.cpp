@@ -19,11 +19,8 @@ struct LibjpegTurboImgCodecsExtension
     {
         framework->registerDecoder(framework->instance, jpeg_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
-    ~LibjpegTurboImgCodecsExtension()
-    {
-        framework_->unregisterDecoder(framework_->instance, jpeg_decoder_.getDecoderDesc());
+    ~LibjpegTurboImgCodecsExtension() { framework_->unregisterDecoder(framework_->instance, jpeg_decoder_.getDecoderDesc()); }
 
-    }
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
     LibjpegTurboDecoderPlugin jpeg_decoder_;
@@ -65,8 +62,9 @@ nvimgcdcsExtensionDesc_t libjpeg_turbo_extension = {
     NULL,
 
     NULL,
-    "libjpeg_turbo_extension",  // id
-     0x00000100,        // version
+    "libjpeg_turbo_extension",
+    NVIMGCDCS_VER,       
+    NVIMGCDCS_EXT_API_VER,
 
     libjpegTurboExtensionCreate,
     libjpegTurboExtensionDestroy

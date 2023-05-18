@@ -191,7 +191,6 @@ OpenCVDecoderPlugin::OpenCVDecoderPlugin(const char* codec_name, const nvimgcdcs
     , decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,             // instance
           "opencv_decoder", // id
-          0x00000100,       // version
           codec_name_,      // codec_type
           static_create, DecoderImpl::static_destroy, DecoderImpl::static_get_capabilities, DecoderImpl::static_can_decode,
           DecoderImpl::static_decode_batch}

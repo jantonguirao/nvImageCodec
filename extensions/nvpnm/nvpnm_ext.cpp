@@ -24,10 +24,7 @@ struct PnmImgCodecsExtension
     {
         framework->registerEncoder(framework->instance, &nvpnm_encoder, NVIMGCDCS_PRIORITY_VERY_LOW);
     }
-    ~PnmImgCodecsExtension() 
-    { 
-        framework_->unregisterEncoder(framework_->instance, &nvpnm_encoder);
-    }
+    ~PnmImgCodecsExtension() { framework_->unregisterEncoder(framework_->instance, &nvpnm_encoder); }
 
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
@@ -69,8 +66,9 @@ nvimgcdcsExtensionDesc_t nvpnm_extension = {
     NULL,
 
     NULL,
-    "nvpnm_extension",  // id
-     0x00000100,        // version
+    "nvpnm_extension",
+    NVIMGCDCS_VER,
+    NVIMGCDCS_EXT_API_VER,
 
     nvpnm_extension_create,
     nvpnm_extension_destroy

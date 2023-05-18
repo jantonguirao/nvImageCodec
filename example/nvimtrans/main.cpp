@@ -678,11 +678,19 @@ int main(int argc, const char* argv[])
         return EXIT_FAILURE;
     }
 
+    nvimgcdcsProperties_t properties{NVIMGCDCS_STRUCTURE_TYPE_PROPERTIES, 0};
+    nvimgcdcsGetProperties(&properties);
+    std::cout << "nvImageCodecs version: " << properties.version / 1000 << "." << (properties.version % 1000) / 100 << "."
+              << (properties.version % 1000) % 100  << std::endl;
+    std::cout << " - extension API version: " << properties.ext_api_version / 1000 << "."
+              << (properties.ext_api_version % 1000) / 100 << "." << (properties.ext_api_version % 1000) % 100 << std::endl;
+    std::cout << " - CUDA Runtime version: " << properties.cudart_version / 1000 << "."
+              << (properties.ext_api_version % 1000) / 10  << std::endl;
     cudaDeviceProp props;
     int dev = 0;
     cudaGetDevice(&dev);
     cudaGetDeviceProperties(&props, dev);
-    std::cout << "Using GPU - " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
+    std::cout << "Using GPU: " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
 
     nvimgcdcsInstance_t instance;
     nvimgcdcsInstanceCreateInfo_t instance_create_info{};

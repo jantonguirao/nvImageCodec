@@ -113,7 +113,6 @@ JPEG2KParserPlugin::JPEG2KParserPlugin()
     : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr,
           this,            // instance
           "jpeg2k_parser", // id
-          0x00000100,      // version
           "jpeg2k",        // codec_type
           static_can_parse, static_create, Parser::static_destroy, 
           Parser::static_get_image_info, Parser::static_get_capabilities}
@@ -472,8 +471,9 @@ nvimgcdcsExtensionDesc_t jpeg2k_parser_extension = {
     NULL,
 
     NULL,
-    "jpeg2k_parser_extension",  // id
-     0x00000100,              // version
+    "jpeg2k_parser_extension",
+    NVIMGCDCS_VER, 
+    NVIMGCDCS_EXT_API_VER,
 
     jpeg2k_parser_extension_create,
     jpeg2k_parser_extension_destroy

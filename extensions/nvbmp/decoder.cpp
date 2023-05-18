@@ -170,13 +170,12 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, 
 nvimgcdcsDecoderDesc nvbmp_decoder = {
     NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
     NULL,
-    NULL,               // instance
+    NULL,               // instance    
     "nvbmp_decoder",    //id
-    0x00000100,         // version
-    "bmp",              //  codec_type
+    "bmp",              //  codec_type 
 
     nvbmp_decoder_create,
-    nvbmp_decoder_destroy,
+    nvbmp_decoder_destroy, 
     nvbmp_get_capabilities,
     nvbmp_can_decode,
     nvbmp_decoder_decode_batch

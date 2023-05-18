@@ -191,6 +191,23 @@ struct nvimgcdcsImage
     size_t dev_image_buffer_size_;
 };
 
+nvimgcdcsStatus_t nvimgcdcsGetProperties(nvimgcdcsProperties_t* properties)
+{
+    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
+    NVIMGCDCSAPI_TRY
+        {
+            CHECK_NULL(properties);
+            if (properties->type != NVIMGCDCS_STRUCTURE_TYPE_PROPERTIES) {
+                return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            }
+            properties->version = NVIMGCDCS_VER;
+            properties->ext_api_version = NVIMGCDCS_EXT_API_VER;
+            properties->cudart_version = CUDART_VERSION;
+        }
+    NVIMGCDCSAPI_CATCH(ret)
+    return ret;
+}
+
 nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;

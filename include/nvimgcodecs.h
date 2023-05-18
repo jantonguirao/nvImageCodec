@@ -37,6 +37,7 @@ extern "C"
 
     typedef enum
     {
+        NVIMGCDCS_STRUCTURE_TYPE_PROPERTIES,
         NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         NVIMGCDCS_STRUCTURE_TYPE_DEVICE_ALLOCATOR,
         NVIMGCDCS_STRUCTURE_TYPE_PINNED_ALLOCATOR,
@@ -65,6 +66,17 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_IMAGE_PROCESSOR_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
+
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+        
+        uint32_t version;
+        uint32_t ext_api_version;
+        uint32_t cudart_version;
+
+    } nvimgcdcsProperties_t;
 
     typedef int (*nvimgcdcsDeviceMalloc_t)(void* ctx, void** ptr, size_t size, cudaStream_t stream);
 
@@ -553,7 +565,6 @@ extern "C"
 
         void* instance;    // plugin instance pointer which will be passed back in functions
         const char* id;    // named identifier e.g. nvJpeg2000
-        uint32_t version;
         const char* codec; // e.g. jpeg2000
 
         nvimgcdcsStatus_t (*canParse)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream);
@@ -570,7 +581,6 @@ extern "C"
 
         void* instance;    // plugin instance pointer which will be passed back in functions
         const char* id;    // named identifier e.g. nvJpeg2000
-        uint32_t version;
         const char* codec; // e.g. jpeg2000
 
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, int device_id);
@@ -594,7 +604,6 @@ extern "C"
 
         void* instance;    // plugin instance pointer which will be passed back in functions
         const char* id;    // named identifier e.g. nvJpeg2000
-        uint32_t version;
         const char* codec; // e.g. jpeg2000
 
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
@@ -636,6 +645,8 @@ extern "C"
         void* instance;
         const char* id; // framework named identifier e.g. nvImageCodecs
         uint32_t version;
+        uint32_t api_version;
+        uint32_t cudart_version;
 
         nvimgcdcsDeviceAllocator_t* device_allocator;
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
@@ -662,6 +673,7 @@ extern "C"
         void* instance;
         const char* id;
         uint32_t version;
+        uint32_t api_version;
 
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsExtension_t extension);
@@ -669,6 +681,9 @@ extern "C"
 
     typedef nvimgcdcsStatus_t (*nvimgcdcsExtensionModuleEntryFunc_t)(nvimgcdcsExtensionDesc_t* ext_desc);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc);
+
+
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsGetProperties(nvimgcdcsProperties_t* properties);
 
     // Instance
     typedef struct
@@ -678,17 +693,16 @@ extern "C"
 
         nvimgcdcsDeviceAllocator_t* device_allocator;
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
-        bool load_builtin_modules;    //Load default modules
-        bool load_extension_modules;  //Discover and load extension modules on start
+        bool load_builtin_modules;          //Load default modules
+        bool load_extension_modules;        //Discover and load extension modules on start
         const char* extension_modules_path; //There may be several paths separated by : on Linux or ; on Windows
-        bool default_debug_messenger; //Create default debug messenger
-        uint32_t message_severity;    //Severity for default debug messenger
-        uint32_t message_type;        //Message type for default debug messenger
-        int num_cpu_threads;          //Number of CPU threads in default executor
+        bool default_debug_messenger;       //Create default debug messenger
+        uint32_t message_severity;          //Severity for default debug messenger
+        uint32_t message_type;              //Message type for default debug messenger
+        int num_cpu_threads;                //Number of CPU threads in default executor
         nvimgcdcsExecutorDesc_t executor;
     } nvimgcdcsInstanceCreateInfo_t;
 
-    // Instance
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceDestroy(nvimgcdcsInstance_t instance);
 

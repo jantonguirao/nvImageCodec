@@ -1,6 +1,6 @@
 #include <nvimgcodecs.h>
-#include "log.h"
 #include "error_handling.h"
+#include "log.h"
 
 extern nvimgcdcsEncoderDesc nvbmp_encoder;
 extern nvimgcdcsDecoderDesc nvbmp_decoder;
@@ -28,16 +28,14 @@ struct BmpImgCodecsExtension
 
 } // namespace nvimgcdcs
 
-nvimgcdcsStatus_t nvbmp_extension_create(void* instance, nvimgcdcsExtension_t* extension,
-    const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t nvbmp_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvbmp_extension_create");
     try {
         XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
-        *extension =
-            reinterpret_cast<nvimgcdcsExtension_t>(new nvimgcdcs::BmpImgCodecsExtension(framework));
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new nvimgcdcs::BmpImgCodecsExtension(framework));
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
@@ -64,8 +62,9 @@ nvimgcdcsExtensionDesc_t nvbmp_extension = {
     NULL,
 
     NULL,
-    "nvbmp_extension",  // id
-     0x00000100,        // version
+    "nvbmp_extension",  
+    NVIMGCDCS_VER,       
+    NVIMGCDCS_EXT_API_VER,
 
     nvbmp_extension_create,
     nvbmp_extension_destroy

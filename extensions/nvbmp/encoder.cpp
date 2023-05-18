@@ -279,14 +279,13 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode_batch(nvimgcdcsEncoder_t encoder, 
 nvimgcdcsEncoderDesc nvbmp_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
-    NULL,               // instance
+    NULL,               // instance    
     "nvbmp_encoder",    //id
-     0x00000100,        // version
-    "bmp",              //  codec_type
+    "bmp",              //  codec_type 
     nvbmp_encoder_create,
-    nvbmp_encoder_destroy,
+    nvbmp_encoder_destroy, 
     nvbmp_get_capabilities,
     nvbmp_encoder_can_encode,
     nvbmp_encoder_encode_batch
 };
-// clang-format on
+// clang-format on   

@@ -81,8 +81,9 @@ nvimgcdcsExtensionDesc_t nvjpeg_extension = {
     NULL,
 
     NULL,
-    "nvjpeg_extension",  // id
-     0x00000100,        // version
+    "nvjpeg_extension",
+    NVIMGCDCS_VER,    
+    NVIMGCDCS_EXT_API_VER,
 
     nvjpeg_extension_create,
     nvjpeg_extension_destroy

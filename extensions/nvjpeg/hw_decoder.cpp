@@ -21,7 +21,6 @@ NvJpegHwDecoderPlugin::NvJpegHwDecoderPlugin(const nvimgcdcsFrameworkDesc_t fram
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,                // instance
           "nvjpeg_hw_decoder", // id
-          0x00000100,          // version
           "jpeg",              // codec_type
           static_create, Decoder::static_destroy, Decoder::static_get_capabilities, Decoder::static_can_decode,
           Decoder::static_decode_batch}
