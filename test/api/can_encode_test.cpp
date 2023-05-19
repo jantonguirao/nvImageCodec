@@ -97,6 +97,7 @@ struct MockCodecExtensionFactory
             : framework_(framework)
             , statuses_(statuses)
         {
+            encoders_.reserve(statuses_->size());
             for (auto& item : *statuses_) {
                 encoders_.emplace_back(framework, item);
                 framework->registerEncoder(framework->instance, encoders_.back().getEncoderDesc(), NVIMGCDCS_PRIORITY_NORMAL);

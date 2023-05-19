@@ -101,7 +101,9 @@ struct MockCodecExtensionFactory
             : framework_(framework)
             , statuses_(statuses)
         {
-            for (auto& item : *statuses_) {
+            decoders_.reserve(statuses_->size());
+            for (auto& item : *statuses_)
+            {
                 decoders_.emplace_back(framework, item);
                 framework->registerDecoder(framework->instance, decoders_.back().getDecoderDesc(), NVIMGCDCS_PRIORITY_NORMAL);
             }
