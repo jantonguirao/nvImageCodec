@@ -64,7 +64,7 @@ class PluginFramework
 
     nvimgcdcsStatus_t registerExtension(
         nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc, const Module& module);
-    nvimgcdcsStatus_t unregisterExtension(std::vector<Extension>::const_iterator it);
+    nvimgcdcsStatus_t unregisterExtension(std::map<std::string, Extension>::const_iterator it);
 
     ICodec* ensureExistsAndRetrieveCodec(const char* codec_name);
 
@@ -93,7 +93,7 @@ class PluginFramework
     std::unique_ptr<IEnvironment> env_;
     std::unique_ptr<IDirectoryScaner> directory_scaner_;
     std::unique_ptr<ILibraryLoader> library_loader_;
-    std::vector<Extension> extensions_;
+    std::map<std::string, Extension> extensions_;
     std::unique_ptr<IExecutor> executor_;
     struct nvimgcdcsFrameworkDesc framework_desc_;
     ICodecRegistry* codec_registry_;

@@ -680,10 +680,8 @@ int main(int argc, const char* argv[])
 
     nvimgcdcsProperties_t properties{NVIMGCDCS_STRUCTURE_TYPE_PROPERTIES, 0};
     nvimgcdcsGetProperties(&properties);
-    std::cout << "nvImageCodecs version: " << properties.version / 1000 << "." << (properties.version % 1000) / 100 << "."
-              << (properties.version % 1000) % 100  << std::endl;
-    std::cout << " - extension API version: " << properties.ext_api_version / 1000 << "."
-              << (properties.ext_api_version % 1000) / 100 << "." << (properties.ext_api_version % 1000) % 100 << std::endl;
+    std::cout << "nvImageCodecs version: " << NVIMGCDCS_STREAM_VER(properties.version)  << std::endl;
+    std::cout << " - extension API version: " <<  NVIMGCDCS_STREAM_VER(properties.ext_api_version) << std::endl;
     std::cout << " - CUDA Runtime version: " << properties.cudart_version / 1000 << "."
               << (properties.ext_api_version % 1000) / 10  << std::endl;
     cudaDeviceProp props;

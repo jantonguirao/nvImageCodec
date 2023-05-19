@@ -10,11 +10,11 @@
 
 #include "plugin_framework.h"
 
-#include <sstream>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <iostream>
+#include <sstream>
 
 #include <nvimgcdcs_version.h>
 
@@ -39,8 +39,9 @@ PluginFramework::PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr
     , library_loader_(std::move(library_loader))
     , executor_(std::move(executor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, this, "nvImageCodecs", NVIMGCDCS_VER, NVIMGCDCS_EXT_API_VER,
-          CUDART_VERSION, device_allocator, pinned_allocator, &static_register_encoder, &static_unregister_encoder, &static_register_decoder,
-          &static_unregister_decoder, &static_register_parser, &static_unregister_parser, &static_get_executor, &static_log}
+          CUDART_VERSION, device_allocator, pinned_allocator, &static_register_encoder, &static_unregister_encoder,
+          &static_register_decoder, &static_unregister_decoder, &static_register_parser, &static_unregister_parser, &static_get_executor,
+          &static_log}
     , codec_registry_(codec_registry)
     , extension_paths_{}
 {
@@ -124,18 +125,41 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
-    NVIMGCDCS_LOG_INFO("Registering extension " << extension_desc->id << " version:" << extension_desc->version);
-
     if (extension_desc->create == nullptr) {
-        NVIMGCDCS_LOG_ERROR("Could not find  'create' function in extension module");
+        NVIMGCDCS_LOG_ERROR("Could not find  'create' function in extension");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
     if (extension_desc->destroy == nullptr) {
-        NVIMGCDCS_LOG_ERROR("Could not find  'destroy' function in extension module");
+        NVIMGCDCS_LOG_ERROR("Could not find  'destroy' function in extension");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
+    if (extension_desc->api_version > NVIMGCDCS_EXT_API_VER) {
+        NVIMGCDCS_LOG_WARNING("Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+                                                              << " Extension API version: " << NVIMGCDCS_STREAM_VER(extension_desc->api_version)
+                                                              << " newer than framework API version: " << NVIMGCDCS_EXT_API_VER);
+        return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
+    }
+    auto it = extensions_.find(extension_desc->id);
+    if (it != extensions_.end()) {
+        if (it->second.desc_.version == extension_desc->version) {
+            NVIMGCDCS_LOG_WARNING("Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+                                                                  << " Extension with the same id and version already registered");
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        } else if (it->second.desc_.version > extension_desc->version) {
+            NVIMGCDCS_LOG_WARNING("Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+                                                                  << " Extension with the same id and newer version: "
+                                                                  << NVIMGCDCS_STREAM_VER(it->second.desc_.version) << " already registered");
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        } else if (it->second.desc_.version < extension_desc->version) {
+            NVIMGCDCS_LOG_WARNING("Extension with the same id:" << extension_desc->id << " and older version: " << NVIMGCDCS_STREAM_VER(it->second.desc_.version)
+                                                                << " already registered and will be unregistered");
+            unregisterExtension(it);
+        }
+    }
+
+    NVIMGCDCS_LOG_INFO("Registering extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version));
     PluginFramework::Extension internal_extension;
     internal_extension.desc_ = *extension_desc;
     internal_extension.module_ = module;
@@ -148,7 +172,7 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(
     if (extension)
         *extension = internal_extension.handle_;
 
-    extensions_.push_back(internal_extension);
+    extensions_.emplace(extension_desc->id, internal_extension);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -160,13 +184,14 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
     return registerExtension(extension, extension_desc, module);
 }
 
-nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::vector<Extension>::const_iterator it)
+nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::map<std::string, Extension>::const_iterator it)
 {
-    it->desc_.destroy(it->handle_);
+    NVIMGCDCS_LOG_INFO("Unregistering extension " << it->second.desc_.id << " version:" << NVIMGCDCS_STREAM_VER(it->second.desc_.version));
+    it->second.desc_.destroy(it->second.handle_);
 
-    if (it->module_.lib_handle_ != nullptr) {
-        NVIMGCDCS_LOG_INFO("Unloading extension module:" << it->module_.path_);
-        library_loader_->unloadLibrary(it->module_.lib_handle_);
+    if (it->second.module_.lib_handle_ != nullptr) {
+        NVIMGCDCS_LOG_INFO("Unloading extension module:" << it->second.module_.path_);
+        library_loader_->unloadLibrary(it->second.module_.lib_handle_);
     }
     extensions_.erase(it);
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -174,7 +199,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::vector<Extension>::c
 
 nvimgcdcsStatus_t PluginFramework::unregisterExtension(nvimgcdcsExtension_t extension)
 {
-    auto it = std::find_if(extensions_.begin(), extensions_.end(), [&](auto e) -> bool { return e.handle_ == extension; });
+    auto it = std::find_if(extensions_.begin(), extensions_.end(), [&](const auto& e) -> bool { return e.second.handle_ == extension; });
     if (it == extensions_.end()) {
         NVIMGCDCS_LOG_WARNING("Could not find extension to unregister ");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
