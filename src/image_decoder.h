@@ -24,7 +24,7 @@ class ICodeStream;
 class ImageDecoder : public IImageDecoder
 {
   public:
-    ImageDecoder(const nvimgcdcsDecoderDesc_t desc, int device_id);
+    ImageDecoder(const nvimgcdcsDecoderDesc_t desc, int device_id, const char* options);
     ~ImageDecoder() override;
     std::unique_ptr<IDecodeState> createDecodeStateBatch() const override;
     void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;

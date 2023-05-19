@@ -66,7 +66,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         if (params->backends != nullptr) {
             *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
             for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].use_hw_eng) {
+                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
@@ -184,20 +184,20 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
     parse_state_ = std::make_unique<NvJpegHwDecoderPlugin::ParseState>(handle_);
 }
 
-nvimgcdcsStatus_t NvJpegHwDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id)
+nvimgcdcsStatus_t NvJpegHwDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegHwDecoderPlugin::Decoder(capabilities_, framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegHwDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
+nvimgcdcsStatus_t NvJpegHwDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("nvjpeg_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         NvJpegHwDecoderPlugin* handle = reinterpret_cast<NvJpegHwDecoderPlugin*>(instance);
-        handle->create(decoder, device_id);
+        handle->create(decoder, device_id, options);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg decoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error

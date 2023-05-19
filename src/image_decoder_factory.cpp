@@ -31,9 +31,9 @@ std::string ImageDecoderFactory::getCodecName() const
     return decoder_desc_->codec;
 }
 
-std::unique_ptr<IImageDecoder> ImageDecoderFactory::createDecoder(int device_id) const
+std::unique_ptr<IImageDecoder> ImageDecoderFactory::createDecoder(int device_id, const char* options) const
 {
-    return std::make_unique<ImageDecoder>(decoder_desc_, device_id);
+    return std::make_unique<ImageDecoder>(decoder_desc_, device_id, options);
 }
 
 } // namespace nvimgcdcs

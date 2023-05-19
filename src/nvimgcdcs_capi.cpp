@@ -411,7 +411,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_h
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreateEx(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -421,13 +421,18 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instan
             CHECK_NULL(decoder)
             if (device_id == -1)
                 CHECK_CUDA(cudaGetDevice(&device_id));
-            std::unique_ptr<ImageGenericDecoder> image_decoder = instance->director_.createGenericDecoder(device_id);
+            std::unique_ptr<ImageGenericDecoder> image_decoder = instance->director_.createGenericDecoder(device_id, options);
             *decoder = new nvimgcdcsDecoder();
             (*decoder)->image_decoder_ = std::move(image_decoder);
             (*decoder)->instance_ = instance;
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
+}
+
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id)
+{
+    return nvimgcdcsDecoderCreateEx(instance, decoder, device_id, nullptr);
 }
 
 nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder)
@@ -542,7 +547,7 @@ nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsIm
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -552,7 +557,7 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instan
             CHECK_NULL(encoder)
             if (device_id == -1)
                 CHECK_CUDA(cudaGetDevice(&device_id));
-            std::unique_ptr<ImageGenericEncoder> image_encoder = instance->director_.createGenericEncoder(device_id);
+            std::unique_ptr<ImageGenericEncoder> image_encoder = instance->director_.createGenericEncoder(device_id, options);
             *encoder = new nvimgcdcsEncoder();
             (*encoder)->image_encoder_ = std::move(image_encoder);
             (*encoder)->instance_ = instance;
@@ -667,7 +672,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             nvimgcdcsCodeStream_t code_stream;
             nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, file_name);
             nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            
+
             nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
             char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
             nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
@@ -872,7 +877,8 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
             nvimgcdcsCodeStreamCreateToFile(instance, &output_code_stream, file_name, codec_name.c_str(), &out_image_info);
 
             nvimgcdcsEncoder_t encoder;
-            nvimgcdcsEncoderCreate(instance, &encoder, device_id);
+            const char* options = nullptr;
+            nvimgcdcsEncoderCreate(instance, &encoder, device_id, options);
 
             nvimgcdcsFuture_t future;
             nvimgcdcsEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &future);

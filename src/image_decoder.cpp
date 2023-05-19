@@ -18,10 +18,10 @@
 
 namespace nvimgcdcs {
 
-ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t desc, int device_id)
+ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t desc, int device_id, const char* options)
     : decoder_desc_(desc)
 {
-    decoder_desc_->create(decoder_desc_->instance, &decoder_, device_id);
+    decoder_desc_->create(decoder_desc_->instance, &decoder_, device_id, options);
 }
 
 ImageDecoder::~ImageDecoder()
