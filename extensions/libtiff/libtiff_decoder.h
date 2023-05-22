@@ -23,8 +23,8 @@ class LibtiffDecoderPlugin
     nvimgcdcsDecoderDesc_t getDecoderDesc();
 
   private:
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id);
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id);
+    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
+    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
 
     struct nvimgcdcsDecoderDesc decoder_desc_;
     std::vector<nvimgcdcsCapability_t> capabilities_;

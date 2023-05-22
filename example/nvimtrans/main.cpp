@@ -232,7 +232,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
         instance, &output_code_stream, output_path.string().c_str(), params.output_codec.data(), &out_image_info);
 
     nvimgcdcsEncoder_t encoder = nullptr;
-    nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT);
+    const char* options = nullptr;
+    nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT, nullptr);
 
     nvimgcdcsFuture_t encode_future;
     double encode_time = wtime();
@@ -445,7 +446,8 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
             instance, &out_code_streams[i], output_filename.string().c_str(), params.output_codec.c_str(), &out_image_info));
 
         if (encoder == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT));
+            const char* options = nullptr;
+            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT, options));
         }
     }
     return EXIT_SUCCESS;

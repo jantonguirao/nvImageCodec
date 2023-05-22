@@ -39,7 +39,7 @@ int Codec::getDecodersNum() const
     return decoders_.size();
 }
 
-std::unique_ptr<IImageDecoder> Codec::createDecoder(int index, int device_id) const
+std::unique_ptr<IImageDecoder> Codec::createDecoder(int index, int device_id, const char* options) const
 {
     if (size_t(index) >= decoders_.size()) {
         return std::unique_ptr<IImageDecoder>();
@@ -48,7 +48,7 @@ std::unique_ptr<IImageDecoder> Codec::createDecoder(int index, int device_id) co
     for (int i = 0; i < index; ++i)
         it++;
     if (it != decoders_.end())
-        return it->second->createDecoder(device_id);
+        return it->second->createDecoder(device_id, options);
     else
         return std::unique_ptr<IImageDecoder>();
 }
@@ -58,7 +58,7 @@ int Codec::getEncodersNum() const
     return encoders_.size();
 }
 
-std::unique_ptr<IImageEncoder> Codec::createEncoder(int index, int device_id) const
+std::unique_ptr<IImageEncoder> Codec::createEncoder(int index, int device_id, const char* options) const
 {
     if (size_t(index) >= encoders_.size()) {
         return std::unique_ptr<IImageEncoder>();

@@ -264,21 +264,32 @@ extern "C"
     struct nvimgcdcsImage;
     typedef struct nvimgcdcsImage* nvimgcdcsImage_t;
 
+    typedef enum
+    {
+        NVIMGCDCS_BACKEND_KIND_CPU_ONLY = 0b1,
+        NVIMGCDCS_BACKEND_KIND_GPU_ONLY = 0b10,
+        NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU = 0b11,
+        NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY = 0b100,
+    } nvimgcdcsBackendKind_t;
+
     typedef struct
     {
         nvimgcdcsStructureType_t type;
         void* next;
 
-        bool use_cpu;
-        bool use_gpu;
-        bool use_hw_eng;
-        int variant;
+        nvimgcdcsBackendKind_t kind;
+
+        // fraction of the samples that will be picked by this backend.
+        // The remaining samples will be marked as "saturated" status and will be picked by the next backend.
+        // This is just a hint and a particular implementation can choose to ignored or reinterpret it.
+        float load_hint;
     } nvimgcdcsBackend_t;
 
     typedef enum
     {
         NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = 0,
         NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0b01,
+        NVIMGCDCS_PROCESSING_STATUS_SATURATED = 0b10,
 
         NVIMGCDCS_PROCESSING_STATUS_FAIL = 0b11,
         NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 0b111,
@@ -436,11 +447,11 @@ extern "C"
     typedef enum
     {
         NVIMGCDCS_PRIORITY_HIGHEST = 0,
-        NVIMGCDCS_PRIORITY_VERY_HIGH = 100,     
-        NVIMGCDCS_PRIORITY_HIGH = 200,          
-        NVIMGCDCS_PRIORITY_NORMAL = 300,        
-        NVIMGCDCS_PRIORITY_LOW = 400,           
-        NVIMGCDCS_PRIORITY_VERY_LOW = 500,      
+        NVIMGCDCS_PRIORITY_VERY_HIGH = 100,
+        NVIMGCDCS_PRIORITY_HIGH = 200,
+        NVIMGCDCS_PRIORITY_NORMAL = 300,
+        NVIMGCDCS_PRIORITY_LOW = 400,
+        NVIMGCDCS_PRIORITY_VERY_LOW = 500,
         NVIMGCDCS_PRIORITY_LOWEST = 1000,
         NVIMGCDCS_PRIORITY_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsPriority_t;
@@ -586,7 +597,7 @@ extern "C"
         uint32_t version;
         const char* codec; // e.g. jpeg2000
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
 
         nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -718,6 +729,8 @@ extern "C"
 
     //Decoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreateEx(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id,
+                                                            const char* options);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
         nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
@@ -726,7 +739,7 @@ extern "C"
         nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
         nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,

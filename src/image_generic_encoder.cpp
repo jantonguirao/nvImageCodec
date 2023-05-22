@@ -47,12 +47,13 @@ class ImageGenericEncoder::Worker
    *                  is launched; otherwise a call to `start` is delayed until the first
    *                  work that's relevant for this encoder.
    */
-    Worker(IWorkManager* work_manager, int device_id, const ICodec* codec, int index)
+    Worker(IWorkManager* work_manager, int device_id, std::string options, const ICodec* codec, int index)
     {
         work_manager_ = work_manager;
         codec_ = codec;
         index_ = index;
         device_id_ = device_id;
+        options_ = std::move(options);
     }
     ~Worker();
 
@@ -78,6 +79,7 @@ class ImageGenericEncoder::Worker
     void run();
 
     int device_id_;
+    std::string options_;
     std::mutex mtx_;
     std::condition_variable cv_;
 
@@ -105,7 +107,7 @@ ImageGenericEncoder::Worker* ImageGenericEncoder::Worker::getFallback()
     if (!fallback_) {
         int n = codec_->getEncodersNum();
         if (index_ + 1 < n) {
-            fallback_ = std::make_unique<ImageGenericEncoder::Worker>(work_manager_, device_id_, codec_, index_ + 1);
+            fallback_ = std::make_unique<ImageGenericEncoder::Worker>(work_manager_, device_id_, options_, codec_, index_ + 1);
         }
     }
     return fallback_.get();
@@ -114,7 +116,7 @@ ImageGenericEncoder::Worker* ImageGenericEncoder::Worker::getFallback()
 IImageEncoder* ImageGenericEncoder::Worker::getEncoder()
 {
     if (!encoder_) {
-        encoder_ = codec_->createEncoder(index_, device_id_);
+        encoder_ = codec_->createEncoder(index_, device_id_, options_.c_str());
         if (encoder_) {
             encode_state_batch_ = encoder_->createEncodeStateBatch();
             size_t capabilities_size;
@@ -287,10 +289,11 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work<nvimgcdcsEnc
 
 //ImageGenericEncoder
 
-ImageGenericEncoder::ImageGenericEncoder(ICodecRegistry* codec_registry, int device_id)
+ImageGenericEncoder::ImageGenericEncoder(ICodecRegistry* codec_registry, int device_id, const char* options)
     : capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT, NVIMGCDCS_CAPABILITY_DEVICE_INPUT, NVIMGCDCS_CAPABILITY_HOST_INPUT}
     , codec_registry_(codec_registry)
     , device_id_(device_id)
+    , options_(options ? options : "")
 {
 }
 
@@ -323,7 +326,7 @@ void ImageGenericEncoder::canEncode(const std::vector<IImage*>& images, const st
             codec_code_streams[i] = code_streams[entry.second[i]];
             codec_images[i] = images[entry.second[i]];
         }
-        auto worker = getWorker(entry.first, device_id_);
+        auto worker = getWorker(entry.first, device_id_, options_);
         while (worker && codec_code_streams.size() != 0) {
             auto encoder = worker->getEncoder();
             std::vector<bool> mask(codec_code_streams.size());
@@ -417,11 +420,11 @@ void ImageGenericEncoder::combineWork(Work<nvimgcdcsEncodeParams_t>* target, std
     recycleWork(std::move(source));
 }
 
-ImageGenericEncoder::Worker* ImageGenericEncoder::getWorker(const ICodec* codec, int device_id)
+ImageGenericEncoder::Worker* ImageGenericEncoder::getWorker(const ICodec* codec, int device_id, const std::string& options)
 {
     auto it = workers_.find(codec);
     if (it == workers_.end()) {
-        it = workers_.emplace(codec, std::make_unique<Worker>(this, device_id, codec, 0)).first;
+        it = workers_.emplace(codec, std::make_unique<Worker>(this, device_id, options, codec, 0)).first;
     }
 
     return it->second.get();
@@ -444,7 +447,7 @@ void ImageGenericEncoder::distributeWork(std::unique_ptr<Work<nvimgcdcsEncodePar
     }
 
     for (auto& [codec, w] : dist) {
-        auto worker = getWorker(codec, device_id_);
+        auto worker = getWorker(codec, device_id_, options_);
         worker->addWork(std::move(w));
     }
 }

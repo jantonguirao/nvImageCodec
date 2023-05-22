@@ -346,7 +346,7 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
         if (params->backends != nullptr) {
             *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
             for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].use_cpu) {
+                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
@@ -438,20 +438,20 @@ DecoderImpl::DecoderImpl(const std::vector<nvimgcdcsCapability_t>& capabilities,
     decode_state_batch_ = std::make_unique<DecodeState>(num_threads);
 }
 
-nvimgcdcsStatus_t LibtiffDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id)
+nvimgcdcsStatus_t LibtiffDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(capabilities_, framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t LibtiffDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
+nvimgcdcsStatus_t LibtiffDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("libtiff_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         auto handle = reinterpret_cast<LibtiffDecoderPlugin*>(instance);
-        handle->create(decoder, device_id);
+        handle->create(decoder, device_id, options);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create libtiff decoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
@@ -602,7 +602,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
     int64_t stride_x = planar ? 1 : num_channels;
     int64_t tile_stride_y = info.tile_width * info.channels;
     int64_t tile_stride_x = info.channels;
-    
+
     const bool allow_random_row_access = (info.compression == COMPRESSION_NONE || info.rows_per_strip == 1);
     // If random access is not allowed, need to read sequentially all previous rows
     // From: http://www.libtiff.org/man/TIFFReadScanline.3t.html
@@ -709,7 +709,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
             case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
             case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
-            {   
+            {
                 uint32_t plane_stride = image_info.plane_info[0].height * image_info.plane_info[0].row_stride;
                 for (uint32_t c = 0; c < image_info.num_planes; c++) {
                     uint32_t dst_p = c;
@@ -729,7 +729,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
 
             case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
-            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED: 
+            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
             {
                 for (uint32_t i = 0; i < tile_size_y; i++) {
                     auto* row = dst + i * stride_y;
@@ -747,7 +747,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
                 }
             }
             break;
-            
+
             case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
             default:
                 NVIMGCDCS_D_LOG_ERROR("Unsupported sample_format: " << image_info.sample_format);

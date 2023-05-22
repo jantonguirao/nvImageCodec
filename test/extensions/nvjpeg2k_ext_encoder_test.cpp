@@ -37,7 +37,8 @@ class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase
     void SetUp() override
     {
         NvJpeg2kExtTestBase::SetUp();
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT));
+        const char* options = nullptr;
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, options));
 
         jpeg2k_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
         jpeg2k_enc_params_.stream_type = NVIMGCDCS_JPEG2K_STREAM_J2K;

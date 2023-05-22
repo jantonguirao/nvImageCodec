@@ -32,10 +32,10 @@ class MockCodec : public ICodec
         (nvimgcdcsCodeStreamDesc_t code_stream), (const, override));
     MOCK_METHOD(int, getDecodersNum, (), (const, override));
     MOCK_METHOD(std::unique_ptr<IImageDecoder>, createDecoder,
-        (int index, int device_id), (const, override));
+        (int index, int device_id, const char* options), (const, override));
     MOCK_METHOD(int, getEncodersNum, (), (const, override));
     MOCK_METHOD(std::unique_ptr<IImageEncoder>, createEncoder,
-        (int index, int device_id), (const, override));
+        (int index, int device_id, const char* options), (const, override));
     MOCK_METHOD(void, registerEncoderFactory,
         (std::unique_ptr<IImageEncoderFactory> factory, float priority), (override));
     MOCK_METHOD(void, unregisterEncoderFactory,(const std::string encoder_id), (override));

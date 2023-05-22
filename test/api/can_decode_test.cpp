@@ -51,7 +51,7 @@ class MockDecoderPlugin
     nvimgcdcsDecoderDesc_t getDecoderDesc() { return &decoder_desc_; }
 
   private:
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
+    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
     {
         *decoder = static_cast<nvimgcdcsDecoder_t>(instance);
         return NVIMGCDCS_STATUS_SUCCESS;

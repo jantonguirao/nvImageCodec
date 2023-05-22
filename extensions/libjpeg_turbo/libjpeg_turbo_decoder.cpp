@@ -4,6 +4,7 @@
 #include "log.h"
 #include <cstring>
 #include <nvtx3/nvtx3.hpp>
+#include <iostream>
 
 #define XM_CHECK_NULL(ptr)                            \
     {                                                 \
@@ -32,11 +33,15 @@ struct DecodeState
     };
     std::vector<PerThreadResources> per_thread_;
     std::vector<Sample> samples_;
+
+    // Options
+    bool fancy_upsampling_;
+    bool fast_idct_;
 };
 
 struct DecoderImpl
 {
-    DecoderImpl(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id);
+    DecoderImpl(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id, std::string options);
     ~DecoderImpl();
 
     nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
@@ -51,6 +56,8 @@ struct DecoderImpl
         nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
     static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
         nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+
+    void parseOptions(std::string options);
 
     const std::vector<nvimgcdcsCapability_t>& capabilities_;
     const nvimgcdcsFrameworkDesc_t framework_;
@@ -95,7 +102,7 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
         if (params->backends != nullptr) {
             *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
             for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].use_cpu) {
+                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
@@ -158,7 +165,7 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
 }
 
 DecoderImpl::DecoderImpl(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
+    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id, std::string options)
     : capabilities_(capabilities)
     , framework_(framework)
     , device_id_(device_id)
@@ -167,22 +174,52 @@ DecoderImpl::DecoderImpl(
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
     decode_state_batch_ = std::make_unique<DecodeState>(num_threads);
+
+    parseOptions(std::move(options));
 }
 
-nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id)
+void DecoderImpl::parseOptions(std::string options) {
+    // defaults
+    decode_state_batch_->fancy_upsampling_ = true;
+    decode_state_batch_->fast_idct_ = false;
+
+    std::istringstream iss(options);
+    std::string token;
+    while (std::getline(iss, token, ' ')) {
+        std::string::size_type colon = token.find(':');
+        std::string::size_type equal = token.find('=');
+        if (colon == std::string::npos || equal == std::string::npos || colon > equal)
+            continue;
+        std::string module = token.substr(0, colon);
+        if (module != "" && module != "libjpeg_turbo_decoder")
+            continue;
+        std::string option = token.substr(colon + 1, equal - colon - 1);
+        std::string value_str = token.substr(equal + 1);
+
+        std::istringstream value(value_str);
+        if (option == "fancy_upsampling") {
+            value >> decode_state_batch_->fancy_upsampling_;
+        } else if (option == "fast_idct") {
+            value >> decode_state_batch_->fast_idct_;
+        }
+    }
+}
+
+
+nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(capabilities_, framework_, device_id));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(capabilities_, framework_, device_id, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
+nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("libjpeg_turbo_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         auto handle = reinterpret_cast<LibjpegTurboDecoderPlugin*>(instance);
-        handle->create(decoder, device_id);
+        handle->create(decoder, device_id, options);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create libjpeg_turbo decoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
@@ -244,7 +281,7 @@ nvimgcdcsStatus_t DecoderImpl::static_get_capabilities(
 
 nvimgcdcsStatus_t decodeImpl(
     nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params,
-    std::vector<uint8_t>& buffer)
+    std::vector<uint8_t>& buffer, bool fancy_upsampling = true, bool fast_idct = false)
 {
     libjpeg_turbo::UncompressFlags flags;
     nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -267,7 +304,8 @@ nvimgcdcsStatus_t decodeImpl(
             NVIMGCDCS_D_LOG_ERROR("Unsupported sample_format: " << flags.sample_format);
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
-    flags.dct_method = JDCT_DEFAULT; // TODO(janton): use_fast_idct_ ? JDCT_FASTEST : JDCT_DEFAULT;
+    flags.dct_method = fast_idct ? JDCT_FASTEST : JDCT_DEFAULT;
+    flags.fancy_upscaling = fancy_upsampling;
 
     if (info.region.ndim != 0 && info.region.ndim != 2) {
         NVIMGCDCS_D_LOG_ERROR("Invalid region of interest");
@@ -364,7 +402,8 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
                 auto* decode_state = reinterpret_cast<DecodeState*>(context);
                 auto& sample = decode_state->samples_[sample_idx];
                 auto& thread_resources = decode_state->per_thread_[tid];
-                auto result = decodeImpl(sample.code_stream, sample.image, sample.params, thread_resources.buffer);
+                auto result = decodeImpl(sample.code_stream, sample.image, sample.params, thread_resources.buffer,
+                                         decode_state->fancy_upsampling_, decode_state->fast_idct_);
                 if (result == NVIMGCDCS_STATUS_SUCCESS) {
                     sample.image->imageReady(sample.image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
                 } else {

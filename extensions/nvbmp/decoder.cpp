@@ -31,7 +31,7 @@ static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsP
         if (params->backends != nullptr) {
             *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
             for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].use_cpu) {
+                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
@@ -72,7 +72,7 @@ static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsP
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
+static nvimgcdcsStatus_t nvbmp_decoder_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_create");
     *decoder = new nvimgcdcsDecoder();
@@ -170,16 +170,15 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, 
 nvimgcdcsDecoderDesc nvbmp_decoder = {
     NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
     NULL,
-    NULL,               // instance    
+    NULL,               // instance
     "nvbmp_decoder",    //id
     0x00000100,         // version
-    "bmp",              //  codec_type 
+    "bmp",              //  codec_type
 
     nvbmp_decoder_create,
-    nvbmp_decoder_destroy, 
+    nvbmp_decoder_destroy,
     nvbmp_get_capabilities,
     nvbmp_can_decode,
     nvbmp_decoder_decode_batch
 };
 // clang-format on
-

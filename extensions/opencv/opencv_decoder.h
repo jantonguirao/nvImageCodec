@@ -23,8 +23,8 @@ class OpenCVDecoderPlugin
     nvimgcdcsDecoderDesc_t getDecoderDesc();
 
   private:
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id);
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id);
+    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
+    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
 
     const char* codec_name_;
     struct nvimgcdcsDecoderDesc decoder_desc_;

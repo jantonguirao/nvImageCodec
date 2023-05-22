@@ -43,7 +43,7 @@ static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
         if (params->backends != nullptr) {
             *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
             for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].use_cpu) {
+                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
@@ -264,10 +264,10 @@ static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsI
 struct nvimgcdcsEncoderDesc nvpnm_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
-    NULL,                // instance     
-    "nvpnm",             // id           
-    0x00000100,          // version     
-    "pnm",               // codec_type   
+    NULL,                // instance
+    "nvpnm",             // id
+    0x00000100,          // version
+    "pnm",               // codec_type
     pnm_create,
     pnm_destroy,
     pnm_get_capabilities,

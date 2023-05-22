@@ -32,7 +32,7 @@ class ICodec;
 class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
 {
   public:
-    explicit ImageGenericDecoder(ICodecRegistry* codec_registry, int device_id);
+    explicit ImageGenericDecoder(ICodecRegistry* codec_registry, int device_id, const char *options = nullptr);
     ~ImageGenericDecoder();
     void canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
         nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
@@ -41,7 +41,7 @@ class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
 
   private:
     class Worker;
-    ImageGenericDecoder::Worker *getWorker(const ICodec* codec, int device_id);
+    ImageGenericDecoder::Worker *getWorker(const ICodec* codec, int device_id, const std::string& options);
 
     std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> createNewWork(const ProcessingResultsPromise& results, const void* params);
     void recycleWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work) override;
@@ -53,6 +53,7 @@ class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
     std::map<const ICodec*, std::unique_ptr<Worker>> workers_;
     ICodecRegistry* codec_registry_;
     int device_id_;
+    std::string options_;
 };
 
 } // namespace nvimgcdcs

@@ -164,7 +164,8 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         if (register_extension_) {
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &extension_, mock_extension_->getExtensionDesc()));
         }
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT));
+        const char* options = nullptr;
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, options));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;

@@ -225,7 +225,7 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
         if (params->backends != nullptr) {
             *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
             for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].use_cpu) {
+                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
@@ -312,20 +312,20 @@ DecoderImpl::DecoderImpl(const std::vector<nvimgcdcsCapability_t>& capabilities,
     decode_state_batch_ = std::make_unique<DecodeState>(num_threads);
 }
 
-nvimgcdcsStatus_t OpenCVDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id)
+nvimgcdcsStatus_t OpenCVDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(capabilities_, framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t OpenCVDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id)
+nvimgcdcsStatus_t OpenCVDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("opencv_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         auto handle = reinterpret_cast<OpenCVDecoderPlugin*>(instance);
-        handle->create(decoder, device_id);
+        handle->create(decoder, device_id, options);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create opencv decoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error

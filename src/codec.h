@@ -33,9 +33,9 @@ class Codec : public ICodec
     const std::string& name() const override;
     std::unique_ptr<IImageParser> createParser(nvimgcdcsCodeStreamDesc_t code_stream) const override;
     int getDecodersNum() const override;
-    std::unique_ptr<IImageDecoder> createDecoder(int index, int device_id) const override;
+    std::unique_ptr<IImageDecoder> createDecoder(int index, int device_id, const char* options) const override;
     int getEncodersNum() const override;
-    std::unique_ptr<IImageEncoder> createEncoder(int index, int device_id) const override;
+    std::unique_ptr<IImageEncoder> createEncoder(int index, int device_id, const char* options) const override;
     void registerEncoderFactory(std::unique_ptr<IImageEncoderFactory> factory, float priority) override;
     void unregisterEncoderFactory(const std::string encoder_id) override;
     void registerDecoderFactory(std::unique_ptr<IImageDecoderFactory> factory, float priority) override;

@@ -147,7 +147,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_can_encode(nvimgcdcsEncoder_t encoder, nv
         if (params->backends != nullptr) {
             *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
             for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].use_cpu) {
+                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
@@ -279,16 +279,14 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode_batch(nvimgcdcsEncoder_t encoder, 
 nvimgcdcsEncoderDesc nvbmp_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
-    NULL,               // instance    
+    NULL,               // instance
     "nvbmp_encoder",    //id
      0x00000100,        // version
-    "bmp",              //  codec_type 
+    "bmp",              //  codec_type
     nvbmp_encoder_create,
-    nvbmp_encoder_destroy, 
+    nvbmp_encoder_destroy,
     nvbmp_get_capabilities,
     nvbmp_encoder_can_encode,
     nvbmp_encoder_encode_batch
 };
-// clang-format on   
-
-
+// clang-format on
