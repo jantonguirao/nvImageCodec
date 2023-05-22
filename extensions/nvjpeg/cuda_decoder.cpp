@@ -1,4 +1,15 @@
+/*
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * NVIDIA CORPORATION and its licensors retain all intellectual property
+ * and proprietary rights in and to this software, related documentation
+ * and any modifications thereto.  Any use, reproduction, disclosure or
+ * distribution of this software and related documentation without an express
+ * license agreement from NVIDIA CORPORATION is strictly prohibited.
+ */
+
 #include "cuda_decoder.h"
+#include "nvjpeg_utils.h"
 #include <library_types.h>
 #include <nvimgcodecs.h>
 #include <cstring>
@@ -7,7 +18,6 @@
 #include <numeric>
 #include <nvtx3/nvtx3.hpp>
 #include <set>
-#include <sstream>
 #include <vector>
 #include "errors_handling.h"
 #include "log.h"
@@ -132,7 +142,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_can_decode(nvimgcdcsD
 }
 
 NvJpegCudaDecoderPlugin::Decoder::Decoder(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
+    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id, const char* options)
     : capabilities_(capabilities)
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
@@ -151,10 +161,11 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(
         pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
     }
 
+    unsigned int nvjpeg_flags = get_nvjpeg_flags("nvjpeg_cuda_decoder", options);
     if (device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free) {
-        XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_DEFAULT, &device_allocator_, &pinned_allocator_, 0, &handle_));
+        XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_DEFAULT, &device_allocator_, &pinned_allocator_, nvjpeg_flags, &handle_));
     } else {
-        XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_DEFAULT, nullptr, nullptr, 0, &handle_));
+        XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_DEFAULT, nullptr, nullptr, nvjpeg_flags, &handle_));
     }
 
     if (framework->device_allocator && (framework->device_allocator->device_mem_padding != 0)) {
@@ -174,7 +185,7 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(
 
 nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegCudaDecoderPlugin::Decoder(capabilities_, framework_, device_id));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegCudaDecoderPlugin::Decoder(capabilities_, framework_, device_id, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

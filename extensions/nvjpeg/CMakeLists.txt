@@ -6,6 +6,7 @@ set(NVIMGCDCS_NVJPEG_EXT_SRC
   cuda_encoder.cpp
   type_convert.cpp
   nvjpeg_ext.cpp
+  nvjpeg_utils.cpp
 )
 
 find_package(CUDAToolkit REQUIRED)

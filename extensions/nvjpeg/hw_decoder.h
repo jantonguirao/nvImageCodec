@@ -58,7 +58,8 @@ class NvJpegHwDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id);
+        Decoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id,
+            const char* options = nullptr);
         ~Decoder();
 
         nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);

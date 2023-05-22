@@ -1,5 +1,15 @@
-#include "hw_decoder.h"
+/*
+ * Copyright (c) 2022-2023, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * NVIDIA CORPORATION and its licensors retain all intellectual property
+ * and proprietary rights in and to this software, related documentation
+ * and any modifications thereto.  Any use, reproduction, disclosure or
+ * distribution of this software and related documentation without an express
+ * license agreement from NVIDIA CORPORATION is strictly prohibited.
+ */
 
+#include "hw_decoder.h"
+#include "nvjpeg_utils.h"
 #include <nvimgcodecs.h>
 #include <cassert>
 #include <cstring>
@@ -143,7 +153,7 @@ NvJpegHwDecoderPlugin::ParseState::~ParseState()
 }
 
 NvJpegHwDecoderPlugin::Decoder::Decoder(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
+    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id, const char* options)
     : capabilities_(capabilities)
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
@@ -162,10 +172,11 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
         pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
     }
 
+    unsigned int nvjpeg_flags = get_nvjpeg_flags("nvjpeg_cuda_decoder", options);
     if (device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free) {
-        XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_HARDWARE, &device_allocator_, &pinned_allocator_, 0, &handle_));
+        XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_HARDWARE, &device_allocator_, &pinned_allocator_, nvjpeg_flags, &handle_));
     } else {
-        XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_HARDWARE, nullptr, nullptr, 0, &handle_));
+        XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_HARDWARE, nullptr, nullptr, nvjpeg_flags, &handle_));
     }
 
     if (framework->device_allocator && (framework->device_allocator->device_mem_padding != 0)) {
@@ -186,7 +197,7 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
 
 nvimgcdcsStatus_t NvJpegHwDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegHwDecoderPlugin::Decoder(capabilities_, framework_, device_id));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegHwDecoderPlugin::Decoder(capabilities_, framework_, device_id, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
