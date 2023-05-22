@@ -216,7 +216,9 @@ class NvJpeg2kTestBase
         for (int i = 0; i < input_image_info.num_planes; ++i) {
             image_comp_info[i].component_width = input_image_info.plane_info[i].width;
             image_comp_info[i].component_height = input_image_info.plane_info[i].height;
-            image_comp_info[i].precision = (input_image_info.plane_info[i].sample_type) & 0b11111110;
+            image_comp_info[i].precision = input_image_info.plane_info[i].precision
+                                               ? input_image_info.plane_info[i].precision
+                                               : (static_cast<unsigned int>(input_image_info.plane_info[i].sample_type) >> 8)&0xFF;
             image_comp_info[i].sgn = input_image_info.plane_info[i].sample_type & 0b1;
             strides[i] = input_image_info.plane_info[0].row_stride;
         }

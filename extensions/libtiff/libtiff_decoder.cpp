@@ -797,11 +797,11 @@ nvimgcdcsStatus_t decodeImpl(
     switch(image_info.plane_info[0].sample_type) {
         case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
             return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8:
+        case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
             return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
         case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
             return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16:
+        case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
             return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
         case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
             return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);

@@ -25,7 +25,7 @@ namespace nvimgcdcs {
 namespace {
 
 const std::array<uint8_t, 12> JP2_SIGNATURE = {0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a};
-const std::array<uint8_t, 2>  J2K_SIGNATURE = {0xff, 0x4f};
+const std::array<uint8_t, 2> J2K_SIGNATURE = {0xff, 0x4f};
 
 using block_type_t = std::array<uint8_t, 4>;
 const block_type_t jp2_signature = {'j', 'P', ' ', ' '};    // JPEG2000 signature
@@ -79,9 +79,9 @@ nvimgcdcsSampleDataType_t BitsPerComponentToType(uint8_t bits_per_component)
     bits_per_component += 1;
     auto sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
     if (bits_per_component <= 16 && bits_per_component > 8) {
-        sample_type = sign_component ? NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 : NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+        sample_type = sign_component ? NVIMGCDCS_SAMPLE_DATA_TYPE_INT16 : NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
     } else if (bits_per_component <= 8) {
-        sample_type = sign_component ? NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 : NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+        sample_type = sign_component ? NVIMGCDCS_SAMPLE_DATA_TYPE_INT8 : NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
     }
     return sample_type;
 }
@@ -114,9 +114,9 @@ JPEG2KParserPlugin::JPEG2KParserPlugin()
           this,            // instance
           "jpeg2k_parser", // id
           "jpeg2k",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, 
-          Parser::static_get_image_info, Parser::static_get_capabilities}
-{}
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
+{
+}
 
 struct nvimgcdcsParserDesc* JPEG2KParserPlugin::getParserDesc()
 {
@@ -130,16 +130,16 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::canParse(bool* result, nvimgcdcsCodeStream
     io_stream->size(io_stream->instance, &bitstream_size);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
     *result = false;
-    
+
     std::array<uint8_t, 12> bitstream_start;
     size_t read_nbytes = 0;
     io_stream->read(io_stream->instance, &read_nbytes, bitstream_start.data(), bitstream_start.size());
     if (read_nbytes < bitstream_start.size())
         return NVIMGCDCS_STATUS_SUCCESS;
 
-    if(!memcmp(bitstream_start.data(), JP2_SIGNATURE.data(), JP2_SIGNATURE.size()))
+    if (!memcmp(bitstream_start.data(), JP2_SIGNATURE.data(), JP2_SIGNATURE.size()))
         *result = true;
-    else if(!memcmp(bitstream_start.data(), J2K_SIGNATURE.data(), J2K_SIGNATURE.size()))
+    else if (!memcmp(bitstream_start.data(), J2K_SIGNATURE.data(), J2K_SIGNATURE.size()))
         *result = true;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -160,7 +160,8 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::static_can_parse(void* instance, bool* res
 }
 
 JPEG2KParserPlugin::Parser::Parser()
-{}
+{
+}
 
 nvimgcdcsStatus_t JPEG2KParserPlugin::create(nvimgcdcsParser_t* parser)
 {
@@ -285,10 +286,10 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseJP2(nvimgcdcsIoStreamDesc_t i
                 remaining_bytes -= block_size;
             }
         } else if (block_type == jp2_code_stream) {
-            return parseCodeStream(io_stream);  // parsing ends here
+            return parseCodeStream(io_stream); // parsing ends here
         }
     }
-    return NVIMGCDCS_STATUS_BAD_CODESTREAM;  //  didn't parse codestream
+    return NVIMGCDCS_STATUS_BAD_CODESTREAM; //  didn't parse codestream
 }
 
 nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseCodeStream(nvimgcdcsIoStreamDesc_t io_stream)
@@ -399,6 +400,8 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
             image_info->plane_info[p].width = DivUp(XSiz - XOSiz, XRSiz[p]);
             image_info->plane_info[p].num_channels = 1;
             image_info->plane_info[p].sample_type = BitsPerComponentToType(Ssiz[p]);
+            image_info->plane_info[p].precision =
+                ((image_info->plane_info[p].sample_type >> 8) & 0xff) == (Ssiz[p] & 0x7F) + 1 ? 0 : (Ssiz[p] & 0x7F) + 1;
         }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg2k stream - " << e.what());

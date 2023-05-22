@@ -75,6 +75,50 @@ class JPEG2KParserPluginTest : public ::testing::Test
             info.plane_info[p].width = 640;
             info.plane_info[p].num_channels = 1;
             info.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+            info.plane_info[p].precision = 0;
+        }
+        return info;
+    }
+
+    nvimgcdcsImageInfo_t expected_cat_1245673_640_12bit()
+    {
+        nvimgcdcsImageInfo_t info;
+        info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
+        info.next = nullptr;
+        info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+        info.num_planes = 3;
+        info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+        info.orientation.rotated = 0;
+        info.orientation.flip_x = false;
+        info.orientation.flip_y = false;
+        for (int p = 0; p < info.num_planes; p++) {
+            info.plane_info[p].height = 423;
+            info.plane_info[p].width = 640;
+            info.plane_info[p].num_channels = 1;
+            info.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+            info.plane_info[p].precision = 12;
+        }
+        return info;
+    }
+    nvimgcdcsImageInfo_t expected_cat_1245673_640_5bit()
+    {
+        nvimgcdcsImageInfo_t info;
+        info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
+        info.next = nullptr;
+        info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+        info.num_planes = 3;
+        info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+        info.orientation.rotated = 0;
+        info.orientation.flip_x = false;
+        info.orientation.flip_y = false;
+        for (int p = 0; p < info.num_planes; p++) {
+            info.plane_info[p].height = 423;
+            info.plane_info[p].width = 640;
+            info.plane_info[p].num_channels = 1;
+            info.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+            info.plane_info[p].precision = 5;
         }
         return info;
     }
@@ -103,6 +147,28 @@ TEST_F(JPEG2KParserPluginTest, Uint8_FromHostMem) {
     info.next = nullptr;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1046544_640(), info);
+}
+
+TEST_F(JPEG2KParserPluginTest, Uint8_Precision_5_FromHostMem)
+{
+    auto buffer = read_file(resources_dir + "/jpeg2k/cat-1245673_640-5bit.jp2");
+    LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
+    nvimgcdcsImageInfo_t info;
+    info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
+    info.next = nullptr;
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
+    expect_eq(expected_cat_1245673_640_5bit(), info);
+}
+
+TEST_F(JPEG2KParserPluginTest, Uint16_Precision_12_FromHostMem)
+{
+    auto buffer = read_file(resources_dir + "/jpeg2k/cat-1245673_640-12bit.jp2");
+    LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
+    nvimgcdcsImageInfo_t info;
+    info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
+    info.next = nullptr;
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
+    expect_eq(expected_cat_1245673_640_12bit(), info);
 }
 
 TEST_F(JPEG2KParserPluginTest, Uint8_CodeStreamOnly) {

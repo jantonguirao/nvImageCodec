@@ -116,7 +116,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
         }
 
         static const std::set<nvimgcdcsSampleDataType_t> supported_sample_type{
-            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16};
+            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, NVIMGCDCS_SAMPLE_DATA_TYPE_INT16};
         for (uint32_t p = 0; p < image_info.num_planes; ++p) {
             auto sample_type = image_info.plane_info[p].sample_type;
             if (supported_sample_type.find(sample_type) == supported_sample_type.end()) {
@@ -337,8 +337,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     image_comp_info[c].component_width = image_info.plane_info[c].width;
                     image_comp_info[c].component_height = image_info.plane_info[c].height;
                     image_comp_info[c].precision = image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16;
-                    image_comp_info[c].sgn = (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8) ||
-                                             (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16);
+                    image_comp_info[c].sgn = (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_INT8) ||
+                                             (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_INT16);
                 }
 
                 nvjpeg2kEncodeConfig_t encode_config;

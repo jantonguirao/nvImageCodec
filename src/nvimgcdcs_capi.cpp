@@ -116,7 +116,7 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
 
 inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
 {
-    return ((static_cast<unsigned int>(sample_type) & 0b11111110) + 7) / 8;
+    return static_cast<unsigned int>(sample_type) >> (8 + 3);
 }
 
 struct nvimgcdcsInstance
