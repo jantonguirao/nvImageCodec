@@ -55,8 +55,9 @@ nvimgcdcsStatus_t nvjpeg_extension_create(void* instance, nvimgcdcsExtension_t* 
         XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
         *extension = reinterpret_cast<nvimgcdcsExtension_t>(new nvjpeg::NvJpegImgCodecsExtension(framework));
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    } catch (const Exception& e) {
+        NVIMGCDCS_LOG_ERROR("could not create nvjpeg extension " << e.info());
+        return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -69,8 +70,9 @@ nvimgcdcsStatus_t nvjpeg_extension_destroy(nvimgcdcsExtension_t extension)
         auto ext_handle = reinterpret_cast<nvjpeg::NvJpegImgCodecsExtension*>(extension);
         delete ext_handle;
         Logger::get().unregisterLogFunc();
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    } catch (const Exception& e) {
+        NVIMGCDCS_LOG_ERROR("could not destroy nvimgcodecs extension " << e.info());
+        return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
