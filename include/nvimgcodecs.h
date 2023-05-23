@@ -127,6 +127,7 @@ extern "C"
     } nvimgcdcsStatus_t;
 
     // 0 bit      -> 0 - unsigned, 1- signed
+    // 1..7 bits  -> define type
     // 8..15 bits -> type bitdepth
     typedef enum
     {
