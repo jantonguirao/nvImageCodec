@@ -264,10 +264,9 @@ static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsI
 struct nvimgcdcsEncoderDesc nvpnm_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
-    NULL,                // instance
-    "nvpnm",             // id
-    0x00000100,          // version
-    "pnm",               // codec_type
+    NULL,                // instance     
+    "nvpnm",             // id           
+    "pnm",               // codec_type   
     pnm_create,
     pnm_destroy,
     pnm_get_capabilities,

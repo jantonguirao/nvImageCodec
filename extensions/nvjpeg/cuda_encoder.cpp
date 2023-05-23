@@ -31,7 +31,6 @@ NvJpegCudaEncoderPlugin::NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t 
     : encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL,
           this,             // instance
           "nvjpeg_encoder", // id
-          0x00000100,       // version
           "jpeg",           // codec_type
           static_create, Encoder::static_destroy, Encoder::static_get_capabilities, Encoder::static_can_encode,
           Encoder::static_encode_batch}

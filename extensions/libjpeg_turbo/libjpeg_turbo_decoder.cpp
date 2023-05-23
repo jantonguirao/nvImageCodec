@@ -69,7 +69,6 @@ LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDes
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,                    // instance
           "libjpeg_turbo_decoder", // id
-          0x00000100,              // version
           "jpeg",                  // codec_type
           static_create, DecoderImpl::static_destroy, DecoderImpl::static_get_capabilities, DecoderImpl::static_can_decode,
           DecoderImpl::static_decode_batch}

@@ -59,26 +59,24 @@ class Logger
 };
 
 #ifdef NDEBUG
-   //TODO  #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO
-    #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE
+    #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO
 #else
     #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE
 #endif
 
-#define NVIMGCDCS_LOG(svr, type, codec_id, codec_ver, msg)               \
-    do {                                                                 \
-        if (svr >= NVIMGCDCS_SEVERITY) {                                 \
-            std::stringstream ss{};                                      \
-            ss << msg;                                                   \
-            Logger::get().log(svr, type, codec_id, codec_ver, ss.str()); \
-        }                                                                \
+#define NVIMGCDCS_LOG(svr, type, codec_id, msg)                              \
+    do {                                                                     \
+        if (svr >= NVIMGCDCS_SEVERITY) {                                     \
+            std::stringstream ss{};                                          \
+            ss << msg;                                                       \
+            Logger::get().log(svr, type, codec_id, NVIMGCDCS_VER, ss.str()); \
+        }                                                                    \
     } while (0)
 
-//TODO set correct version
-#define NVIMGCDCS_M_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-module", 0, msg)
-#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-parser", 0, msg)
-#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-encoder", 0, msg)
-#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-decoder", 0, msg)
+#define NVIMGCDCS_M_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-module", msg)
+#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-parser", msg)
+#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-encoder", msg)
+#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libjpeg-turbo-decoder", msg)
 
 #define NVIMGCDCS_LOG_TRACE(...) \
     NVIMGCDCS_M_LOG(             \

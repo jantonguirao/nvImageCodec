@@ -39,7 +39,6 @@ class MockEncoderPlugin
         , encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL,
               this,                // instance
               "mock_test_encoder", // id
-              0x00000100,          // version
               "bmp",               // codec_type
               static_create, static_destroy, static_get_capabilities, static_can_encode, static_encode_batch}
     {
@@ -83,7 +82,7 @@ struct MockCodecExtensionFactory
 {
   public:
     explicit MockCodecExtensionFactory(const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses)
-        : desc_{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, this, "test_extension", 0x00000100, static_extension_create,
+        : desc_{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, this, "test_extension", NVIMGCDCS_VER, NVIMGCDCS_EXT_API_VER, static_extension_create,
               static_extension_destroy}
         , statuses_(statuses)
 
@@ -98,6 +97,7 @@ struct MockCodecExtensionFactory
             : framework_(framework)
             , statuses_(statuses)
         {
+            encoders_.reserve(statuses_->size());
             for (auto& item : *statuses_) {
                 encoders_.emplace_back(framework, item);
                 framework->registerEncoder(framework->instance, encoders_.back().getEncoderDesc(), NVIMGCDCS_PRIORITY_NORMAL);

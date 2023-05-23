@@ -91,8 +91,9 @@ nvimgcdcsExtensionDesc_t opencv_extension = {
     NULL,
 
     NULL,
-    "opencv_extension",  // id
-     0x00000100,        // version
+    "opencv_extension",
+    NVIMGCDCS_VER,
+    NVIMGCDCS_EXT_API_VER,
 
     opencvExtensionCreate,
     opencvExtensionDestroy

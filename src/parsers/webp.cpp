@@ -164,7 +164,6 @@ WebpParserPlugin::WebpParserPlugin()
     : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr,
           this,          // instance
           "webp_parser", // id
-          0x00000100,    // version
           "webp",        // codec_type
           static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
 {
@@ -367,8 +366,9 @@ nvimgcdcsExtensionDesc_t webp_parser_extension = {
     NULL,
 
     NULL,
-    "webp_parser_extension",  // id
-     0x00000100,             // version
+    "webp_parser_extension",
+    NVIMGCDCS_VER,
+    NVIMGCDCS_EXT_API_VER,
 
     webp_parser_extension_create,
     webp_parser_extension_destroy

@@ -88,8 +88,9 @@ nvimgcdcsExtensionDesc_t parsers_extension = {
     NULL,
 
     NULL,
-    "parsers",    // id
-     0x00000100,  // version
+    "nvimgcdcs_builtin_parsers",
+    NVIMGCDCS_VER,
+    NVIMGCDCS_EXT_API_VER, 
 
     parsers_extension_create,
     parsers_extension_destroy

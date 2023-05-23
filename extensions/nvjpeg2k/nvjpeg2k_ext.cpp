@@ -17,10 +17,12 @@ struct NvJpeg2kImgCodecsExtension
         framework->registerEncoder(framework->instance, jpeg2k_encoder_.getEncoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
         framework->registerDecoder(framework->instance, jpeg2k_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
     }
-    ~NvJpeg2kImgCodecsExtension(){
+    ~NvJpeg2kImgCodecsExtension()
+    {
         framework_->unregisterEncoder(framework_->instance, jpeg2k_encoder_.getEncoderDesc());
         framework_->unregisterDecoder(framework_->instance, jpeg2k_decoder_.getDecoderDesc());
     }
+
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
     NvJpeg2kDecoderPlugin jpeg2k_decoder_;
@@ -63,9 +65,10 @@ nvimgcdcsExtensionDesc_t nvjpeg2k_extension = {
     NULL,
 
     NULL,
-    "nvjpeg2k_extension",  // id
-     0x00000100,        // version
-
+    "nvjpeg2k_extension",  
+    NVIMGCDCS_VER,           
+    NVIMGCDCS_EXT_API_VER,
+    
     nvjpeg2k_extension_create,
     nvjpeg2k_extension_destroy
 };

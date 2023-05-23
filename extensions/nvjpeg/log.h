@@ -58,26 +58,24 @@ class Logger
 };
 
 #ifdef NDEBUG
-//TODO  #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO
-    #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE
+    #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO
 #else
     #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE
 #endif
 
-#define NVIMGCDCS_LOG(svr, type, codec_id, codec_ver, msg)               \
-    do {                                                                 \
-        if (svr >= NVIMGCDCS_SEVERITY) {                                 \
-            std::stringstream ss{};                                      \
-            ss << msg;                                                   \
-            Logger::get().log(svr, type, codec_id, codec_ver, ss.str()); \
-        }                                                                \
+#define NVIMGCDCS_LOG(svr, type, codec_id, msg)                              \
+    do {                                                                     \
+        if (svr >= NVIMGCDCS_SEVERITY) {                                     \
+            std::stringstream ss{};                                          \
+            ss << msg;                                                       \
+            Logger::get().log(svr, type, codec_id, NVIMGCDCS_VER, ss.str()); \
+        }                                                                    \
     } while (0)
 
-//TODO set correct version
-#define NVIMGCDCS_M_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvjpeg-module", 0, msg)
-#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvjpeg-parser", 0, msg)
-#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvjpeg-encoder", 0, msg)
-#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvjpeg-decoder", 0, msg)
+#define NVIMGCDCS_M_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvjpeg-module", msg)
+#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvjpeg-parser", msg)
+#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvjpeg-encoder", msg)
+#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvjpeg-decoder", msg)
 
 #define NVIMGCDCS_LOG_TRACE(...) NVIMGCDCS_M_LOG(NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
 #define NVIMGCDCS_LOG_DEBUG(...) NVIMGCDCS_M_LOG(NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
