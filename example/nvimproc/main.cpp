@@ -154,7 +154,7 @@ int collect_input_files(const std::string& sInputPath, std::vector<std::string>&
 
 inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
 {
-    return ((static_cast<unsigned int>(sample_type) & 0b11111110) + 7) / 8;
+    return static_cast<unsigned int>(sample_type)>> (8+3);
 }
 
 int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& params, const FileNames& image_names,
@@ -336,10 +336,10 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     // tag: Create operator input tensor in RGB interleaved format
     nvcv::Tensor inTensor(1, {static_cast<int>(tensor_data.shape[3]), static_cast<int>(tensor_data.shape[2])}, nvcv::FMT_RGB8);
 
-    // tag: Convert form planar to interleaved 
+    // tag: Convert form planar to interleaved
     cvcuda::Reformat reformatOp;
     reformatOp(stream, decodedTensor, inTensor);
-  
+
     // tag: The input buffer is now ready to be used by the operators
 
     // Set parameters for Crop and Resize
@@ -357,7 +357,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     NVCVRectI crpRect = {cropX, cropY, cropWidth, cropHeight};
 
     // tag: Allocate Tensors for Crop and Resize
-    
+
     // Create a CVCUDA Tensor based on the crop window size.
     nvcv::Tensor cropTensor(1, {cropWidth, cropHeight}, nvcv::FMT_RGB8);
     // Create a CVCUDA Tensor based on resize dimensions

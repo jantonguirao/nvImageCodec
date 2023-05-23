@@ -1,4 +1,5 @@
 #include <cuda_runtime_api.h>
+#include <extensions/nvpnm/nvpnm_ext.h>
 #include <nvimgcodecs.h>
 #include <stdlib.h>
 #include <algorithm>
@@ -11,7 +12,6 @@
 #include <string>
 #include <vector>
 #include "command_line_params.h"
-#include <extensions/nvpnm/nvpnm_ext.h>
 
 namespace fs = std::filesystem;
 
@@ -88,7 +88,7 @@ uint32_t verbosity2severity(int verbose)
 
 inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
 {
-    return ((static_cast<unsigned int>(sample_type) & 0b11111110) + 7) / 8;
+    return static_cast<unsigned int>(sample_type) >> (8 + 3);
 }
 
 void fill_encode_params(const CommandLineParams& params, fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
@@ -368,7 +368,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
 
         for (uint32_t c = 0; c < image_info.num_planes; ++c) {
             if (image_info.plane_info[c].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
-                std::cout << "Precision not supported by this sample" << std::endl;
+                std::cout << "Data type #" << image_info.plane_info[c].sample_type << " not supported by this sample" << std::endl;
                 return EXIT_FAILURE;
             }
         }
@@ -376,7 +376,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
         char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetCodecName(code_streams[i], codec_name));
 
-        int bytes_per_element = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 1 : 2;
+        int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
         //Decode to format
         image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
@@ -551,7 +551,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
                 --i;
             }
         }
-        
+
         nvimgcdcsFutureDestroy(decode_future);
 
         ret = prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_code_streams, images,
@@ -680,10 +680,10 @@ int main(int argc, const char* argv[])
 
     nvimgcdcsProperties_t properties{NVIMGCDCS_STRUCTURE_TYPE_PROPERTIES, 0};
     nvimgcdcsGetProperties(&properties);
-    std::cout << "nvImageCodecs version: " << NVIMGCDCS_STREAM_VER(properties.version)  << std::endl;
-    std::cout << " - extension API version: " <<  NVIMGCDCS_STREAM_VER(properties.ext_api_version) << std::endl;
-    std::cout << " - CUDA Runtime version: " << properties.cudart_version / 1000 << "."
-              << (properties.ext_api_version % 1000) / 10  << std::endl;
+    std::cout << "nvImageCodecs version: " << NVIMGCDCS_STREAM_VER(properties.version) << std::endl;
+    std::cout << " - extension API version: " << NVIMGCDCS_STREAM_VER(properties.ext_api_version) << std::endl;
+    std::cout << " - CUDA Runtime version: " << properties.cudart_version / 1000 << "." << (properties.ext_api_version % 1000) / 10
+              << std::endl;
     cudaDeviceProp props;
     int dev = 0;
     cudaGetDevice(&dev);

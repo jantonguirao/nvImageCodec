@@ -126,17 +126,23 @@ extern "C"
         NVIMGCDCS_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStatus_t;
 
-    // 0     bit  -> 0 - unsigned, 1- signed
-    // 1..7  bits -> type number of bits
-    // 8..15 bits -> precision
+    // 0 bit      -> 0 - unsigned, 1- signed
+    // 1..7 bits  -> define type
+    // 8..15 bits -> type bitdepth
     typedef enum
     {
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN = 0,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 = 0x0808,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 = 0x1010,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8 = 0x0809,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16 = 0x1011,
-        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 0x2021,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_INT8 = 0x0801,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 = 0x0802,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_INT16 = 0x1003,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 = 0x1004,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_INT32 = 0x2005,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32 = 0x2006,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_INT64 = 0x4007,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64 = 0x4008,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16 = 0x1009,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 0x200B,
+        NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64 = 0x400D,
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED = -1,
         NVIMGCDCS_SAMPLE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsSampleDataType_t;
@@ -187,6 +193,7 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
+
         int rotated; //Clockwise
         bool flip_x;
         bool flip_y;
@@ -196,11 +203,13 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
+
         uint32_t width;
         uint32_t height;
         size_t row_stride;
         uint32_t num_channels;
         nvimgcdcsSampleDataType_t sample_type;
+        uint8_t precision; //0 means sample type bitdepth
     } nvimgcdcsImagePlaneInfo_t;
 
 #define NVIMGCDCS_MAX_NUM_DIM 5
@@ -208,6 +217,7 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
+
         int ndim; // number of dimensions, 0 means no region
         int start[NVIMGCDCS_MAX_NUM_DIM];
         int end[NVIMGCDCS_MAX_NUM_DIM];

@@ -187,8 +187,6 @@ class CommonExtDecoderTest
         image_info_.sample_format = sample_format;
         image_info_.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         image_info_.num_planes = 1;
-        // image_info_.plane_info[0].height = image_info_.plane_info[0].height;
-        // image_info_.plane_info[0].width = image_info_.plane_info[0].width;
         image_info_.plane_info[0].row_stride = image_info_.plane_info[0].width * num_channels;
         image_info_.plane_info[0].num_channels = num_channels;
         image_info_.plane_info[0].sample_type = sample_type;

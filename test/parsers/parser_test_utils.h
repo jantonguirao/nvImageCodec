@@ -54,6 +54,7 @@ inline void expect_eq(nvimgcdcsImageInfo_t expected, nvimgcdcsImageInfo_t actual
         EXPECT_EQ(expected.plane_info[p].width, actual.plane_info[p].width);
         EXPECT_EQ(expected.plane_info[p].num_channels, actual.plane_info[p].num_channels);
         EXPECT_EQ(expected.plane_info[p].sample_type, actual.plane_info[p].sample_type);
+        EXPECT_EQ(expected.plane_info[p].precision, actual.plane_info[p].precision);
     }
 }
 

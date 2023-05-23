@@ -89,9 +89,9 @@ nvimgcdcsStatus_t ConvertPlanar(nvimgcdcsImageInfo_t& info, const cv::Mat& decod
 
     switch (info.plane_info[0].sample_type) {
         CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, uint8_t, info, decoded);
-        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8, int8_t, info, decoded);
+        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_INT8, int8_t, info, decoded);
         CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, uint16_t, info, decoded);
-        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16, int16_t, info, decoded);
+        CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_INT16, int16_t, info, decoded);
         CaseConvertPlanar(NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32, float, info, decoded);
     default:
         return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
@@ -118,9 +118,9 @@ nvimgcdcsStatus_t ConvertInterleaved(nvimgcdcsImageInfo_t& info, const cv::Mat& 
 
     switch (info.plane_info[0].sample_type) {
         CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, uint8_t, info, decoded);
-        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8, int8_t, info, decoded);
+        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_INT8, int8_t, info, decoded);
         CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, uint16_t, info, decoded);
-        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16, int16_t, info, decoded);
+        CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_INT16, int16_t, info, decoded);
         CaseConvertInterleaved(NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32, float, info, decoded);
     default:
         return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;

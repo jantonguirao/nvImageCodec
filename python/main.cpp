@@ -61,29 +61,29 @@ class Module
 static std::string format_str_from_type(nvimgcdcsSampleDataType_t type)
 {
     switch (type) {
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
         return "=b";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
         return "=B";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
         return "=h";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
         return "=H";
-        /*  case NVIMGCDCS_INT32:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT32:
         return "=i";
-    case NVIMGCDCS_UINT32:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32:
         return "=I";
-    case NVIMGCDCS_INT64:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT64:
         return "=q";
-    case NVIMGCDCS_UINT64:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64:
         return "=Q";
-    case NVIMGCDCS_FLOAT:
-        return "=f";
-    case NVIMGCDCS_FLOAT16:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16:
         return "=e";
-    case NVIMGCDCS_FLOAT64:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
+        return "=f";
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64:
         return "=d";
-    case NVIMGCDCS_BOOL:
+   /* case NVIMGCDCS_BOOL:
         return "=?";*/
     default:
         break;
@@ -96,13 +96,13 @@ static nvimgcdcsSampleDataType_t type_from_format_str(const std::string& typestr
     pybind11::ssize_t itemsize = py::dtype(typestr).itemsize();
     if (itemsize == 1) {
         if (py::dtype(typestr).kind() == 'i')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8;
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT8;
         if (py::dtype(typestr).kind() == 'u')
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
 
     } else if (itemsize == 2) {
         if (py::dtype(typestr).kind() == 'i')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16;
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
         if (py::dtype(typestr).kind() == 'u')
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
     } else if (itemsize == 4) {

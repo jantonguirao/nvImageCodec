@@ -93,24 +93,40 @@ constexpr auto ext2loc_css(NVCVChromaSubsampling in)
 constexpr auto ext2loc_sample_type(NVCVDataKind data_kind, int32_t bpp)
 {
     switch (data_kind) {
-    case NVCV_DATA_KIND_SIGNED: {
-        if (bpp == 8)
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8;
-        else if (bpp == 16)
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16;
+    case NVCV_DATA_KIND_SIGNED: 
+        if (bpp <= 8)
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT8;
+        else if ((bpp > 8) &&  (bpp <= 16))
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
+        else if ((bpp > 16) && (bpp <= 32))
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT32;
+        else if ((bpp > 32) && (bpp <= 64))
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT64;
         else
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
-    }
-    case NVCV_DATA_KIND_UNSIGNED: {
-        if (bpp == 8)
+    
+    case NVCV_DATA_KIND_UNSIGNED: 
+        if (bpp <= 8)
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-        else if (bpp == 16)
+        else if ((bpp > 8) && (bpp <= 16))
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+        else if ((bpp > 16) && (bpp <= 32))
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32;
+        else if ((bpp > 32) && (bpp <= 64))
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64;
         else
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
-    }
+    
     case NVCV_DATA_KIND_FLOAT:
-        return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
+        if (bpp <= 16)
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16;
+        else if ((bpp > 16) && (bpp <= 32))
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
+        else if ((bpp > 32) && (bpp <= 64))
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64;
+        else
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
+
     case NVCV_DATA_KIND_COMPLEX:
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
     default:
@@ -122,15 +138,27 @@ constexpr auto ext2loc_sample_type(NVCVDataType data_type)
 {
     switch (data_type) {
     case NVCV_DATA_TYPE_S8:
-        return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8;
-    case NVCV_DATA_TYPE_S16:
-        return NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16;
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_INT8;
     case NVCV_DATA_TYPE_U8:
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+    case NVCV_DATA_TYPE_S16:
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
     case NVCV_DATA_TYPE_U16:
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+    case NVCV_DATA_TYPE_S32:
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_INT32;
+    case NVCV_DATA_TYPE_U32:
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32;
+    case NVCV_DATA_TYPE_S64:
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_INT64;
+    case NVCV_DATA_TYPE_U64:
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64;
+    case NVCV_DATA_TYPE_F16:
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16;
     case NVCV_DATA_TYPE_F32:
         return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
+    case NVCV_DATA_TYPE_F64:
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64;
     default:
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
     }
@@ -142,16 +170,28 @@ constexpr auto loc2ext_dtype(nvimgcdcsSampleDataType_t in)
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN:
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED:
         return NVCV_DATA_TYPE_NONE;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
         return NVCV_DATA_TYPE_S8;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16:
-        return NVCV_DATA_TYPE_S16;
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
         return NVCV_DATA_TYPE_U8;
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
+        return NVCV_DATA_TYPE_S16;
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
         return NVCV_DATA_TYPE_U16;
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT32:
+        return NVCV_DATA_TYPE_S32;
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32:
+        return NVCV_DATA_TYPE_U32;
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT64:
+        return NVCV_DATA_TYPE_S64;
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64:
+        return NVCV_DATA_TYPE_U64;
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16:
+        return NVCV_DATA_TYPE_F16;
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
         return NVCV_DATA_TYPE_F32;
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64:
+        return NVCV_DATA_TYPE_F64;
     default:
         return NVCV_DATA_TYPE_NONE;
     }
@@ -267,8 +307,8 @@ constexpr auto loc2ext_data_kind(nvimgcdcsSampleDataType_t in)
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
         return NVCV_DATA_KIND_UNSIGNED;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8:
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
         return NVCV_DATA_KIND_SIGNED;
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
         return NVCV_DATA_KIND_FLOAT;
@@ -310,10 +350,10 @@ constexpr unsigned char loc2ext_bpp(nvimgcdcsSampleDataType_t in)
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN:
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED:
         return 0;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT8:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
         return 8;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_SINT16:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
         return 16;
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
@@ -398,6 +438,7 @@ nvimgcdcsStatus_t ImageData2Imageinfo(nvimgcdcsImageInfo_t* image_info, const NV
             int32_t bpp;
             CHECK_NVCV(nvcvImageFormatGetPlaneBitsPerPixel(image_data.format, p, &bpp));
             image_info->plane_info[p].sample_type = ext2loc_sample_type(data_kind, bpp);
+            image_info->plane_info[p].precision = bpp;
             if (image_info->plane_info[p].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED)
                 return NVIMGCDCS_STATUS_INVALID_PARAMETER;
             int32_t num_channels;
