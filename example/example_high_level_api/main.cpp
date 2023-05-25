@@ -41,6 +41,7 @@ void get_read_flags(const CommandLineParams& params, std::vector<int>* read_para
         read_params->push_back(NVIMGCDCS_IMREAD_DEVICE_ID);
         read_params->push_back(params.device_id);
     }
+    read_params->push_back(NVIMGCDCS_IMREAD_DISABLE_UPSAMPLING_INTERPOLATION);
 }
 
 void get_write_params(const CommandLineParams& params, std::vector<int>* write_params)

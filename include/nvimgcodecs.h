@@ -71,7 +71,7 @@ extern "C"
     {
         nvimgcdcsStructureType_t type;
         void* next;
-        
+
         uint32_t version;
         uint32_t ext_api_version;
         uint32_t cudart_version;
@@ -692,7 +692,6 @@ extern "C"
     typedef nvimgcdcsStatus_t (*nvimgcdcsExtensionModuleEntryFunc_t)(nvimgcdcsExtensionDesc_t* ext_desc);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc);
 
-
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsGetProperties(nvimgcdcsProperties_t* properties);
 
     // Instance
@@ -752,9 +751,8 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_handle, char* codec_name);
 
     //Decoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreateEx(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id,
-                                                            const char* options);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
+        nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
         nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
@@ -763,7 +761,8 @@ extern "C"
         nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(
+        nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
         nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
@@ -780,6 +779,8 @@ extern "C"
         //for Jpeg2k and 422/420 chroma subsampling enable conversion to RGB
         NVIMGCDCS_IMREAD_COLOR = 2,
         NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 3, // flag Ignore orientation from Exif
+        NVIMGCDCS_IMREAD_DISABLE_UPSAMPLING_INTERPOLATION =
+            4, // flag Disables upsampling interpolation similarly like e.g. ":fancy_upsampling=0" decoder option
         NVIMGCDCS_IMREAD_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImReadParams_t;
 
