@@ -164,7 +164,7 @@ int main(int argc, const char* argv[])
     instance_create_info.num_cpu_threads = 10;
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
     
-    nvimgcdcsExtension_t pnm_extension;
+    nvimgcdcsExtension_t pnm_extension{nullptr};
     nvimgcdcsExtensionDesc_t pnm_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
     get_nvpnm_extension_desc(&pnm_extension_desc);
     nvimgcdcsExtensionCreate(instance, &pnm_extension, &pnm_extension_desc);
@@ -179,7 +179,9 @@ int main(int argc, const char* argv[])
 
     nvimgcdcsImageDestroy(image);
 
-    nvimgcdcsExtensionDestroy(pnm_extension);
+    if (pnm_extension) {
+        nvimgcdcsExtensionDestroy(pnm_extension);
+    }
     nvimgcdcsInstanceDestroy(instance);
 
     return EXIT_SUCCESS;
