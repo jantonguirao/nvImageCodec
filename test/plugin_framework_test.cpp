@@ -147,7 +147,7 @@ TEST_F(PluginFrameworkExtensionsPathTest, test_extension_path_for_empty_env_and_
 {
     std::string env_test_path{""};
     std::string soft_test_path{""};
-    std::string expected_test_path{DefaultExtensionsPath};
+    std::string expected_test_path{GetDefaultExtensionsPath()};
     TestExtensionsOnePath(env_test_path, soft_test_path, expected_test_path);
 }
 
@@ -172,7 +172,7 @@ TEST_F(PluginFrameworkExtensionsPathTest, test_extension_path_for_env_with_multi
 {
     std::vector<std::string> expected_test_paths{"/usr/env_test_path1", "/usr/env_test_path2", "/usr/env_test_path3"};
     std::stringstream ss;
-    ss << expected_test_paths[0] << PathSeparator << expected_test_paths[1] << PathSeparator << expected_test_paths[2];
+    ss << expected_test_paths[0] << GetPathSeparator() << expected_test_paths[1] << GetPathSeparator() << expected_test_paths[2];
     std::string env_test_path{ss.str()};
 
     std::string soft_test_path{""};
@@ -184,7 +184,7 @@ TEST_F(PluginFrameworkExtensionsPathTest, test_extension_path_for_soft_with_mult
 {
     std::vector<std::string> expected_test_paths{"/usr/soft_test_path1", "/usr/soft_test_path2", "/usr/soft_test_path3"};
     std::stringstream ss;
-    ss << expected_test_paths[0] << PathSeparator << expected_test_paths[1] << PathSeparator << expected_test_paths[2];
+    ss << expected_test_paths[0] << GetPathSeparator() << expected_test_paths[1] << GetPathSeparator() << expected_test_paths[2];
     std::string env_test_path{"/usr/env_test_path"};
 
     std::string soft_test_path{ss.str()};

@@ -10,56 +10,39 @@
 # without an express license agreement from NVIDIA CORPORATION or
 # its affiliates is strictly prohibited.
 
-cmake_minimum_required(VERSION 3.22)
-
-project(nvimgcodecs_python CXX)
-
-set(PYBIND11_PYTHON_VERSION ${PYTHON_VERSION})
-
-include_directories(
-  ../include
-)   
-
-set(CMAKE_CXX_STANDARD 20)
-
-pybind11_add_module(nvimgcodecs_python MODULE
-    main.cpp
-)
-
-target_include_directories(nvimgcodecs_python
-    PRIVATE
-        ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-set_target_properties(nvimgcodecs_python PROPERTIES
-    OUTPUT_NAME nvimgcodecs
-    DEBUG_POSTFIX ""
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
-)
-
-find_package(CUDAToolkit REQUIRED)
-
-find_library(CUDA_LIB
-    NAMES cuda
-    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
-)
-
-target_link_libraries(nvimgcodecs_python
-    PRIVATE
-    nvimgcodecs
-    CUDA::cudart_static
-    -static-libstdc++
-    ${CUDA_LIB}
-)
-
-#target_compile_options(nvimgcodecs_python
-#    PRIVATE
-#        -Wno-deprecated-declarations
-#        -Wsuggest-override
-#)
-
+include(Utils)
 include(GNUInstallDirs)
 
-install(TARGETS nvimgcodecs_python
-    LIBRARY DESTINATION python
-)
+build_per_python_lib(nvimgcodecs_python
+                     OUTPUT_NAME nvimgcodecs_impl
+                     OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs
+                     PUBLIC_LIBS nvimgcodecs
+                     PRIV_LIBS CUDA::cudart_static -static-libstdc++
+                     SRC main.cpp)
+
+# TODO(janton)
+
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/nvidia" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
+make_directory("${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions")
+configure_file("__init__.py.in" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/__init__.py")
+configure_file("setup.py.in" "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${PROJECT_SOURCE_DIR}/LICENSE.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+
+add_custom_target(copy_libs_to_python_dir ALL DEPENDS nvimgcodecs_python)
+add_custom_command(
+    TARGET copy_libs_to_python_dir
+    COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodecs.so" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs" &&
+            cp "${PROJECT_BINARY_DIR}/extensions/*/*.so*" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions"
+    )
+
+if (BUILD_WHEEL)
+    add_custom_target(wheel ALL DEPENDS copy_libs_to_python_dir)
+    set(WHEEL_FILENAME "nvidia_nvimgcodecs_cuda120-${NVIMGCODECS_VERSION}-py3-none-${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME}.whl")
+    set(WHEEL_DIR "${CMAKE_CURRENT_BINARY_DIR}/dist")
+    set(WHEEL_FILEPATH "${WHEEL_DIR}/${WHEEL_FILENAME}")
+    add_custom_command(
+        TARGET wheel
+        COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel --verbose --compression=stored --python-tag=py3 --plat-name=${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME} &&
+                ${CMAKE_CURRENT_SOURCE_DIR}/bundle-wheel.sh ${WHEEL_FILEPATH} NO NO ${WHEEL_FILENAME} /usr/local ${WHEEL_DIR} YES)
+endif()

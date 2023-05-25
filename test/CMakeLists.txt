@@ -1,5 +1,4 @@
 
-
 set(SRCS
     nvimgcodecs_tests.cpp
     test_utils.cpp
@@ -28,28 +27,15 @@ endif()
 
 
 if (BUILD_NVJPEG2K_EXT)
-    if(NOT DEFINED NVJPEG2K_LIBRARY)
-        find_library(NVJPEG2K_LIBRARY NAMES nvjpeg2k)
-    endif()
-
     list(APPEND SRCS extensions/nvjpeg2k_ext_encoder_test.cpp)
     list(APPEND SRCS extensions/nvjpeg2k_ext_decoder_test.cpp)
 endif()
 
 if (BUILD_LIBJPEG_TURBO_EXT)
-    if(NOT DEFINED JPEG_LIBRARY)
-        find_package(JPEG 62 REQUIRED) # 1.5.3 version
-        message("Using libjpeg-turbo at ${JPEG_LIBRARY}")
-    endif()
-
     list(APPEND SRCS extensions/libjpeg_turbo_ext_decoder_test.cpp)
 endif()
 
 if (BUILD_LIBTIFF_EXT)
-    if(NOT DEFINED TIFF_LIBRARY)
-        find_package(TIFF REQUIRED)
-        message("Using libtiff at ${TIFF_LIBRARY}")
-    endif()
     list(APPEND SRCS extensions/libtiff_ext_decoder_test.cpp)
 endif()
 
@@ -62,13 +48,9 @@ include_directories(
     .
     ..
     ../src
-    ../include
-    SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )
 
 set(FILESTOPACK nvimgcodecs_tests)
-
-find_package(CUDAToolkit REQUIRED)
 
 if (NOT DEFINED OpenCV_VERSION)
   find_package(OpenCV 4.0 QUIET COMPONENTS core imgproc imgcodecs)
@@ -82,14 +64,9 @@ endif()
 
 
 include_directories(
-  ../../include
   SYSTEM ${JPEG_INCLUDE_DIR}
   SYSTEM ${OpenCV_INCLUDE_DIRS}
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )
-
-# Find all dependencies
-include(Dependencies)
 
 add_executable(nvimgcodecs_tests ${SRCS})
 foreach(testapp nvimgcodecs_tests)

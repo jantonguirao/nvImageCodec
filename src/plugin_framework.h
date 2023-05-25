@@ -24,14 +24,8 @@ class ICodecRegistry;
 class ICodec;
 class IEnvironment;
 
-#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-constexpr std::string_view DefaultExtensionsPath = "/usr/lib/nvimgcodecs/extensions";
-constexpr char PathSeparator = ':';
-#elif defined(_WIN32) || defined(_WIN64)
-constexpr std::string_view DefaultExtensionsPath = "C:/Program Files/nvimgcodecs/extensions";
-constexpr char PathSeparator = ';';
-#endif
-
+std::string GetDefaultExtensionsPath();
+char GetPathSeparator();
 class PluginFramework
 {
   public:

@@ -1,9 +1,22 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
-if(NOT BUILD_ID)
-set (BUILD_ID 0)
-endif()
 
-project(nvimgcodecs VERSION 0.1.0.${BUILD_ID} LANGUAGES CXX CUDA)
+set(NVIMGCODECS_FLAVOR "")  # could be nightly, weekly, etc if necessary
+set(NVIMGCODECS_FLAVOR_MINUS "")  # -nightly, -weekly, etc
+set(NVIMGCODECS_VERSION "0.1.0")
+if(NOT BUILD_ID)
+    set (BUILD_ID 0)
+endif()
+set(NVIMGCODECS_VERSION_WITH_BUILD "${NVIMGCODECS_VERSION}.${BUILD_ID}")
+set(NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME "manylinux2014_x86_64")
+project(nvimgcodecs VERSION ${NVIMGCODECS_VERSION_WITH_BUILD} LANGUAGES CXX CUDA)
+
+set(CUDA_VERSION "${CMAKE_CUDA_COMPILER_VERSION}")
+
+# Include custom cmake modules/scripts
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
+
+include(Utils)
+parse_cuda_version(${CUDA_VERSION} CUDA_VERSION_MAJOR CUDA_VERSION_MINOR CUDA_VERSION_PATCH CUDA_VERSION_SHORT CUDA_VERSION_SHORT_DIGIT_ONLY)
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -33,6 +46,7 @@ option(BUILD_LIBJPEG_TURBO_EXT "Build libjpeg-turbo extensions module" ON)
 option(BUILD_LIBTIFF_EXT "Build libtiff extensions module" ON)
 option(BUILD_OPENCV_EXT "Build opencv extensions module" ON)
 option(BUILD_PYTHON "Build Python binding" ON)
+option(BUILD_WHEEL "Build python wheel package" ON)
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
 
@@ -54,11 +68,6 @@ set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_FILE_NAME}_test)
 endif()
 include (CPack)
 
-
-# Include custom cmake modules/scripts
-list(APPEND CMAKE_MODULE_PATH
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmake/
-)
 
 # Targeted CUDA Architectures
 # ALL: 30;35;50;60;70;75;82
@@ -87,15 +96,18 @@ generate_product_version(ProductVersionFiles
     COMPANY_NAME NVIDIA Corporation)
 endif()
 
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-
 set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS OFF)
+
+include_directories(${PROJECT_SOURCE_DIR}/include)
+
+# Find all dependencies
+include(Dependencies)
 
 add_subdirectory(external)
 

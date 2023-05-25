@@ -5,25 +5,10 @@ set(NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC
   opencv_decoder.cpp
   )
 
-if (NOT DEFINED OpenCV_VERSION)
-  find_package(OpenCV 4.0 QUIET COMPONENTS core imgproc imgcodecs)
-  if(NOT OpenCV_FOUND)
-    find_package(OpenCV 3.0 REQUIRED COMPONENTS core imgproc imgcodecs)
-  endif()
-  message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} (found suitable version \"${OpenCV_VERSION}\", minimum required is \"3.0\")")
-  message("OpenCV libraries: ${OpenCV_LIBRARIES}")
-endif()
-
-find_package(JPEG 62 REQUIRED) # 1.5.3 version
-message("Using OpenCV at ${JPEG_LIBRARY}")
-
 include_directories(
-  ../../include
   ../../src
-  SYSTEM ../../external/NVTX/c/include
   SYSTEM ${JPEG_INCLUDE_DIR}
   SYSTEM ${OpenCV_INCLUDE_DIRS}
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
 )
 
 add_library(${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC} ext_module.cpp)

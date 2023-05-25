@@ -15,8 +15,8 @@
 #include <filesystem>
 #include <iostream>
 #include <sstream>
-
 #include <nvimgcdcs_version.h>
+#include <dlfcn.h>
 
 #include "codec.h"
 #include "codec_registry.h"
@@ -30,6 +30,43 @@
 namespace fs = std::filesystem;
 
 namespace nvimgcdcs {
+
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
+
+std::string GetDefaultExtensionsPath() {
+    Dl_info info;
+    if (dladdr((const void*)GetDefaultExtensionsPath, &info)) {
+        std::string path(info.dli_fname);
+        // If this comes from a shared_object in the installation dir, 
+        // we trim the nvimgcodecs dir and add "extensions" to the path
+        // Examples:
+        // /usr/lib/nvimgcodecs/lib64/libnvimgcodecs.so -> /usr/lib/nvimgcodecs/extensions
+        // ~/.local/lib/python3.8/site-packages/nvidia/nvimgcodecs/libnvimgcodecs.so ->
+        //      ~/.local/lib/python3.8/site-packages/nvidia/nvimgcodecs/extensions
+        auto pos = path.find("nvimgcodecs/");
+        if (pos != std::string::npos) {
+           return path.substr(0, pos + strlen("nvimgcodecs/")) + "extensions";
+        }
+    }
+    return "/usr/lib/nvimgcodecs/extensions";
+}
+
+char GetPathSeparator() {
+    return ':';
+}
+
+#elif defined(_WIN32) || defined(_WIN64)
+
+std::string GetDefaultExtensionsPath() {
+    return "C:/Program Files/nvimgcodecs/extensions";
+}
+
+char GetPathSeparator() {
+    return ';';
+}
+
+#endif
+
 
 PluginFramework::PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr<IEnvironment> env,
     std::unique_ptr<IDirectoryScaner> directory_scaner, std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
@@ -49,11 +86,12 @@ PluginFramework::PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr
     std::string effective_ext_path = extensions_path;
     if (effective_ext_path.empty()) {
         std::string env_extensions_path = env_->getVariable("NVIMGCODECS_EXTENSIONS_PATH");
-        effective_ext_path = env_extensions_path.empty() ? DefaultExtensionsPath : std::string(env_extensions_path);
+        effective_ext_path = env_extensions_path.empty() ? GetDefaultExtensionsPath() : std::string(env_extensions_path);
     }
     std::stringstream ss(effective_ext_path);
     std::string current_path;
-    while (getline(ss, current_path, PathSeparator)) {
+    while (getline(ss, current_path, GetPathSeparator())) {
+        NVIMGCDCS_LOG_DEBUG("Using extension path [" << current_path << "]");
         extension_paths_.push_back(current_path);
     }
 }

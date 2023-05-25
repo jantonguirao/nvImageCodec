@@ -276,7 +276,7 @@ class Image
     py::dict cudaarrayinterface_;
 };
 
-PYBIND11_MODULE(nvimgcodecs, m)
+PYBIND11_MODULE(nvimgcodecs_impl, m)
 {
     static Module module;
 

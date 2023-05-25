@@ -4,13 +4,6 @@ set(NVIMGCDCS_EXAMPLE_SRC
         main.cpp
 )
 
-include_directories(
-        ../../include
-)
-
-include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-
-find_package(CUDAToolkit REQUIRED)
 find_package(NVCV_TYPES REQUIRED)
 find_package(CVCUDA REQUIRED)
 

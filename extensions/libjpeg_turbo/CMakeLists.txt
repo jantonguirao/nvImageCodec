@@ -7,15 +7,7 @@ set(NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC
   jpeg_mem.cpp
   )
 
-find_package(JPEG 62 REQUIRED) # 1.5.3 version
-message("Using libjpeg-turbo at ${JPEG_LIBRARY}")
-
-include_directories(
-  ../../include
-  SYSTEM ../../external/NVTX/c/include
-  SYSTEM ${JPEG_INCLUDE_DIR}
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-  )
+include_directories(SYSTEM ${JPEG_INCLUDE_DIR})
 
 add_library(${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_LIBJPEG_TURBO_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC})

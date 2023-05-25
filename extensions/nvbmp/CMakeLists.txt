@@ -5,10 +5,6 @@ set(NVIMGCDCS_NVBMP_EXT_SRC
       encoder.cpp
       decoder.cpp
 )
-include_directories(
-  ../../include
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-)     
     
 add_library(${NVIMGCDCS_NVBMP_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVBMP_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_NVBMP_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVBMP_EXT_SRC})

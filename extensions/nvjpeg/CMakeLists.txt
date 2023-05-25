@@ -9,18 +9,12 @@ set(NVIMGCDCS_NVJPEG_EXT_SRC
   nvjpeg_utils.cpp
 )
 
-find_package(CUDAToolkit REQUIRED)
-
-include_directories(
-  ../../include
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-)
-include_directories(../../external/NVTX/c/include)
-
 add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVJPEG_EXT_SRC})
 
-target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} PUBLIC CUDA::cudart ${NVJPEG_LIBRARY})
+target_link_libraries(
+  ${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
+  PUBLIC CUDA::cudart_static ${NVJPEG_LIBRARY} ${NVJPEG_LIBRARY_DEPS})
 
 if(UNIX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
