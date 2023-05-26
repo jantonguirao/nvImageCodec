@@ -27,8 +27,11 @@ before_script:
     extends: .build
     artifacts:
         paths:
+            - build/python/dist/*.whl
             - build/src/*.so.*
             - build/src/*.a
+            - build/extensions/*/*.so.*
+            - build/extensions/*/*.a
             - build/test/nvimagecodec_tests
             - build/test/nvimagecodec_tests_static
         expire_in: 2 weeks
@@ -46,8 +49,6 @@ build:nvimagecodec:
         - nice -n 19 make -j8
         - nvidia-smi
         - ctest --verbose
-
-
 
 
 # Documentation jobs

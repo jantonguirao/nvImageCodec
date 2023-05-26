@@ -38,7 +38,7 @@ add_custom_command(
 
 if (BUILD_WHEEL)
     add_custom_target(wheel ALL DEPENDS copy_libs_to_python_dir)
-    set(WHEEL_FILENAME "nvidia_nvimgcodecs_cuda120-${NVIMGCODECS_VERSION}-py3-none-${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME}.whl")
+    set(WHEEL_FILENAME "nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-${NVIMGCODECS_VERSION}-py3-none-${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME}.whl")
     set(WHEEL_DIR "${CMAKE_CURRENT_BINARY_DIR}/dist")
     set(WHEEL_FILEPATH "${WHEEL_DIR}/${WHEEL_FILENAME}")
     add_custom_command(
