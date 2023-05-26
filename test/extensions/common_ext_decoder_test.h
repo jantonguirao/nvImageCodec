@@ -46,7 +46,7 @@ class CommonExtDecoderTest
         images_.clear();
         streams_.clear();
 
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, nullptr));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         params_.enable_orientation = true;
         params_.enable_color_conversion = true;

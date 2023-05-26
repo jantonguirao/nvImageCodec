@@ -205,7 +205,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
     nvimgcdcsDecoder_t decoder;
-    nvimgcdcsDecoderCreate(instance, &decoder);
+    nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT, nullptr);
 
     nvimgcdcsFuture_t future;
     nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future);

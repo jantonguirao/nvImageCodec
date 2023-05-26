@@ -428,7 +428,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_h
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreateEx(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -445,11 +445,6 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreateEx(nvimgcdcsInstance_t inst
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
-}
-
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id)
-{
-    return nvimgcdcsDecoderCreateEx(instance, decoder, device_id, nullptr);
 }
 
 nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder)
@@ -651,7 +646,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsIm
     return ret;
 }
 
-static void fill_decode_params(const int* params, nvimgcdcsDecodeParams_t* decode_params, int* device_id)
+static void fill_decode_params(const int* params, nvimgcdcsDecodeParams_t* decode_params, int* device_id, std::string* options)
 {
     const int* param = params;
     while (param && *param) {
@@ -670,6 +665,10 @@ static void fill_decode_params(const int* params, nvimgcdcsDecodeParams_t* decod
             *device_id = *param;
             break;
         }
+        case NVIMGCDCS_IMREAD_DISABLE_UPSAMPLING_INTERPOLATION: {
+            *options = ":fancy_upsampling=0";
+            break;
+        } 
         default:
             break;
         };
@@ -715,14 +714,15 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             decode_params.enable_color_conversion = false;
             decode_params.enable_orientation = true;
             int device_id = NVIMGCDCS_DEVICE_CURRENT;
-            fill_decode_params(params, &decode_params, &device_id);
+            std::string options;
+            fill_decode_params(params, &decode_params, &device_id, &options);
 
             nvimgcdcsImageCreate(instance, image, &image_info);
             (*image)->dev_image_buffer_ = image_info.buffer;
             (*image)->dev_image_buffer_size_ = image_info.buffer_size;
 
             nvimgcdcsDecoder_t decoder;
-            nvimgcdcsDecoderCreate(instance, &decoder, device_id);
+            nvimgcdcsDecoderCreate(instance, &decoder, device_id, options.c_str());
 
             nvimgcdcsFuture_t future;
             nvimgcdcsDecoderDecode(decoder, &code_stream, image, 1, &decode_params, &future);

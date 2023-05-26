@@ -178,7 +178,8 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
     nvimgcdcsDecoder_t decoder;
-    nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT);
+    std::string dec_options{":fancy_upsampling=0"};
+    nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT, dec_options.c_str());
 
     // warm up
     for (int warmup_iter = 0; warmup_iter < params.warmup; warmup_iter++) {
@@ -409,7 +410,8 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
         CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &images[i], &image_info));
 
         if (decoder == nullptr) {
-            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT));
+            std::string dec_options{":fancy_upsampling=0"};
+            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT, dec_options.c_str()));
         }
     }
     return EXIT_SUCCESS;
@@ -682,7 +684,7 @@ int main(int argc, const char* argv[])
     nvimgcdcsGetProperties(&properties);
     std::cout << "nvImageCodecs version: " << NVIMGCDCS_STREAM_VER(properties.version) << std::endl;
     std::cout << " - extension API version: " << NVIMGCDCS_STREAM_VER(properties.ext_api_version) << std::endl;
-    std::cout << " - CUDA Runtime version: " << properties.cudart_version / 1000 << "." << (properties.ext_api_version % 1000) / 10
+    std::cout << " - CUDA Runtime version: " << properties.cudart_version / 1000 << "." << (properties.cudart_version % 1000) / 10
               << std::endl;
     cudaDeviceProp props;
     int dev = 0;
@@ -704,7 +706,7 @@ int main(int argc, const char* argv[])
     instance_create_info.num_cpu_threads = 10;
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
-    nvimgcdcsExtension_t pnm_extension;
+    nvimgcdcsExtension_t pnm_extension{nullptr};
     nvimgcdcsExtensionDesc_t pnm_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
     get_nvpnm_extension_desc(&pnm_extension_desc);
     nvimgcdcsExtensionCreate(instance, &pnm_extension, &pnm_extension_desc);
@@ -718,8 +720,9 @@ int main(int argc, const char* argv[])
     } else {
         exit_code = process_one_image(instance, input_path, output_path, params);
     }
-
-    nvimgcdcsExtensionDestroy(pnm_extension);
+    if (pnm_extension) {
+        nvimgcdcsExtensionDestroy(pnm_extension);
+    }
     nvimgcdcsInstanceDestroy(instance);
 
     return exit_code;
