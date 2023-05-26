@@ -30,6 +30,16 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" DESTINATION "${CMAKE_CURRENT
 file(COPY "${PROJECT_SOURCE_DIR}/LICENSE.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_custom_target(copy_libs_to_python_dir ALL DEPENDS nvimgcodecs_python)
+add_dependencies(copy_libs_to_python_dir 
+    nvimgcodecs
+    libjpeg_turbo_ext
+    libtiff_ext
+    nvbmp_ext
+    nvjpeg_ext
+    nvjpeg2k_ext
+    nvpnm_ext
+    opencv_ext)
+
 add_custom_command(
     TARGET copy_libs_to_python_dir
     COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodecs.so" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs" &&
