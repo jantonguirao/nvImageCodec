@@ -51,11 +51,6 @@ add_library(${NVIMGCDCS_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_SRCS} ${ProductV
 set(LIBTOPACK ${NVIMGCDCS_LIBRARY_NAME} ${NVIMGCDCS_LIBRARY_NAME}_static)
 
 find_package(CUDAToolkit REQUIRED)
-
-# find_library(CUDA_LIB
-#     NAMES cuda
-#     PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
-# )
 add_subdirectory(dynlink_cuda)
 
 target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PRIVATE CUDA::cudart_static dynlink_cuda)
