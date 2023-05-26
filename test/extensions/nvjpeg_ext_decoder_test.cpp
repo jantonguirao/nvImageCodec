@@ -42,7 +42,8 @@ class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
     void SetUp()
     {
         NvJpegExtTestBase::SetUp();
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, nullptr));
+        std::string dec_options{":fancy_upsampling=0"};
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, dec_options.c_str()));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         params_.enable_orientation = true;
         params_.enable_color_conversion = true;
