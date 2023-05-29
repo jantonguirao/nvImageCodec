@@ -9,7 +9,6 @@
  */
 
 #include "cuda_decoder.h"
-#include "nvjpeg_utils.h"
 #include <library_types.h>
 #include <nvimgcodecs.h>
 #include <cstring>
@@ -21,6 +20,7 @@
 #include <vector>
 #include "errors_handling.h"
 #include "log.h"
+#include "nvjpeg_utils.h"
 #include "type_convert.h"
 
 namespace nvjpeg {
@@ -359,11 +359,12 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                     nvjpegExifOrientation_t orientation = nvimgcdcs_to_nvjpeg_orientation(image_info.orientation);
 
                     // This is a workaround for a known bug in nvjpeg.
-                    int major, minor, ver;
+                    int major, minor, patch, ver;
                     if (NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MAJOR_VERSION, &major) &&
-                        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor)) {
-                        ver = major * 1000 + minor;
-                        if (ver < 12001) { // TODO(janton): double check the version that includes the fix
+                        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor) &&
+                        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(PATCH_LEVEL, &patch)) {
+                        ver = major * 1000 + minor * 100 + patch * 10;
+                        if (ver < 12200) {
                             if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
                                 orientation = NVJPEG_ORIENTATION_ROTATE_270;
                             else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
