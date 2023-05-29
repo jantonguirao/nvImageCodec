@@ -164,15 +164,22 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
     image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
 
+    bool swap_wh = decode_params.enable_orientation && ((image_info.orientation.rotated / 90) % 2);
+    if (swap_wh) {
+        std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
+    }
+
     size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
-    image_info.buffer_size = device_pitch_in_bytes * image_info.plane_info[0].height * image_info.num_planes;
-    image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
-    CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
-    for (auto c = 0; c < image_info.num_planes; ++c) {
+
+    for (uint32_t c = 0; c < image_info.num_planes; ++c) {
         image_info.plane_info[c].height = image_info.plane_info[0].height;
         image_info.plane_info[c].width = image_info.plane_info[0].width;
         image_info.plane_info[c].row_stride = device_pitch_in_bytes;
     }
+
+    image_info.buffer_size = image_info.plane_info[0].row_stride * image_info.plane_info[0].height * image_info.num_planes;
+    image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+    CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
 
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
@@ -383,29 +390,33 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
         image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
         image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
-        for (auto c = 0; c < image_info.num_planes; ++c) {
-            image_info.plane_info[c].height = image_info.plane_info[0].height;
-            image_info.plane_info[c].width = image_info.plane_info[0].width;
+
+        bool swap_wh = decode_params.enable_orientation && ((image_info.orientation.rotated / 90) % 2);
+        if (swap_wh) {
+            std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
         }
 
-        size_t device_pitch_in_bytes = bytes_per_element * image_info.plane_info[0].width;
-        size_t image_buffer_size = device_pitch_in_bytes * image_info.plane_info[0].height * image_info.num_planes;
+        size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
 
-        if (image_buffer_size > ibuf[i].size) {
+        for (uint32_t c = 0; c < image_info.num_planes; ++c) {
+            image_info.plane_info[c].height = image_info.plane_info[0].height;
+            image_info.plane_info[c].width = image_info.plane_info[0].width;
+            image_info.plane_info[c].row_stride = device_pitch_in_bytes;
+        }
+
+        image_info.buffer_size = image_info.plane_info[0].row_stride * image_info.plane_info[0].height * image_info.num_planes;
+        image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+
+        if (image_info.buffer_size > ibuf[i].size) {
             if (ibuf[i].data) {
                 CHECK_CUDA(cudaFree(ibuf[i].data));
             }
-            CHECK_CUDA(cudaMalloc((void**)&ibuf[i].data, image_buffer_size));
+            CHECK_CUDA(cudaMalloc((void**)&ibuf[i].data, image_info.buffer_size));
         }
+        
         ibuf[i].pitch_in_bytes = device_pitch_in_bytes;
-        ibuf[i].size = image_buffer_size;
-
-        for (uint32_t c = 0; c < image_info.num_planes; ++c) {
-            image_info.plane_info[c].row_stride = device_pitch_in_bytes;
-        }
+        ibuf[i].size = image_info.buffer_size;
         image_info.buffer = ibuf[i].data;
-        image_info.buffer_size = image_buffer_size;
-        image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
         CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &images[i], &image_info));
 
