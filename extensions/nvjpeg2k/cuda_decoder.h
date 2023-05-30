@@ -14,7 +14,7 @@
 #include <nvjpeg2k.h>
 #include <memory>
 #include <vector>
-
+#include <nppdefs.h>
 namespace nvjpeg2k {
 
 class NvJpeg2kDecoderPlugin
@@ -37,10 +37,14 @@ class NvJpeg2kDecoderPlugin
 
     struct DecodeState
     {
-        explicit DecodeState(nvjpeg2kHandle_t handle, int num_threads);
+        explicit DecodeState(nvjpeg2kHandle_t handle, nvimgcdcsDeviceAllocator_t* device_allocator,
+            nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads);
         ~DecodeState();
 
         nvjpeg2kHandle_t handle_ = nullptr;
+        nvimgcdcsDeviceAllocator_t* device_allocator_;
+        nvimgcdcsPinnedAllocator_t* pinned_allocator_;
+        int device_id_;
 
         struct PerThreadResources
         {
@@ -48,6 +52,8 @@ class NvJpeg2kDecoderPlugin
             cudaEvent_t event_;
             nvjpeg2kDecodeState_t state_;
             std::unique_ptr<ParseState> parse_state_;
+
+            NppStreamContext npp_ctx_;
         };
 
         struct Sample
