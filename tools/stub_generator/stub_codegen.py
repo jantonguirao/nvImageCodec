@@ -23,6 +23,7 @@ import argparse
 import re
 import json
 import clang.cindex
+import os
 
 
 def function_header(return_type, name, args):
@@ -59,6 +60,9 @@ def main():
         'extra_args', nargs='*', type=str, default=None)
     args = parser.parse_args()
 
+
+    if os.name == 'nt':
+        clang.cindex.Config.set_library_file('C:/Program Files/LLVM/bin/libclang.dll')
     config = json.load(args.input)
 
     function_impl = """

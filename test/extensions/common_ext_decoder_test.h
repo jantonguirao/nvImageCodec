@@ -71,7 +71,7 @@ class CommonExtDecoderTest
         nvimgcdcsRegion_t region = {NVIMGCDCS_STRUCTURE_TYPE_REGION, nullptr, 0})
     {
         std::string filename = resources_dir + "/" + rel_path;
-        std::string reference_filename = std::filesystem::path(resources_dir + "/ref/" + rel_path).replace_extension(".ppm");
+        std::string reference_filename = std::filesystem::path(resources_dir + "/ref/" + rel_path).replace_extension(".ppm").string();
         int num_channels = sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y ? 1 : 3;
         auto cv_type = num_channels == 1 ? CV_8UC1 : CV_8UC3;
         int cv_flags = num_channels == 1 ? cv::IMREAD_GRAYSCALE : cv::IMREAD_COLOR;

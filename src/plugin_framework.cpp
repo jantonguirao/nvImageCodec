@@ -16,8 +16,6 @@
 #include <iostream>
 #include <sstream>
 #include <nvimgcdcs_version.h>
-#include <dlfcn.h>
-
 #include "codec.h"
 #include "codec_registry.h"
 #include "ienvironment.h"
@@ -26,6 +24,10 @@
 #include "image_encoder_factory.h"
 #include "image_parser_factory.h"
 #include "log.h"
+
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
+#include <dlfcn.h>
+#endif
 
 namespace fs = std::filesystem;
 

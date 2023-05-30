@@ -60,7 +60,7 @@ class LibraryLoader : public ILibraryLoader
         }
         return handle;
     }
-    void unloadLibrary(LibraryHandle libraryHandle) override
+    void unloadLibrary(LibraryHandle library_handle) override
     {
         const BOOL result = ::FreeLibrary(library_handle);
         if (result == 0) {
@@ -70,7 +70,7 @@ class LibraryLoader : public ILibraryLoader
     void* getFuncAddress(LibraryHandle library_handle, const std::string& func_name) override
     {
         FARPROC func_ptr = ::GetProcAddress(library_handle, func_name.c_str());
-        if (funcPtr == nullptr) {
+        if (func_ptr == nullptr) {
             throw std::runtime_error(std::string("Failed to get function from library"));
         }
         return reinterpret_cast<void*>(func_ptr);

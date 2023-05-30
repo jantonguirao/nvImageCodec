@@ -50,10 +50,12 @@ include_directories(
     ../src
 )
 
+include_directories(${NVJPEG2K_INCLUDE})
+
 set(FILESTOPACK nvimgcodecs_tests)
 
 if (NOT DEFINED OpenCV_VERSION)
-  find_package(OpenCV 4.0 QUIET COMPONENTS core imgproc imgcodecs)
+  find_package(OpenCV 4.0 REQUIRED COMPONENTS core imgproc imgcodecs)
   if(NOT OpenCV_FOUND)
     find_package(OpenCV 3.0 REQUIRED COMPONENTS core imgproc imgcodecs)
   endif()
@@ -61,7 +63,6 @@ if (NOT DEFINED OpenCV_VERSION)
   message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} (found suitable version \"${OpenCV_VERSION}\", minimum required is \"3.0\")")
   message("OpenCV libraries: ${OpenCV_LIBRARIES}")
 endif()
-
 
 include_directories(
   SYSTEM ${JPEG_INCLUDE_DIR}
@@ -97,7 +98,10 @@ foreach(testapp nvimgcodecs_tests)
 
     if (BUILD_LIBTIFF_EXT)
         list(APPEND TARGET_LIBS libtiff_ext_static)
+        #TODO On Windows linking with OpenCV_LIBRARIES already takes tiff library
+        if (NOT WIN32)
         list(APPEND TARGET_LIBS ${TIFF_LIBRARY})
+        endif()
         list(APPEND TARGET_LIBS ${JPEG_LIBRARY})
     endif()
 
@@ -105,12 +109,15 @@ foreach(testapp nvimgcodecs_tests)
         list(APPEND TARGET_LIBS opencv_ext_static)
     endif()
 
+    
     target_link_libraries(${testapp} PUBLIC
         ${TARGET_LIBS}
         ${OpenCV_LIBRARIES}
         ${NVJPEG2K_LIBRARY}
         CUDA::nvjpeg
         CUDA::cudart
+        CUDA::nppc
+        CUDA::nppidei
         CUDA::cuda_driver
         GTest::gtest
         GTest::gmock

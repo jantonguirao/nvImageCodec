@@ -139,7 +139,7 @@ boolean MemFillInputBuffer(j_decompress_ptr cinfo) {
 void MemTermSource(j_decompress_ptr cinfo) {}
 
 // -----------------------------------------------------------------------------
-void MemSkipInputData(j_decompress_ptr cinfo, int64_t jump) {
+void MemSkipInputData(j_decompress_ptr cinfo, long jump) {
   MemSourceMgr *src = reinterpret_cast<MemSourceMgr *>(cinfo->src);
   if (jump < 0) {
     return;

@@ -19,7 +19,7 @@ setup(name='nvidia-nvimgcodecs@NVIMGCODECS_FLAVOR_MINUS@-cuda@CUDA_VERSION_SHORT
           long_description='''NVIDIA nvimgcodecs
 ===========
 
-Enter long description here
+nvImageCodecs is a library of accelerated codecs with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
 ''',
       long_description_content_type="text/x-rst",
       url='https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec',

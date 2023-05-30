@@ -1,4 +1,4 @@
-set(CUDA_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_cuda_gen.cc")
+set(CUDA_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_cuda_gen.cpp")
 add_custom_command(
     OUTPUT ${CUDA_GENERATED_STUB}
     COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/stub_generator/stub_codegen.py --unique_prefix=Cuda --
@@ -15,7 +15,7 @@ add_custom_command(
     VERBATIM)
 
 set_source_files_properties(${CUDA_GENERATED_STUB} PROPERTIES GENERATED TRUE)
-add_library(dynlink_cuda STATIC dynlink_cuda.cc ${CUDA_GENERATED_STUB})
+add_library(dynlink_cuda STATIC dynlink_cuda.cpp ${CUDA_GENERATED_STUB})
 
 set_target_properties(dynlink_cuda
     PROPERTIES POSITION_INDEPENDENT_CODE

@@ -40,11 +40,18 @@ add_dependencies(copy_libs_to_python_dir
     nvpnm_ext
     opencv_ext)
 
-add_custom_command(
-    TARGET copy_libs_to_python_dir
-    COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodecs.so" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs" &&
-            cp "${PROJECT_BINARY_DIR}/extensions/*/*.so*" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions"
-    )
+if (UNIX)
+    add_custom_command(
+        TARGET copy_libs_to_python_dir
+        COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodecs.so" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs" &&
+                cp "${PROJECT_BINARY_DIR}/extensions/*/*.so*" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions"
+        )
+else()
+
+    add_custom_command(
+        TARGET copy_libs_to_python_dir
+        COMMAND echo "TODO copy_libs_to_python_dir")
+endif()
 
 if (BUILD_WHEEL)
     # Note: not adding this target to ALL
@@ -52,8 +59,16 @@ if (BUILD_WHEEL)
     set(WHEEL_FILENAME "nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-${NVIMGCODECS_VERSION}-py3-none-${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME}.whl")
     set(WHEEL_DIR "${CMAKE_CURRENT_BINARY_DIR}/dist")
     set(WHEEL_FILEPATH "${WHEEL_DIR}/${WHEEL_FILENAME}")
-    add_custom_command(
+    if (UNIX)
+        add_custom_command(
         TARGET wheel
         COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel --verbose --compression=stored --python-tag=py3 --plat-name=${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME} &&
                 ${CMAKE_CURRENT_SOURCE_DIR}/bundle-wheel.sh ${WHEEL_FILEPATH} NO NO ${WHEEL_FILENAME} /usr/local ${WHEEL_DIR} YES)
+
+    else()
+        add_custom_command(
+        TARGET wheel
+        COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel --verbose --compression=stored --python-tag=py3 --plat-name=${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME}
+        )
+    endif()                
 endif()
