@@ -13,6 +13,8 @@ RUN  apt-get update \
         curl \
         scons \
         wget \
+        zip \
+        unzip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-x86_64.sh \
@@ -98,6 +100,13 @@ RUN export OPENCV_VERSION=4.7.0 && cd /tmp && \
       VERBOSE=1 .. && \
       make -j8 && make install && \
       cd && rm -rf /tmp/${OPENCV_VERSION}.tar.gz /tmp/opencv-${OPENCV_VERSION}
+
+# patchelf Needed to patch rpath of dependencies in bundle-wheel.sh
+RUN cd /tmp && export PATCHELF_VERSION=0.17.2 && export PATCHELF_ARCH=x86_64 && \
+    wget https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}-${PATCHELF_ARCH}.tar.gz && \ 
+    tar xzvf patchelf-${PATCHELF_VERSION}-${PATCHELF_ARCH}.tar.gz && \
+    mv bin/patchelf /usr/local/bin/ && \
+    cd
 
 # Allow using this image in systems2.1.91.tar.gz without proper CUDA runtime/driver support.
 # We'll be using this image only for building, don't need strict CUDA checks.

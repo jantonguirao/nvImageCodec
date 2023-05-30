@@ -44,6 +44,7 @@ NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_in
         for (auto builtin_ext : get_builtin_modules())
             plugin_framework_.registerExtension(nullptr, &builtin_ext);
     }
+
     if (create_info.load_extension_modules) {
         plugin_framework_.discoverAndLoadExtModules();
     }

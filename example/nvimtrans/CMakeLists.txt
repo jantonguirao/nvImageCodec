@@ -8,9 +8,6 @@ include_directories(
   ../../include
 )   
 
-message(STATUS "CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES: ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
-include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
-
 find_library(CUDART_SHARED 
     NAMES cudart
     PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
@@ -20,7 +17,7 @@ find_library(CUDART_SHARED
 add_executable(${NVIMGCDCS_EXAMPLE_NAME} ${NVIMGCDCS_EXAMPLE_SRC})
 
 set_property(TARGET ${NVIMGCDCS_EXAMPLE_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-target_link_libraries(${NVIMGCDCS_EXAMPLE_NAME} PUBLIC nvimgcodecs nvpnm_ext_static ${CUDART_SHARED})
+target_link_libraries(${NVIMGCDCS_EXAMPLE_NAME} PUBLIC nvimgcodecs nvpnm_ext_static CUDA::cudart)
 
 install(TARGETS ${NVIMGCDCS_EXAMPLE_NAME}
     DESTINATION bin COMPONENT Applications

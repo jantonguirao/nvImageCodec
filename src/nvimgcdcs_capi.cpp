@@ -24,13 +24,13 @@
 #include "iimage_decoder.h"
 #include "iimage_encoder.h"
 #include "image.h"
-#include "image_generic_decoder.h"
-#include "image_generic_encoder.h"
 #include "iostream_factory.h"
 #include "log.h"
 #include "nvimgcodecs_director.h"
 #include "plugin_framework.h"
 #include "processing_results.h"
+#include "image_generic_decoder.h"
+#include "image_generic_encoder.h"
 
 namespace fs = std::filesystem;
 
@@ -270,7 +270,7 @@ nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(nvimgcdcsExtension_t extension)
         {
             CHECK_NULL(extension)
 
-            ret = extension->nvimgcdcs_instance_->director_.plugin_framework_.unregisterExtension(extension->extension_ext_handle_);
+            ret =  extension->nvimgcdcs_instance_->director_.plugin_framework_.unregisterExtension(extension->extension_ext_handle_);
             delete extension;
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -428,8 +428,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_h
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
-    nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -560,8 +559,7 @@ nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsIm
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(
-    nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -670,7 +668,7 @@ static void fill_decode_params(const int* params, nvimgcdcsDecodeParams_t* decod
         case NVIMGCDCS_IMREAD_DISABLE_UPSAMPLING_INTERPOLATION: {
             *options = ":fancy_upsampling=0";
             break;
-        }
+        } 
         default:
             break;
         };
@@ -701,6 +699,15 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
             image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+            size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
+            image_info.buffer_size = device_pitch_in_bytes * image_info.plane_info[0].height * image_info.num_planes;
+            image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+            CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
+            for (uint32_t c = 0; c < image_info.num_planes; ++c) {
+                image_info.plane_info[c].height = image_info.plane_info[0].height;
+                image_info.plane_info[c].width = image_info.plane_info[0].width;
+                image_info.plane_info[c].row_stride = device_pitch_in_bytes;
+            }
 
             nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
             // Defaults
@@ -709,22 +716,6 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             int device_id = NVIMGCDCS_DEVICE_CURRENT;
             std::string options;
             fill_decode_params(params, &decode_params, &device_id, &options);
-            bool swap_wh = decode_params.enable_orientation && ((image_info.orientation.rotated / 90) % 2);
-            if (swap_wh) {
-                std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
-            }
-
-            size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
-
-            for (uint32_t c = 0; c < image_info.num_planes; ++c) {
-                image_info.plane_info[c].height = image_info.plane_info[0].height;
-                image_info.plane_info[c].width = image_info.plane_info[0].width;
-                image_info.plane_info[c].row_stride = device_pitch_in_bytes;
-            }
-
-            image_info.buffer_size = image_info.plane_info[0].row_stride * image_info.plane_info[0].height * image_info.num_planes;
-            image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
-            CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
 
             nvimgcdcsImageCreate(instance, image, &image_info);
             (*image)->dev_image_buffer_ = image_info.buffer;

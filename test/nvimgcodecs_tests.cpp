@@ -9,7 +9,6 @@
  */
 
 #include "nvimgcodecs_tests.h"
-#include <cuda.h>
 #include <cuda_runtime.h>
 #include <gtest/gtest.h>
 #include <algorithm>

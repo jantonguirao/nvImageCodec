@@ -5,18 +5,10 @@ set(NVIMGCDCS_LIBTIFF_EXT_SRC
   libtiff_decoder.cpp
   )
 
-find_package(TIFF REQUIRED)
-message("Using libtiff at ${TIFF_LIBRARY}")
-
-find_package(JPEG REQUIRED)
-message("Using libjpeg-turbo at ${JPEG_LIBRARY}")
 
 include_directories(
-  ../../include
   ../../src
-  SYSTEM ../../external/NVTX/c/include
   SYSTEM ${TIFF_INCLUDE_DIR}
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
   )
 
 add_library(${NVIMGCDCS_LIBTIFF_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_LIBTIFF_EXT_SRC} ext_module.cpp)

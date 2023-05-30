@@ -1,6 +1,9 @@
 #include "libtiff_decoder.h"
 #include <tiffio.h>
+#include <algorithm>
 #include <cstring>
+
+#define NOMINMAX
 #include <nvtx3/nvtx3.hpp>
 #include "convert.h"
 #include "log.h"

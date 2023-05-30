@@ -212,7 +212,7 @@ class NvJpeg2kTestBase
 
         ASSERT_EQ(NVJPEG2K_STATUS_SUCCESS, nvjpeg2kEncodeParamsSetQuality(nvjpeg2k_encode_params_, params.target_psnr));
         std::vector<size_t> strides(input_image_info.num_planes);
-        nvjpeg2kImageComponentInfo_t image_comp_info[input_image_info.num_planes];
+        std::vector<nvjpeg2kImageComponentInfo_t> image_comp_info(input_image_info.num_planes);
         for (int i = 0; i < input_image_info.num_planes; ++i) {
             image_comp_info[i].component_width = input_image_info.plane_info[i].width;
             image_comp_info[i].component_height = input_image_info.plane_info[i].height;
@@ -238,7 +238,7 @@ class NvJpeg2kTestBase
         enc_config.mct_mode = params.mct_mode == NVIMGCDCS_MCT_MODE_RGB ? 1 : 0;
         enc_config.prog_order = nvimgcdcs2nvjpeg2k_prog_order(jpeg2k_enc_params.prog_order);
         enc_config.num_resolutions = jpeg2k_enc_params.num_resolutions;
-        enc_config.image_comp_info = image_comp_info;
+        enc_config.image_comp_info = image_comp_info.data();
 
         ASSERT_EQ(NVJPEG2K_STATUS_SUCCESS, nvjpeg2kEncodeParamsSetEncodeConfig(nvjpeg2k_encode_params_, &enc_config));
 

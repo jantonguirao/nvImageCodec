@@ -11,6 +11,7 @@
 #include "parsers/jpeg.h"
 #include <nvimgcodecs.h>
 #include <vector>
+#include <array>
 
 #include "exception.h"
 #include "exif_orientation.h"

@@ -47,9 +47,13 @@ DEFINE_TYPE_RANGE(uint32_t, 0, 0xffffffff);
 DEFINE_TYPE_RANGE(int32_t, -0x80000000, 0x7fffffff);
 DEFINE_TYPE_RANGE(uint64_t, 0, 0xffffffffffffffffUL);
 DEFINE_TYPE_RANGE(int64_t, -0x8000000000000000L, 0x7fffffffffffffffL);
+#if defined(_WIN32)
+DEFINE_TYPE_RANGE(float, 1.175494351e-38f, 3.402823466e+38f);
+DEFINE_TYPE_RANGE(double, 2.2250738585072014e-308, 1.7976931348623158e+308);
+#else
 DEFINE_TYPE_RANGE(float, -3.40282347e+38f, 3.40282347e+38f);
 DEFINE_TYPE_RANGE(double, -1.7976931348623157e+308, 1.7976931348623157e+308);
-
+#endif
 template <typename From, typename To>
 struct needs_clamp {
   static constexpr bool from_fp = std::is_floating_point<From>::value;

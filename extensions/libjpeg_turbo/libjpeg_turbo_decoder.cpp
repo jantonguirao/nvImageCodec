@@ -1,8 +1,10 @@
 #include "nvimgcodecs.h"
 #include "libjpeg_turbo_decoder.h"
+
 #include "jpeg_mem.h"
 #include "log.h"
 #include <cstring>
+#undef  INT32
 #include <nvtx3/nvtx3.hpp>
 #include <iostream>
 

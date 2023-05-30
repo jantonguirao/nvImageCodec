@@ -14,6 +14,7 @@
 #include <nvjpeg.h>
 #include <future>
 #include <vector>
+#include <array>
 
 namespace nvjpeg {
 
