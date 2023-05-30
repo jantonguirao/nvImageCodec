@@ -7,6 +7,7 @@ set(NVIMGCDCS_NVJPEG_EXT_SRC
   type_convert.cpp
   nvjpeg_ext.cpp
   nvjpeg_utils.cpp
+  exception.cpp
 )
 
 add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG_EXT_SRC} ext_module.cpp)
