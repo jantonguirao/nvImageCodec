@@ -74,6 +74,10 @@ def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, oupu
     ("base/4k_lossless.bmp", "pnm", "4k_lossless-bmp.ppm","", "b452d532ba80d9e560baabe8208a04f5"),
     ("base/4k_lossless_q95_444.jpg", "pnm", "4k_lossless-jpg.ppm","", "083f9062bd227cba62471f5ae3b85df1"),
     ("base/4k_lossless.jp2", "pnm", "4k_lossless-jp2.ppm", "", "b452d532ba80d9e560baabe8208a04f5"),
+    
+    #test orientation
+    ("base/f8-exif.jpg", "bmp", "f8-exif_orientation_enabled.bmp", "", "02fa6fe20734b0463b6bed8623d405c4"),
+    ("base/f8-exif.jpg", "bmp", "f8-exif_orientation_disabled.bmp", "--ignore_orientation true", "e44b36cc1056cefb8df7473d96dd65e7"),
     ]
 )
 def test_imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum):
