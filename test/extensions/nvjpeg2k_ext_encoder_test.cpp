@@ -105,10 +105,31 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
     DecodeReference(resources_dir, image_file_, sample_format_, enable_color_conversion, &ref_cs_image_info);
     image_info_.plane_info[0] = ref_cs_image_info.plane_info[0];
     PrepareImageForFormat();
-    memcpy(image_buffer_.data(), reinterpret_cast<void*>(ref_buffer_.data()), ref_buffer_.size());
+    auto image_info_ref = image_info_;
+    if (sample_format_ == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
+        Convert_P_RGB_to_I_RGB(image_buffer_, ref_buffer_, image_info_);
+        image_info_ref.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+        image_info_ref.num_planes = image_info_.plane_info[0].num_channels;
+        for (int p = 0; p < image_info_ref.num_planes; p++) {
+            image_info_ref.plane_info[p].height = image_info_.plane_info[0].height;
+            image_info_ref.plane_info[p].width = image_info_.plane_info[0].width;
+            image_info_ref.plane_info[p].row_stride = image_info_.plane_info[0].width;
+            image_info_ref.plane_info[p].num_channels = 1;
+            image_info_ref.plane_info[p].sample_type = image_info_.plane_info[0].sample_type;
+            image_info_ref.plane_info[p].precision = 0;
+        }
+        image_info_ref.buffer_size = ref_buffer_.size();
+        image_info_ref.buffer = ref_buffer_.data();
+        image_info_ref.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
+    } else {
+        memcpy(image_buffer_.data(), reinterpret_cast<void*>(ref_buffer_.data()), ref_buffer_.size());
+    }
+    
 
     nvimgcdcsImageInfo_t cs_image_info(image_info_);
     cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
+    nvimgcdcsImageInfo_t cs_image_info_ref(image_info_ref);
+    cs_image_info_ref.chroma_subsampling = encoded_chroma_subsampling_;
     code_stream_buffer_.resize(image_info_.buffer_size);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, code_stream_buffer_.data(),
@@ -129,7 +150,7 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
     //TODO uncomment when generic jpeg2k parser is in place EXPECT_EQ(cs_image_info.chroma_subsampling, load_info.chroma_subsampling);
 
     std::vector<unsigned char> ref_out_buffer;
-    EncodeReference(image_info_, params_, jpeg2k_enc_params_, cs_image_info, &ref_out_buffer);
+    EncodeReference(image_info_ref, params_, jpeg2k_enc_params_, cs_image_info_ref, &ref_out_buffer);
     ASSERT_EQ(0,
         memcmp(reinterpret_cast<void*>(ref_out_buffer.data()), reinterpret_cast<void*>(code_stream_buffer_.data()), ref_out_buffer.size()));
 }
@@ -139,7 +160,7 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_VALID_SRGB_INPUT_FORMATS_WITH_VARIOUS_P
     Combine(
         Values("jpeg2k/tiled-cat-1046544_640.jp2"),
         Values(NVIMGCDCS_COLORSPEC_SRGB),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB, NVIMGCDCS_SAMPLEFORMAT_I_RGB),
         Values(NVIMGCDCS_SAMPLING_444),
         Values(NVIMGCDCS_SAMPLING_444),
         Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP, NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP, NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL, NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL,
@@ -245,7 +266,7 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG2K_ENCODE_INVALID_SAMPLE_FORMATS, NvJpeg2kExtEnco
     Combine(
         Values("jpeg2k/tiled-cat-1046544_640.jp2"),
         Values(NVIMGCDCS_COLORSPEC_SRGB),
-        Values(NVIMGCDCS_SAMPLEFORMAT_I_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
         Values(NVIMGCDCS_SAMPLING_NONE),
         Values(NVIMGCDCS_SAMPLING_NONE),
         Values(NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP),

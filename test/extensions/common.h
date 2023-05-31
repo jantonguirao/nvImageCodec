@@ -111,6 +111,22 @@ class ExtensionTestBase
         }
     }
 
+    void Convert_P_RGB_to_I_RGB(std::vector<uint8_t>& out_buffer, const std::vector<uint8_t>& in_buffer, nvimgcdcsImageInfo_t image_info)
+    {
+        out_buffer.resize(in_buffer.size());
+        for (int y = 0; y < image_info_.plane_info[0].height; y++) {
+            for (int x = 0; x < image_info_.plane_info[0].width; x++) {
+                for (int c = 0; c < image_info_.plane_info[0].num_channels; ++c) {
+                    *(static_cast<uint8_t*>(image_info_.buffer) + y * image_info_.plane_info[0].row_stride +
+                            x * image_info_.plane_info[0].num_channels + c) =
+                            in_buffer[c * image_info_.plane_info[0].height * image_info_.plane_info[0].width +
+                                       y * image_info_.plane_info[0].width + x];
+                }
+            }
+        }
+    }
+
+
     void Convert_I_RGB_to_P_RGB()
     {
         planar_out_buffer_.resize(image_buffer_.size());
@@ -125,6 +141,7 @@ class ExtensionTestBase
             }
         }
     }
+
     void Convert_P_BGR_to_P_RGB()
     {
         planar_out_buffer_.resize(image_buffer_.size());
