@@ -88,10 +88,3 @@ install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt
     DESTINATION .
 )
-
-if(UNIX)
-    install(FILES
-        ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/install.sh
-        DESTINATION .
-    )
-endif()

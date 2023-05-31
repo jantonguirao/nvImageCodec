@@ -13,7 +13,6 @@ variables:
     GCC_URL: "http://ftp.gnu.org/gnu/gcc/gcc-9.4.0/gcc-9.4.0.tar.gz"
     GCC_DIR: "$CI_PROJECT_DIR/.dependencies/gcc"
 
-
 before_script:
   - export CUDACXX=nvcc
 
@@ -28,12 +27,7 @@ before_script:
     artifacts:
         paths:
             - build/python/dist/*.whl
-            - build/src/*.so.*
-            - build/src/*.a
-            - build/extensions/*/*.so.*
-            - build/extensions/*/*.a
-            - build/test/nvimagecodec_tests
-            - build/test/nvimagecodec_tests_static
+            - build/*.tar.gz
         expire_in: 2 weeks
 
 build:nvimagecodec:
@@ -45,11 +39,14 @@ build:nvimagecodec:
         # Build
         - mkdir -p build
         - cd build
-        - cmake -DCMAKE_BUILD_TYPE=NVIMAGECODEC_BUILD_TYPE ../.
+        - mkdir -p install
+        - cmake -DCMAKE_BUILD_TYPE=${NVIMAGECODEC_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=$PWD/install ../.
         - nice -n 19 make -j8
         - make wheel
         - nvidia-smi
         - ctest --verbose
+        - make install
+        - tar cvzf nvimgcodecs.tar.gz -C $PWD/install .
 
 
 # Documentation jobs
