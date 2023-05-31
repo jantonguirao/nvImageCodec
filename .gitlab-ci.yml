@@ -39,14 +39,12 @@ build:nvimagecodec:
         # Build
         - mkdir -p build
         - cd build
-        - mkdir -p install
-        - cmake -DCMAKE_BUILD_TYPE=${NVIMAGECODEC_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=$PWD/install ../.
+        - cmake -DCMAKE_BUILD_TYPE=${NVIMAGECODEC_BUILD_TYPE} ../.
         - nice -n 19 make -j8
         - make wheel
+        - cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=${NVIMAGECODEC_BUILD_TYPE}
         - nvidia-smi
         - ctest --verbose
-        - make install
-        - tar cvzf nvimgcodecs.tar.gz -C $PWD/install .
 
 
 # Documentation jobs
