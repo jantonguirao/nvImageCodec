@@ -9,7 +9,8 @@ set(NVIMGCDCS_NVJPEG2K_EXT_SRC
 add_library(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG2K_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVJPEG2K_EXT_SRC})
 
-target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} PUBLIC CUDA::cudart_static ${NVJPEG2K_LIBRARY})
+target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} PUBLIC
+  CUDA::cudart_static CUDA::nppc_static CUDA::nppidei_static ${NVJPEG2K_LIBRARY})
 
 if(UNIX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")

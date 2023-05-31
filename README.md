@@ -66,14 +66,14 @@ Below is described temporary installation process just for testing prototype.
 ### Linux
 ```
 cd build
-cmake --install . --config Release --prefix bin
-cd bin
-sudo ./install.sh
+CUDACXX=nvcc cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/nvimgcodecs
+make -j
+make install
 ```
 
 After execution there should be:
-- all extension modules in /usr/lib/nvimgcodecs/extensions (it is default directory for plugin discovery)
-- libnvimgcodecs.so in /usr/lib/x86_64-linux-gnu
+- all extension modules in /opt/nvimgcodecs/extensions (it is default directory for plugin discovery)
+- libnvimgcodecs.so in /opt/nvimgcodecs/lib64
 
 ### Windows
 
