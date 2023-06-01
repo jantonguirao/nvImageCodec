@@ -3,10 +3,6 @@ set(NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_NAME nvimgcodecs_example_high_level_api)
 set(NVIMGCDCS_EXAMPLE_HIGH_LEVEL_API_SRC
       main.cpp
 )
-include_directories(
-  ../../
-  ../../include
-)   
 
 message(STATUS "CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES: ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})

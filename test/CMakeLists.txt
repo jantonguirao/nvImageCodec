@@ -43,31 +43,7 @@ if (BUILD_OPENCV_EXT)
     list(APPEND SRCS extensions/opencv_ext_decoder_test.cpp)
 endif()
 
-# Headers file are located here:
-include_directories(
-    .
-    ..
-    ../src
-)
-
-include_directories(${NVJPEG2K_INCLUDE})
-
 set(FILESTOPACK nvimgcodecs_tests)
-
-if (NOT DEFINED OpenCV_VERSION)
-  find_package(OpenCV 4.0 REQUIRED COMPONENTS core imgproc imgcodecs)
-  if(NOT OpenCV_FOUND)
-    find_package(OpenCV 3.0 REQUIRED COMPONENTS core imgproc imgcodecs)
-  endif()
-
-  message(STATUS "Found OpenCV: ${OpenCV_INCLUDE_DIRS} (found suitable version \"${OpenCV_VERSION}\", minimum required is \"3.0\")")
-  message("OpenCV libraries: ${OpenCV_LIBRARIES}")
-endif()
-
-include_directories(
-  SYSTEM ${JPEG_INCLUDE_DIR}
-  SYSTEM ${OpenCV_INCLUDE_DIRS}
-)
 
 add_executable(nvimgcodecs_tests ${SRCS})
 foreach(testapp nvimgcodecs_tests)

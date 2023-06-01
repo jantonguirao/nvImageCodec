@@ -56,16 +56,13 @@ else()
 set(CPACK_GENERATOR "TGZ")
 endif()
 
-set(CPACK_PACKAGE_NAME "libnvimgcodecs")
+set(CPACK_PACKAGE_NAME "nvimgcodecs")
 set(CPACK_PACKAGE_VENDOR "NVIDIA CORPORATION")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GPU Accelerated Image Codecs library")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME})
+set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${PROJECT_VERSION})
 set(CPACK_STRIP_FILES TRUE)
 
-if(BUILD_TEST)
-set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_FILE_NAME}_test)
-endif()
 include (CPack)
 
 
@@ -104,7 +101,12 @@ set(CMAKE_CUDA_STANDARD 14)
 set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CMAKE_CUDA_EXTENSIONS OFF)
 
-include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/test
+    )
 
 # Find all dependencies
 include(Dependencies)

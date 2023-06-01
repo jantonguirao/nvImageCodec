@@ -1,4 +1,7 @@
 
+#include "cuda_encoder.h"
+#include <npp.h>
+#include <nppdefs.h>
 #include <nvimgcodecs.h>
 #include <cstring>
 #include <future>
@@ -8,10 +11,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "cuda_encoder.h"
 #include "error_handling.h"
 #include "log.h"
+#include "nvimgcodecs_type_utils.h"
 #include "nvjpeg2k.h"
 
 namespace nvjpeg2k {
@@ -95,7 +97,9 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
 
         static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
             NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED,
+            NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED,
             NVIMGCDCS_SAMPLEFORMAT_P_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_I_RGB,
             NVIMGCDCS_SAMPLEFORMAT_P_Y,
             NVIMGCDCS_SAMPLEFORMAT_P_YUV,
         };
@@ -157,7 +161,8 @@ NvJpeg2kEncoderPlugin::Encoder::Encoder(
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
-    encode_state_batch_ = std::make_unique<NvJpeg2kEncoderPlugin::EncodeState>(handle_, num_threads);
+    encode_state_batch_ = std::make_unique<NvJpeg2kEncoderPlugin::EncodeState>(handle_, framework->device_allocator,
+            framework->pinned_allocator, device_id_, num_threads);
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, int device_id)
@@ -236,9 +241,21 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_get_capabilities(
     }
 }
 
-NvJpeg2kEncoderPlugin::EncodeState::EncodeState(nvjpeg2kEncoder_t handle, int num_threads)
+NvJpeg2kEncoderPlugin::EncodeState::EncodeState(nvjpeg2kEncoder_t handle, nvimgcdcsDeviceAllocator_t* device_allocator,
+            nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads)
     : handle_(handle)
+    , device_allocator_(device_allocator)
+    , pinned_allocator_(pinned_allocator)
+    , device_id_(device_id)
 {
+    int nCudaDevAttrComputeCapabilityMajor, nCudaDevAttrComputeCapabilityMinor;
+    XM_CHECK_CUDA(
+        cudaDeviceGetAttribute(&nCudaDevAttrComputeCapabilityMajor, cudaDevAttrComputeCapabilityMajor, device_id_));
+    XM_CHECK_CUDA(
+        cudaDeviceGetAttribute(&nCudaDevAttrComputeCapabilityMinor, cudaDevAttrComputeCapabilityMinor, device_id_));
+    cudaDeviceProp device_properties{};
+    XM_CHECK_CUDA(cudaGetDeviceProperties(&device_properties, device_id_));
+
     per_thread_.reserve(num_threads);
     for (int i = 0; i < num_threads; i++) {
         per_thread_.emplace_back();
@@ -246,6 +263,13 @@ NvJpeg2kEncoderPlugin::EncodeState::EncodeState(nvjpeg2kEncoder_t handle, int nu
         XM_CHECK_CUDA(cudaStreamCreateWithFlags(&res.stream_, cudaStreamNonBlocking));
         XM_CHECK_CUDA(cudaEventCreate(&res.event_));
         XM_CHECK_NVJPEG2K(nvjpeg2kEncodeStateCreate(handle_, &res.state_));
+
+        res.npp_ctx_.nCudaDeviceId = device_id_;
+        res.npp_ctx_.hStream = res.stream_;
+        res.npp_ctx_.nMultiProcessorCount = device_properties.multiProcessorCount;
+        res.npp_ctx_.nMaxThreadsPerMultiProcessor = device_properties.maxThreadsPerMultiProcessor;
+        res.npp_ctx_.nMaxThreadsPerBlock = device_properties.maxThreadsPerBlock;
+        res.npp_ctx_.nSharedMemPerBlock = device_properties.sharedMemPerBlock;
     }
 }
 
@@ -320,6 +344,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
             nvimgcdcsCodeStreamDesc_t code_stream = encode_state->samples_[sample_idx].code_stream;
             nvimgcdcsImageDesc_t image = encode_state->samples_[sample_idx].image;
             const nvimgcdcsEncodeParams_t* params = encode_state->samples_[sample_idx].params;
+            size_t tmp_buffer_sz = 0;
+            void* tmp_buffer = nullptr;
             try {
                 nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 image->getImageInfo(image->instance, &image_info);
@@ -331,22 +357,108 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 std::unique_ptr<std::remove_pointer<nvjpeg2kEncodeParams_t>::type, decltype(&nvjpeg2kEncodeParamsDestroy)> encode_params(
                     encode_params_, &nvjpeg2kEncodeParamsDestroy);
 
-                std::vector<nvjpeg2kImageComponentInfo_t> image_comp_info(image_info.num_planes); //assumed planar
+                auto sample_type = image_info.plane_info[0].sample_type;
+                size_t bytes_per_sample = sample_type_to_bytes_per_element(sample_type);
+                nvjpeg2kImageType_t nvjpeg2k_sample_type;
+                switch (sample_type) {
+                case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
+                    nvjpeg2k_sample_type = NVJPEG2K_UINT8;
+                    break;
+                case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
+                    nvjpeg2k_sample_type = NVJPEG2K_INT16;
+                    break;
+                case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
+                    nvjpeg2k_sample_type = NVJPEG2K_UINT16;
+                    break;
+                default:
+                    throw std::runtime_error("Unexpected data type");
+                }
 
-                for (uint32_t c = 0; c < image_info.num_planes; c++) {
-                    image_comp_info[c].component_width = image_info.plane_info[c].width;
-                    image_comp_info[c].component_height = image_info.plane_info[c].height;
-                    image_comp_info[c].precision = image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16;
-                    image_comp_info[c].sgn = (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_INT8) ||
-                                             (image_info.plane_info[c].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_INT16);
+                bool interleaved = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB;
+                size_t num_components = interleaved ? image_info.plane_info[0].num_channels : image_info.num_planes;
+                std::vector<nvjpeg2kImageComponentInfo_t> image_comp_info(num_components);
+
+                uint32_t width = image_info.plane_info[0].width;
+                uint32_t height = image_info.plane_info[0].height;
+
+                std::vector<unsigned char*> encode_input(num_components);
+                std::vector<size_t> pitch_in_bytes(num_components);
+
+                if (interleaved) {
+                    size_t row_nbytes = width * bytes_per_sample;
+                    size_t component_nbytes = row_nbytes * height;
+                    tmp_buffer_sz = component_nbytes * num_components;
+                    if (encode_state->device_allocator_) {
+                        encode_state->device_allocator_->device_malloc(
+                                encode_state->device_allocator_->device_ctx, &tmp_buffer, tmp_buffer_sz, t.stream_);
+                    } else {
+                        XM_CHECK_CUDA(cudaMallocAsync(&tmp_buffer, tmp_buffer_sz, t.stream_));
+                    }
+                    device_buffer = reinterpret_cast<uint8_t*>(tmp_buffer);
+                    for (uint32_t c = 0; c < num_components; ++c) {
+                        encode_input[c] = device_buffer + c * component_nbytes;
+                        pitch_in_bytes[c] = row_nbytes;
+                    }
+
+                    #define NPP_CONVERT_INTERLEAVED_TO_PLANAR(NPP_FUNC, DTYPE, NUM_COMPONENTS) \
+                        DTYPE* planes[NUM_COMPONENTS]; \
+                        for (uint32_t p = 0; p < NUM_COMPONENTS; ++p) { \
+                            planes[p] = reinterpret_cast<DTYPE*>(tmp_buffer) + p * component_nbytes / sizeof(DTYPE); \
+                        } \
+                        NppiSize dims = {static_cast<int>(width), static_cast<int>(height)}; \
+                        const DTYPE *pSrc = reinterpret_cast<const DTYPE*>(image_info.buffer); \
+                        auto status = NPP_FUNC(pSrc, image_info.plane_info[0].row_stride, planes, row_nbytes, dims, t.npp_ctx_); \
+                        if (NPP_SUCCESS != status) { \
+                            throw std::runtime_error("Failed to transpose the image from planar to interleaved layout " + std::to_string(status)); \
+                        }
+
+                    bool is_rgb = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
+                                  (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED && num_components == 3);
+                    bool is_rgba = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED && num_components == 4;
+                    bool is_u8 = sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+                    bool is_u16 = sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+                    bool is_s16 = sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
+                    if (is_rgb && is_u8) {
+                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_8u_C3P3R_Ctx, uint8_t, 3);
+                    } else if (is_rgb && is_u16) {
+                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16u_C3P3R_Ctx, uint16_t, 3);
+                    } else if (is_rgb && is_s16) {
+                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16s_C3P3R_Ctx, int16_t, 3);
+                    } else if (is_rgba && is_u8) {
+                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_8u_C4P4R_Ctx, uint8_t, 4);
+                    } else if (is_rgba && is_u16) {
+                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16u_C4P4R_Ctx, uint16_t, 4);
+                    } else if (is_rgba && is_s16) {
+                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16s_C4P4R_Ctx, int16_t, 4);
+                    } else {
+                        throw std::runtime_error("Transposition not implemented for this combination of sample format and data type");
+                    }
+
+                    #undef NPP_CONVERT_INTERLEAVED_TO_PLANAR
+
+                } else {
+                    size_t plane_start = 0;
+                    for (uint32_t c = 0; c < image_info.num_planes; ++c) {
+                        encode_input[c] = device_buffer + plane_start;
+                        pitch_in_bytes[c] = image_info.plane_info[c].row_stride;
+                        plane_start += image_info.plane_info[c].height * image_info.plane_info[c].row_stride;
+                    }
+                }
+
+                for (uint32_t c = 0; c < num_components; c++) {
+                    image_comp_info[c].component_width = width;
+                    image_comp_info[c].component_height = height;
+                    image_comp_info[c].precision = sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16;
+                    image_comp_info[c].sgn = (sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_INT8) ||
+                                             (sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_INT16);
                 }
 
                 nvjpeg2kEncodeConfig_t encode_config;
                 memset(&encode_config, 0, sizeof(encode_config));
                 encode_config.color_space = nvimgcdcs_to_nvjpeg2k_color_spec(image_info.color_spec);
-                encode_config.image_width = image_info.plane_info[0].width;
-                encode_config.image_height = image_info.plane_info[0].height;
-                encode_config.num_components = image_info.num_planes; //assumed planar
+                encode_config.image_width = width;
+                encode_config.image_height = height;
+                encode_config.num_components = num_components; // planar
                 encode_config.image_comp_info = image_comp_info.data();
                 encode_config.mct_mode = params->mct_mode;
 
@@ -369,19 +481,11 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetEncodeConfig(encode_params.get(), &encode_config));
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetQuality(encode_params.get(), params->target_psnr));
 
-                std::vector<unsigned char*> encode_input;
-                std::vector<size_t> pitch_in_bytes;
                 nvjpeg2kImage_t input_image;
-                for (uint32_t c = 0; c < image_info.num_planes; ++c) {
-                    encode_input.push_back(device_buffer + c * image_info.plane_info[c].row_stride * image_info.plane_info[c].height);
-                    pitch_in_bytes.push_back(image_info.plane_info[c].row_stride);
-                }
-
-                input_image.num_components = image_info.num_planes; //assumed planar
+                input_image.num_components = num_components;
                 input_image.pixel_data = reinterpret_cast<void**>(&encode_input[0]);
                 input_image.pitch_in_bytes = pitch_in_bytes.data();
-                input_image.pixel_type =
-                    image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? NVJPEG2K_UINT8 : NVJPEG2K_UINT16;
+                input_image.pixel_type = nvjpeg2k_sample_type;
                 NVIMGCDCS_E_LOG_DEBUG("before encode ");
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncode(handle, state_handle, encode_params.get(), &input_image, t.stream_));
                 XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));
@@ -404,6 +508,16 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
             } catch (const std::runtime_error& e) {
                 NVIMGCDCS_D_LOG_ERROR("Could not encode jpeg2k code stream - " << e.what());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+            }
+            if (tmp_buffer) {
+                if (encode_state->device_allocator_) {
+                    encode_state->device_allocator_->device_free(
+                        encode_state->device_allocator_->device_ctx, tmp_buffer, tmp_buffer_sz, t.stream_);
+                } else {
+                    XM_CHECK_CUDA(cudaFreeAsync(&tmp_buffer, t.stream_));
+                }
+                tmp_buffer = nullptr;
+                tmp_buffer_sz = 0;
             }
         });
 

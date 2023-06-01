@@ -30,6 +30,7 @@
 
 #define COMMAND_PARAMS_IMPLEMENTATION
 #include "command_line_params.h"
+#include "nvimgcodecs_type_utils.h"
 
 namespace fs = std::filesystem;
 
@@ -150,11 +151,6 @@ int collect_input_files(const std::string& sInputPath, std::vector<std::string>&
     }
 
     return 0;
-}
-
-inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
-{
-    return static_cast<unsigned int>(sample_type)>> (8+3);
 }
 
 int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& params, const FileNames& image_names,

@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include "command_line_params.h"
+#include "nvimgcodecs_type_utils.h"
 
 namespace fs = std::filesystem;
 
@@ -86,10 +87,6 @@ uint32_t verbosity2severity(int verbose)
     return result;
 }
 
-inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
-{
-    return static_cast<unsigned int>(sample_type) >> (8 + 3);
-}
 
 void fill_encode_params(const CommandLineParams& params, fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
     nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcdcsJpegEncodeParams_t* jpeg_encode_params,

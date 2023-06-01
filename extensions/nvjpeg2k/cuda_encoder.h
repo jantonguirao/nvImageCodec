@@ -15,6 +15,8 @@
 #include <vector>
 #include "nvjpeg2k.h"
 
+#include <nppdefs.h>
+
 namespace nvjpeg2k {
 
 class NvJpeg2kEncoderPlugin
@@ -27,7 +29,8 @@ class NvJpeg2kEncoderPlugin
     struct Encoder;
     struct EncodeState
     {
-        explicit EncodeState(nvjpeg2kEncoder_t handle, int num_threads);
+        explicit EncodeState(nvjpeg2kEncoder_t handle, nvimgcdcsDeviceAllocator_t* device_allocator,
+            nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads);
         ~EncodeState();
 
         struct PerThreadResources
@@ -36,6 +39,8 @@ class NvJpeg2kEncoderPlugin
             cudaEvent_t event_;
             nvjpeg2kEncodeState_t state_;
             std::vector<unsigned char> compressed_data_; //TODO it should be created with pinned allocator
+
+            NppStreamContext npp_ctx_;
         };
 
         struct Sample
@@ -46,6 +51,9 @@ class NvJpeg2kEncoderPlugin
         };
 
         nvjpeg2kEncoder_t handle_;
+        nvimgcdcsDeviceAllocator_t* device_allocator_;
+        nvimgcdcsPinnedAllocator_t* pinned_allocator_;
+        int device_id_;
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
     };

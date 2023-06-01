@@ -451,15 +451,13 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 
                 unsigned char* decode_buffer = device_buffer;
                 if (interleaved) {
-                    if (!decode_state->device_allocator_) {
-                        NVIMGCDCS_D_LOG_ERROR("Need custom allocator to perform transposition to interleaved layout");
-                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
-                        return;
-                    }
-
                     decode_tmp_buffer_sz = num_components * component_nbytes;
-                    decode_state->device_allocator_->device_malloc(
-                        decode_state->device_allocator_->device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                    if (decode_state->device_allocator_) {
+                        decode_state->device_allocator_->device_malloc(
+                            decode_state->device_allocator_->device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                    } else {
+                        XM_CHECK_CUDA(cudaMallocAsync(&decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_));
+                    }
                     decode_buffer = reinterpret_cast<uint8_t*>(decode_tmp_buffer);
 
                     for (uint32_t p = 0; p < num_components; ++p) {
@@ -469,8 +467,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 } else {
                     if (num_components > image_info.num_planes) {
                         decode_tmp_buffer_sz = (num_components - image_info.num_planes) * component_nbytes;
-                        decode_state->device_allocator_->device_malloc(
-                            decode_state->device_allocator_->device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                        if (decode_state->device_allocator_) {
+                            decode_state->device_allocator_->device_malloc(
+                                decode_state->device_allocator_->device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                        } else {
+                            XM_CHECK_CUDA(cudaMallocAsync(&decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_));
+                        }
                     }
                     uint32_t p = 0;
                     for (p = 0; p < image_info.num_planes; ++p) {
@@ -546,8 +548,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
             if (decode_tmp_buffer) {
-                decode_state->device_allocator_->device_free(
-                    decode_state->device_allocator_->device_ctx, decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                if (decode_state->device_allocator_) {
+                    decode_state->device_allocator_->device_free(
+                        decode_state->device_allocator_->device_ctx, decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                } else {
+                    XM_CHECK_CUDA(cudaFreeAsync(&decode_tmp_buffer, t.stream_));
+                }
                 decode_tmp_buffer = nullptr;
                 decode_tmp_buffer_sz = 0;
             }
