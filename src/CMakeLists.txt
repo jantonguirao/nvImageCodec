@@ -40,8 +40,6 @@ set(NVIMGCDCS_SRCS
     parsers/parsers_ext_module.cpp
 )
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-
 # Build the library
 message(STATUS "props ProductVersionFiles ${ProductVersionFiles}")
 

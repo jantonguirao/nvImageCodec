@@ -1,4 +1,7 @@
 
+#include "cuda_encoder.h"
+#include <npp.h>
+#include <nppdefs.h>
 #include <nvimgcodecs.h>
 #include <cstring>
 #include <future>
@@ -8,14 +11,10 @@
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "cuda_encoder.h"
 #include "error_handling.h"
 #include "log.h"
+#include "nvimgcodecs_type_utils.h"
 #include "nvjpeg2k.h"
-
-#include <npp.h>
-#include <nppdefs.h>
 
 namespace nvjpeg2k {
 
@@ -359,20 +358,17 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     encode_params_, &nvjpeg2kEncodeParamsDestroy);
 
                 auto sample_type = image_info.plane_info[0].sample_type;
-                size_t bytes_per_sample = 1;
+                size_t bytes_per_sample = sample_type_to_bytes_per_element(sample_type);
                 nvjpeg2kImageType_t nvjpeg2k_sample_type;
                 switch (sample_type) {
                 case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
                     nvjpeg2k_sample_type = NVJPEG2K_UINT8;
-                    bytes_per_sample = 1;
                     break;
                 case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
                     nvjpeg2k_sample_type = NVJPEG2K_INT16;
-                    bytes_per_sample = 2;
                     break;
                 case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
                     nvjpeg2k_sample_type = NVJPEG2K_UINT16;
-                    bytes_per_sample = 2;
                     break;
                 default:
                     throw std::runtime_error("Unexpected data type");

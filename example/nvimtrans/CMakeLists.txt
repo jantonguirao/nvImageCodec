@@ -3,10 +3,6 @@ set(NVIMGCDCS_EXAMPLE_NAME nvimtrans)
 set(NVIMGCDCS_EXAMPLE_SRC
       main.cpp
 )
-include_directories(
-  ../../
-  ../../include
-)   
 
 find_library(CUDART_SHARED 
     NAMES cudart

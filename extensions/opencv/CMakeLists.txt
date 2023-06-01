@@ -5,12 +5,6 @@ set(NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC
   opencv_decoder.cpp
   )
 
-include_directories(
-  ../../src
-  SYSTEM ${JPEG_INCLUDE_DIR}
-  SYSTEM ${OpenCV_INCLUDE_DIRS}
-)
-
 add_library(${NVIMGCDCS_OPENCV_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_OPENCV_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_LIBJPEG_TURBO_EXT_SRC})
 

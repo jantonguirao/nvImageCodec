@@ -31,6 +31,7 @@
 #include "nvimgcodecs_director.h"
 #include "plugin_framework.h"
 #include "processing_results.h"
+#include "nvimgcodecs_type_utils.h"
 
 namespace fs = std::filesystem;
 
@@ -113,11 +114,6 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
             a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                      \
         }
 #endif
-
-inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
-{
-    return static_cast<unsigned int>(sample_type) >> (8 + 3);
-}
 
 struct nvimgcdcsInstance
 {

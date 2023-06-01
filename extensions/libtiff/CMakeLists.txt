@@ -5,12 +5,6 @@ set(NVIMGCDCS_LIBTIFF_EXT_SRC
   libtiff_decoder.cpp
   )
 
-
-include_directories(
-  ../../src
-  SYSTEM ${TIFF_INCLUDE_DIR}
-  )
-
 add_library(${NVIMGCDCS_LIBTIFF_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_LIBTIFF_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_LIBTIFF_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_LIBTIFF_EXT_SRC})
 

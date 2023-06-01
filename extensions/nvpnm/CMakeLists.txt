@@ -4,11 +4,8 @@ set(NVIMGCDCS_NVPNM_EXT_SRC
       encoder.cpp
       nvpnm_ext.cpp
 )
-include_directories(
-  ../../include
-  SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
-)     
-    
+include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+
 add_library(${NVIMGCDCS_NVPNM_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVPNM_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_NVPNM_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVPNM_EXT_SRC})
 
