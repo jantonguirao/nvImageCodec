@@ -40,7 +40,7 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadCudaLibrary()
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
             fprintf(stderr, "dlopen libcuda.so failed!. Please install GPU dirver");
 #elif defined(_WIN32) || defined(_WIN64)
-            fprintf(stderr, "LoadLibrariy nvcuda.dll failed!. Please install GPU dirver");
+            fprintf(stderr, "LoadLibrary nvcuda.dll failed!. Please install GPU dirver");
 #endif
         }
     }

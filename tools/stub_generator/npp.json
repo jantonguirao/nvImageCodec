@@ -1,0 +1,30 @@
+{
+   "extra_include":[
+      "<npp.h>",
+      "<nppdefs.h>"
+   ],
+   "return_type":"NppStatus",
+   "calling_conv":"",
+   "not_found_error":"NPP_NOT_SUPPORTED_MODE_ERROR",
+"functions": {
+      "nppGetStream": {
+         "return_type":"cudaStream_t",
+         "not_found_error":"0" },
+      "nppSetStream": {},
+      "nppGetLibVersion": {
+         "return_type":"const NppLibraryVersion *",
+         "not_found_error":"nullptr" },
+         "nppiCopy_8u_P3C3R_Ctx": {},
+         "nppiCopy_16u_P3C3R_Ctx": {},
+         "nppiCopy_16s_P3C3R_Ctx": {},
+         "nppiCopy_8u_P4C4R_Ctx": {},
+         "nppiCopy_16u_P4C4R_Ctx": {},
+         "nppiCopy_16s_P4C4R_Ctx": {},
+         "nppiCopy_8u_C3P3R_Ctx": {},
+         "nppiCopy_16u_C3P3R_Ctx": {},
+         "nppiCopy_16s_C3P3R_Ctx": {},
+         "nppiCopy_8u_C4P4R_Ctx": {},
+         "nppiCopy_16u_C4P4R_Ctx": {},
+         "nppiCopy_16s_C4P4R_Ctx": {}
+   }
+}
