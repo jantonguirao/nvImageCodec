@@ -36,9 +36,15 @@ namespace {
 
 #elif defined(_WIN32) || defined(_WIN64)
 
-  static const char __NvjpegLibName[] = "libnvjpeg.dll";
-  // TODO(janton): Another name in Windows?
-  static const char __NvjpegLibNameCuVer[] = "libnvjpeg.dll";
+  static const char __NvjpegLibName[] = "nvjpeg.dll";
+
+  #if CUDA_VERSION >= 12000
+  static const char __NvjpegLibNameCuVer[] = "nvjpeg64_12.dll";
+  #elif CUDA_VERSION >= 11000 && CUDA_VERSION < 12000
+  static const char __NvjpegLibNameCuVer[] = "nvjpeg64_11.dll";
+  #else
+  static const char __NvjpegLibNameCuVer[] = "nvjpeg64_10.dll";
+  #endif
 
 #endif
 
@@ -54,7 +60,7 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNvjpegLibrary()
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
             fprintf(stderr, "dlopen libnvjpeg.so failed!. Please install CUDA toolkit or nvJPEG python wheel.");
 #elif defined(_WIN32) || defined(_WIN64)
-            fprintf(stderr, "LoadLibrary libnvjpeg.dll failed!. Please install CUDA toolkit or nvJPEG python wheel.");
+            fprintf(stderr, "LoadLibrary nvjpeg.dll failed!. Please install CUDA toolkit or nvJPEG python wheel.");
 #endif
         }
     }

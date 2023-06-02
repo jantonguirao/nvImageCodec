@@ -25,7 +25,7 @@ namespace {
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
   static const char __Nvjpeg2kLibName[] = "libnvjpeg2k.so";
 #elif defined(_WIN32) || defined(_WIN64)
-  static const char __Nvjpeg2kLibName[] = "libnvjpeg2k.dll";
+  static const char __Nvjpeg2kLibName[] = "nvjpeg2k_0.dll";
 #endif
 
 
@@ -36,9 +36,11 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNvjpeg2kLibrary()
     ret = lib_loader.loadLibrary(__Nvjpeg2kLibName);
     if (!ret) {
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-        fprintf(stderr, "dlopen libnvjpeg.so failed!. Please install CUDA toolkit or nvJPEG python wheel.");
+        fprintf(stderr, "dlopen libnvjpeg2k.so failed!. Please install nvjpeg2000 (see https://developer.nvidia.com/nvjpeg2000/downloads). "
+            // TODO(janton): Uncomment when available "Alternatively, install nvjpeg2000 as a Python package from pip."
+        );
 #elif defined(_WIN32) || defined(_WIN64)
-        fprintf(stderr, "LoadLibrary libnvjpeg.dll failed!. Please install CUDA toolkit or nvJPEG python wheel.");
+        fprintf(stderr, "LoadLibrary nvjpeg2k_0.dll failed!. Please install nvjpeg2000 (see https://developer.nvidia.com/nvjpeg2000/downloads).");
 #endif
     }
     return ret;

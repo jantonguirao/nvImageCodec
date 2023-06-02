@@ -37,11 +37,19 @@ namespace {
   #endif
 
 #elif defined(_WIN32) || defined(_WIN64)
-  static const char __NppcLibName[] = "libnppc.dll";
-  static const char __NppideiLibName[] = "libnppidei.dll";
-  // TODO(janton): Another name in Windows?
-  static const char __NppcLibName[] = "libnppc.dll";
-  static const char __NppideiLibName[] = "libnppidei.dll";
+  static const char __NppcLibName[] = "nppc.dll";
+  static const char __NppideiLibName[] = "nppidei.dll";
+
+  #if CUDA_VERSION >= 12000
+    static const char __NppcLibNameCuVer[] = "nppc64_12.dll";
+    static const char __NppideiLibNameCuVer[] = "nppidei64_12.dll";
+  #elif CUDA_VERSION >= 11000 && CUDA_VERSION < 12000
+    static const char __NppcLibNameCuVer[] = "nppc64_11.dll";
+    static const char __NppideiLibNameCuVer[] = "nppidei64_11.dll";
+  #else
+    static const char __NppcLibNameCuVer[] = "nppc64_10.dll";
+    static const char __NppideiLibNameCuVer[] = "nppidei64_10.dll";
+  #endif
 #endif
 
 nvimgcdcs::ILibraryLoader::LibraryHandle loadNppcLibrary()
@@ -55,7 +63,7 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNppcLibrary()
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
             fprintf(stderr, "dlopen libnppc.so failed!. Please install CUDA toolkit or NPP python wheel.");
 #elif defined(_WIN32) || defined(_WIN64)
-            fprintf(stderr, "LoadLibrary libnppc.dll failed!. Please install CUDA toolkit or NPP python wheel.");
+            fprintf(stderr, "LoadLibrary nppc.dll failed!. Please install CUDA toolkit or NPP python wheel.");
 #endif
         }
     }

@@ -23,7 +23,7 @@ set_target_properties(dynlink_cuda
     )
 
 if(WITH_DYNAMIC_NVJPEG)
-    set(NVJPEG_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_nvjpeg_gen.cc")
+    set(NVJPEG_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_nvjpeg_gen.cpp")
     add_custom_command(
         OUTPUT ${NVJPEG_GENERATED_STUB}
         COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/stub_generator/stub_codegen.py --unique_prefix=Nvjpeg --
@@ -40,13 +40,13 @@ if(WITH_DYNAMIC_NVJPEG)
         VERBATIM)
 
     set_source_files_properties(${NVJPEG_GENERATED_STUB} PROPERTIES GENERATED TRUE)
-    add_library(dynlink_nvjpeg STATIC dynlink_nvjpeg.cc ${NVJPEG_GENERATED_STUB})
+    add_library(dynlink_nvjpeg STATIC dynlink_nvjpeg.cpp ${NVJPEG_GENERATED_STUB})
     set_target_properties(dynlink_nvjpeg PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
 
 if(WITH_DYNAMIC_NVJPEG2K)
-    set(NVJPEG2K_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_nvjpeg2k_gen.cc")
+    set(NVJPEG2K_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_nvjpeg2k_gen.cpp")
     add_custom_command(
         OUTPUT ${NVJPEG2K_GENERATED_STUB}
         COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/stub_generator/stub_codegen.py --unique_prefix=Nvjpeg2k --
@@ -63,12 +63,12 @@ if(WITH_DYNAMIC_NVJPEG2K)
         VERBATIM)
 
     set_source_files_properties(${NVJPEG2K_GENERATED_STUB} PROPERTIES GENERATED TRUE)
-    add_library(dynlink_nvjpeg2k STATIC dynlink_nvjpeg2k.cc ${NVJPEG2K_GENERATED_STUB})
+    add_library(dynlink_nvjpeg2k STATIC dynlink_nvjpeg2k.cpp ${NVJPEG2K_GENERATED_STUB})
     set_target_properties(dynlink_nvjpeg2k PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
 if (WITH_DYNAMIC_NPP)
-    set(NPP_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_npp_gen.cc")
+    set(NPP_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_npp_gen.cpp")
     add_custom_command(
         OUTPUT ${NPP_GENERATED_STUB}
         COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/stub_generator/stub_codegen.py --unique_prefix=Npp --
@@ -84,6 +84,6 @@ if (WITH_DYNAMIC_NPP)
         VERBATIM)
 
     set_source_files_properties(${NPP_GENERATED_STUB} PROPERTIES GENERATED TRUE)
-    add_library(dynlink_npp STATIC dynlink_npp.cc ${NPP_GENERATED_STUB})
+    add_library(dynlink_npp STATIC dynlink_npp.cpp ${NPP_GENERATED_STUB})
     set_target_properties(dynlink_npp PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
