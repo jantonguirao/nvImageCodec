@@ -9,8 +9,28 @@ set(NVIMGCDCS_NVJPEG2K_EXT_SRC
 add_library(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG2K_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVJPEG2K_EXT_SRC})
 
+if(NOT WITH_DYNAMIC_NVJPEG2K)
+  target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}
+    PUBLIC ${NVJPEG2K_LIBRARY})
+else()
+  target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}
+    PRIVATE dynlink_nvjpeg2k)
+  target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}
+    PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:dynlink_nvjpeg2k>")
+endif()
+
+if (WITH_DYNAMIC_NPP)
+  target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}
+    PRIVATE dynlink_npp)
+  target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}
+    PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:dynlink_npp>")
+else()
+  target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}
+    PUBLIC CUDA::nppc_static CUDA::nppidei_static)
+endif()
+
 target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} PUBLIC
-  CUDA::cudart_static CUDA::nppc_static CUDA::nppidei_static ${NVJPEG2K_LIBRARY})
+  CUDA::cudart_static)
 
 if(UNIX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")

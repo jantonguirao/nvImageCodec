@@ -21,34 +21,36 @@ include(third_party/DownloadProject)
 # Google Test and OpenJPEG
 # ###############################################################
 if(BUILD_TEST)
-        find_package(GTest QUIET)
-        if(NOT GTEST_FOUND)
-            find_package(Git REQUIRED)
-            if(NOT Git_FOUND)
-                message(FATAL_ERROR "Git not installed")
-            endif()
+    find_package(GTest QUIET)
 
-            message(STATUS "Building Google Test")
-            set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/gtest CACHE PATH "")
-            download_project(PROJ                googletest
-                            GIT_REPOSITORY      https://github.com/google/googletest.git
-                            GIT_TAG             release-1.12.1
-                            INSTALL_DIR         ${GTEST_ROOT}
-                            CMAKE_ARGS          -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_GMOCK=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-                            LOG_DOWNLOAD        TRUE
-                            LOG_CONFIGURE       TRUE
-                            LOG_BUILD           TRUE
-                            LOG_INSTALL         TRUE
-                            UPDATE_DISCONNECTED TRUE
-            )
+    if(NOT GTEST_FOUND)
+        find_package(Git REQUIRED)
+
+        if(NOT Git_FOUND)
+            message(FATAL_ERROR "Git not installed")
         endif()
-        find_package(GTest REQUIRED)
 
+        message(STATUS "Building Google Test")
+        set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/gtest CACHE PATH "")
+        download_project(PROJ googletest
+            GIT_REPOSITORY https://github.com/google/googletest.git
+            GIT_TAG release-1.12.1
+            INSTALL_DIR ${GTEST_ROOT}
+            CMAKE_ARGS -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_GMOCK=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+            LOG_DOWNLOAD TRUE
+            LOG_CONFIGURE TRUE
+            LOG_BUILD TRUE
+            LOG_INSTALL TRUE
+            UPDATE_DISCONNECTED TRUE
+        )
+    endif()
+
+    find_package(GTest REQUIRED)
 endif()
 
 function(CUDA_find_library out_path lib_name)
     find_library(${out_path} ${lib_name} PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
-                PATH_SUFFIXES lib lib64)
+                 PATH_SUFFIXES lib lib64)
 endfunction()
 
 find_package(CUDAToolkit REQUIRED)
@@ -64,7 +66,6 @@ if (BUILD_NVJPEG2K_EXT)
         set(BUILD_NVJPEG2K_EXT OFF)
     else()
         message(NOTICE "Found nvjpeg2k: " ${NVJPEG2K_LIBRARY})
-    
         if(NOT DEFINED NVJPEG2K_INCLUDE)
             find_path(NVJPEG2K_INCLUDE  NAMES nvjpeg2k.h)
         endif()

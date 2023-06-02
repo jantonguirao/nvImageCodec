@@ -13,14 +13,19 @@ set(NVIMGCDCS_NVJPEG_EXT_SRC
 add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVJPEG_EXT_SRC})
 
-if (UNIX)
-target_link_libraries(
-  ${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
-  PUBLIC CUDA::cudart_static CUDA::nvjpeg_static CUDA::culibos)
+if(NOT WITH_DYNAMIC_NVJPEG)
+  if (UNIX)
+    target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
+      PUBLIC CUDA::cudart_static CUDA::nvjpeg_static CUDA::culibos)
+  else()
+    target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
+      PUBLIC CUDA::cudart_static CUDA::nvjpeg)
+  endif()
 else()
-target_link_libraries(
-  ${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
-  PUBLIC CUDA::cudart_static CUDA::nvjpeg)
+  target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
+    PRIVATE dynlink_nvjpeg)
+  target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
+    PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:dynlink_nvjpeg>")
 endif()
 
 if(UNIX)
