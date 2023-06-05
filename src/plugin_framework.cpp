@@ -290,6 +290,10 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
     module.path_ = modulePath;
     try {
         module.lib_handle_ = library_loader_->loadLibrary(modulePath);
+    } catch (const std::runtime_error& e)
+    {
+        NVIMGCDCS_LOG_ERROR("Could not load extension module library. Error: " << e.what());
+        return;
     } catch (...) {
         NVIMGCDCS_LOG_ERROR("Could not load extension module library: " << modulePath);
         return;

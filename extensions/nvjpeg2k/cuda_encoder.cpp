@@ -143,9 +143,9 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEnc
         XM_CHECK_NULL(params);
         auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin::Encoder*>(encoder);
         return handle->canEncode(status, images, code_streams, batch_size, params);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_E_LOG_ERROR("Could not check if nvjpeg2k can encode - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_E_LOG_ERROR("Could not check if nvjpeg2k can encode - " << e.info());
+        return e.nvimgcdcsStatus();
     }
 }
 
@@ -180,23 +180,18 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(void* instance, nvimgcdcs
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin*>(instance);
-        handle->create(encoder, device_id);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_E_LOG_ERROR("Could not create nvjpeg2k encoder - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
+        return handle->create(encoder, device_id);
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_E_LOG_ERROR("Could not create nvjpeg2k encoder - " << e.info());
+        return e.nvimgcdcsStatus();
+    }    
 }
 
 NvJpeg2kEncoderPlugin::Encoder::~Encoder()
 {
-    try {
-        encode_state_batch_.reset();
-        XM_CHECK_NVJPEG2K(nvjpeg2kEncoderDestroy(handle_));
-
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_E_LOG_ERROR("Could not properly destroy nvjpeg2k encoder");
-    }
+    encode_state_batch_.reset();
+    if (handle_)
+        XM_NVJPEG2K_E_LOG_DESTROY(nvjpeg2kEncoderDestroy(handle_));
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_destroy(nvimgcdcsEncoder_t encoder)
@@ -206,9 +201,9 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_destroy(nvimgcdcsEncode
         XM_CHECK_NULL(encoder);
         auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin::Encoder*>(encoder);
         delete handle;
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_E_LOG_ERROR("Could not properly destroy nvjpeg2k encoder - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_E_LOG_ERROR("Could not properly destroy nvjpeg2k encoder - " << e.info());
+        return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -237,9 +232,9 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_get_capabilities(
         XM_CHECK_NULL(size);
         auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin::Encoder*>(encoder);
         return handle->getCapabilities(capabilities, size);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_E_LOG_ERROR("Could not retrieve nvjpeg2k encoder capabilites " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_E_LOG_ERROR("Could not retrieve nvjpeg2k encoder capabilites " << e.info());
+        return e.nvimgcdcsStatus();
     }
 }
 
@@ -278,19 +273,15 @@ NvJpeg2kEncoderPlugin::EncodeState::EncodeState(nvjpeg2kEncoder_t handle, nvimgc
 NvJpeg2kEncoderPlugin::EncodeState::~EncodeState()
 {
     for (auto& res : per_thread_) {
-        try {
-            if (res.state_) {
-                XM_CHECK_NVJPEG2K(nvjpeg2kEncodeStateDestroy(res.state_));
-            }
-            if (res.event_) {
-                XM_CHECK_CUDA(cudaEventDestroy(res.event_));
-            }
-            if (res.stream_) {
-                XM_CHECK_CUDA(cudaStreamDestroy(res.stream_));
-            }
-        } catch (const std::runtime_error& e) {
-            NVIMGCDCS_E_LOG_ERROR("Could not destroy nvjpeg2k decode state - " << e.what());
+        if (res.state_) {
+            XM_NVJPEG2K_E_LOG_DESTROY(nvjpeg2kEncodeStateDestroy(res.state_));
         }
+        if (res.event_) {
+            XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
+        }
+        if (res.stream_) {
+            XM_CUDA_LOG_DESTROY(cudaStreamDestroy(res.stream_));
+        }        
     }
 }
 
@@ -359,7 +350,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 std::unique_ptr<std::remove_pointer<nvjpeg2kEncodeParams_t>::type, decltype(&nvjpeg2kEncodeParamsDestroy)> encode_params(
                     encode_params_, &nvjpeg2kEncodeParamsDestroy);
 
-                auto sample_type = image_info.plane_info[0].sample_type;
+                auto sample_type = image_info.plane_info[0].sample_type;                
                 size_t bytes_per_sample = sample_type_to_bytes_per_element(sample_type);
                 nvjpeg2kImageType_t nvjpeg2k_sample_type;
                 switch (sample_type) {
@@ -373,7 +364,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     nvjpeg2k_sample_type = NVJPEG2K_UINT16;
                     break;
                 default:
-                    throw std::runtime_error("Unexpected data type");
+                    FatalError(NVJPEG2K_STATUS_INVALID_PARAMETER, "Unexpected data type");
                 }
 
                 bool interleaved = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB;
@@ -411,7 +402,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                         const DTYPE *pSrc = reinterpret_cast<const DTYPE*>(image_info.buffer); \
                         auto status = NPP_FUNC(pSrc, image_info.plane_info[0].row_stride, planes, row_nbytes, dims, t.npp_ctx_); \
                         if (NPP_SUCCESS != status) { \
-                            throw std::runtime_error("Failed to transpose the image from planar to interleaved layout " + std::to_string(status)); \
+                            FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED, "Failed to transpose the image from planar to interleaved layout " + std::to_string(status)); \
                         }
 
                     bool is_rgb = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
@@ -433,7 +424,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     } else if (is_rgba && is_s16) {
                         NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16s_C4P4R_Ctx, int16_t, 4);
                     } else {
-                        throw std::runtime_error("Transposition not implemented for this combination of sample format and data type");
+                        // throw NvJpeg2kException("Transposition not implemented for this combination of sample format and data type");
+                        FatalError(NVJPEG2K_STATUS_IMPLEMENTATION_NOT_SUPPORTED, "Transposition not implemented for this combination of sample format and data type");
                     }
 
                     #undef NPP_CONVERT_INTERLEAVED_TO_PLANAR
@@ -507,8 +499,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 io_stream->write(io_stream->instance, &output_size, static_cast<void*>(&t.compressed_data_[0]), t.compressed_data_.size());
 
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
-            } catch (const std::runtime_error& e) {
-                NVIMGCDCS_D_LOG_ERROR("Could not encode jpeg2k code stream - " << e.what());
+            } catch (const NvJpeg2kException& e) {
+                NVIMGCDCS_D_LOG_ERROR("Could not encode jpeg2k code stream - " << e.info());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
             if (tmp_buffer) {
@@ -556,12 +548,12 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsE
                 NvJpeg2kEncoderPlugin::EncodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
         }
         return handle->encodeBatch();
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_E_LOG_ERROR("Could not encode jpeg2k batch - " << e.what());
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_E_LOG_ERROR("Could not encode jpeg2k batch - " << e.info());
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return e.nvimgcdcsStatus(); //TODO specific error
     }
 }
 

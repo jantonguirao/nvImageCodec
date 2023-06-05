@@ -39,7 +39,7 @@ nvimgcdcsStatus_t nvjpeg2k_extension_create(void* instance, nvimgcdcsExtension_t
         XM_CHECK_NULL(framework)
         XM_CHECK_NULL(extension)
         *extension = reinterpret_cast<nvimgcdcsExtension_t>(new nvjpeg2k::NvJpeg2kImgCodecsExtension(framework));
-    } catch (const std::runtime_error& e) {
+    } catch (const NvJpeg2kException& e) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -53,7 +53,7 @@ nvimgcdcsStatus_t nvjpeg2k_extension_destroy(nvimgcdcsExtension_t extension)
         auto ext_handle = reinterpret_cast<nvjpeg2k::NvJpeg2kImgCodecsExtension*>(extension);
         delete ext_handle;
         Logger::get().unregisterLogFunc();
-    } catch (const std::runtime_error& e) {
+    } catch (const NvJpeg2kException& e) {
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;

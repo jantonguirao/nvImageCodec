@@ -25,7 +25,7 @@ class LibraryLoader : public ILibraryLoader
     {
         LibraryHandle handle = ::dlopen(library_path.c_str(), RTLD_LAZY);
         if (handle == nullptr) {
-            throw std::runtime_error(std::string("Failed to load library"));
+            throw std::runtime_error(std::string("Failed to load library ") + dlerror());
         }
         return handle;
     }
@@ -33,7 +33,7 @@ class LibraryLoader : public ILibraryLoader
     {
         const int result = ::dlclose(library_handle);
         if (result != 0) {
-            throw std::runtime_error(std::string("Failed to unload library"));
+            throw std::runtime_error(std::string("Failed to unload library ") + dlerror());
         }
     
     }
@@ -41,7 +41,7 @@ class LibraryLoader : public ILibraryLoader
     {
         void* func_ptr = ::dlsym(library_handle, func_name.c_str());
         if (func_ptr == nullptr) {
-            throw std::runtime_error(std::string("Failed to get function from library"));
+            throw std::runtime_error(std::string("Failed to get function from library ") + dlerror());
         }
         return func_ptr;
     }
@@ -56,7 +56,7 @@ class LibraryLoader : public ILibraryLoader
     {
         LibraryHandle handle = ::LoadLibrary(library_path.c_str());
         if (handle == nullptr) {
-            throw std::runtime_error(std::string("Failed to load library"));
+            throw std::runtime_error(std::string("Failed to load library ") + dlerror()) ;
         }
         return handle;
     }
@@ -64,14 +64,14 @@ class LibraryLoader : public ILibraryLoader
     {
         const BOOL result = ::FreeLibrary(library_handle);
         if (result == 0) {
-            throw std::runtime_error(std::string("Failed to unload library"));
+            throw std::runtime_error(std::string("Failed to unload library ") + dlerror());
         }
     }
     void* getFuncAddress(LibraryHandle library_handle, const std::string& func_name) override
     {
         FARPROC func_ptr = ::GetProcAddress(library_handle, func_name.c_str());
         if (func_ptr == nullptr) {
-            throw std::runtime_error(std::string("Failed to get function from library"));
+            throw std::runtime_error(std::string("Failed to get function from library ") + dlerror());
         }
         return reinterpret_cast<void*>(func_ptr);
     }

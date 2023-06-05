@@ -4,6 +4,7 @@ set(NVIMGCDCS_NVJPEG2K_EXT_SRC
   nvjpeg2k_ext.cpp
   cuda_encoder.cpp
   cuda_decoder.cpp
+  exception.cpp
 )
 
 add_library(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG2K_EXT_SRC} ext_module.cpp)
