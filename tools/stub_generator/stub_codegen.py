@@ -71,7 +71,11 @@ def main():
 }}
 
 {0} {{
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wattributes"
   using FuncPtr = {return_type} (%s *)({2});
+  #pragma GCC diagnostic pop
+
   static auto func_ptr = reinterpret_cast<FuncPtr>(LOAD_SYMBOL_FUNC("{1}")) ?
                            reinterpret_cast<FuncPtr>(LOAD_SYMBOL_FUNC("{1}")) :
                            {1}NotFound;

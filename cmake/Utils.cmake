@@ -152,3 +152,35 @@ macro(copy_post_build TARGET_NAME SRC DST)
     TARGET install_${TARGET_NAME}
     COMMAND mkdir -p "${DST}" && cp -r  "${SRC}" "${DST}")
 endmacro(copy_post_build)
+
+# get default compiler include paths, needed by the stub generator
+# starting from 3.14.0 CMake will have that inside CMAKE_${LANG}_IMPLICIT_INCLUDE_DIRECTORIES
+macro(DETERMINE_GCC_SYSTEM_INCLUDE_DIRS _lang _compiler _flags _result)
+    file(WRITE "${CMAKE_BINARY_DIR}/CMakeFiles/dummy" "\n")
+    separate_arguments(_buildFlags UNIX_COMMAND "${_flags}")
+    execute_process(COMMAND ${_compiler} ${_buildFlags} -v -E -x ${_lang} -dD dummy
+                    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeFiles OUTPUT_QUIET
+                    ERROR_VARIABLE _gccOutput)
+    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeFiles/dummy")
+    if ("${_gccOutput}" MATCHES "> search starts here[^\n]+\n *(.+) *\n *End of (search) list")
+        set(${_result} ${CMAKE_MATCH_1})
+        string(REPLACE "\n" " " ${_result} "${${_result}}")
+        separate_arguments(${_result})
+    endif ()
+endmacro()
+
+# check_and_add_cmake_submodule
+# Checks for presence of a git submodule that includes a CMakeLists.txt
+# Usage:
+#   check_and_add_cmake_submodule(<submodule_path> ..)
+macro(check_and_add_cmake_submodule SUBMODULE_PATH)
+  if(NOT EXISTS ${SUBMODULE_PATH}/CMakeLists.txt)
+    message(FATAL_ERROR "File ${SUBMODULE_PATH}/CMakeLists.txt not found. "
+                        "Did you forget to `git clone --recursive`? Try this:\n"
+                        "  cd ${PROJECT_SOURCE_DIR} && \\\n"
+                        "  git submodule sync --recursive && \\\n"
+                        "  git submodule update --init --recursive && \\\n"
+                        "  cd -\n")
+  endif()
+  add_subdirectory(${SUBMODULE_PATH} ${ARGN})
+endmacro(check_and_add_cmake_submodule)

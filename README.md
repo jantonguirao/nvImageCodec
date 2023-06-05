@@ -37,6 +37,7 @@ There are following known limitation:
 - libjpeg-turbo >= 2.0.0
 - opencv >= 3.0.0
 - Python for tests and examples
+- Python packages: clang==14 wheel setuptools
 - Supported systems:
   - Windows >= 10 
   - Ubuntu >= 20.04
