@@ -152,7 +152,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     }
 
     // Prepare decode parameters
-    nvimgcdcsDecodeParams_t decode_params{};
+    nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
@@ -489,7 +489,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     std::vector<nvimgcdcsCodeStream_t> in_code_streams(params.batch_size);
     std::vector<nvimgcdcsCodeStream_t> out_code_streams(params.batch_size);
     std::vector<nvimgcdcsImage_t> images(params.batch_size);
-    nvimgcdcsDecodeParams_t decode_params{};
+    nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
 

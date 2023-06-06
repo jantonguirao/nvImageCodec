@@ -34,6 +34,9 @@ extern "C"
 #define NVIMGCDCS_MAX_CODEC_NAME_SIZE 256
 #define NVIMGCDCS_DEVICE_CURRENT -1
 #define NVIMGCDCS_DEVICE_CPU_ONLY -99999
+#define NVIMGCDCS_MAX_NUM_DIM 5
+#define NVIMGCDCS_MAX_NUM_PLANES 32
+#define NVIMGCDCS_JPEG2K_MAXRES 33
 
     typedef enum
     {
@@ -223,7 +226,6 @@ extern "C"
         uint8_t precision; //0 means sample type bitdepth
     } nvimgcdcsImagePlaneInfo_t;
 
-#define NVIMGCDCS_MAX_NUM_DIM 5
     typedef struct
     {
         nvimgcdcsStructureType_t type;
@@ -243,7 +245,6 @@ extern "C"
         NVIMGCDCS_IMAGE_BUFFER_KIND_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsImageBufferKind_t;
 
-#define NVIMGCDCS_MAX_NUM_PLANES 32
     typedef struct
     {
         nvimgcdcsStructureType_t type;
@@ -382,8 +383,6 @@ extern "C"
         int num_backends; //Zero means that all backends are allowed.
         nvimgcdcsBackend_t* backends;
     } nvimgcdcsEncodeParams_t;
-
-#define NVIMGCDCS_JPEG2K_MAXRES 33
 
     typedef enum
     {

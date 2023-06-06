@@ -32,6 +32,7 @@
 #include "plugin_framework.h"
 #include "processing_results.h"
 #include "nvimgcodecs_type_utils.h"
+#include "file_ext_codec.h"
 
 namespace fs = std::filesystem;
 
@@ -748,8 +749,7 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
     return ret;
 }
 
-static std::map<std::string, std::string> ext2codec = {{".bmp", "bmp"}, {".j2c", "jpeg2k"}, {".j2k", "jpeg2k"}, {".jp2", "jpeg2k"},
-    {".tiff", "tiff"}, {".tif", "tiff"}, {".jpg", "jpeg"}, {".jpeg", "jpeg"}, {".ppm", "pnm"}, {".pgm", "pnm"}, {".pbm", "pnm"}};
+
 
 static void fill_encode_params(const int* params, nvimgcdcsEncodeParams_t* encode_params, nvimgcdcsImageInfo_t* image_info, int* device_id)
 {
@@ -857,10 +857,7 @@ nvimgcdcsStatus_t nvimgcdcsImWrite(nvimgcdcsInstance_t instance, nvimgcdcsImage_
             std::string codec_name = "bmp";
             if (file_path.has_extension()) {
                 std::string extension = file_path.extension().string();
-                auto it = ext2codec.find(extension);
-                if (it != ext2codec.end()) {
-                    codec_name = it->second;
-                }
+                codec_name = file_ext_to_codec(extension);
             }
 
             if (image_info.chroma_subsampling == NVIMGCDCS_SAMPLING_NONE || image_info.chroma_subsampling == NVIMGCDCS_SAMPLING_UNSUPPORTED)
