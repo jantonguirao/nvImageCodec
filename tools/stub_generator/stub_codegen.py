@@ -71,16 +71,13 @@ def main():
 }}
 
 {0} {{
-  #pragma GCC diagnostic push
-  #pragma GCC diagnostic ignored "-Wattributes"
-  using FuncPtr = {return_type} (%s *)({2});
-  #pragma GCC diagnostic pop
+  using FuncPtr = {return_type} (*) ({2});
 
   static auto func_ptr = reinterpret_cast<FuncPtr>(LOAD_SYMBOL_FUNC("{1}")) ?
                            reinterpret_cast<FuncPtr>(LOAD_SYMBOL_FUNC("{1}")) :
                            {1}NotFound;
   return func_ptr({3});
-}}\n""" % (config['calling_conv'], config['calling_conv'])
+}}\n""" % (config['calling_conv'])
 
     prolog = """
 void *{0}LoadSymbol(const char *name);
