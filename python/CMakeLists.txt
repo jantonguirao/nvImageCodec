@@ -54,21 +54,21 @@ else()
 endif()
 
 if (BUILD_WHEEL)
+    set(WHEEL_FILENAME "nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-${NVIMGCODECS_VERSION}-py3-none-${NVIMGCODECS_WHL_PLATFORM_NAME}.whl")
+    set(WHEEL_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+    set(WHEEL_FILEPATH "${WHEEL_DIR}/${WHEEL_FILENAME}")
     # Note: not adding this target to ALL
     add_custom_target(wheel DEPENDS copy_libs_to_python_dir)
-    set(WHEEL_FILENAME "nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-${NVIMGCODECS_VERSION}-py3-none-${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME}.whl")
-    set(WHEEL_DIR "${CMAKE_CURRENT_BINARY_DIR}/dist")
-    set(WHEEL_FILEPATH "${WHEEL_DIR}/${WHEEL_FILENAME}")
     if (UNIX)
         add_custom_command(
         TARGET wheel
-        COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel --verbose --compression=stored --python-tag=py3 --plat-name=${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME} &&
+        COMMAND ${PYTHON_EXECUTABLE} -m pip wheel --build-option --verbose --build-option --compression=stored --build-option --python-tag=py3 --build-option --plat-name=${NVIMGCODECS_WHL_PLATFORM_NAME} ${CMAKE_CURRENT_BINARY_DIR} &&
                 ${CMAKE_CURRENT_SOURCE_DIR}/bundle-wheel.sh ${WHEEL_FILEPATH} NO NO ${WHEEL_FILENAME} /usr/local ${WHEEL_DIR} YES)
 
     else()
         add_custom_command(
         TARGET wheel
-        COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_wheel --verbose --compression=stored --python-tag=py3 --plat-name=${NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME}
+        COMMAND ${PYTHON_EXECUTABLE} -m pip wheel --build-option --verbose --build-option --compression=stored --build-option --python-tag=py3 ${CMAKE_CURRENT_BINARY_DIR}
         )
     endif()                
 endif()

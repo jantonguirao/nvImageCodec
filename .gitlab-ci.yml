@@ -26,7 +26,7 @@ before_script:
     extends: .build
     artifacts:
         paths:
-            - build/python/dist/*.whl
+            - build/python/*.whl
             - build/*.tar.gz
         expire_in: 2 weeks
 

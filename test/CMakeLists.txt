@@ -95,8 +95,8 @@ foreach(testapp nvimgcodecs_tests)
         CUDA::nppc
         CUDA::nppidei
         CUDA::cuda_driver
-        GTest::gtest
-        GTest::gmock
+        gtest
+        gmock
         ${PTHREAD})
 endforeach()
 

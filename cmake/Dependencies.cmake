@@ -14,38 +14,16 @@ find_package(Python COMPONENTS Interpreter)
 set(PYTHONINTERP_FOUND ${Python_Interpreter_FOUND})
 set(PYTHON_EXECUTABLE ${Python_EXECUTABLE})
 
-# CMake script for downloading, unpacking and building dependency at configure time
-include(third_party/DownloadProject)
-
-# ###############################################################
-# Google Test and OpenJPEG
-# ###############################################################
-if(BUILD_TEST)
-    find_package(GTest QUIET)
-
-    if(NOT GTEST_FOUND)
-        find_package(Git REQUIRED)
-
-        if(NOT Git_FOUND)
-            message(FATAL_ERROR "Git not installed")
-        endif()
-
-        message(STATUS "Building Google Test")
-        set(GTEST_ROOT ${CMAKE_CURRENT_BINARY_DIR}/gtest CACHE PATH "")
-        download_project(PROJ googletest
-            GIT_REPOSITORY https://github.com/google/googletest.git
-            GIT_TAG release-1.12.1
-            INSTALL_DIR ${GTEST_ROOT}
-            CMAKE_ARGS -DINSTALL_GTEST=ON -Dgtest_force_shared_crt=ON -DBUILD_GMOCK=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-            LOG_DOWNLOAD TRUE
-            LOG_CONFIGURE TRUE
-            LOG_BUILD TRUE
-            LOG_INSTALL TRUE
-            UPDATE_DISCONNECTED TRUE
-        )
-    endif()
-
-    find_package(GTest REQUIRED)
+##################################################################
+# Google C++ testing framework
+##################################################################
+if (BUILD_TEST)
+  set(BUILD_GTEST ON CACHE INTERNAL "Build gtest submodule")
+  set(BUILD_GMOCK ON CACHE INTERNAL "Build gmock submodule")
+  check_and_add_cmake_submodule(${PROJECT_SOURCE_DIR}/external/googletest EXCLUDE_FROM_ALL)
+  include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/external/googletest/googletest/include)
+  include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/external/googletest/googlemock/include)
+  set_target_properties(gtest PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
 function(CUDA_find_library out_path lib_name)
@@ -67,7 +45,7 @@ if (BUILD_NVJPEG2K_EXT)
     else()
         message(NOTICE "Found nvjpeg2k: " ${NVJPEG2K_LIBRARY})
         if(NOT DEFINED NVJPEG2K_INCLUDE)
-            find_path(NVJPEG2K_INCLUDE  NAMES nvjpeg2k.h)
+            find_path(NVJPEG2K_INCLUDE  NAMES nvjpeg2k.h PATHS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
         endif()
         include_directories(SYSTEM ${NVJPEG2K_INCLUDE})
     endif()

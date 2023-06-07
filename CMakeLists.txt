@@ -1,15 +1,27 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
-set(NVIMGCODECS_FLAVOR "")  # could be nightly, weekly, etc if necessary
-set(NVIMGCODECS_FLAVOR_MINUS "")  # -nightly, -weekly, etc
+set(NVIMGCODECS_PROJECT_NAME "nvimgcodecs")
 set(NVIMGCODECS_VERSION "0.1.0")
+
+if (NVIMGCODECS_FLAVOR)
+    set(NVIMGCODECS_FLAVOR "${NVIMGCODECS_FLAVOR} ")  # could be nightly, weekly, etc if necessary
+    set(NVIMGCODECS_FLAVOR_MINUS "-${NVIMGCODECS_FLAVOR}")  # -nightly, -weekly, etc
+endif()
+
+if (NOT ARCH)
+    set(ARCH "x86_64")
+endif()
+
+if (NOT NVIMGCODECS_WHL_PLATFORM_NAME)
+    set(NVIMGCODECS_WHL_PLATFORM_NAME "manylinux2014_${ARCH}")
+endif()
+
 if(NOT BUILD_ID)
     set (BUILD_ID 0)
 endif()
-set(NVIMGCODECS_VERSION_WITH_BUILD "${NVIMGCODECS_VERSION}.${BUILD_ID}")
-set(NVIMGCODECS_PYTHON_WHEEL_PLATFORM_NAME "manylinux2014_x86_64")
-project(nvimgcodecs VERSION ${NVIMGCODECS_VERSION_WITH_BUILD} LANGUAGES CXX CUDA)
 
+set(NVIMGCODECS_VERSION_WITH_BUILD "${NVIMGCODECS_VERSION}.${BUILD_ID}")
+project(${NVIMGCODECS_PROJECT_NAME} VERSION ${NVIMGCODECS_VERSION_WITH_BUILD} LANGUAGES CXX CUDA)
 set(CUDA_VERSION "${CMAKE_CUDA_COMPILER_VERSION}")
 
 # Include custom cmake modules/scripts
