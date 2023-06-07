@@ -151,7 +151,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_can_encode(nvimgcdcsE
         return handle->canEncode(status, images, code_streams, batch_size, params);
     } catch (const Exception& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not check if nvjpge can encode - " << e.info());
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
 }
 
@@ -162,7 +162,7 @@ NvJpegCudaEncoderPlugin::Encoder::Encoder(
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
     , device_id_(device_id)
-{     
+{
     if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
         device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
         device_allocator_.dev_malloc = framework->device_allocator->device_malloc;
@@ -207,20 +207,22 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::static_create(void* instance, nvimgcd
         NVIMGCDCS_E_LOG_TRACE("jpeg_create_encoder");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(encoder);
+        if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         NvJpegCudaEncoderPlugin* handle = reinterpret_cast<NvJpegCudaEncoderPlugin*>(instance);
         handle->create(encoder, device_id);
     } catch (const Exception& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not create nvjpeg encoder - " << e.info());
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 NvJpegCudaEncoderPlugin::Encoder::~Encoder()
-{    
+{
     encode_state_batch_.reset();
     if (handle_)
-        XM_NVJPEG_E_LOG_DESTROY(nvjpegDestroy(handle_)); 
+        XM_NVJPEG_E_LOG_DESTROY(nvjpegDestroy(handle_));
 }
 
 nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_destroy(nvimgcdcsEncoder_t encoder)
@@ -232,7 +234,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_destroy(nvimgcdcsEnco
         delete handle;
     } catch (const Exception& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not properly destroy nvjpeg encoder - " << e.info());
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -263,7 +265,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_get_capabilities(
         return handle->getCapabilities(capabilities, size);
     } catch (const Exception& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not retrive nvjpeg encoder capabilites - " << e.info());
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
 }
 
@@ -277,12 +279,12 @@ NvJpegCudaEncoderPlugin::EncodeState::EncodeState(nvjpegHandle_t handle, int num
         XM_CHECK_CUDA(cudaStreamCreateWithFlags(&res.stream_, cudaStreamNonBlocking));
         XM_CHECK_CUDA(cudaEventCreate(&res.event_));
         XM_CHECK_NVJPEG(nvjpegEncoderStateCreate(handle_, &res.state_, res.stream_));
-    }    
+    }
 }
 
 NvJpegCudaEncoderPlugin::EncodeState::~EncodeState()
 {
-    for (auto& res : per_thread_) {        
+    for (auto& res : per_thread_) {
         if (res.event_) {
             XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
         }
@@ -440,7 +442,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_encode_batch(nvimgcdc
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
 }
 

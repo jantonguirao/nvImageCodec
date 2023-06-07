@@ -21,12 +21,16 @@ namespace nvimgcdcs {
 ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t desc, int device_id, const char* options)
     : decoder_desc_(desc)
 {
-    decoder_desc_->create(decoder_desc_->instance, &decoder_, device_id, options);
+    auto ret = decoder_desc_->create(decoder_desc_->instance, &decoder_, device_id, options);
+    if (NVIMGCDCS_STATUS_SUCCESS != ret) {
+        decoder_ = nullptr;
+    }
 }
 
 ImageDecoder::~ImageDecoder()
 {
-    decoder_desc_->destroy(decoder_);
+    if (decoder_)
+        decoder_desc_->destroy(decoder_);
 }
 
 std::unique_ptr<IDecodeState> ImageDecoder::createDecodeStateBatch() const
@@ -36,7 +40,10 @@ std::unique_ptr<IDecodeState> ImageDecoder::createDecodeStateBatch() const
 
 void ImageDecoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
-    decoder_desc_->getCapabilities(decoder_, capabilities, size);
+    *capabilities = nullptr;
+    *size = 0;
+    if (decoder_)
+        decoder_desc_->getCapabilities(decoder_, capabilities, size);
 }
 
 void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
@@ -44,6 +51,14 @@ void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, cons
 {
     assert(result->size() == code_streams.size());
     assert(status->size() == code_streams.size());
+
+    // in case the decoder couldn't be created for some reason
+    if (!decoder_) {
+        for (size_t i = 0; i < code_streams.size(); ++i) {
+           (*result)[i] = false;
+        }
+        return;
+    }
 
     std::vector<nvimgcdcsCodeStreamDesc*> cs_descs(code_streams.size());
     std::vector<nvimgcdcsImageDesc*> im_descs(code_streams.size());

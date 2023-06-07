@@ -131,20 +131,20 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
         return handle->canDecode(status, handle->handle_, code_streams, images, batch_size, params);
     } catch (const Exception& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not check if nvjpeg can decode - " << e.info());
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
 }
 
 NvJpegHwDecoderPlugin::ParseState::ParseState(nvjpegHandle_t handle)
 {
-    XM_CHECK_NVJPEG(nvjpegJpegStreamCreate(handle, &nvjpeg_stream_));    
+    XM_CHECK_NVJPEG(nvjpegJpegStreamCreate(handle, &nvjpeg_stream_));
 }
 
 NvJpegHwDecoderPlugin::ParseState::~ParseState()
-{    
+{
     if (nvjpeg_stream_) {
         XM_NVJPEG_D_LOG_DESTROY(nvjpegJpegStreamDestroy(nvjpeg_stream_));
-    } 
+    }
 }
 
 NvJpegHwDecoderPlugin::Decoder::Decoder(
@@ -192,7 +192,7 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
 
 nvimgcdcsStatus_t NvJpegHwDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegHwDecoderPlugin::Decoder(capabilities_, framework_, device_id, options));        
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegHwDecoderPlugin::Decoder(capabilities_, framework_, device_id, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -202,20 +202,22 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::static_create(void* instance, nvimgcdcs
         NVIMGCDCS_D_LOG_TRACE("nvjpeg_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
+        if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         NvJpegHwDecoderPlugin* handle = reinterpret_cast<NvJpegHwDecoderPlugin*>(instance);
         return handle->create(decoder, device_id, options);
     } catch (const Exception& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg decoder - " << e.info());
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
 }
 
 NvJpegHwDecoderPlugin::Decoder::~Decoder()
-{    
+{
     parse_state_.reset();
     decode_state_batch_.reset();
     if (handle_)
-        XM_NVJPEG_D_LOG_DESTROY(nvjpegDestroy(handle_)); 
+        XM_NVJPEG_D_LOG_DESTROY(nvjpegDestroy(handle_));
 }
 
 nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_destroy(nvimgcdcsDecoder_t decoder)
@@ -227,7 +229,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_destroy(nvimgcdcsDecode
         delete handle;
     } catch (const Exception& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not properly destroy nvjpeg decoder - " << e.info());
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -258,7 +260,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_get_capabilities(
         return handle->getCapabilities(capabilities, size);
     } catch (const Exception& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not retrieve nvjpeg decoder capabilites - " << e.info());
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
 }
 
@@ -274,7 +276,7 @@ NvJpegHwDecoderPlugin::DecodeState::DecodeState(
 }
 
 NvJpegHwDecoderPlugin::DecodeState::~DecodeState()
-{    
+{
     if (event_)
         XM_CUDA_LOG_DESTROY(cudaEventDestroy(event_));
     if (stream_)
@@ -390,7 +392,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
             nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[sample_idx].image;
             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -421,7 +423,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsD
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return e.nvimgcdcsStatus(); 
+        return e.nvimgcdcsStatus();
     }
 }
 } // namespace nvjpeg
