@@ -19,15 +19,15 @@
 
 const char* getErrorString(nvjpegStatus_t);
 
-class Exception : public std::exception
+class NvJpegException : public std::exception
 {
   public:
-    explicit Exception(
+    explicit NvJpegException(
         nvjpegStatus_t eStatus, const std::string& rMessage = "", const std::string& rLoc = "");
-    explicit Exception(
+    explicit NvJpegException(
         cudaError_t eStatus, const std::string& rMessage = "", const std::string& rLoc = "");
 
-    inline virtual ~Exception() throw() { ; }
+    inline virtual ~NvJpegException() throw() { ; }
 
     virtual const char* what() const throw();
 
@@ -44,7 +44,7 @@ class Exception : public std::exception
     nvimgcdcsStatus_t nvimgcdcsStatus() const;
 
   private:
-    Exception();
+    NvJpegException();
     nvjpegStatus_t eStatus_;
     cudaError_t eCudaStatus_;
     bool isCudaStatus_;
@@ -56,5 +56,5 @@ class Exception : public std::exception
     {                                                   \
         std::stringstream _where;                       \
         _where << "At " << __FILE__ << ":" << __LINE__; \
-        throw Exception(status, message, _where.str()); \
+        throw NvJpegException(status, message, _where.str()); \
     }     

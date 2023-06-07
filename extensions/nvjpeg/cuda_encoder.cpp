@@ -149,7 +149,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_can_encode(nvimgcdcsE
         XM_CHECK_NULL(params);
         auto handle = reinterpret_cast<NvJpegCudaEncoderPlugin::Encoder*>(encoder);
         return handle->canEncode(status, images, code_streams, batch_size, params);
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not check if nvjpge can encode - " << e.info());
         return e.nvimgcdcsStatus();
     }
@@ -211,7 +211,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::static_create(void* instance, nvimgcd
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         NvJpegCudaEncoderPlugin* handle = reinterpret_cast<NvJpegCudaEncoderPlugin*>(instance);
         handle->create(encoder, device_id);
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not create nvjpeg encoder - " << e.info());
         return e.nvimgcdcsStatus();
     }
@@ -232,7 +232,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_destroy(nvimgcdcsEnco
         XM_CHECK_NULL(encoder);
         NvJpegCudaEncoderPlugin::Encoder* handle = reinterpret_cast<NvJpegCudaEncoderPlugin::Encoder*>(encoder);
         delete handle;
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not properly destroy nvjpeg encoder - " << e.info());
         return e.nvimgcdcsStatus();
     }
@@ -263,7 +263,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_get_capabilities(
         XM_CHECK_NULL(size);
         NvJpegCudaEncoderPlugin::Encoder* handle = reinterpret_cast<NvJpegCudaEncoderPlugin::Encoder*>(encoder);
         return handle->getCapabilities(capabilities, size);
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not retrive nvjpeg encoder capabilites - " << e.info());
         return e.nvimgcdcsStatus();
     }
@@ -400,7 +400,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
                 io_stream->write(io_stream->instance, &output_size, static_cast<void*>(&t.compressed_data_[0]), t.compressed_data_.size());
 
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
-            } catch (const Exception& e) {
+            } catch (const NvJpegException& e) {
                 NVIMGCDCS_D_LOG_ERROR("Could not encode jpeg code stream - " << e.info());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
@@ -437,7 +437,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_encode_batch(nvimgcdc
                 NvJpegCudaEncoderPlugin::EncodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
         }
         return handle->encodeBatch();
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not encode jpeg batch - " << e.info());
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);

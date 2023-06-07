@@ -66,7 +66,7 @@ const char* getErrorString(nvjpegStatus_t eStatus_)
     }
 }
 
-Exception::Exception(nvjpegStatus_t eStatus, const std::string& rMessage, const std::string& rLoc)
+NvJpegException::NvJpegException(nvjpegStatus_t eStatus, const std::string& rMessage, const std::string& rLoc)
     : eStatus_(eStatus)
     , sMessage_(rMessage)
     , sLocation_(rLoc)
@@ -74,7 +74,7 @@ Exception::Exception(nvjpegStatus_t eStatus, const std::string& rMessage, const 
     ;
 }
 
-Exception::Exception(cudaError_t eCudaStatus, const std::string& rMessage, const std::string& rLoc)
+NvJpegException::NvJpegException(cudaError_t eCudaStatus, const std::string& rMessage, const std::string& rLoc)
     : eCudaStatus_(eCudaStatus)
     , sMessage_(rMessage)
     , sLocation_(rLoc)
@@ -82,7 +82,7 @@ Exception::Exception(cudaError_t eCudaStatus, const std::string& rMessage, const
     isCudaStatus_ = true;;
 }
 
-const char* Exception::what() const throw()
+const char* NvJpegException::what() const throw()
 {
     if (isCudaStatus_)
         return StatusStrings::sExtCudaCallError.c_str();
@@ -90,27 +90,27 @@ const char* Exception::what() const throw()
         return getErrorString(eStatus_);
 };
 
-nvjpegStatus_t Exception::status() const
+nvjpegStatus_t NvJpegException::status() const
 {    
     return eStatus_;
 }
 
-cudaError_t Exception::cudaStatus() const
+cudaError_t NvJpegException::cudaStatus() const
 {
     return eCudaStatus_;
 }
 
-const char* Exception::message() const
+const char* NvJpegException::message() const
 {
     return sMessage_.c_str();
 }
 
-const char* Exception::where() const
+const char* NvJpegException::where() const
 {
     return sLocation_.c_str();
 }
 
-std::string Exception::info() const throw()
+std::string NvJpegException::info() const throw()
 {   
     std::string info(getErrorString(eStatus_)); 
     if (isCudaStatus_)
@@ -118,7 +118,7 @@ std::string Exception::info() const throw()
     return info + " " + sLocation_;   
 }
 
-nvimgcdcsStatus_t Exception::nvimgcdcsStatus() const
+nvimgcdcsStatus_t NvJpegException::nvimgcdcsStatus() const
 {    
     if (isCudaStatus_)
         return NVIMGCDCS_EXTENSION_STATUS_CUDA_CALL_ERROR;
