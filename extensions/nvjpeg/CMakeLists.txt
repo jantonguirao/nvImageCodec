@@ -23,7 +23,7 @@ if(NOT WITH_DYNAMIC_NVJPEG)
   endif()
 else()
   target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
-    PRIVATE dynlink_nvjpeg)
+    PRIVATE CUDA::cudart_static dynlink_nvjpeg)
   target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
     PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:dynlink_nvjpeg>")
 endif()
