@@ -112,9 +112,9 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
         XM_CHECK_NULL(params);
         auto handle = reinterpret_cast<NvJpeg2kDecoderPlugin::Decoder*>(decoder);
         return handle->canDecode(status, code_streams, images, batch_size, params);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not check if nvjpeg2k can decode - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_D_LOG_ERROR("Could not check if nvjpeg2k can decode - " << e.info());
+        return e.nvimgcdcsStatus();
     }
 }
 
@@ -169,28 +169,24 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     try {
-        NVIMGCDCS_D_LOG_TRACE("jpeg2k_create");
+        NVIMGCDCS_D_LOG_TRACE("jpeg2k_create");        
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         auto handle = reinterpret_cast<NvJpeg2kDecoderPlugin*>(instance);
-        handle->create(decoder, device_id, options);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg2k decoder - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
+        return handle->create(decoder, device_id, options);
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg2k decoder - " << e.info());
+        return e.nvimgcdcsStatus();
+    }    
 }
 
 NvJpeg2kDecoderPlugin::Decoder::~Decoder()
 {
-    try {
-        decode_state_batch_.reset();
-        XM_CHECK_NVJPEG2K(nvjpeg2kDestroy(handle_));
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not properly destroy nvjpeg2k decoder");
-    }
+    decode_state_batch_.reset();
+    if (handle_)
+        XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDestroy(handle_));    
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_destroy(nvimgcdcsDecoder_t decoder)
@@ -199,11 +195,10 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_destroy(nvimgcdcsDecode
         NVIMGCDCS_D_LOG_TRACE("jpeg2k_destroy");
         auto handle = reinterpret_cast<NvJpeg2kDecoderPlugin::Decoder*>(decoder);
         delete handle;
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not properly destroy nvjpeg2k decoder - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_D_LOG_ERROR("Could not properly destroy nvjpeg2k decoder - " << e.info());
+        return e.nvimgcdcsStatus();
     }
-
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -231,9 +226,9 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_get_capabilities(
         XM_CHECK_NULL(size);
         auto handle = reinterpret_cast<NvJpeg2kDecoderPlugin::Decoder*>(decoder);
         return handle->getCapabilities(capabilities, size);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not retrieve nvjpeg2k decoder capabilites " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_D_LOG_ERROR("Could not retrieve nvjpeg2k decoder capabilites - " << e.info());
+        return e.nvimgcdcsStatus();
     }
 }
 
@@ -274,20 +269,16 @@ NvJpeg2kDecoderPlugin::DecodeState::DecodeState(nvjpeg2kHandle_t handle, nvimgcd
 
 NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
 {
-    for (auto& res : per_thread_) {
-        try {
-            if (res.event_) {
-                XM_CHECK_CUDA(cudaEventDestroy(res.event_));
-            }
-            if (res.stream_) {
-                XM_CHECK_CUDA(cudaStreamDestroy(res.stream_));
-            }
-            if (res.state_) {
-                XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateDestroy(res.state_));
-            }
-        } catch (const std::runtime_error& e) {
-            NVIMGCDCS_D_LOG_ERROR("Coud not destroy jpeg2k decode state - " << e.what());
+    for (auto& res : per_thread_) {        
+        if (res.event_) {
+            XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
         }
+        if (res.stream_) {
+            XM_CUDA_LOG_DESTROY(cudaStreamDestroy(res.stream_));
+        }
+        if (res.state_) {
+            XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(res.state_));
+        }        
     }
 }
 
@@ -298,13 +289,9 @@ NvJpeg2kDecoderPlugin::ParseState::ParseState()
 
 NvJpeg2kDecoderPlugin::ParseState::~ParseState()
 {
-    try {
-        if (nvjpeg2k_stream_) {
-            XM_CHECK_NVJPEG2K(nvjpeg2kStreamDestroy(nvjpeg2k_stream_));
-        }
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not destroy nvjpeg2k stream - " << e.what());
-    }
+    if (nvjpeg2k_stream_) {
+        XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kStreamDestroy(nvjpeg2k_stream_));
+    }    
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
@@ -513,7 +500,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                         NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)}; \
                         auto status = NPP_FUNC(decoded_planes, row_nbytes, reinterpret_cast<DTYPE*>(device_buffer), row_nbytes * NUM_COMPONENTS, dims, t.npp_ctx_); \
                         if (NPP_SUCCESS != status) { \
-                            throw std::runtime_error("Failed to transpose the image from planar to interleaved layout " + std::to_string(status)); \
+                            FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED, "Failed to transpose the image from planar to interleaved layout " + std::to_string(status)); \
                         }
 
                     bool is_rgb = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
@@ -535,7 +522,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                     } else if (is_rgba && is_s16) {
                         NPP_CONVERT_PLANAR_TO_INTERLEAVED(nppiCopy_16s_P4C4R_Ctx, int16_t, 4);
                     } else {
-                        throw std::runtime_error("Transposition not implemented for this combination of sample format and data type");
+                        FatalError(NVJPEG2K_STATUS_IMPLEMENTATION_NOT_SUPPORTED, "Transposition not implemented for this combination of sample format and data type");
                     }
 
                     #undef NPP_CONVERT_PLANAR_TO_INTERLEAVED
@@ -545,8 +532,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, t.event_));
 
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
-            } catch (const std::runtime_error& e) {
-                NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg2k code stream - " << e.what());
+            } catch (const NvJpeg2kException& e) {
+                NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg2k code stream - " << e.info());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
             if (decode_tmp_buffer) {
@@ -593,12 +580,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsD
                 NvJpeg2kDecoderPlugin::DecodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
         }
         return handle->decodeBatch();
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg2k batch - " << e.what());
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg2k batch - " << e.info());
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return e.nvimgcdcsStatus();
     }
 }
 

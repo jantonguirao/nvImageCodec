@@ -129,7 +129,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
         XM_CHECK_NULL(params);
         auto handle = reinterpret_cast<NvJpegHwDecoderPlugin::Decoder*>(decoder);
         return handle->canDecode(status, handle->handle_, code_streams, images, batch_size, params);
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not check if nvjpeg can decode - " << e.info());
         return e.nvimgcdcsStatus();
     }
@@ -206,7 +206,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::static_create(void* instance, nvimgcdcs
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         NvJpegHwDecoderPlugin* handle = reinterpret_cast<NvJpegHwDecoderPlugin*>(instance);
         return handle->create(decoder, device_id, options);
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg decoder - " << e.info());
         return e.nvimgcdcsStatus();
     }
@@ -227,7 +227,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_destroy(nvimgcdcsDecode
         XM_CHECK_NULL(decoder);
         NvJpegHwDecoderPlugin::Decoder* handle = reinterpret_cast<NvJpegHwDecoderPlugin::Decoder*>(decoder);
         delete handle;
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not properly destroy nvjpeg decoder - " << e.info());
         return e.nvimgcdcsStatus();
     }
@@ -258,7 +258,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_get_capabilities(
         XM_CHECK_NULL(size);
         NvJpegHwDecoderPlugin::Decoder* handle = reinterpret_cast<NvJpegHwDecoderPlugin::Decoder*>(decoder);
         return handle->getCapabilities(capabilities, size);
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not retrieve nvjpeg decoder capabilites - " << e.info());
         return e.nvimgcdcsStatus();
     }
@@ -385,7 +385,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
             XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, decode_state_batch_->event_));
             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
         }
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg code stream - " << e.info());
         for (auto& elem : sample_meta) {
             int sample_idx = std::get<2>(elem);
@@ -418,7 +418,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsD
                 NvJpegHwDecoderPlugin::DecodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
         }
         return handle->decodeBatch();
-    } catch (const Exception& e) {
+    } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg batch - " << e.info());
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);

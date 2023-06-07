@@ -15,23 +15,23 @@
 #include <string>
 #include <map>
 #include <nvimgcodecs.h>
-#include <nvjpeg.h>
+#include <nvjpeg2k.h>
 
-const char* getErrorString(nvjpegStatus_t);
+const char* getErrorString(nvjpeg2kStatus_t);
 
-class NvJpegException : public std::exception
+class NvJpeg2kException : public std::exception
 {
   public:
-    explicit NvJpegException(
-        nvjpegStatus_t eStatus, const std::string& rMessage = "", const std::string& rLoc = "");
-    explicit NvJpegException(
+    explicit NvJpeg2kException(
+        nvjpeg2kStatus_t eStatus, const std::string& rMessage = "", const std::string& rLoc = "");
+    explicit NvJpeg2kException(
         cudaError_t eStatus, const std::string& rMessage = "", const std::string& rLoc = "");
-
-    inline virtual ~NvJpegException() throw() { ; }
+    
+    inline virtual ~NvJpeg2kException() throw() { ; }
 
     virtual const char* what() const throw();
 
-    nvjpegStatus_t status() const;
+    nvjpeg2kStatus_t status() const;
     
     cudaError_t cudaStatus() const;
 
@@ -44,9 +44,9 @@ class NvJpegException : public std::exception
     nvimgcdcsStatus_t nvimgcdcsStatus() const;
 
   private:
-    NvJpegException();
-    nvjpegStatus_t eStatus_;
-    cudaError_t eCudaStatus_;
+    NvJpeg2kException();
+    nvjpeg2kStatus_t eStatus_;
+    cudaError_t eCudaStatus_;    
     bool isCudaStatus_;
     std::string sMessage_;
     std::string sLocation_;
@@ -56,5 +56,5 @@ class NvJpegException : public std::exception
     {                                                   \
         std::stringstream _where;                       \
         _where << "At " << __FILE__ << ":" << __LINE__; \
-        throw NvJpegException(status, message, _where.str()); \
+        throw NvJpeg2kException(status, message, _where.str()); \
     }     
