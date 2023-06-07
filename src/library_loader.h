@@ -23,11 +23,7 @@ class LibraryLoader : public ILibraryLoader
   public:
     LibraryHandle loadLibrary(const std::string& library_path) override
     {
-        LibraryHandle handle = ::dlopen(library_path.c_str(), RTLD_LAZY);
-        if (handle == nullptr) {
-            throw std::runtime_error(std::string("Failed to load library ") + dlerror());
-        }
-        return handle;
+      return ::dlopen(library_path.c_str(), RTLD_LAZY);
     }
     void unloadLibrary(LibraryHandle library_handle) override 
     {
@@ -39,11 +35,7 @@ class LibraryLoader : public ILibraryLoader
     }
     void* getFuncAddress(LibraryHandle library_handle, const std::string& func_name) override
     {
-        void* func_ptr = ::dlsym(library_handle, func_name.c_str());
-        if (func_ptr == nullptr) {
-            throw std::runtime_error(std::string("Failed to get function from library ") + dlerror());
-        }
-        return func_ptr;
+        return ::dlsym(library_handle, func_name.c_str());
     }
 };
 
@@ -54,11 +46,7 @@ class LibraryLoader : public ILibraryLoader
   public:
     LibraryHandle loadLibrary(const std::string& library_path) override
     {
-        LibraryHandle handle = ::LoadLibrary(library_path.c_str());
-        if (handle == nullptr) {
-            throw std::runtime_error(std::string("Failed to load library ") + dlerror()) ;
-        }
-        return handle;
+        return ::LoadLibrary(library_path.c_str());
     }
     void unloadLibrary(LibraryHandle library_handle) override
     {
@@ -69,11 +57,7 @@ class LibraryLoader : public ILibraryLoader
     }
     void* getFuncAddress(LibraryHandle library_handle, const std::string& func_name) override
     {
-        FARPROC func_ptr = ::GetProcAddress(library_handle, func_name.c_str());
-        if (func_ptr == nullptr) {
-            throw std::runtime_error(std::string("Failed to get function from library ") + dlerror());
-        }
-        return reinterpret_cast<void*>(func_ptr);
+        return reinterpret_cast<void*>( ::GetProcAddress(library_handle, func_name.c_str()));
     }
 };
 

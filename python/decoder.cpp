@@ -66,7 +66,8 @@ std::vector<Image> Decoder::decode(const std::vector<std::string>& data_list)
         int bytes_per_element = static_cast<unsigned int>(image_info.plane_info[0].sample_type) >> (8 + 3);
 
         //Decode to format
-        image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+        constexpr bool decode_to_interleaved = true;
+        image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
         image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
 
@@ -75,19 +76,26 @@ std::vector<Image> Decoder::decode(const std::vector<std::string>& data_list)
             std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
         }
 
-        size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
+        image_info.plane_info[0].num_channels = decode_to_interleaved ? 3 /*I_RGB*/: 1 /*P_RGB*/;
+        image_info.num_planes = decode_to_interleaved ? 1 : image_info.num_planes;
 
+        size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element * image_info.plane_info[0].num_channels;
+        
+        size_t buffer_size = 0;
         for (uint32_t c = 0; c < image_info.num_planes; ++c) {
             image_info.plane_info[c].height = image_info.plane_info[0].height;
             image_info.plane_info[c].width = image_info.plane_info[0].width;
             image_info.plane_info[c].row_stride = device_pitch_in_bytes;
-        }
+            image_info.plane_info[c].sample_type = image_info.plane_info[0].sample_type;
+            image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
+            buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[c].height;
+         }
 
-        image_info.buffer_size = image_info.plane_info[0].row_stride * image_info.plane_info[0].height * image_info.num_planes;
-        image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+         image_info.buffer_size = buffer_size;
+         image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
-        py_images.emplace_back(instance_, &image_info);
-        images[i - skip_samples] = py_images[i - skip_samples].getNvImgCdcsImage();
+         py_images.emplace_back(instance_, &image_info);
+         images[i - skip_samples] = py_images[i - skip_samples].getNvImgCdcsImage();
     }
     nvimgcdcsFuture_t decode_future;
     CHECK_NVIMGCDCS(nvimgcdcsDecoderDecode(decoder_.get(), code_streams.data(), images.data(), data_list.size(), &decode_params, &decode_future));

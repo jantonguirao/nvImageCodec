@@ -52,7 +52,7 @@ class Image
     size_t img_buffer_size_;
     std::shared_ptr<unsigned char> img_buffer_;
     std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type> image_;
-    py::dict cudaarrayinterface_;
+    py::dict cuda_array_interface_;
 };
 
 } // namespace nvimgcdcs

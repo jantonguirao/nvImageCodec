@@ -695,7 +695,8 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
             int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
             // Define  requested output
-            image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+            constexpr bool decode_to_interleaved = true;
+            image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
             image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
 
@@ -711,15 +712,22 @@ nvimgcdcsStatus_t nvimgcdcsImRead(nvimgcdcsInstance_t instance, nvimgcdcsImage_t
                 std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
             }
 
-            size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element;
+            image_info.plane_info[0].num_channels = decode_to_interleaved ? 3 /*I_RGB*/ : 1 /*P_RGB*/;
+            image_info.num_planes = decode_to_interleaved ? 1 : image_info.num_planes;
 
+            size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element * image_info.plane_info[0].num_channels;
+
+            size_t buffer_size = 0;
             for (uint32_t c = 0; c < image_info.num_planes; ++c) {
                 image_info.plane_info[c].height = image_info.plane_info[0].height;
                 image_info.plane_info[c].width = image_info.plane_info[0].width;
                 image_info.plane_info[c].row_stride = device_pitch_in_bytes;
+                image_info.plane_info[c].sample_type = image_info.plane_info[0].sample_type;
+                image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
+                buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[c].height;
             }
 
-            image_info.buffer_size = image_info.plane_info[0].row_stride * image_info.plane_info[0].height * image_info.num_planes;
+            image_info.buffer_size =  buffer_size;
             image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
             CHECK_CUDA(cudaMalloc(&image_info.buffer, image_info.buffer_size));
 
