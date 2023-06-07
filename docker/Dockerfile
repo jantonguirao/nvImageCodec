@@ -33,10 +33,9 @@ RUN apt-get update \
          python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
+# Make sure that libclang is installed after clang
 RUN python3 -m pip install numba future setuptools wheel clang==14.0 flake8 && \
-    PY_CLANG_PATH=$(echo $(pip show clang) | sed 's/.*Location: \(.*\) Requires.*/\1/')/clang/cindex.py && \
-    LIBCLANG_PATH=/usr/local/lib/libclang.so && \
-    sed -i "s|library_file = None|library_file = \"${LIBCLANG_PATH}\"|" ${PY_CLANG_PATH} && \
+    python3 -m pip install libclang==14.0.1 && \
     rm -rf /root/.cache/pip
 
 RUN  apt-get update \
