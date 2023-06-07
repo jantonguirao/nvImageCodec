@@ -25,13 +25,13 @@ class LibraryLoader : public ILibraryLoader
     {
       return ::dlopen(library_path.c_str(), RTLD_LAZY);
     }
-    void unloadLibrary(LibraryHandle library_handle) override 
+    void unloadLibrary(LibraryHandle library_handle) override
     {
         const int result = ::dlclose(library_handle);
         if (result != 0) {
             throw std::runtime_error(std::string("Failed to unload library ") + dlerror());
         }
-    
+
     }
     void* getFuncAddress(LibraryHandle library_handle, const std::string& func_name) override
     {
