@@ -19,12 +19,16 @@ namespace nvimgcdcs {
 ImageEncoder::ImageEncoder(const nvimgcdcsEncoderDesc_t desc, int device_id)
     : encoder_desc_(desc)
 {
-    encoder_desc_->create(encoder_desc_->instance, &encoder_, device_id);
+    auto ret = encoder_desc_->create(encoder_desc_->instance, &encoder_, device_id);
+    if (ret != NVIMGCDCS_STATUS_SUCCESS) {
+        encoder_ = nullptr;
+    }
 }
 
 ImageEncoder::~ImageEncoder()
 {
-    encoder_desc_->destroy(encoder_);
+    if (encoder_)
+        encoder_desc_->destroy(encoder_);
 }
 
 std::unique_ptr<IEncodeState> ImageEncoder::createEncodeStateBatch() const
@@ -34,7 +38,10 @@ std::unique_ptr<IEncodeState> ImageEncoder::createEncodeStateBatch() const
 
 void ImageEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
 {
-    encoder_desc_->getCapabilities(encoder_, capabilities, size);
+    *capabilities = nullptr;
+    *size = 0;
+    if (encoder_)
+        encoder_desc_->getCapabilities(encoder_, capabilities, size);
 }
 
 void ImageEncoder::canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
@@ -42,6 +49,14 @@ void ImageEncoder::canEncode(const std::vector<IImage*>& images, const std::vect
 {
     assert(result->size() == code_streams.size());
     assert(status->size() == code_streams.size());
+
+    // in case the encoder couldn't be created for some reason
+    if (!encoder_) {
+        for (size_t i = 0; i < code_streams.size(); ++i) {
+            (*result)[i] = false;
+        }
+        return;
+    }
 
     std::vector<nvimgcdcsCodeStreamDesc*> cs_descs(code_streams.size());
     std::vector<nvimgcdcsImageDesc*> im_descs(code_streams.size());

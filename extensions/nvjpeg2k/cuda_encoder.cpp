@@ -177,6 +177,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(void* instance, nvimgcdcs
         NVIMGCDCS_E_LOG_TRACE("nvjpeg2k_create_encoder");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(encoder);
+        if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin*>(instance);
         handle->create(encoder, device_id);
     } catch (const std::runtime_error& e) {

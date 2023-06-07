@@ -172,6 +172,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(void* instance, nvimgcdcs
         NVIMGCDCS_D_LOG_TRACE("jpeg2k_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
+        if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         auto handle = reinterpret_cast<NvJpeg2kDecoderPlugin*>(instance);
         handle->create(decoder, device_id, options);
     } catch (const std::runtime_error& e) {
@@ -499,7 +501,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_NVJPEG2K(nvjpeg2kDecodeImage(
                     handle_, jpeg2k_state, parse_state->nvjpeg2k_stream_, decode_params_raii.get(), &output_image, t.stream_));
 
-                
+
                 // TODO(janton): This is a workaround to transpose to interleaved layout. Ideally nvjpeg2k should be able to output interleaved
                 // layout directly. To be removed when this is the case.
                 if (interleaved) {
