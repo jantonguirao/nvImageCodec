@@ -53,8 +53,12 @@ void* CudaLoadSymbol(const char* name)
 {
     static nvimgcdcs::ILibraryLoader::LibraryHandle cudaDrvLib = loadCudaLibrary();
     nvimgcdcs::LibraryLoader lib_loader;
-    void* ret = cudaDrvLib ? lib_loader.getFuncAddress(cudaDrvLib, name) : nullptr;
-    return ret;
+    try {
+        void *ret = cudaDrvLib ? lib_loader.getFuncAddress(cudaDrvLib, name) : nullptr;
+        return ret;
+    } catch (...) {
+        return nullptr;
+    }
 }
 
 bool cuInitChecked()

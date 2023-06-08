@@ -52,8 +52,12 @@ void *Nvjpeg2kLoadSymbol(const char *name) {
   nvimgcdcs::LibraryLoader lib_loader;
   static nvimgcdcs::ILibraryLoader::LibraryHandle nvjpeg2kDrvLib = loadNvjpeg2kLibrary();
   // check processing library, core later if symbol not found
-  void *ret = nvjpeg2kDrvLib ? lib_loader.getFuncAddress(nvjpeg2kDrvLib, name) : nullptr;
-  return ret;
+  try {
+    void *ret = nvjpeg2kDrvLib ? lib_loader.getFuncAddress(nvjpeg2kDrvLib, name) : nullptr;
+    return ret;
+  } catch (...) {
+    return nullptr;
+  }
 }
 
 bool nvjpeg2kIsSymbolAvailable(const char *name) {

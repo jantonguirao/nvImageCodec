@@ -23,7 +23,31 @@
 #include "nvjpeg_utils.h"
 #include "type_convert.h"
 
+#if WITH_DYNAMIC_NVJPEG_ENABLED
+  bool nvjpegIsSymbolAvailable(const char *name);
+#else
+  #define nvjpegIsSymbolAvailable(T) (true)
+#endif
+
 namespace nvjpeg {
+
+static int nvjpeg_flat_version(int major, int minor, int patch) {
+    return ((major)*1000000+(minor)*1000+(patch));
+}
+
+static int nvjpeg_get_version() {
+    int major = -1, minor = -1, patch = -1, ver = -1;
+    if (NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MAJOR_VERSION, &major) &&
+        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor) &&
+        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(PATCH_LEVEL, &patch)) {
+        ver = major * 1000 + minor * 100 + patch * 10;
+    }
+    return ver;
+}
+
+static bool nvjpeg_at_least(int major, int minor, int patch) {
+    return nvjpeg_get_version() >= nvjpeg_flat_version(major, minor, patch);
+}
 
 NvJpegCudaDecoderPlugin::NvJpegCudaDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
@@ -148,20 +172,25 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(
     , framework_(framework)
     , device_id_(device_id)
 {
-    if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
-        device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
-        device_allocator_.dev_malloc = framework->device_allocator->device_malloc;
-        device_allocator_.dev_free = framework->device_allocator->device_free;
-    }
+    bool use_nvjpeg_create_ex_v2 = false;
+    if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
+        if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
+            device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
+            device_allocator_.dev_malloc = framework->device_allocator->device_malloc;
+            device_allocator_.dev_free = framework->device_allocator->device_free;
+        }
 
-    if (framework->pinned_allocator && framework->pinned_allocator->pinned_malloc && framework->pinned_allocator->pinned_free) {
-        pinned_allocator_.pinned_ctx = framework->pinned_allocator->pinned_ctx;
-        pinned_allocator_.pinned_malloc = framework->pinned_allocator->pinned_malloc;
-        pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
+        if (framework->pinned_allocator && framework->pinned_allocator->pinned_malloc && framework->pinned_allocator->pinned_free) {
+            pinned_allocator_.pinned_ctx = framework->pinned_allocator->pinned_ctx;
+            pinned_allocator_.pinned_malloc = framework->pinned_allocator->pinned_malloc;
+            pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
+        }
+        use_nvjpeg_create_ex_v2 =
+            device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free;
     }
 
     unsigned int nvjpeg_flags = get_nvjpeg_flags("nvjpeg_cuda_decoder", options);
-    if (device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free) {
+    if (use_nvjpeg_create_ex_v2) {
         XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_DEFAULT, &device_allocator_, &pinned_allocator_, nvjpeg_flags, &handle_));
     } else {
         XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_DEFAULT, nullptr, nullptr, nvjpeg_flags, &handle_));
@@ -361,17 +390,11 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                     nvjpegExifOrientation_t orientation = nvimgcdcs_to_nvjpeg_orientation(image_info.orientation);
 
                     // This is a workaround for a known bug in nvjpeg.
-                    int major, minor, patch, ver;
-                    if (NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MAJOR_VERSION, &major) &&
-                        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor) &&
-                        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(PATCH_LEVEL, &patch)) {
-                        ver = major * 1000 + minor * 100 + patch * 10;
-                        if (ver < 12200) {
-                            if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
-                                orientation = NVJPEG_ORIENTATION_ROTATE_270;
-                            else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
-                                orientation = NVJPEG_ORIENTATION_ROTATE_90;
-                        }
+                    if (!nvjpeg_at_least(12, 2, 0)) {
+                        if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
+                            orientation = NVJPEG_ORIENTATION_ROTATE_270;
+                        else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
+                            orientation = NVJPEG_ORIENTATION_ROTATE_90;
                     }
 
                     if (orientation == NVJPEG_ORIENTATION_UNKNOWN) {

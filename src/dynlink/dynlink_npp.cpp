@@ -96,11 +96,14 @@ void *NppLoadSymbol(const char *name) {
   static nvimgcdcs::ILibraryLoader::LibraryHandle nppcDrvLib = loadNppcLibrary();
   static nvimgcdcs::ILibraryLoader::LibraryHandle nppideiDrvLib = loadNppideiLibrary();
   // check processing library, core later if symbol not found
-  void *ret = nppideiDrvLib ? lib_loader.getFuncAddress(nppideiDrvLib, name) : nullptr;
-  if (!ret) {
-    ret = nppcDrvLib ? lib_loader.getFuncAddress(nppcDrvLib, name) : nullptr;
+  try {
+    void *ret = nppideiDrvLib ? lib_loader.getFuncAddress(nppideiDrvLib, name) : nullptr;
+    if (!ret)
+      ret = nppcDrvLib ? lib_loader.getFuncAddress(nppcDrvLib, name) : nullptr;
+    return ret;
+  } catch (...) {
+    return nullptr;
   }
-  return ret;
 }
 
 bool nppIsSymbolAvailable(const char *name) {
