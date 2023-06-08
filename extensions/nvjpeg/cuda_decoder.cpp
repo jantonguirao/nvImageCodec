@@ -24,9 +24,9 @@
 #include "type_convert.h"
 
 #if WITH_DYNAMIC_NVJPEG_ENABLED
-  bool nvjpegIsSymbolAvailable(const char *name);
+    #include "dynlink/dynlink_nvjpeg.h"
 #else
-  #define nvjpegIsSymbolAvailable(T) (true)
+    #define nvjpegIsSymbolAvailable(T) (true)
 #endif
 
 namespace nvjpeg {

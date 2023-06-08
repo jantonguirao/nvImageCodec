@@ -60,8 +60,11 @@ option(BUILD_OPENCV_EXT "Build opencv extensions module" ON)
 option(BUILD_PYTHON "Build Python binding" ON)
 option(BUILD_WHEEL "Build python wheel package" ON)
 option(WITH_DYNAMIC_NVJPEG "Dynamically loads nvjpeg at runtime" ON)
+propagate_option(WITH_DYNAMIC_NVJPEG)
 option(WITH_DYNAMIC_NVJPEG2K "Dynamically loads nvjpeg2k at runtime" OFF)
+propagate_option(WITH_DYNAMIC_NVJPEG2K)
 option(WITH_DYNAMIC_NPP "Dynamically loads npp at runtime" ON)
+propagate_option(WITH_DYNAMIC_NPP)
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
 
