@@ -401,8 +401,15 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                         image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED);
                         return;
                     }
-                    NVIMGCDCS_D_LOG_DEBUG("Setting up EXIF orientation " << orientation);
-                    XM_CHECK_NVJPEG(nvjpegDecodeParamsSetExifOrientation(nvjpeg_params.get(), orientation));
+
+                    if (orientation != NVJPEG_ORIENTATION_NORMAL) {
+                        if (!nvjpegIsSymbolAvailable("nvjpegDecodeParamsSetExifOrientation")) {
+                            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED);
+                            return;
+                        }
+                        NVIMGCDCS_D_LOG_DEBUG("Setting up EXIF orientation " << orientation);
+                        XM_CHECK_NVJPEG(nvjpegDecodeParamsSetExifOrientation(nvjpeg_params.get(), orientation));
+                    }
                 }
 
                 if (params->enable_roi && image_info.region.ndim > 0) {

@@ -26,9 +26,9 @@ namespace {
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
 
   static const char __NvjpegLibName[] = "libnvjpeg.so";
-  #if CUDA_VERSION >= 12000
+  #if CUDA_VERSION_MAJOR >= 12
   static const char __NvjpegLibNameCuVer[] = "libnvjpeg.so.12";
-  #elif CUDA_VERSION >= 11000 && CUDA_VERSION < 12000
+  #elif CUDA_VERSION_MAJOR >= 11
   static const char __NvjpegLibNameCuVer[] = "libnvjpeg.so.11";
   #else
   static const char __NvjpegLibNameCuVer[] = "libnvjpeg.so.10";
@@ -38,9 +38,9 @@ namespace {
 
   static const char __NvjpegLibName[] = "nvjpeg.dll";
 
-  #if CUDA_VERSION >= 12000
+  #if CUDA_VERSION_MAJOR >= 12
   static const char __NvjpegLibNameCuVer[] = "nvjpeg64_12.dll";
-  #elif CUDA_VERSION >= 11000 && CUDA_VERSION < 12000
+  #elif CUDA_VERSION_MAJOR >= 11
   static const char __NvjpegLibNameCuVer[] = "nvjpeg64_11.dll";
   #else
   static const char __NvjpegLibNameCuVer[] = "nvjpeg64_10.dll";

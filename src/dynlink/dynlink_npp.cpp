@@ -25,10 +25,10 @@ namespace {
   static const char __NppcLibName[] = "libnppc.so";
   static const char __NppideiLibName[] = "libnppidei.so";
 
-  #if CUDA_VERSION >= 12000
-    static const char __NppcLibName[] = "libnppc.so.12";
-    static const char __NppideiLibName[] = "libnppidei.so.12";
-  #elif CUDA_VERSION >= 11000 && CUDA_VERSION < 12000
+  #if CUDA_VERSION_MAJOR >= 12
+    static const char __NppcLibNameCuVer[] = "libnppc.so.12";
+    static const char __NppideiLibNameCuVer[] = "libnppidei.so.12";
+  #elif CUDA_VERSION_MAJOR >= 11
     static const char __NppcLibNameCuVer[] = "libnppc.so.11";
     static const char __NppideiLibNameCuVer[] = "libnppidei.so.11";
   #else
@@ -40,10 +40,10 @@ namespace {
   static const char __NppcLibName[] = "nppc.dll";
   static const char __NppideiLibName[] = "nppidei.dll";
 
-  #if CUDA_VERSION >= 12000
+  #if CUDA_VERSION_MAJOR >= 12
     static const char __NppcLibNameCuVer[] = "nppc64_12.dll";
     static const char __NppideiLibNameCuVer[] = "nppidei64_12.dll";
-  #elif CUDA_VERSION >= 11000 && CUDA_VERSION < 12000
+  #elif CUDA_VERSION_MAJOR >= 11
     static const char __NppcLibNameCuVer[] = "nppc64_11.dll";
     static const char __NppideiLibNameCuVer[] = "nppidei64_11.dll";
   #else
