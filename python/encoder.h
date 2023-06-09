@@ -29,11 +29,16 @@ class Encoder
     explicit Encoder(nvimgcdcsInstance_t instance, int device_id, const std::string& options);
     ~Encoder();
 
-    std::vector<py::bytes> encode(const std::string& ext, const std::vector<Image>& images);
+    py::bytes encode(Image image, const std::string& codec, int cuda_stream);
+    void encode(const std::string& file_name, Image image,  const std::string& codec, int cuda_stream);
+    std::vector<py::bytes> encode(const std::vector<Image>& images, const std::string& codec,  int cuda_stream);
+    void encode(const std::vector<std::string>& file_names, const std::vector<Image>& images, const std::string& codec, int cuda_stream);
 
     static void exportToPython(py::module& m, nvimgcdcsInstance_t instance);
 
   private:
+    void encode(const std::vector<Image>& images, int cuda_stream,
+        std::function<void(const nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream);
     struct EncoderDeleter;
     std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type> encoder_;
     nvimgcdcsInstance_t instance_;
