@@ -8,22 +8,23 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
+#include "std_file_io_stream.h"
 #include <errno.h>
 #include <sys/stat.h>
 #include <cstdio>
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <string>
-#include <iostream>
-#include "std_file_io_stream.h"
 
 namespace nvimgcdcs {
 
 StdFileIoStream::StdFileIoStream(const std::string& path, bool to_write)
     : FileIoStream(path)
 {
-    fp_ = std::fopen(path.c_str(), to_write ?"wb":"rb");
-    if(fp_ == nullptr) throw std::runtime_error("Could not open file " + path + ": " + std::strerror(errno));
+    fp_ = std::fopen(path.c_str(), to_write ? "wb" : "rb");
+    if (fp_ == nullptr)
+        throw std::runtime_error("Could not open file " + path + ": " + std::strerror(errno));
 }
 
 void StdFileIoStream::close()
@@ -63,9 +64,9 @@ std::size_t StdFileIoStream::putc(unsigned char ch)
     return n_written;
 }
 
-    std::shared_ptr<void> StdFileIoStream::get(size_t /*n_bytes*/)
+std::shared_ptr<void> StdFileIoStream::get(size_t /*n_bytes*/)
 {
-    // this unction should return a pointer inside mmaped file
+    // this function should return a pointer inside mmaped file
     // it doesn't make sense in case of StdFileIoStream
     return {};
 }
@@ -78,4 +79,4 @@ std::size_t StdFileIoStream::size() const
     }
     return sb.st_size;
 }
-} //namespace nvimgcdcs 
+} //namespace nvimgcdcs

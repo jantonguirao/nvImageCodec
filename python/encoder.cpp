@@ -41,7 +41,7 @@ py::bytes Encoder::encode(Image image, const std::string& codec, int cuda_stream
 {
     std::vector<Image> images{image};
 
-    std::vector<py::bytes> data_list = encode(images, codec,  cuda_stream);
+    std::vector<py::bytes> data_list = encode(images, codec, cuda_stream);
     if (data_list.size() == 1)
         return data_list[0];
     else
@@ -57,7 +57,8 @@ void Encoder::encode(const std::string& file_name, Image image, const std::strin
 }
 
 void Encoder::encode(const std::vector<Image>& images, int cuda_stream,
-    std::function<void(const nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream)
+    std::function<void(size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream,
+    std::function<void(size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream)> post_encode_call_back)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(images.size());
     std::vector<nvimgcdcsImage_t> int_images(images.size());
@@ -89,17 +90,19 @@ void Encoder::encode(const std::vector<Image>& images, int cuda_stream,
 
     //fill_encode_params(params, &encode_params, &out_image_info, &device_id);
 
-    for (uint32_t i = 0; i < images.size(); i++) {
+    for (size_t i = 0; i < images.size(); i++) {
         int_images[i] = images[i].getNvImgCdcsImage();
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         nvimgcdcsImageGetImageInfo(int_images[i], &image_info);
 
         nvimgcdcsImageInfo_t out_image_info(image_info);
+        constexpr size_t MAX_HEADER_SIZE_FOR_RAW_DATA = 1024;
+        out_image_info.buffer_size += MAX_HEADER_SIZE_FOR_RAW_DATA;
         out_image_info.next = &jpeg_image_info;
         jpeg_image_info.next = image_info.next;
 
-        create_code_stream(out_image_info, &code_streams[i]);
+        create_code_stream(i, out_image_info, &code_streams[i]);
     }
     nvimgcdcsFuture_t encode_future;
     CHECK_NVIMGCDCS(
@@ -109,13 +112,12 @@ void Encoder::encode(const std::vector<Image>& images, int cuda_stream,
     nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);
     std::vector<nvimgcdcsProcessingStatus_t> encode_status(status_size);
     nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
-    size_t skip_samples = 0;
+
     for (size_t i = 0; i < encode_status.size(); ++i) {
         if (encode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
-            std::cerr << "Something went wrong during encoding image #" << i << " it will not be included in output" << std::endl;
-            // data_list.erase(data_list.begin() + i - skip_samples);
-            skip_samples++;
+            std::cerr << "Error: Something went wrong during encoding image #" << i << " it will not be included in output" << std::endl;
         }
+        post_encode_call_back(i, encode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS, code_streams[i]);
     }
     nvimgcdcsFutureDestroy(encode_future);
     for (auto& cs : code_streams) {
@@ -126,7 +128,6 @@ void Encoder::encode(const std::vector<Image>& images, int cuda_stream,
 std::vector<py::bytes> Encoder::encode(const std::vector<Image>& images, const std::string& codec, int cuda_stream)
 {
     std::vector<py::bytes> data_list;
-    data_list.reserve(images.size());
     if (codec.empty()) {
         std::cerr << "Error: Unspecified codec." << std::endl;
         return data_list;
@@ -137,18 +138,39 @@ std::vector<py::bytes> Encoder::encode(const std::vector<Image>& images, const s
         return data_list;
     }
 
-    auto create_code_stream = [&](const nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
-        size_t buffer_size = out_image_info.buffer_size;
-        PyObject* bytesObject = PyBytes_FromStringAndSize(nullptr, buffer_size);
-        char* buffer = PyBytes_AsString(bytesObject);
+    struct PyObjectWrap
+    {
+        unsigned char* getBuffer(size_t bytes) {
+            ptr_ = PyBytes_FromStringAndSize(nullptr, bytes);
+            return (unsigned char*)PyBytes_AsString(ptr_);
+        }
 
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToHostMem(
-            instance_, code_stream, (unsigned char*)buffer, buffer_size, codec_name.c_str(), &out_image_info));
+        static unsigned char* get_buffer_static(void* ctx, size_t bytes)
+        {
+            auto handle = reinterpret_cast<PyObjectWrap*>(ctx);
+            return handle->getBuffer(bytes);
+        }
 
-        data_list.push_back(py::reinterpret_steal<py::object>(bytesObject));
+        PyObject* ptr_;
     };
 
-    encode(images, cuda_stream, create_code_stream);
+    std::vector<PyObjectWrap> py_objects(images.size());
+
+    auto create_code_stream = [&](size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
+          CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToHostMem(
+           instance_, code_stream, (void*)&py_objects[i], &PyObjectWrap::get_buffer_static, codec_name.c_str(), &out_image_info));
+    };
+
+    data_list.reserve(images.size());
+    auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream) -> void {
+        if (skip_item) {
+            Py_DECREF(py_objects[i].ptr_);
+        } else {
+            data_list.push_back(py::reinterpret_steal<py::object>(py_objects[i].ptr_));
+        }
+    };
+
+    encode(images, cuda_stream, create_code_stream, post_encode_callback);
 
     return data_list;
 }
@@ -157,8 +179,7 @@ void Encoder::encode(
     const std::vector<std::string>& file_names, const std::vector<Image>& images, const std::string& codec, int cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(images.size());
-    int i = 0;
-    auto create_code_stream = [&](const nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
+    auto create_code_stream = [&](size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
         std::string codec_name{};
 
         if (codec.empty()) {
@@ -176,13 +197,11 @@ void Encoder::encode(
             }
         }
 
-
         CHECK_NVIMGCDCS(
             nvimgcdcsCodeStreamCreateToFile(instance_, code_stream, file_names[i].c_str(), codec_name.c_str(), &out_image_info));
-        i++;
     };
-
-    encode(images, cuda_stream, create_code_stream);
+    auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream) -> void {};
+    encode(images, cuda_stream, create_code_stream, post_encode_callback);
 }
 
 void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)

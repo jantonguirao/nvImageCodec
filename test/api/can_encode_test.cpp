@@ -177,9 +177,10 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         streams_.clear();
 
         for (size_t i = 0; i < expected_statuses_->size(); ++i) {
+            nvimgcdcsImageInfo_t out_image_info(image_info_);
             nvimgcdcsCodeStream_t code_stream = nullptr;
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-                nvimgcdcsCodeStreamCreateToHostMem(instance_, &code_stream, out_buffer_.data(), out_buffer_.size(), "bmp", &image_info_));
+            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &code_stream, (void*)this,
+                                                    &NvImageCodecsCanEncodeApiTest::GetOutputBufferStatic, "bmp", &out_image_info));
             streams_.push_back(code_stream);
             nvimgcdcsImage_t image;
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &image, &image_info_));
@@ -201,6 +202,16 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(extension_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
         mock_extension_.reset();
+    }
+
+    unsigned char* GetOutputBuffer(size_t bytes) {
+        out_buffer_.resize(bytes);
+        return out_buffer_.data();
+    }
+
+    static unsigned char* GetOutputBufferStatic(void* ctx, size_t bytes) {
+        auto handle = reinterpret_cast<NvImageCodecsCanEncodeApiTest*>(ctx);
+        return handle->GetOutputBuffer(bytes);
     }
 
     nvimgcdcsInstance_t instance_;

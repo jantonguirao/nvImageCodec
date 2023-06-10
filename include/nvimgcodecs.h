@@ -256,12 +256,14 @@ extern "C"
         nvimgcdcsOrientation_t orientation;
         nvimgcdcsRegion_t region;
 
+        uint32_t num_planes;
+        nvimgcdcsImagePlaneInfo_t plane_info[NVIMGCDCS_MAX_NUM_PLANES];
+
         void* buffer;
         size_t buffer_size;
         nvimgcdcsImageBufferKind_t buffer_kind;
+
         cudaStream_t cuda_stream; // stream to synchronize with
-        uint32_t num_planes;
-        nvimgcdcsImagePlaneInfo_t plane_info[NVIMGCDCS_MAX_NUM_PLANES];
     } nvimgcdcsImageInfo_t;
 
     // Currently parseable JPEG encodings (SOF markers)
@@ -451,6 +453,7 @@ extern "C"
         nvimgcdcsStatus_t (*seek)(void* instance, size_t offset, int whence);
         nvimgcdcsStatus_t (*tell)(void* instance, size_t* offset);
         nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
+        nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes);
         nvimgcdcsStatus_t (*raw_data)(void* instance, const void**);
     };
     typedef struct nvimgcdcsIOStreamDesc* nvimgcdcsIoStreamDesc_t;
@@ -699,9 +702,10 @@ extern "C"
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsExtension_t extension);
     } nvimgcdcsExtensionDesc_t;
 
+    typedef unsigned char* (*nvimgcdcsGetBufferFunc_t)(void* ctx, size_t buffer_size);
+
     typedef nvimgcdcsStatus_t (*nvimgcdcsExtensionModuleEntryFunc_t)(nvimgcdcsExtensionDesc_t* ext_desc);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc);
-
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsGetProperties(nvimgcdcsProperties_t* properties);
 
     // Instance
@@ -749,16 +753,16 @@ extern "C"
 
     // CodeStream
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
-        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const char* file_name);
+        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
-        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const unsigned char* data, size_t length);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle,
+        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const unsigned char* data, size_t length);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
         const char* file_name, const char* codec_name, const nvimgcdcsImageInfo_t* image_info);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle,
-        unsigned char* output_buffer, size_t length, const char* codec_name, const nvimgcdcsImageInfo_t* image_info);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t stream_handle);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_handle, char* codec_name);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
+        void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const char* codec_name, const nvimgcdcsImageInfo_t* image_info);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t code_stream);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t code_stream, nvimgcdcsImageInfo_t* image_info);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t code_stream, char* codec_name);
 
     //Decoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(

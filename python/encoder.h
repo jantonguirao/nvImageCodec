@@ -38,7 +38,8 @@ class Encoder
 
   private:
     void encode(const std::vector<Image>& images, int cuda_stream,
-        std::function<void(const nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream);
+        std::function<void(size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream,
+        std::function<void(size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream)> post_encode_call_back);
     struct EncoderDeleter;
     std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type> encoder_;
     nvimgcdcsInstance_t instance_;

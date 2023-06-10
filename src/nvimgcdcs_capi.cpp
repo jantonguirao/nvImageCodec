@@ -284,15 +284,15 @@ struct nvimgcdcsCodeStream
     nvimgcdcs::CodeStream code_stream_;
 };
 
-static nvimgcdcsStatus_t nvimgcdcsStreamCreate(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle)
+static nvimgcdcsStatus_t nvimgcdcsStreamCreate(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     nvimgcdcsCodeStream_t stream = nullptr;
     NVIMGCDCSAPI_TRY
         {
-            CHECK_NULL(stream_handle);
+            CHECK_NULL(code_stream);
             stream = new nvimgcdcsCodeStream(&instance->director_.codec_registry_);
-            *stream_handle = stream;
+            *code_stream = stream;
         }
     NVIMGCDCSAPI_CATCH(ret)
 
@@ -305,14 +305,14 @@ static nvimgcdcsStatus_t nvimgcdcsStreamCreate(nvimgcdcsInstance_t instance, nvi
 }
 
 nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
-    nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const char* file_name)
+    nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name)
 {
-    nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, stream_handle);
+    nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
 
     NVIMGCDCSAPI_TRY
         {
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                (*stream_handle)->code_stream_.parseFromFile(std::string(file_name));
+                (*code_stream)->code_stream_.parseFromFile(std::string(file_name));
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -320,101 +320,101 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
 }
 
 nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
-    nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const unsigned char* data, size_t size)
+    nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const unsigned char* data, size_t size)
 {
-    nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, stream_handle);
+    nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
 
     NVIMGCDCSAPI_TRY
         {
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                (*stream_handle)->code_stream_.parseFromMem(data, size);
+                (*code_stream)->code_stream_.parseFromMem(data, size);
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle, const char* file_name,
+nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name,
     const char* codec_name, const nvimgcdcsImageInfo_t* image_info)
 {
-    nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, stream_handle);
+    nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
     NVIMGCDCSAPI_TRY
         {
-            CHECK_NULL(stream_handle)
+            CHECK_NULL(code_stream)
             CHECK_NULL(file_name)
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                (*stream_handle)->code_stream_.setOutputToFile(file_name, codec_name);
-                (*stream_handle)->code_stream_.setImageInfo(image_info);
+                (*code_stream)->code_stream_.setOutputToFile(file_name, codec_name);
+                (*code_stream)->code_stream_.setImageInfo(image_info);
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* stream_handle,
-    unsigned char* output_buffer, size_t length, const char* codec_name, const nvimgcdcsImageInfo_t* image_info)
+nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
+    void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const char* codec_name, const nvimgcdcsImageInfo_t* image_info)
 {
-    nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, stream_handle);
+    nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
     NVIMGCDCSAPI_TRY
         {
-            CHECK_NULL(stream_handle)
-            CHECK_NULL(output_buffer)
-            CHECK_NULL(length)
+            CHECK_NULL(code_stream)
+            CHECK_NULL(image_info)
+            CHECK_NULL(get_buffer_func)
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                (*stream_handle)->code_stream_.setOutputToHostMem(output_buffer, length, codec_name);
-                (*stream_handle)->code_stream_.setImageInfo(image_info);
+                (*code_stream)->code_stream_.setOutputToHostMem(ctx, get_buffer_func, codec_name);
+                (*code_stream)->code_stream_.setImageInfo(image_info);
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t stream_handle)
+nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t code_stream)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
         {
-            CHECK_NULL(stream_handle)
-            delete stream_handle;
+            CHECK_NULL(code_stream)
+            delete code_stream;
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info)
+nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t code_stream, nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
         {
-            CHECK_NULL(stream_handle)
+            CHECK_NULL(code_stream)
             CHECK_NULL(image_info)
-            return stream_handle->code_stream_.getImageInfo(image_info);
+            return code_stream->code_stream_.getImageInfo(image_info);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(nvimgcdcsCodeStream_t stream_handle, nvimgcdcsImageInfo_t* image_info)
+nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(nvimgcdcsCodeStream_t code_stream, nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
         {
-            CHECK_NULL(stream_handle)
+            CHECK_NULL(code_stream)
             CHECK_NULL(image_info)
-            stream_handle->code_stream_.setImageInfo(image_info);
+            code_stream->code_stream_.setImageInfo(image_info);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t stream_handle, char* codec_name)
+nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t code_stream, char* codec_name)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
         {
-            CHECK_NULL(stream_handle)
+            CHECK_NULL(code_stream)
             CHECK_NULL(codec_name)
-            std::string codec_name_ = stream_handle->code_stream_.getCodecName();
+            std::string codec_name_ = code_stream->code_stream_.getCodecName();
 #ifdef WIN32
             strcpy_s(codec_name, NVIMGCDCS_MAX_CODEC_NAME_SIZE, codec_name_.c_str());
 #else

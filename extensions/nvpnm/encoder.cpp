@@ -153,6 +153,8 @@ int write_pnm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
         ss << (1 << precision) - 1 << "\n";
     }
     std::string header = ss.str();
+    size_t length = header.size() + (precision / 8) * num_components * height * width;
+    io_stream->reserve(io_stream->instance, length);
     io_stream->write(io_stream->instance, &written_size, static_cast<void*>(header.data()), header.size());
 
     for (int y = 0; y < height; y++) {
