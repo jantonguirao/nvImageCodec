@@ -22,6 +22,7 @@
 namespace nvimgcdcs {
 
 namespace py = pybind11;
+using namespace py::literals;
 
 class Encoder
 {

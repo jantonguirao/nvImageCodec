@@ -351,6 +351,13 @@ extern "C"
 
     typedef uint32_t nvimgcdcsProcessingStatus_t;
 
+    typedef enum
+    {
+        NVIMGCDCS_MCT_MODE_YCC = 0, //transform RGB color images to YUV
+        NVIMGCDCS_MCT_MODE_RGB = 1,
+        NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
+    } nvimgcdcsMctMode_t;
+    
     typedef struct
     {
         nvimgcdcsStructureType_t type;
@@ -365,13 +372,6 @@ extern "C"
         int num_backends; // Zero means that all backends are allowed.
         nvimgcdcsBackend_t* backends;
     } nvimgcdcsDecodeParams_t;
-
-    typedef enum
-    {
-        NVIMGCDCS_MCT_MODE_YCC = 0, //transform RGB color images to YUV
-        NVIMGCDCS_MCT_MODE_RGB = 1,
-        NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsMctMode_t;
 
     typedef struct
     {
@@ -718,7 +718,7 @@ extern "C"
         nvimgcdcsPinnedAllocator_t* pinned_allocator;
         bool load_builtin_modules;          //Load default modules
         bool load_extension_modules;        //Discover and load extension modules on start
-        const char* extension_modules_path; //There may be several paths separated by : on Linux or ; on Windows
+        const char* extension_modules_path; //There may be several paths separated by ':' on Linux or ';' on Windows
         bool default_debug_messenger;       //Create default debug messenger
         uint32_t message_severity;          //Severity for default debug messenger
         uint32_t message_type;              //Message type for default debug messenger
@@ -768,21 +768,21 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
         nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
-        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, const nvimgcdcsCodeStream_t* streams,
+        const nvimgcdcsImage_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
         bool force_format);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStream_t* streams,
-        nvimgcdcsImage_t* images, int batch_size, nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, const nvimgcdcsCodeStream_t* streams,
+        const nvimgcdcsImage_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(
         nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
-        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
+        const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
         bool force_format);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, nvimgcdcsImage_t* images,
-        nvimgcdcsCodeStream_t* streams, int batch_size, nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
+        const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //High-level API
     typedef enum

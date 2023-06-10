@@ -20,7 +20,7 @@
 #include "image.h"
 #include "decoder.h"
 #include "encoder.h"
-
+#include "decode_params.h"
 
 #include <iostream>
 
@@ -49,6 +49,8 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
    
     Module::exportToPython(m, module.instance_);
     Image::exportToPython(m);
+    DecodeParams::exportToPython(m);
     Decoder::exportToPython(m, module.instance_);
     Encoder::exportToPython(m, module.instance_);
+
 }

@@ -22,7 +22,8 @@ set(PY_NVIMGCDCS_SRCS
     module.cpp
     image.cpp
     decoder.cpp
-    encoder.cpp 
+    encoder.cpp
+    decode_params.cpp 
     error_handling.cpp)
 
 build_per_python_lib(nvimgcodecs_python
