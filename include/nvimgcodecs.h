@@ -784,57 +784,6 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
         const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);
 
-    //High-level API
-    typedef enum
-    {
-        NVIMGCDCS_IMREAD_DEVICE_ID = 0, //value device id to process on (default 0)
-        NVIMGCDCS_IMREAD_GRAYSCALE = 1, // flag do not convert to RGB
-        // flag for jpeg with 4 color components assumes CMYK colorspace and converts to RGB
-        //for Jpeg2k and 422/420 chroma subsampling enable conversion to RGB
-        NVIMGCDCS_IMREAD_COLOR = 2,
-        NVIMGCDCS_IMREAD_IGNORE_ORIENTATION = 3, // flag Ignore orientation from Exif
-        NVIMGCDCS_IMREAD_DISABLE_UPSAMPLING_INTERPOLATION =
-            4, // flag Disables upsampling interpolation similarly like e.g. ":fancy_upsampling=0" decoder option
-        NVIMGCDCS_IMREAD_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsImReadParams_t;
-
-    typedef enum
-    {
-        NVIMGCDCS_IMWRITE_DEVICE_ID = 0,                //value  device id to process on (default 0)
-        NVIMGCDCS_IMWRITE_MCT_MODE = 1,                 // value  nvimgcdcsMctMode_t (default NVIMGCDCS_MCT_MODE_RGB )
-
-        NVIMGCDCS_IMWRITE_JPEG_QUALITY = 100,           // value 0-100 default 95
-        NVIMGCDCS_IMWRITE_JPEG_PROGRESSIVE = 101,       // flag NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN
-        NVIMGCDCS_IMWRITE_JPEG_OPTIMIZE = 102,          // flag optimized_huffman
-        NVIMGCDCS_IMWRITE_JPEG_SAMPLING_FACTOR = 103,   // value nvimgcdcsImWriteSamplingFactor_t
-
-        NVIMGCDCS_IMWRITE_JPEG2K_TARGET_PSNR = 200,     // value default 50
-        NVIMGCDCS_IMWRITE_JPEG2K_NUM_DECOMPS = 201,     // value num_decomps default 5
-        NVIMGCDCS_IMWRITE_JPEG2K_CODE_BLOCK_SIZE = 202, // value code_block_w code_block_h (default 64 64)
-        NVIMGCDCS_IMWRITE_JPEG2K_REVERSIBLE = 203,      // flag !irreversible
-        NVIMGCDCS_IMWRITE_JPEG2K_PROG_ORDER = 204,      // value nvimgcdcsJpeg2kProgOrder_t (default RPCL)
-
-        NVIMGCDCS_IMWRITE_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsImWriteParams_t;
-
-    typedef enum
-    {
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_444 = 0x111111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_422 = 0x211111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_420 = 0x221111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_440 = 0x121111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_411 = 0x411111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410 = 0x441111,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_410V = 0x440000,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_GRAY = 0x110000,
-        NVIMGCDCS_IMWRITE_SAMPLING_FACTOR_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsImWriteSamplingFactor_t;
-
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImRead(
-        nvimgcdcsInstance_t instance, nvimgcdcsImage_t* image, const char* file_name, const int* params);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImWrite(
-        nvimgcdcsInstance_t instance, nvimgcdcsImage_t image, const char* file_name, const int* params);
-
 #if defined(__cplusplus)
 }
 #endif

@@ -30,7 +30,6 @@ class Image
   public:
     explicit Image(nvimgcdcsImage_t image);
     Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info);
-    Image(nvimgcdcsInstance_t instance, const char* file_name, const int* params);
     Image(nvimgcdcsInstance_t instance, PyObject* o);
 
     int getWidth() const;

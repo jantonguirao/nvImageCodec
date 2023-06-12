@@ -102,17 +102,6 @@ Image::Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info)
     initCudaArrayInterface(image_info);
 }
 
-Image::Image(nvimgcdcsInstance_t instance, const char* file_name, const int* params)
-    : img_buffer_size_(0)
-{
-    nvimgcdcsImage_t image;
-    CHECK_NVIMGCDCS(nvimgcdcsImRead(instance, &image, file_name, params));
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image, &image_info);
-    initCudaArrayInterface(&image_info);
-    image_ = std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, ImageDeleter{});
-}
-
 Image::Image(nvimgcdcsInstance_t instance, PyObject* o)
     : img_buffer_size_(0)
 {
