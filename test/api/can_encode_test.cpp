@@ -151,13 +151,7 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         expected_statuses_ = std::get<2>(test_case);
         register_extension_ = std::get<1>(GetParam());
 
-        nvimgcdcsInstanceCreateInfo_t create_info;
-        create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        create_info.next = nullptr;
-        create_info.device_allocator = nullptr;
-        create_info.pinned_allocator = nullptr;
-        create_info.load_extension_modules = false;
-        create_info.executor = nullptr;
+        nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
         create_info.num_cpu_threads = 1;
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
