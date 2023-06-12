@@ -21,6 +21,11 @@
 #include "decoder.h"
 #include "encoder.h"
 #include "decode_params.h"
+#include "encode_params.h"
+#include "mct_mode.h"
+#include "chroma_subsampling.h"
+#include "jpeg2k_bitstream_type.h"
+#include "jpeg2k_prog_order.h"
 
 #include <iostream>
 
@@ -48,8 +53,13 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
     m.attr("__version__") = ver_ss.str();
    
     Module::exportToPython(m, module.instance_);
-    Image::exportToPython(m);
+    MctMode::exportToPython(m);
+    ChromaSubsampling::exportToPython(m);
+    Jpeg2kBitstreamType::exportToPython(m);
+    Jpeg2kProgOrder::exportToPython(m);
     DecodeParams::exportToPython(m);
+    EncodeParams::exportToPython(m);
+    Image::exportToPython(m);
     Decoder::exportToPython(m, module.instance_);
     Encoder::exportToPython(m, module.instance_);
 
