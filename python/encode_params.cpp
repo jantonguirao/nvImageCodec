@@ -77,13 +77,13 @@ void EncodeParams::exportToPython(py::module& m)
         .def_property("jpeg_progressive", &EncodeParams::getJpegProgressive, &EncodeParams::setJpegProgressive,
             "Use Jpeg progressive encoding (default False)")
         .def_property("jpeg_optimized_huffman", &EncodeParams::getJpegOptimizedHuffman, &EncodeParams::setJpegOptimizedHuffman,
-            "Use Jpeg encoding with optimized huffman (default False)")
+            "Use Jpeg encoding with optimized Huffman (default False)")
         .def_property("jpeg2k_reversible", &EncodeParams::getJpeg2kReversible, &EncodeParams::setJpeg2kReversible,
             "Use reversible Jpeg 2000 transform (default False)")
         .def_property("jpeg2k_code_block_size", &EncodeParams::getJpeg2kCodeBlockSize, &EncodeParams::setJpeg2kCodeBlockSize,
             "Jpeg 2000 code block width and height (default 64x64)")
         .def_property("jpeg2k_num_resolutions", &EncodeParams::getJpeg2kNumResoulutions, &EncodeParams::setJpeg2kNumResoulutions,
-            "Jpeg 2000 number of resoultions (decomposition levels) (default 5)")
+            "Jpeg 2000 number of resolutions - decomposition levels (default 5)")
         .def_property("jpeg2k_bitstream_type", &EncodeParams::getJpeg2kBitstreamType, &EncodeParams::setJpeg2kBitstreamType,
             "Jpeg 2000 bitstream type (default JP2)")
         .def_property("jpeg2k_prog_order", &EncodeParams::getJpeg2kProgOrder, &EncodeParams::setJpeg2kProgOrder,
