@@ -473,7 +473,9 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 fill_encode_config(&encode_config, params);
 
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetEncodeConfig(encode_params.get(), &encode_config));
-                XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetQuality(encode_params.get(), params->target_psnr));
+                if (encode_config.irreversible) {
+                    XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetQuality(encode_params.get(), params->target_psnr));
+                }
 
                 nvjpeg2kImage_t input_image;
                 input_image.num_components = num_components;
