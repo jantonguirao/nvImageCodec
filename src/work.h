@@ -193,7 +193,9 @@ struct Work
                 image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
                 images_[i]->setImageInfo(&image_info);
 
-                CHECK_CUDA(cudaMemcpyAsync(image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyDeviceToHost));
+                CHECK_CUDA(cudaMemcpyAsync(
+                    image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
+                CHECK_CUDA(cudaEventRecord(event, image_info.cuda_stream));
             }
             if (is_input_expected_in_device && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
                 if (device_temp_buffers_.empty()) {
@@ -204,12 +206,13 @@ struct Work
                 image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                 images_[i]->setImageInfo(&image_info);
 
-                CHECK_CUDA(cudaMemcpyAsync(image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyHostToDevice));
+                CHECK_CUDA(cudaMemcpyAsync(
+                    image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyHostToDevice, image_info.cuda_stream));
+                CHECK_CUDA(cudaEventRecord(event, image_info.cuda_stream));
             }
             images_[i]->setImageInfo(&image_info);
         }
 
-        CHECK_CUDA(cudaEventRecord(event));
         CHECK_CUDA(cudaEventSynchronize(event));
         CHECK_CUDA(cudaEventDestroy(event));
     }
