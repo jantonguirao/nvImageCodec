@@ -31,11 +31,11 @@ class Decoder
     explicit Decoder(nvimgcdcsInstance_t instance, int device_id, const std::string& options);
     ~Decoder();
 
-    Image decode(const std::string& file_name, const DecodeParams& params, int cuda_stream);
-    Image decode(py::bytes data, const DecodeParams& params, int cuda_stream);
-    std::vector<Image> decode(const std::vector<std::string>& file_names, const DecodeParams& params, int cuda_stream);
-    std::vector<Image> decode(const std::vector<py::bytes>& data_list, const DecodeParams& params, int cuda_stream);
-    std::vector<Image> decode(std::vector<nvimgcdcsCodeStream_t>& code_streams, const DecodeParams& params, int cuda_stream);
+    Image decode(const std::string& file_name, const DecodeParams& params, intptr_t cuda_stream);
+    Image decode(py::bytes data, const DecodeParams& params, intptr_t cuda_stream);
+    std::vector<Image> decode(const std::vector<std::string>& file_names, const DecodeParams& params, intptr_t cuda_stream);
+    std::vector<Image> decode(const std::vector<py::bytes>& data_list, const DecodeParams& params, intptr_t cuda_stream);
+    std::vector<Image> decode(std::vector<nvimgcdcsCodeStream_t>& code_streams, const DecodeParams& params, intptr_t cuda_stream);
     static void exportToPython(py::module& m, nvimgcdcsInstance_t instance);
 
   private:

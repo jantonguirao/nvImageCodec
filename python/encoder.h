@@ -31,15 +31,15 @@ class Encoder
     explicit Encoder(nvimgcdcsInstance_t instance, int device_id, const std::string& options);
     ~Encoder();
 
-    py::bytes encode(Image image, const std::string& codec, const EncodeParams& params, int cuda_stream);
-    void encode(const std::string& file_name, Image image,  const std::string& codec, const EncodeParams& params, int cuda_stream);
-    std::vector<py::bytes> encode(const std::vector<Image>& images, const std::string& codec, const EncodeParams& params, int cuda_stream);
-    void encode(const std::vector<std::string>& file_names, const std::vector<Image>& images, const std::string& codec, const EncodeParams& params, int cuda_stream);
+    py::bytes encode(Image image, const std::string& codec, const EncodeParams& params, intptr_t cuda_stream);
+    void encode(const std::string& file_name, Image image,  const std::string& codec, const EncodeParams& params, intptr_t cuda_stream);
+    std::vector<py::bytes> encode(const std::vector<Image>& images, const std::string& codec, const EncodeParams& params, intptr_t cuda_stream);
+    void encode(const std::vector<std::string>& file_names, const std::vector<Image>& images, const std::string& codec, const EncodeParams& params, intptr_t cuda_stream);
 
     static void exportToPython(py::module& m, nvimgcdcsInstance_t instance);
 
   private:
-    void encode(const std::vector<Image>& images, const EncodeParams& params, int cuda_stream,
+    void encode(const std::vector<Image>& images, const EncodeParams& params, intptr_t cuda_stream,
         std::function<void(size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream,
         std::function<void(size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream)> post_encode_call_back);
     struct EncoderDeleter;

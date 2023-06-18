@@ -35,7 +35,7 @@ Decoder::~Decoder()
 {
 }
 
-Image Decoder::decode(const std::string& file_name, const DecodeParams& params, int cuda_stream)
+Image Decoder::decode(const std::string& file_name, const DecodeParams& params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(1);
     CHECK_NVIMGCDCS(
@@ -47,7 +47,7 @@ Image Decoder::decode(const std::string& file_name, const DecodeParams& params, 
         return Image(nullptr);
 }
 
-Image Decoder::decode(py::bytes data, const DecodeParams& params, int cuda_stream)
+Image Decoder::decode(py::bytes data, const DecodeParams& params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(1);
     auto str_view = static_cast<std::string_view>(data);
@@ -60,7 +60,7 @@ Image Decoder::decode(py::bytes data, const DecodeParams& params, int cuda_strea
         return Image(nullptr);
 }
 
-std::vector<Image> Decoder::decode(const std::vector<std::string>& file_names, const DecodeParams& params, int cuda_stream)
+std::vector<Image> Decoder::decode(const std::vector<std::string>& file_names, const DecodeParams& params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(file_names.size());
     for (uint32_t i = 0; i < file_names.size(); i++) {
@@ -69,7 +69,7 @@ std::vector<Image> Decoder::decode(const std::vector<std::string>& file_names, c
     return decode(code_streams, params, cuda_stream);
 }
 
-std::vector<Image> Decoder::decode(const std::vector<py::bytes>& data_list, const DecodeParams& params, int cuda_stream)
+std::vector<Image> Decoder::decode(const std::vector<py::bytes>& data_list, const DecodeParams& params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(data_list.size());
     for (uint32_t i = 0; i < data_list.size(); i++) {
@@ -81,7 +81,7 @@ std::vector<Image> Decoder::decode(const std::vector<py::bytes>& data_list, cons
     return decode(code_streams, params, cuda_stream);
 }
 
-std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_streams, const DecodeParams& params, int cuda_stream)
+std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_streams, const DecodeParams& params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsImage_t> images(code_streams.size());
     std::vector<Image> py_images;
@@ -132,7 +132,7 @@ std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_stre
             image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
             buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[c].height;
         }
-
+        image_info.buffer = nullptr;
         image_info.buffer_size = buffer_size;
         image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
@@ -176,7 +176,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
             )pbdoc",
             "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "options"_a = ":fancy_upsampling=0")
-        .def("decode", py::overload_cast<py::bytes, const DecodeParams&, int>(&Decoder::decode), R"pbdoc(
+        .def("decode", py::overload_cast<py::bytes, const DecodeParams&, intptr_t>(&Decoder::decode), R"pbdoc(
             Executes decoding of data.
 
             Args:
@@ -188,7 +188,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
         )pbdoc",
             "data"_a, "params"_a = DecodeParams(), "cuda_stream"_a = 0)
-        .def("decode", py::overload_cast<const std::string&, const DecodeParams&, int>(&Decoder::decode), R"pbdoc(
+        .def("decode", py::overload_cast<const std::string&, const DecodeParams&, intptr_t>(&Decoder::decode), R"pbdoc(
             Executes decoding of file.
 
             Args:
@@ -200,7 +200,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
         )pbdoc",
             "file_name"_a, "params"_a = DecodeParams(), "cuda_stream"_a = 0)
-        .def("decode", py::overload_cast<const std::vector<py::bytes>&, const DecodeParams&, int>(&Decoder::decode), R"pbdoc(
+        .def("decode", py::overload_cast<const std::vector<py::bytes>&, const DecodeParams&, intptr_t>(&Decoder::decode), R"pbdoc(
             Executes data batch decoding.
 
             Args:
@@ -212,7 +212,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
         )pbdoc",
             "file_names"_a, "params"_a = DecodeParams(), "cuda_stream"_a = 0)
-        .def("decode", py::overload_cast<const std::vector<std::string>&, const DecodeParams&, int>(&Decoder::decode), R"pbdoc(
+        .def("decode", py::overload_cast<const std::vector<std::string>&, const DecodeParams&, intptr_t>(&Decoder::decode), R"pbdoc(
             Executes file batch decoding.
 
             Args:

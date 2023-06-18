@@ -37,7 +37,7 @@ Encoder::~Encoder()
 {
 }
 
-py::bytes Encoder::encode(Image image, const std::string& codec, const EncodeParams& params, int cuda_stream)
+py::bytes Encoder::encode(Image image, const std::string& codec, const EncodeParams& params, intptr_t cuda_stream)
 {
     std::vector<Image> images{image};
 
@@ -48,7 +48,7 @@ py::bytes Encoder::encode(Image image, const std::string& codec, const EncodePar
         return py::bytes(nullptr);
 }
 
-void Encoder::encode(const std::string& file_name, Image image, const std::string& codec, const EncodeParams& params, int cuda_stream)
+void Encoder::encode(const std::string& file_name, Image image, const std::string& codec, const EncodeParams& params, intptr_t cuda_stream)
 {
     std::vector<Image> images{image};
     std::vector<std::string> file_names{file_name};
@@ -56,7 +56,7 @@ void Encoder::encode(const std::string& file_name, Image image, const std::strin
     encode(file_names, images, codec, params, cuda_stream);
 }
 
-void Encoder::encode(const std::vector<Image>& images, const EncodeParams& params, int cuda_stream,
+void Encoder::encode(const std::vector<Image>& images, const EncodeParams& params, intptr_t cuda_stream,
     std::function<void(size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream,
     std::function<void(size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream)> post_encode_call_back)
 {
@@ -97,7 +97,7 @@ void Encoder::encode(const std::vector<Image>& images, const EncodeParams& param
 }
 
 std::vector<py::bytes> Encoder::encode(
-    const std::vector<Image>& images, const std::string& codec, const EncodeParams& params, int cuda_stream)
+    const std::vector<Image>& images, const std::string& codec, const EncodeParams& params, intptr_t cuda_stream)
 {
     std::vector<py::bytes> data_list;
     if (codec.empty()) {
@@ -148,7 +148,7 @@ std::vector<py::bytes> Encoder::encode(
 }
 
 void Encoder::encode(const std::vector<std::string>& file_names, const std::vector<Image>& images, const std::string& codec,
-    const EncodeParams& params, int cuda_stream)
+    const EncodeParams& params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(images.size());
     auto create_code_stream = [&](size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
@@ -190,7 +190,7 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             )pbdoc",
 
             "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "options"_a = "")
-        .def("encode", py::overload_cast<Image, const std::string&, const EncodeParams&, int>(&Encoder::encode),
+        .def("encode", py::overload_cast<Image, const std::string&, const EncodeParams&, intptr_t>(&Encoder::encode),
             R"pbdoc(
             Encode image to buffer.
 
@@ -203,7 +203,7 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 Buffer with compressed code stream
         )pbdoc",
             "image"_a, "codec"_a, "params"_a = EncodeParams(), "cuda_stream"_a = 0)
-        .def("encode", py::overload_cast<const std::string&, Image, const std::string&, const EncodeParams&, int>(&Encoder::encode),
+        .def("encode", py::overload_cast<const std::string&, Image, const std::string&, const EncodeParams&, intptr_t>(&Encoder::encode),
             R"pbdoc(
             Encode image to file.
 
@@ -219,7 +219,7 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 void
         )pbdoc",
             "file_name"_a, "image"_a, "codec"_a = "", "params"_a = EncodeParams(), "cuda_stream"_a = 0)
-        .def("encode", py::overload_cast<const std::vector<Image>&, const std::string&, const EncodeParams&, int>(&Encoder::encode),
+        .def("encode", py::overload_cast<const std::vector<Image>&, const std::string&, const EncodeParams&, intptr_t>(&Encoder::encode),
             R"pbdoc(
             Encode batch of images to buffers.
 
@@ -233,7 +233,7 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
         )pbdoc",
             "images"_a, "codec"_a, "params"_a = EncodeParams(), "cuda_stream"_a = 0)
         .def("encode",
-            py::overload_cast<const std::vector<std::string>&, const std::vector<Image>&, const std::string&, const EncodeParams&, int>(
+            py::overload_cast<const std::vector<std::string>&, const std::vector<Image>&, const std::string&, const EncodeParams&, intptr_t>(
                 &Encoder::encode),
             R"pbdoc(
             Encode batch of images to files.
