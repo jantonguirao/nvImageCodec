@@ -51,6 +51,9 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
 
     size_t written_size;
     std::string bm("BM");
+    size_t length = 2 /*BM*/ + sizeof(headers) + paddedsize;
+    io_stream->reserve(io_stream->instance, length, length);
+
     io_stream->write(io_stream->instance, &written_size, static_cast<void*>(bm.data()), 2);
 
     for (n = 0; n <= 5; n++) {

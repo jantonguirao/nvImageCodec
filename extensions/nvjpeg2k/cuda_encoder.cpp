@@ -473,7 +473,9 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 fill_encode_config(&encode_config, params);
 
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetEncodeConfig(encode_params.get(), &encode_config));
-                XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetQuality(encode_params.get(), params->target_psnr));
+                if (encode_config.irreversible) {
+                    XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetQuality(encode_params.get(), params->target_psnr));
+                }
 
                 nvjpeg2kImage_t input_image;
                 input_image.num_components = num_components;
@@ -495,6 +497,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 
                 nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
                 size_t output_size;
+                io_stream->reserve(io_stream->instance, length, length);
                 io_stream->seek(io_stream->instance, 0, SEEK_SET);
                 io_stream->write(io_stream->instance, &output_size, static_cast<void*>(&t.compressed_data_[0]), t.compressed_data_.size());
 

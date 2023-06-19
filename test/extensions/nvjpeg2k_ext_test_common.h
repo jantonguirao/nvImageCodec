@@ -209,8 +209,9 @@ class NvJpeg2kTestBase
                 return NVJPEG2K_COLORSPACE_UNKNOWN;
             };
         };
-
-        ASSERT_EQ(NVJPEG2K_STATUS_SUCCESS, nvjpeg2kEncodeParamsSetQuality(nvjpeg2k_encode_params_, params.target_psnr));
+        if (jpeg2k_enc_params.irreversible) {
+            ASSERT_EQ(NVJPEG2K_STATUS_SUCCESS, nvjpeg2kEncodeParamsSetQuality(nvjpeg2k_encode_params_, params.target_psnr));
+        }
         std::vector<size_t> strides(input_image_info.num_planes);
         std::vector<nvjpeg2kImageComponentInfo_t> image_comp_info(input_image_info.num_planes);
         for (int i = 0; i < input_image_info.num_planes; ++i) {

@@ -15,8 +15,8 @@
 #include <cstring>
 #include <fstream>
 #include <string>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "nvimgcodecs_tests.h"
 #include "nvjpeg2k_ext_test_common.h"
@@ -29,7 +29,7 @@ using ::testing::ValuesIn;
 
 namespace nvimgcdcs { namespace test {
 
-class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase 
+class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase
 {
   public:
     NvJpeg2kExtEncoderTestBase() {}
@@ -64,14 +64,12 @@ class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase
     nvimgcdcsEncoder_t encoder_;
     nvimgcdcsJpeg2kEncodeParams_t jpeg2k_enc_params_;
     nvimgcdcsEncodeParams_t params_;
-
 };
 
-class NvJpeg2kExtEncoderTestSingleImage
-    : public NvJpeg2kExtEncoderTestBase,
-      public NvJpeg2kTestBase,
-      public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
-          nvimgcdcsChromaSubsampling_t, nvimgcdcsChromaSubsampling_t, nvimgcdcsJpeg2kProgOrder_t>>
+class NvJpeg2kExtEncoderTestSingleImage : public NvJpeg2kExtEncoderTestBase,
+                                          public NvJpeg2kTestBase,
+                                          public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
+                                              nvimgcdcsChromaSubsampling_t, nvimgcdcsChromaSubsampling_t, nvimgcdcsJpeg2kProgOrder_t>>
 {
   public:
     virtual ~NvJpeg2kExtEncoderTestSingleImage() = default;
@@ -124,16 +122,15 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
     } else {
         memcpy(image_buffer_.data(), reinterpret_cast<void*>(ref_buffer_.data()), ref_buffer_.size());
     }
-    
 
     nvimgcdcsImageInfo_t cs_image_info(image_info_);
     cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
+
     nvimgcdcsImageInfo_t cs_image_info_ref(image_info_ref);
     cs_image_info_ref.chroma_subsampling = encoded_chroma_subsampling_;
-    code_stream_buffer_.resize(image_info_.buffer_size);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, code_stream_buffer_.data(),
-                                            code_stream_buffer_.size(), "jpeg2k", &cs_image_info));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
+                                            &NvJpeg2kExtEncoderTestSingleImage::GetBufferStatic, "jpeg2k", &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
@@ -244,12 +241,14 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
     PrepareImageForFormat();
     memcpy(image_buffer_.data(), reinterpret_cast<void*>(ref_buffer_.data()), ref_buffer_.size());
 
+    code_stream_buffer_.resize(image_info_.buffer_size);
+
     nvimgcdcsImageInfo_t cs_image_info(image_info_);
     cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
-    code_stream_buffer_.resize(image_info_.buffer_size);
+
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, code_stream_buffer_.data(),
-                                            code_stream_buffer_.size(), "jpeg2k", &cs_image_info));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
+                                            &NvJpeg2kExtEncoderTestSingleImageWithStatus::GetBufferStatic, "jpeg2k", &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));

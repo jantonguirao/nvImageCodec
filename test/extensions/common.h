@@ -118,14 +118,13 @@ class ExtensionTestBase
             for (int x = 0; x < image_info_.plane_info[0].width; x++) {
                 for (int c = 0; c < image_info_.plane_info[0].num_channels; ++c) {
                     *(static_cast<uint8_t*>(image_info_.buffer) + y * image_info_.plane_info[0].row_stride +
-                            x * image_info_.plane_info[0].num_channels + c) =
-                            in_buffer[c * image_info_.plane_info[0].height * image_info_.plane_info[0].width +
-                                       y * image_info_.plane_info[0].width + x];
+                        x * image_info_.plane_info[0].num_channels + c) =
+                        in_buffer[c * image_info_.plane_info[0].height * image_info_.plane_info[0].width +
+                                  y * image_info_.plane_info[0].width + x];
                 }
             }
         }
     }
-
 
     void Convert_I_RGB_to_P_RGB()
     {
@@ -195,6 +194,18 @@ class ExtensionTestBase
             assert(!"TODO");
         }
         }
+    }
+
+    unsigned char* GetBuffer(size_t bytes, size_t used)
+    {
+        code_stream_buffer_.resize(bytes);
+        return code_stream_buffer_.data();
+    }
+
+    static unsigned char* GetBufferStatic(void* ctx, size_t bytes, size_t used)
+    {
+        auto handle = reinterpret_cast<ExtensionTestBase*>(ctx);
+        return handle->GetBuffer(bytes, used);
     }
 
     nvimgcdcsInstance_t instance_;

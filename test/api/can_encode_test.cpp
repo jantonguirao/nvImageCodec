@@ -151,13 +151,7 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         expected_statuses_ = std::get<2>(test_case);
         register_extension_ = std::get<1>(GetParam());
 
-        nvimgcdcsInstanceCreateInfo_t create_info;
-        create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        create_info.next = nullptr;
-        create_info.device_allocator = nullptr;
-        create_info.pinned_allocator = nullptr;
-        create_info.load_extension_modules = false;
-        create_info.executor = nullptr;
+        nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
         create_info.num_cpu_threads = 1;
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
@@ -177,9 +171,10 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         streams_.clear();
 
         for (size_t i = 0; i < expected_statuses_->size(); ++i) {
+            nvimgcdcsImageInfo_t out_image_info(image_info_);
             nvimgcdcsCodeStream_t code_stream = nullptr;
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-                nvimgcdcsCodeStreamCreateToHostMem(instance_, &code_stream, out_buffer_.data(), out_buffer_.size(), "bmp", &image_info_));
+            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &code_stream, (void*)this,
+                                                    &NvImageCodecsCanEncodeApiTest::GetOutputBufferStatic, "bmp", &out_image_info));
             streams_.push_back(code_stream);
             nvimgcdcsImage_t image;
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &image, &image_info_));
@@ -201,6 +196,16 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(extension_));
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
         mock_extension_.reset();
+    }
+
+    unsigned char* GetOutputBuffer(size_t bytes, size_t used) {
+        out_buffer_.resize(bytes);
+        return out_buffer_.data();
+    }
+
+    static unsigned char* GetOutputBufferStatic(void* ctx, size_t bytes, size_t used) {
+        auto handle = reinterpret_cast<NvImageCodecsCanEncodeApiTest*>(ctx);
+        return handle->GetOutputBuffer(bytes, used);
     }
 
     nvimgcdcsInstance_t instance_;

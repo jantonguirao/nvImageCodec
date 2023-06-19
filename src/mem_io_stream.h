@@ -11,6 +11,8 @@
 #pragma once
 
 #include <cstring>
+#include <functional>
+
 #include "io_stream.h"
 
 namespace nvimgcdcs {
@@ -26,6 +28,14 @@ class MemIoStream : public IoStream
         start_ = mem;
         size_ = bytes;
     }
+
+    MemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t, size_t)> get_buffer_func)
+        : get_buffer_ctx_(ctx)
+        , get_buffer_func_(get_buffer_func)
+    {
+
+    }
+
 
     std::size_t read(void* buf, size_t bytes) override
     {
@@ -92,10 +102,23 @@ class MemIoStream : public IoStream
         return static_cast<const void*>(start_); 
     }
 
+    void reserve(size_t bytes, size_t used) override
+    {
+        if (get_buffer_func_) {
+            T* new_start = get_buffer_func_(get_buffer_ctx_, bytes, used);
+            size_ = bytes;
+            if (new_start != start_) {
+                start_ = new_start;
+                pos_ = 0;
+            }
+        }
+    }
   private:
     T* start_ = nullptr;
     ptrdiff_t size_ = 0;
     ptrdiff_t pos_ = 0;
+    void* get_buffer_ctx_ = nullptr;
+    std::function<unsigned char*(void*, size_t, size_t)> get_buffer_func_ = nullptr;
 };
 
 } // namespace nvimgcdcs

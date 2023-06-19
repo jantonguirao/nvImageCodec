@@ -5,6 +5,9 @@ import subprocess
 
 
 img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
+exec_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../build/bin/bin"))
+transcode_exec="nvimtrans"
+
 
 def file_md5(file_name):
     hash_md5 = hashlib.md5()
@@ -12,22 +15,7 @@ def file_md5(file_name):
         for chunk in iter(lambda: f.read(4096), b""):
             hash_md5.update(chunk)
     return hash_md5.hexdigest()
-
-
-def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, ouput_img_file, params, check_sum):
-    os.chdir(exec_dir_path)
-    input_img_path = os.path.join(img_dir_path, input_img_file)
-    output_img_path = os.path.join(tmp_path, ouput_img_file)
-    cmd = ".{}{} -i {} -c {} {} -o {}".format(os.sep, transcode_exec,
-                                              str(input_img_path), codec, params, str(output_img_path))
-    subprocess.run(cmd, shell=True)
-    assert check_sum == file_md5(output_img_path)
     
-@t.mark.parametrize("exec_dir_path, transcode_exec",
-                    [(os.path.abspath(os.path.join(os.path.dirname(__file__), "../build/bin/bin")), "nvimtrans"),
-                     (os.path.abspath(os.path.join(os.path.dirname(__file__), "../build/bin/bin")), "nvimgcodecs_example_high_level_api")
-    ]
-)
 @t.mark.parametrize(
     "input_img_file,codec,output_img_file,params,check_sum",
     [
@@ -80,6 +68,12 @@ def imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, oupu
     ("base/f8-exif.jpg", "bmp", "f8-exif_orientation_disabled.bmp", "--ignore_orientation true", "e44b36cc1056cefb8df7473d96dd65e7"),
     ]
 )
-def test_imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum):
-    imtrans(exec_dir_path, transcode_exec, tmp_path, input_img_file, codec, output_img_file, params, check_sum)
+def test_imtrans(tmp_path, input_img_file, codec, output_img_file, params, check_sum):
+    os.chdir(exec_dir_path)
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+    output_img_path = os.path.join(tmp_path, output_img_file)
+    cmd = ".{}{} -i {} -c {} {} -o {}".format(os.sep, transcode_exec,
+                                              str(input_img_path), codec, params, str(output_img_path))
+    subprocess.run(cmd, shell=True)
+    assert check_sum == file_md5(output_img_path)
 

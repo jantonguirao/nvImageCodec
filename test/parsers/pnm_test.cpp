@@ -27,14 +27,7 @@ class PNMParserPluginTest : public ::testing::Test
 
     void SetUp() override
     {
-        nvimgcdcsInstanceCreateInfo_t create_info;
-        create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-        create_info.next = nullptr;
-        create_info.device_allocator = nullptr;
-        create_info.pinned_allocator = nullptr;
-        create_info.load_builtin_modules = false;
-        create_info.load_extension_modules = false;
-        create_info.executor = nullptr;
+        nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
         create_info.num_cpu_threads = 1;
         create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;

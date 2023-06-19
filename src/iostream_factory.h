@@ -13,8 +13,8 @@
 #include <memory>
 #include <string>
 
-#include "iiostream_factory.h"
 #include "file_io_stream.h"
+#include "iiostream_factory.h"
 #include "mem_io_stream.h"
 
 namespace nvimgcdcs {
@@ -23,23 +23,20 @@ class IoStream;
 class IoStreamFactory : public IIoStreamFactory
 {
   public:
-    std::unique_ptr<IoStream> createFileIoStream(
-        const std::string& file_name, bool read_ahead, bool use_mmap, bool to_write) const override
-        {
-            return FileIoStream::open(file_name, read_ahead, use_mmap, to_write);
-        }
+    std::unique_ptr<IoStream> createFileIoStream(const std::string& file_name, bool read_ahead, bool use_mmap, bool to_write) const override
+    {
+        return FileIoStream::open(file_name, read_ahead, use_mmap, to_write);
+    }
 
-       std::unique_ptr<IoStream> createMemIoStream(const unsigned char* data,
-            size_t size) const override
-        {
-            return std::make_unique<MemIoStream<const unsigned char>>(data, size);
-        }
-        
-        std::unique_ptr<IoStream> createMemIoStream(
-            unsigned char* data, size_t size) const override
-            {
-            return std::make_unique<MemIoStream<unsigned char>>(data, size);
-            }
+    std::unique_ptr<IoStream> createMemIoStream(const unsigned char* data, size_t size) const override
+    {
+        return std::make_unique<MemIoStream<const unsigned char>>(data, size);
+    }
+
+    std::unique_ptr<IoStream> createMemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t, size_t)> get_buffer_func) const override
+    {
+        return std::make_unique<MemIoStream<unsigned char>>(ctx, get_buffer_func);
+    }
 };
 
 } // namespace nvimgcdcs

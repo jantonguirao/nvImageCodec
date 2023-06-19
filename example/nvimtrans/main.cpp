@@ -152,7 +152,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     }
 
     // Prepare decode parameters
-    nvimgcdcsDecodeParams_t decode_params{};
+    nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
@@ -489,7 +489,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     std::vector<nvimgcdcsCodeStream_t> in_code_streams(params.batch_size);
     std::vector<nvimgcdcsCodeStream_t> out_code_streams(params.batch_size);
     std::vector<nvimgcdcsImage_t> images(params.batch_size);
-    nvimgcdcsDecodeParams_t decode_params{};
+    nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
     decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.enable_orientation = !params.ignore_orientation;
 
@@ -701,17 +701,12 @@ int main(int argc, const char* argv[])
     std::cout << "Using GPU: " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
 
     nvimgcdcsInstance_t instance;
-    nvimgcdcsInstanceCreateInfo_t instance_create_info{};
-    instance_create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instance_create_info.next = NULL;
-    instance_create_info.pinned_allocator = NULL;
-    instance_create_info.device_allocator = NULL;
+    nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
     instance_create_info.load_builtin_modules = true;
     instance_create_info.load_extension_modules = true;
     instance_create_info.default_debug_messenger = true;
     instance_create_info.message_severity = verbosity2severity(params.verbose);
     instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
-    instance_create_info.num_cpu_threads = 10;
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
     nvimgcdcsExtension_t pnm_extension{nullptr};

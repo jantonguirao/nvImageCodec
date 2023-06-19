@@ -13,12 +13,30 @@
 include(Utils)
 include(GNUInstallDirs)
 
+if(UNIX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
+endif()
+
+set(PY_NVIMGCDCS_SRCS
+    main.cpp
+    module.cpp
+    image.cpp
+    decoder.cpp
+    encoder.cpp
+    decode_params.cpp
+    encode_params.cpp
+    mct_mode.cpp
+    chroma_subsampling.cpp
+    jpeg2k_prog_order.cpp
+    jpeg2k_bitstream_type.cpp
+    error_handling.cpp)
+
 build_per_python_lib(nvimgcodecs_python
-                     OUTPUT_NAME nvimgcodecs_impl
-                     OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs
-                     PUBLIC_LIBS nvimgcodecs
-                     PRIV_LIBS CUDA::cudart_static -static-libstdc++
-                     SRC main.cpp)
+    OUTPUT_NAME nvimgcodecs_impl
+    OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs
+    PUBLIC_LIBS nvimgcodecs
+    PRIV_LIBS CUDA::cudart_static -static-libstdc++
+    SRC ${PY_NVIMGCDCS_SRCS})
 
 # TODO(janton)
 

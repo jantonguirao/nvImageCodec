@@ -232,7 +232,7 @@ class PluginFrameworkExtensionsVersionTest : public ::testing::Test
 TEST_F(PluginFrameworkExtensionsVersionTest, test_when_there_is_already_ext_with_the_same_ver_register_returns_invalid)
 {
     nvimgcdcsExtension_t ext1;
-    nvimgcdcsExtensionDesc_t ext1_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, 1000,
+    nvimgcdcsExtensionDesc_t ext1_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, NVIMGCDCS_EXT_API_VER,
         &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
 
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->registerExtension(&ext1, &ext1_desc));
@@ -243,10 +243,11 @@ TEST_F(PluginFrameworkExtensionsVersionTest, test_when_there_is_already_ext_with
 TEST_F(PluginFrameworkExtensionsVersionTest, test_when_there_is_already_ext_with_the_newer_ver_register_returns_invalid)
 {
     nvimgcdcsExtension_t ext1;
-    nvimgcdcsExtensionDesc_t ext1_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, 1000,
+    nvimgcdcsExtensionDesc_t ext1_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, NVIMGCDCS_EXT_API_VER,
         &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
     nvimgcdcsExtension_t ext2;
-    nvimgcdcsExtensionDesc_t ext2_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 0100, 1000,
+
+    nvimgcdcsExtensionDesc_t ext2_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 0100, NVIMGCDCS_EXT_API_VER,
         &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
 
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->registerExtension(&ext1, &ext1_desc));

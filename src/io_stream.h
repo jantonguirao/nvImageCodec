@@ -142,6 +142,13 @@ class IoStream
     inline int64_t ssize() const { return size(); }
 
     /**
+     * @brief Provides expected bytes of data which are going to be written.
+     *        and used so far.  
+     *        Gives possibility to pre/re-allocate raw_data buffer
+     */
+    virtual void reserve(size_t bytes, size_t used){};
+
+    /**
      * @brief Returns the raw pointer to the data in memory, if available,
      *        otherwise returns nullptr
      * 
