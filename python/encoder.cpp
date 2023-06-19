@@ -112,15 +112,18 @@ std::vector<py::bytes> Encoder::encode(
 
     struct PyObjectWrap
     {
-        unsigned char* getBuffer(size_t bytes) {
+        unsigned char* getBuffer(size_t bytes, size_t used) {
+            if (bytes != used) {
+                assert(!"TODO");
+            }
             ptr_ = PyBytes_FromStringAndSize(nullptr, bytes);
             return (unsigned char*)PyBytes_AsString(ptr_);
         }
 
-        static unsigned char* get_buffer_static(void* ctx, size_t bytes)
+        static unsigned char* get_buffer_static(void* ctx, size_t bytes, size_t used)
         {
             auto handle = reinterpret_cast<PyObjectWrap*>(ctx);
-            return handle->getBuffer(bytes);
+            return handle->getBuffer(bytes, used);
         }
 
         PyObject* ptr_;

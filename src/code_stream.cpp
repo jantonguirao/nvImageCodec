@@ -170,10 +170,10 @@ nvimgcdcsStatus_t CodeStream::size(size_t* size)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t CodeStream::reserve(size_t bytes)
+nvimgcdcsStatus_t CodeStream::reserve(size_t bytes, size_t used)
 {
     assert(io_stream_);
-    io_stream_->reserve(bytes);
+    io_stream_->reserve(bytes, used);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -233,11 +233,11 @@ nvimgcdcsStatus_t CodeStream::size_static(void* instance, size_t* size)
     return handle->size(size);
 }
 
-nvimgcdcsStatus_t CodeStream::reserve_static(void* instance, size_t bytes)
+nvimgcdcsStatus_t CodeStream::reserve_static(void* instance, size_t bytes, size_t used)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
-    return handle->reserve(bytes);
+    return handle->reserve(bytes, used);
 }
 
 nvimgcdcsStatus_t CodeStream::raw_data_static(void* instance, const void** raw_data)

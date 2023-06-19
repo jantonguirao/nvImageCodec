@@ -48,7 +48,7 @@ class CodeStream : public ICodeStream
     nvimgcdcsStatus_t seek(size_t offset, int whence);
     nvimgcdcsStatus_t tell(size_t* offset);
     nvimgcdcsStatus_t size(size_t* size);
-    nvimgcdcsStatus_t reserve(size_t bytes);
+    nvimgcdcsStatus_t reserve(size_t bytes, size_t used);
     nvimgcdcsStatus_t raw_data(const void** raw_data);
 
     static nvimgcdcsStatus_t read_static(void* instance, size_t* output_size, void* buf, size_t bytes);
@@ -59,7 +59,7 @@ class CodeStream : public ICodeStream
     static nvimgcdcsStatus_t seek_static(void* instance, size_t offset, int whence);
     static nvimgcdcsStatus_t tell_static(void* instance, size_t* offset);
     static nvimgcdcsStatus_t size_static(void* instance, size_t* size);
-    static nvimgcdcsStatus_t reserve_static(void* instance, size_t bytes);
+    static nvimgcdcsStatus_t reserve_static(void* instance, size_t bytes, size_t used);
     static nvimgcdcsStatus_t raw_data_static(void* instance, const void** raw_data);
 
     static nvimgcdcsStatus_t static_get_codec_name(void* instance, char* codec_name);

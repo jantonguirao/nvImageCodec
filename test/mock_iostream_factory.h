@@ -26,7 +26,7 @@ class MockIoStreamFactory : public IIoStreamFactory
         (const, override));
     MOCK_METHOD(std::unique_ptr<IoStream>, createMemIoStream,
         (const unsigned char* data, size_t size), (const, override));
-    MOCK_METHOD(std::unique_ptr<IoStream>, createMemIoStream, (void* ctx, std::function<unsigned char*(void* ctx, size_t)>),
+    MOCK_METHOD(std::unique_ptr<IoStream>, createMemIoStream, (void* ctx, std::function<unsigned char*(void* ctx, size_t, size_t)>),
         (const, override));
 };
 

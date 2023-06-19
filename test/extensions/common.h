@@ -196,16 +196,16 @@ class ExtensionTestBase
         }
     }
 
-    unsigned char* GetBuffer(size_t bytes)
+    unsigned char* GetBuffer(size_t bytes, size_t used)
     {
         code_stream_buffer_.resize(bytes);
         return code_stream_buffer_.data();
     }
 
-    static unsigned char* GetBufferStatic(void* ctx, size_t bytes)
+    static unsigned char* GetBufferStatic(void* ctx, size_t bytes, size_t used)
     {
         auto handle = reinterpret_cast<ExtensionTestBase*>(ctx);
-        return handle->GetBuffer(bytes);
+        return handle->GetBuffer(bytes, used);
     }
 
     nvimgcdcsInstance_t instance_;

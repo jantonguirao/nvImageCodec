@@ -33,7 +33,7 @@ class IoStreamFactory : public IIoStreamFactory
         return std::make_unique<MemIoStream<const unsigned char>>(data, size);
     }
 
-    std::unique_ptr<IoStream> createMemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t)> get_buffer_func) const override
+    std::unique_ptr<IoStream> createMemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t, size_t)> get_buffer_func) const override
     {
         return std::make_unique<MemIoStream<unsigned char>>(ctx, get_buffer_func);
     }

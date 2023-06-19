@@ -453,7 +453,7 @@ extern "C"
         nvimgcdcsStatus_t (*seek)(void* instance, size_t offset, int whence);
         nvimgcdcsStatus_t (*tell)(void* instance, size_t* offset);
         nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
-        nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes);
+        nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes, size_t used);
         nvimgcdcsStatus_t (*raw_data)(void* instance, const void**);
     };
     typedef struct nvimgcdcsIOStreamDesc* nvimgcdcsIoStreamDesc_t;
@@ -702,7 +702,14 @@ extern "C"
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsExtension_t extension);
     } nvimgcdcsExtensionDesc_t;
 
-    typedef unsigned char* (*nvimgcdcsGetBufferFunc_t)(void* ctx, size_t buffer_size);
+    // Function to provide buffer with requested size. There can be few cases when it is called:
+    // 1) init  - when called with used_size == 0 - for initial allocation before any data is actually written
+    // 2) update - when called with used_size < req_size - for update with used_size and possibility of reallocation if needed
+    // 3) terminate - when called with used_size == req_size - for init/update with end size of used data 
+    // Note 1: When returned pointer for the same context changed, new buffer will be used from the beginning and used_size will be reset
+    //         There is no internal copy of previous content
+    // Note 2: Currently only case 3) is supported (we know end used size from the beginning) and cases 1) and 2) are reserved for future use
+    typedef unsigned char* (*nvimgcdcsGetBufferFunc_t)(void* ctx, size_t req_size, size_t used_size);
 
     typedef nvimgcdcsStatus_t (*nvimgcdcsExtensionModuleEntryFunc_t)(nvimgcdcsExtensionDesc_t* ext_desc);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc);

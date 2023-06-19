@@ -29,7 +29,7 @@ class MemIoStream : public IoStream
         size_ = bytes;
     }
 
-    MemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t)> get_buffer_func)
+    MemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t, size_t)> get_buffer_func)
         : get_buffer_ctx_(ctx)
         , get_buffer_func_(get_buffer_func)
     {
@@ -102,11 +102,15 @@ class MemIoStream : public IoStream
         return static_cast<const void*>(start_); 
     }
 
-    void reserve(size_t bytes) override
+    void reserve(size_t bytes, size_t used) override
     {
         if (get_buffer_func_) {
-            start_ = get_buffer_func_(get_buffer_ctx_, bytes);
+            T* new_start = get_buffer_func_(get_buffer_ctx_, bytes, used);
             size_ = bytes;
+            if (new_start != start_) {
+                start_ = new_start;
+                pos_ = 0;
+            }
         }
     }
   private:
@@ -114,7 +118,7 @@ class MemIoStream : public IoStream
     ptrdiff_t size_ = 0;
     ptrdiff_t pos_ = 0;
     void* get_buffer_ctx_ = nullptr;
-    std::function<unsigned char*(void*, size_t)> get_buffer_func_ = nullptr;
+    std::function<unsigned char*(void*, size_t, size_t)> get_buffer_func_ = nullptr;
 };
 
 } // namespace nvimgcdcs

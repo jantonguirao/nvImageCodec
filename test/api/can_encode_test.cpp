@@ -198,14 +198,14 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         mock_extension_.reset();
     }
 
-    unsigned char* GetOutputBuffer(size_t bytes) {
+    unsigned char* GetOutputBuffer(size_t bytes, size_t used) {
         out_buffer_.resize(bytes);
         return out_buffer_.data();
     }
 
-    static unsigned char* GetOutputBufferStatic(void* ctx, size_t bytes) {
+    static unsigned char* GetOutputBufferStatic(void* ctx, size_t bytes, size_t used) {
         auto handle = reinterpret_cast<NvImageCodecsCanEncodeApiTest*>(ctx);
-        return handle->GetOutputBuffer(bytes);
+        return handle->GetOutputBuffer(bytes, used);
     }
 
     nvimgcdcsInstance_t instance_;
