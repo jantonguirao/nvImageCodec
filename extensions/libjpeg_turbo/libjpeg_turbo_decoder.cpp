@@ -116,8 +116,6 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
 
         switch(info.sample_format) {
             case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
-            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:  // TODO(janton): support?
-            case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
                 *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
                 break;
             case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
@@ -125,6 +123,8 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
             case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
+            case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
             default:
                 break;  // supported
         }
@@ -294,8 +294,10 @@ nvimgcdcsStatus_t decodeImpl(
     switch(flags.sample_format) {
         case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
         case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+        case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
         case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
         case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+        case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
             flags.components = 3;
             break;
         case NVIMGCDCS_SAMPLEFORMAT_P_Y:
@@ -353,6 +355,12 @@ nvimgcdcsStatus_t decodeImpl(
     }
 
     auto orig_sample_format = flags.sample_format;
+    if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED) {
+        orig_sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+    } else if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED) {
+        orig_sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
+    }
+
     if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
         flags.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
     } else if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR) {

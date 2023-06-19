@@ -36,13 +36,14 @@ static int nvjpeg_flat_version(int major, int minor, int patch) {
 }
 
 static int nvjpeg_get_version() {
-    int major = -1, minor = -1, patch = -1, ver = -1;
+    int major = -1, minor = -1, patch = -1;
     if (NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MAJOR_VERSION, &major) &&
         NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor) &&
         NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(PATCH_LEVEL, &patch)) {
-        ver = major * 1000 + minor * 100 + patch * 10;
+        return nvjpeg_flat_version(major, minor, patch);
+    } else {
+        return -1;
     }
-    return ver;
 }
 
 static bool nvjpeg_at_least(int major, int minor, int patch) {

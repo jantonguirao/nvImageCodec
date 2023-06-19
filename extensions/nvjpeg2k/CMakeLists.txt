@@ -27,7 +27,7 @@ if (WITH_DYNAMIC_NPP)
     PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:dynlink_npp>")
 else()
   target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME}
-    PUBLIC CUDA::nppc_static CUDA::nppidei_static)
+    PUBLIC CUDA::nppc_static CUDA::nppidei_static CUDA::nppicc_static)
 endif()
 
 target_link_libraries(${NVIMGCDCS_NVJPEG2K_EXT_LIBRARY_NAME} PUBLIC

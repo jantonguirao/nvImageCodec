@@ -107,6 +107,7 @@ foreach(testapp nvimgcodecs_tests)
         CUDA::cudart
         CUDA::nppc
         CUDA::nppidei
+        CUDA::nppicc
         CUDA::cuda_driver
         gtest
         gmock
