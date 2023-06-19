@@ -14,18 +14,13 @@ namespace nvimgcdcs {
 
 Module::Module()
 {
-    nvimgcdcsInstanceCreateInfo_t instance_create_info{};
-    instance_create_info.type = NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instance_create_info.next = NULL;
-    instance_create_info.pinned_allocator = NULL;
-    instance_create_info.device_allocator = NULL;
+    nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
     instance_create_info.load_builtin_modules = true;
     instance_create_info.load_extension_modules = true;
     instance_create_info.default_debug_messenger = false;
     instance_create_info.message_severity =
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING;
     instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
-    instance_create_info.num_cpu_threads = 10;
     nvimgcdcsInstanceCreate(&instance_, instance_create_info);
 }
 

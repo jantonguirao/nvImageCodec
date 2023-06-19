@@ -722,7 +722,7 @@ extern "C"
         bool default_debug_messenger;       //Create default debug messenger
         uint32_t message_severity;          //Severity for default debug messenger
         uint32_t message_type;              //Message type for default debug messenger
-        int num_cpu_threads;                //Number of CPU threads in default executor
+        int num_cpu_threads;                //Number of CPU threads in default executor (0 means default value equal to #cpu_cores)
         nvimgcdcsExecutorDesc_t executor;
     } nvimgcdcsInstanceCreateInfo_t;
 

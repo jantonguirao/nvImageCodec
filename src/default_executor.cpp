@@ -9,6 +9,7 @@
  */
 #include "default_executor.h"
 #include <cassert>
+#include <thread>
 #include "exception.h"
 #include "log.h"
 
@@ -18,6 +19,10 @@ DefaultExecutor::DefaultExecutor(int num_threads)
     : desc_{NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC, nullptr, this, &static_launch, &static_get_num_threads}
     , num_threads_(num_threads)
 {
+    if (num_threads_ == 0) {
+        const auto cpu_cores_count = std::thread::hardware_concurrency();
+        num_threads_ = cpu_cores_count ? cpu_cores_count : 1;
+    }
 }
 
 DefaultExecutor::~DefaultExecutor()
