@@ -2,6 +2,7 @@
 #include <extensions/nvpnm/nvpnm_ext.h>
 #include <nvimgcodecs.h>
 #include <stdlib.h>
+#include <string.h>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -139,14 +140,12 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     image_info.next = &jpeg_image_info;
     nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
     parse_time = wtime() - parse_time;
-    char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-    nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
 
     std::cout << "Input image info: " << std::endl;
     std::cout << "\t - width:" << image_info.plane_info[0].width << std::endl;
     std::cout << "\t - height:" << image_info.plane_info[0].height << std::endl;
     std::cout << "\t - components:" << image_info.num_planes << std::endl;
-    std::cout << "\t - codec:" << codec_name << std::endl;
+    std::cout << "\t - codec:" << image_info.codec_name << std::endl;
     if (jpeg_image_info.encoding != NVIMGCDCS_JPEG_ENCODING_UNKNOWN) {
         std::cout << "\t - jpeg encoding: 0x" << std::hex << jpeg_image_info.encoding << std::endl;
     }
@@ -231,10 +230,11 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     out_image_info.chroma_subsampling = params.chroma_subsampling;
     out_image_info.next = &out_jpeg_image_info;
     out_jpeg_image_info.next = image_info.next;
+    strcpy(out_image_info.codec_name, params.output_codec.c_str());
 
     nvimgcdcsCodeStream_t output_code_stream;
     nvimgcdcsCodeStreamCreateToFile(
-        instance, &output_code_stream, output_path.string().c_str(), params.output_codec.data(), &out_image_info);
+        instance, &output_code_stream, output_path.string().c_str(), &out_image_info);
 
     nvimgcdcsEncoder_t encoder = nullptr;
     const char* options = nullptr;
@@ -378,9 +378,6 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
             }
         }
 
-        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetCodecName(code_streams[i], codec_name));
-
         int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
         //Decode to format
@@ -451,9 +448,10 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         out_image_info.chroma_subsampling = params.chroma_subsampling;
         out_image_info.next = reinterpret_cast<void*>(&jpeg_image_info);
         jpeg_image_info.next = image_info.next;
+        strcpy(out_image_info.codec_name, params.output_codec.c_str());
 
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(
-            instance, &out_code_streams[i], output_filename.string().c_str(), params.output_codec.c_str(), &out_image_info));
+            instance, &out_code_streams[i], output_filename.string().c_str(), &out_image_info));
 
         if (encoder == nullptr) {
             const char* options = nullptr;

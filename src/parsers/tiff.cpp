@@ -10,6 +10,7 @@
 
 #include "parsers/tiff.h"
 #include <nvimgcodecs.h>
+#include <string.h>
 #include <vector>
 
 #include "exception.h"
@@ -63,6 +64,7 @@ nvimgcdcsStatus_t GetInfoImpl(nvimgcdcsImageInfo_t* info, nvimgcdcsIoStreamDesc_
     io_stream->seek(io_stream->instance, ifd_offset, SEEK_SET);
     const auto entry_count = TiffRead<uint16_t, is_little_endian>(io_stream);
 
+    strcpy(info->codec_name, "tiff");
     info->color_spec = NVIMGCDCS_COLORSPEC_UNKNOWN;
     info->chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
     info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;

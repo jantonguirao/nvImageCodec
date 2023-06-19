@@ -10,6 +10,7 @@
 
 #include "parsers/pnm.h"
 #include <nvimgcodecs.h>
+#include <string.h>
 #include <vector>
 
 #include "exception.h"
@@ -84,7 +85,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
         NVIMGCDCS_LOG_ERROR("Unexpected structure type");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
-
+    strcpy(image_info->codec_name, "pnm");
     // http://netpbm.sourceforge.net/doc/ppm.html
 
     if (io_stream_length < 3) {

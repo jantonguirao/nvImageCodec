@@ -10,6 +10,7 @@
 
 #include "parsers/png.h"
 #include <nvimgcodecs.h>
+#include <string.h>
 #include <vector>
 
 #include "exception.h"
@@ -107,7 +108,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
         NVIMGCDCS_LOG_ERROR("Unexpected structure type");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
-
+    strcpy(image_info->codec_name, "png");
     image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
     image_info->plane_info[0].width = ReadValueBE<uint32_t>(io_stream);
     image_info->plane_info[0].height = ReadValueBE<uint32_t>(io_stream);

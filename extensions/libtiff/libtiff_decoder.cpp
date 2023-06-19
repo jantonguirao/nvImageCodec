@@ -337,10 +337,10 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
     auto image = images;
     for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
         *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-        (*code_stream)->getCodecName((*code_stream)->instance, codec_name);
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
-        if (strcmp(codec_name, "tiff") != 0) {
+        if (strcmp(cs_image_info.codec_name, "tiff") != 0) {
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }

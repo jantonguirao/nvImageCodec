@@ -14,20 +14,18 @@
 #include <string>
 #include "codec.h"
 #include "codec_registry.h"
-#include "image_parser.h"
 #include "exception.h"
+#include "image_parser.h"
 namespace nvimgcdcs {
 
 CodeStream::CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStreamFactory> io_stream_factory)
     : codec_registry_(codec_registry)
-    , codec_name_("")
     , parser_(nullptr)
     , io_stream_factory_(std::move(io_stream_factory))
     , io_stream_(nullptr)
     , io_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static, write_static, putc_static, skip_static,
           seek_static, tell_static, size_static, reserve_static, raw_data_static}
-    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, &io_stream_desc_, static_get_codec_name,
-          static_get_image_info}
+    , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, &io_stream_desc_, static_get_image_info}
     , image_info_(nullptr)
 {
 }
@@ -40,13 +38,10 @@ void CodeStream::parse()
 {
     auto parser = codec_registry_->getParser(&code_stream_desc_);
     if (!parser)
-        throw Exception(
-            UNSUPPORTED_FORMAT_STATUS,
-            "The encoded stream did not match any of the available format parsers",
+        throw Exception(UNSUPPORTED_FORMAT_STATUS, "The encoded stream did not match any of the available format parsers",
             "CodeStream::parse - Encoded stream parsing");
 
     parser_ = std::move(parser);
-    codec_name_ = parser_->getCodecName();
 }
 
 void CodeStream::parseFromFile(const std::string& file_name)
@@ -60,18 +55,14 @@ void CodeStream::parseFromMem(const unsigned char* data, size_t size)
     io_stream_ = io_stream_factory_->createMemIoStream(data, size);
     parse();
 }
-void CodeStream::setOutputToFile(const char* file_name, const char* codec_name)
+void CodeStream::setOutputToFile(const char* file_name)
 {
     io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, false, true);
-    codec_ = codec_registry_->getCodecByName(codec_name);
-    codec_name_ = std::string(codec_name);
 }
 
-void CodeStream::setOutputToHostMem(void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const char* codec_name)
+void CodeStream::setOutputToHostMem(void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func)
 {
     io_stream_ = io_stream_factory_->createMemIoStream(ctx, get_buffer_func);
-    codec_ = codec_registry_->getCodecByName(codec_name);
-    codec_name_ = std::string(codec_name);
 }
 
 nvimgcdcsStatus_t CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
@@ -81,13 +72,13 @@ nvimgcdcsStatus_t CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
         assert(parser_);
         image_info_ = std::make_unique<nvimgcdcsImageInfo_t>();
         image_info_->type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
-        image_info_->next = image_info->next;  // TODO(janton): temp solution but we probably need deep copy
+        image_info_->next = image_info->next; // TODO(janton): temp solution but we probably need deep copy
         auto res = parser_->getImageInfo(&code_stream_desc_, image_info_.get());
         if (res != NVIMGCDCS_STATUS_SUCCESS) {
             image_info_.reset();
             return res;
         }
-    } 
+    }
     *image_info = *image_info_.get();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -103,12 +94,12 @@ nvimgcdcsStatus_t CodeStream::setImageInfo(const nvimgcdcsImageInfo_t* image_inf
 
 std::string CodeStream::getCodecName() const
 {
-    return codec_name_;
+    return image_info_ ? std::string(image_info_->codec_name) : parser_->getCodecName();
 }
 
 ICodec* CodeStream::getCodec() const
 {
-    return codec_registry_->getCodecByName(codec_name_.c_str());
+    return codec_registry_->getCodecByName(getCodecName().c_str());
 }
 
 nvimgcdcsIOStreamDesc* CodeStream::getInputStreamDesc()
@@ -245,15 +236,6 @@ nvimgcdcsStatus_t CodeStream::raw_data_static(void* instance, const void** raw_d
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->raw_data(raw_data);
-}
-
-nvimgcdcsStatus_t CodeStream::static_get_codec_name(void* instance, char* codec_name)
-{
-    assert(instance);
-    CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
-    std::string str = handle->getCodecName();
-    strcpy(codec_name, str.c_str());
-    return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t CodeStream::static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result)

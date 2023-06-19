@@ -32,11 +32,11 @@ static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
     auto image = images;
     for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
         *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-        (*code_stream)->getCodecName((*code_stream)->instance, codec_name);
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
-        if (strcmp(codec_name, "pnm") != 0) {
-            NVIMGCDCS_E_LOG_INFO("cannot encode because it is not pnm codec but " << codec_name);
+        if (strcmp(cs_image_info.codec_name, "pnm") != 0) {
+            NVIMGCDCS_E_LOG_INFO("cannot encode because it is not pnm codec but " << cs_image_info.codec_name);
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }

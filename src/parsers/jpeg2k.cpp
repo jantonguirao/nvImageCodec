@@ -10,6 +10,7 @@
 
 #include "parsers/jpeg2k.h"
 #include <nvimgcodecs.h>
+#include <string.h>
 #include <vector>
 
 #include "exception.h"
@@ -367,7 +368,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
             NVIMGCDCS_LOG_ERROR("Unexpected structure type");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
-
+        strcpy(image_info->codec_name, "jpeg2k");
         std::array<uint8_t, 12> bitstream_start;
         size_t read_nbytes = 0;
         io_stream->read(io_stream->instance, &read_nbytes, bitstream_start.data(), bitstream_start.size());

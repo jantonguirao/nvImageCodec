@@ -30,8 +30,8 @@ class CodeStream : public ICodeStream
     ~CodeStream();
     void parseFromFile(const std::string& file_name) override;
     void parseFromMem(const unsigned char* data, size_t size) override;
-    void setOutputToFile(const char* file_name, const char* codec_name) override;
-    void setOutputToHostMem(void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const char* codec_name) override;
+    void setOutputToFile(const char* file_name) override;
+    void setOutputToHostMem(void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func) override;
     nvimgcdcsStatus_t getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
     nvimgcdcsStatus_t setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
     std::string getCodecName() const override;
@@ -62,12 +62,9 @@ class CodeStream : public ICodeStream
     static nvimgcdcsStatus_t reserve_static(void* instance, size_t bytes, size_t used);
     static nvimgcdcsStatus_t raw_data_static(void* instance, const void** raw_data);
 
-    static nvimgcdcsStatus_t static_get_codec_name(void* instance, char* codec_name);
     static nvimgcdcsStatus_t static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result);
 
     ICodecRegistry* codec_registry_;
-    ICodec* codec_;
-    std::string codec_name_;
     std::unique_ptr<IImageParser> parser_;
     std::unique_ptr<IIoStreamFactory> io_stream_factory_;
     std::unique_ptr<IoStream> io_stream_;

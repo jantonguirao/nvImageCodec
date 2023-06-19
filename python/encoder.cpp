@@ -12,6 +12,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <string.h>
 #include "../src/file_ext_codec.h"
 #include "error_handling.h"
 
@@ -132,8 +133,9 @@ std::vector<py::bytes> Encoder::encode(
     std::vector<PyObjectWrap> py_objects(images.size());
 
     auto create_code_stream = [&](size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
-          CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToHostMem(
-           instance_, code_stream, (void*)&py_objects[i], &PyObjectWrap::get_buffer_static, codec_name.c_str(), &out_image_info));
+        strcpy(out_image_info.codec_name, codec_name.c_str());
+        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToHostMem(
+            instance_, code_stream, (void*)&py_objects[i], &PyObjectWrap::get_buffer_static, &out_image_info));
     };
 
     data_list.reserve(images.size());
@@ -171,9 +173,9 @@ void Encoder::encode(const std::vector<std::string>& file_names, const std::vect
                 codec_name = "jpeg";
             }
         }
-
+        strcpy(out_image_info.codec_name, codec_name.c_str());
         CHECK_NVIMGCDCS(
-            nvimgcdcsCodeStreamCreateToFile(instance_, code_stream, file_names[i].c_str(), codec_name.c_str(), &out_image_info));
+            nvimgcdcsCodeStreamCreateToFile(instance_, code_stream, file_names[i].c_str(), &out_image_info));
     };
     auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream) -> void {};
     encode(images, params, cuda_stream, create_code_stream, post_encode_callback);

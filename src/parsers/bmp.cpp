@@ -11,6 +11,7 @@
 #include "parsers/bmp.h"
 #include <nvimgcodecs.h>
 #include <vector>
+#include <string.h>
 
 #include "exception.h"
 #include "log.h"
@@ -224,7 +225,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
             NVIMGCDCS_LOG_ERROR("Unexpected structure type");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
-
+        strcpy(image_info->codec_name, "bmp");
         constexpr size_t header_start = 14;
         io_stream->seek(io_stream->instance, header_start, SEEK_SET);
         uint32_t header_size = ReadValueLE<uint32_t>(io_stream);
