@@ -26,8 +26,8 @@ import argparse
 # tag: Import CVCUDA module
 import cvcuda
 
+# tag: Import nvImageCodecs module
 from nvidia import nvimgcodecs
-
 
 # tag: Classification Sample
 
@@ -117,135 +117,139 @@ class ClassificationSample:
         ]
         batch_idx = 0
         decoder = nvimgcodecs.Decoder()
-        for file_name_batch, data_batch in zip(file_name_batches, data_batches):
-            effective_batch_size = len(file_name_batch)
-            batch_idx += 1
-            print("Processing batch %d of %d" % (batch_idx, len(file_name_batches)))
-        
-            # Decode in batch using nvImageCodecs decoder on the GPU.
+        cvcuda_stream = cvcuda.Stream()
+        torch_stream = torch.cuda.ExternalStream(cvcuda_stream.handle)
+        with cvcuda_stream:
+            with torch.cuda.stream(torch_stream):
+                for file_name_batch, data_batch in zip(file_name_batches, data_batches):
+                    effective_batch_size = len(file_name_batch)
+                    batch_idx += 1
+                    print("Processing batch %d of %d" % (batch_idx, len(file_name_batches)))
+                
+                    # Decode in batch using nvImageCodecs decoder on the GPU.
 
-            images = decoder.decode(data_batch)
-            image_tensor_list = [torch.as_tensor(img, device='cuda') for img in images]
+                    images = decoder.decode(data_batch, cuda_stream = cvcuda_stream.handle)
+                    image_tensor_list = [torch.as_tensor(img, device='cuda') for img in images]
 
-            # Convert the list of tensors to a tensor itself.
-            image_tensors = torch.stack(image_tensor_list)
+                    # Convert the list of tensors to a tensor itself.
+                    image_tensors = torch.stack(image_tensor_list)
 
-            # tag: Wrapping into Tensor
-            # A torch tensor can be wrapped into a CVCUDA Object using the "as_tensor"
-            # function in the specified layout. The datatype and dimensions are derived
-            # directly from the torch tensor.
-            cvcuda_input_tensor = cvcuda.as_tensor(image_tensors, "NHWC")
+                    # tag: Wrapping into Tensor
+                    # A torch tensor can be wrapped into a CVCUDA Object using the "as_tensor"
+                    # function in the specified layout. The datatype and dimensions are derived
+                    # directly from the torch tensor.
+                    cvcuda_input_tensor = cvcuda.as_tensor(image_tensors, "NHWC")
 
-            # tag: Preprocess
-            """
-            Preprocessing includes the following sequence of operations.
-            Resize -> DataType Convert(U8->F32) -> Normalize
-            (Apply mean and std deviation) -> Interleaved to Planar
-            """
+                    # tag: Preprocess
+                    """
+                    Preprocessing includes the following sequence of operations.
+                    Resize -> DataType Convert(U8->F32) -> Normalize
+                    (Apply mean and std deviation) -> Interleaved to Planar
+                    """
 
-            # Resize
-            # Resize to the input network dimensions
-            cvcuda_resize_tensor = cvcuda.resize(
-                cvcuda_input_tensor,
-                (
-                    effective_batch_size,
-                    self.target_img_height,
-                    self.target_img_width,
-                    3,
-                ),
-                cvcuda.Interp.LINEAR
-            )
-
-            # Convert to the data type and range of values needed by the input layer
-            # i.e uint8->float. A Scale is applied to normalize the values in the
-            # range 0-1
-            cvcuda_convert_tensor = cvcuda.convertto(
-                cvcuda_resize_tensor, np.float32, scale=1 / 255
-            )
-
-            """
-            The input to the network needs to be normalized based on the mean and
-            std deviation value to standardize the input data.
-            """
-
-            # Create a torch tensor to store the mean and standard deviation
-            # values for R,G,B
-            mean = [0.485, 0.456, 0.406]
-            std = [0.229, 0.224, 0.225]
-            base_tensor = torch.Tensor(mean)
-            stddev_tensor = torch.Tensor(std)
-
-            # Reshape the the number of channels. The R,G,B values scale and offset
-            # will be applied to every color plane respectively across the batch
-            base_tensor = torch.reshape(base_tensor, (1, 1, 1, 3)).cuda()
-            stddev_tensor = torch.reshape(stddev_tensor, (1, 1, 1, 3)).cuda()
-
-            # Wrap the torch tensor in a CVCUDA Tensor
-            cvcuda_base_tensor = cvcuda.as_tensor(base_tensor, "NHWC")
-            cvcuda_scale_tensor = cvcuda.as_tensor(stddev_tensor, "NHWC")
-
-            # Apply the normalize operator and indicate the scale values are
-            # std deviation i.e scale = 1/stddev
-            cvcuda_norm_tensor = cvcuda.normalize(
-                cvcuda_convert_tensor,
-                base=cvcuda_base_tensor,
-                scale=cvcuda_scale_tensor,
-                flags=cvcuda.NormalizeFlags.SCALE_IS_STDDEV,
-            )
-
-            # The final stage in the preprocess pipeline includes converting the RGB
-            # buffer into a planar buffer
-            cvcuda_preprocessed_tensor = cvcuda.reformat(cvcuda_norm_tensor, "NCHW")
-
-            # tag: Inference
-            # Inference uses pytorch to run a resnet50 model on the preprocessed
-            # input and outputs the classification scores for 1000 classes
-            # Load Resnet model pretrained on Imagenet
-            resnet50 = models.resnet50(pretrained=True)
-            resnet50.to("cuda")
-            resnet50.eval()
-
-            # Run inference on the preprocessed input
-            torch_preprocessed_tensor = torch.as_tensor(
-                cvcuda_preprocessed_tensor.cuda(), device="cuda"
-            )
-
-            with torch.no_grad():
-                infer_output = resnet50(torch_preprocessed_tensor)
-
-            # tag: Postprocess
-            """
-            Postprocessing function normalizes the classification score from the network
-            and sorts the scores to get the TopN classification scores.
-            """
-            # Apply softmax to Normalize scores between 0-1
-            scores = torch.nn.functional.softmax(infer_output, dim=1)
-
-            # Sort output scores in descending order
-            _, indices = torch.sort(infer_output, descending=True)
-
-            # tag: Display Top N Results
-            # Read and parse the classes
-            with open(self.labels_file, "r") as f:
-                classes = [line.strip() for line in f.readlines()]
-
-            # top results to print out
-            topN = 5
-            for img_idx in range(effective_batch_size):
-                print(
-                    "Result for the image: %d of %d"
-                    % (img_idx + 1, effective_batch_size)
-                )
-
-                # Display Top N Results
-                for idx in indices[img_idx][:topN]:
-                    idx = idx.item()
-                    print(
-                        "\tClass : ",
-                        classes[idx],
-                        " Score : ",
-                        scores[img_idx][idx].item(),
+                    # Resize
+                    # Resize to the input network dimensions
+                    cvcuda_resize_tensor = cvcuda.resize(
+                        cvcuda_input_tensor,
+                        (
+                            effective_batch_size,
+                            self.target_img_height,
+                            self.target_img_width,
+                            3,
+                        ),
+                        cvcuda.Interp.LINEAR
                     )
+
+                    # Convert to the data type and range of values needed by the input layer
+                    # i.e uint8->float. A Scale is applied to normalize the values in the
+                    # range 0-1
+                    cvcuda_convert_tensor = cvcuda.convertto(
+                        cvcuda_resize_tensor, np.float32, scale=1 / 255
+                    )
+
+                    """
+                    The input to the network needs to be normalized based on the mean and
+                    std deviation value to standardize the input data.
+                    """
+
+                    # Create a torch tensor to store the mean and standard deviation
+                    # values for R,G,B
+                    mean = [0.485, 0.456, 0.406]
+                    std = [0.229, 0.224, 0.225]
+                    base_tensor = torch.Tensor(mean)
+                    stddev_tensor = torch.Tensor(std)
+
+                    # Reshape the the number of channels. The R,G,B values scale and offset
+                    # will be applied to every color plane respectively across the batch
+                    base_tensor = torch.reshape(base_tensor, (1, 1, 1, 3)).cuda()
+                    stddev_tensor = torch.reshape(stddev_tensor, (1, 1, 1, 3)).cuda()
+
+                    # Wrap the torch tensor in a CVCUDA Tensor
+                    cvcuda_base_tensor = cvcuda.as_tensor(base_tensor, "NHWC")
+                    cvcuda_scale_tensor = cvcuda.as_tensor(stddev_tensor, "NHWC")
+
+                    # Apply the normalize operator and indicate the scale values are
+                    # std deviation i.e scale = 1/stddev
+                    cvcuda_norm_tensor = cvcuda.normalize(
+                        cvcuda_convert_tensor,
+                        base=cvcuda_base_tensor,
+                        scale=cvcuda_scale_tensor,
+                        flags=cvcuda.NormalizeFlags.SCALE_IS_STDDEV,
+                    )
+
+                    # The final stage in the preprocess pipeline includes converting the RGB
+                    # buffer into a planar buffer
+                    cvcuda_preprocessed_tensor = cvcuda.reformat(cvcuda_norm_tensor, "NCHW")
+
+                    # tag: Inference
+                    # Inference uses pytorch to run a resnet50 model on the preprocessed
+                    # input and outputs the classification scores for 1000 classes
+                    # Load Resnet model pretrained on Imagenet
+                    resnet50 = models.resnet50(pretrained=True)
+                    resnet50.to("cuda")
+                    resnet50.eval()
+
+                    # Run inference on the preprocessed input
+                    torch_preprocessed_tensor = torch.as_tensor(
+                        cvcuda_preprocessed_tensor.cuda(), device="cuda"
+                    )
+
+                    with torch.no_grad():
+                        infer_output = resnet50(torch_preprocessed_tensor)
+
+                    # tag: Postprocess
+                    """
+                    Postprocessing function normalizes the classification score from the network
+                    and sorts the scores to get the TopN classification scores.
+                    """
+                    # Apply softmax to Normalize scores between 0-1
+                    scores = torch.nn.functional.softmax(infer_output, dim=1)
+
+                    # Sort output scores in descending order
+                    _, indices = torch.sort(infer_output, descending=True)
+
+                    # tag: Display Top N Results
+                    # Read and parse the classes
+                    with open(self.labels_file, "r") as f:
+                        classes = [line.strip() for line in f.readlines()]
+
+                    # top results to print out
+                    topN = 5
+                    for img_idx in range(effective_batch_size):
+                        print(
+                            "Result for the image: %d of %d"
+                            % (img_idx + 1, effective_batch_size)
+                        )
+
+                        # Display Top N Results
+                        for idx in indices[img_idx][:topN]:
+                            idx = idx.item()
+                            print(
+                                "\tClass : ",
+                                classes[idx],
+                                " Score : ",
+                                scores[img_idx][idx].item(),
+                            )
 
 
 def main():
