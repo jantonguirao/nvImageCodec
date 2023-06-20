@@ -62,6 +62,19 @@ foreach(testapp nvimgcodecs_tests)
         list(APPEND TARGET_LIBS nvjpeg_ext_static)
     endif()
 
+
+    if (WITH_DYNAMIC_NVJPEG)
+        list(APPEND TARGET_LIBS dynlink_nvjpeg)
+    endif()
+
+    if (WITH_DYNAMIC_NVJPEG2K)
+        list(APPEND TARGET_LIBS dynlink_nvjpeg2k)
+    endif()
+
+    if (WITH_DYNAMIC_NPP)
+        list(APPEND TARGET_LIBS dynlink_npp)
+    endif()
+
     if (BUILD_NVJPEG2K_EXT)
         list(APPEND TARGET_LIBS nvjpeg2k_ext_static)
     endif()
@@ -94,6 +107,7 @@ foreach(testapp nvimgcodecs_tests)
         CUDA::cudart
         CUDA::nppc
         CUDA::nppidei
+        CUDA::nppicc
         CUDA::cuda_driver
         gtest
         gmock

@@ -25,6 +25,12 @@
 #include "log.h"
 #include "type_convert.h"
 
+#if WITH_DYNAMIC_NVJPEG_ENABLED
+    #include "dynlink/dynlink_nvjpeg.h"
+#else
+    #define nvjpegIsSymbolAvailable(T) (true)
+#endif
+
 namespace nvjpeg {
 
 NvJpegHwDecoderPlugin::NvJpegHwDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
@@ -155,20 +161,25 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
     , framework_(framework)
     , device_id_(device_id)
 {
-    if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
-        device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
-        device_allocator_.dev_malloc = framework->device_allocator->device_malloc;
-        device_allocator_.dev_free = framework->device_allocator->device_free;
-    }
+    bool use_nvjpeg_create_ex_v2 = false;
+    if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
+        if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
+            device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
+            device_allocator_.dev_malloc = framework->device_allocator->device_malloc;
+            device_allocator_.dev_free = framework->device_allocator->device_free;
+        }
 
-    if (framework->pinned_allocator && framework->pinned_allocator->pinned_malloc && framework->pinned_allocator->pinned_free) {
-        pinned_allocator_.pinned_ctx = framework->pinned_allocator->pinned_ctx;
-        pinned_allocator_.pinned_malloc = framework->pinned_allocator->pinned_malloc;
-        pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
+        if (framework->pinned_allocator && framework->pinned_allocator->pinned_malloc && framework->pinned_allocator->pinned_free) {
+            pinned_allocator_.pinned_ctx = framework->pinned_allocator->pinned_ctx;
+            pinned_allocator_.pinned_malloc = framework->pinned_allocator->pinned_malloc;
+            pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
+        }
+        use_nvjpeg_create_ex_v2 =
+            device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free;
     }
 
     unsigned int nvjpeg_flags = get_nvjpeg_flags("nvjpeg_cuda_decoder", options);
-    if (device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free) {
+    if (use_nvjpeg_create_ex_v2) {
         XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_HARDWARE, &device_allocator_, &pinned_allocator_, nvjpeg_flags, &handle_));
     } else {
         XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_HARDWARE, nullptr, nullptr, nvjpeg_flags, &handle_));

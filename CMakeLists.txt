@@ -30,6 +30,10 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/)
 include(Utils)
 parse_cuda_version(${CUDA_VERSION} CUDA_VERSION_MAJOR CUDA_VERSION_MINOR CUDA_VERSION_PATCH CUDA_VERSION_SHORT CUDA_VERSION_SHORT_DIGIT_ONLY)
 
+add_definitions("-DCUDA_VERSION_MAJOR=${CUDA_VERSION_MAJOR}")
+add_definitions("-DCUDA_VERSION_MINOR=${CUDA_VERSION_MINOR}")
+add_definitions("-DCUDA_VERSION_PATCH=${CUDA_VERSION_PATCH}")
+
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     message(STATUS "Setting build type to 'Debug' as none was specified.")
@@ -60,8 +64,11 @@ option(BUILD_OPENCV_EXT "Build opencv extensions module" ON)
 option(BUILD_PYTHON "Build Python binding" ON)
 option(BUILD_WHEEL "Build python wheel package" ON)
 option(WITH_DYNAMIC_NVJPEG "Dynamically loads nvjpeg at runtime" ON)
-option(WITH_DYNAMIC_NVJPEG2K "Dynamically loads nvjpeg2k at runtime" ON)
+propagate_option(WITH_DYNAMIC_NVJPEG)
+option(WITH_DYNAMIC_NVJPEG2K "Dynamically loads nvjpeg2k at runtime" OFF)
+propagate_option(WITH_DYNAMIC_NVJPEG2K)
 option(WITH_DYNAMIC_NPP "Dynamically loads npp at runtime" ON)
+propagate_option(WITH_DYNAMIC_NPP)
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
 

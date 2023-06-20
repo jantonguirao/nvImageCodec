@@ -24,31 +24,39 @@ namespace {
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
   static const char __NppcLibName[] = "libnppc.so";
   static const char __NppideiLibName[] = "libnppidei.so";
+  static const char __NppiccLibName[] = "libnppicc.so";
 
-  #if CUDA_VERSION >= 12000
-    static const char __NppcLibName[] = "libnppc.so.12";
-    static const char __NppideiLibName[] = "libnppidei.so.12";
-  #elif CUDA_VERSION >= 11000 && CUDA_VERSION < 12000
+  #if CUDA_VERSION_MAJOR >= 12
+    static const char __NppcLibNameCuVer[] = "libnppc.so.12";
+    static const char __NppideiLibNameCuVer[] = "libnppidei.so.12";
+    static const char __NppiccLibNameCuVer[] = "libnppicc.so.12";
+  #elif CUDA_VERSION_MAJOR >= 11
     static const char __NppcLibNameCuVer[] = "libnppc.so.11";
     static const char __NppideiLibNameCuVer[] = "libnppidei.so.11";
+    static const char __NppiccLibNameCuVer[] = "libnppicc.so.11";
   #else
     static const char __NppcLibNameCuVer[] = "libnppc.so.10";
     static const char __NppideiLibNameCuVer[] = "libnppidei.so.10";
+    static const char __NppiccLibNameCuVer[] = "libnppicc.so.10";
   #endif
 
 #elif defined(_WIN32) || defined(_WIN64)
   static const char __NppcLibName[] = "nppc.dll";
   static const char __NppideiLibName[] = "nppidei.dll";
+  static const char __NppiccLibName[] = "nppicc.dll";
 
-  #if CUDA_VERSION >= 12000
+  #if CUDA_VERSION_MAJOR >= 12
     static const char __NppcLibNameCuVer[] = "nppc64_12.dll";
     static const char __NppideiLibNameCuVer[] = "nppidei64_12.dll";
-  #elif CUDA_VERSION >= 11000 && CUDA_VERSION < 12000
+    static const char __NppiccLibNameCuVer[] = "nppicc64_12.dll";
+  #elif CUDA_VERSION_MAJOR >= 11
     static const char __NppcLibNameCuVer[] = "nppc64_11.dll";
     static const char __NppideiLibNameCuVer[] = "nppidei64_11.dll";
+    static const char __NppiccLibNameCuVer[] = "nppicc64_12.dll";
   #else
     static const char __NppcLibNameCuVer[] = "nppc64_10.dll";
     static const char __NppideiLibNameCuVer[] = "nppidei64_10.dll";
+    static const char __NppiccLibNameCuVer[] = "nppicc64_12.dll";
   #endif
 #endif
 
@@ -81,7 +89,25 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNppideiLibrary()
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
             fprintf(stderr, "dlopen libnppidei.so failed!. Please install CUDA toolkit or NPP python wheel.");
 #elif defined(_WIN32) || defined(_WIN64)
-            fprintf(stderr, "LoadLibrary libnppidei.dll failed!. Please install CUDA toolkit or NPP python wheel.");
+            fprintf(stderr, "LoadLibrary nppidei.dll failed!. Please install CUDA toolkit or NPP python wheel.");
+#endif
+        }
+    }
+    return ret;
+}
+
+nvimgcdcs::ILibraryLoader::LibraryHandle loadNppiccLibrary()
+{
+    nvimgcdcs::LibraryLoader lib_loader;
+    nvimgcdcs::ILibraryLoader::LibraryHandle ret = nullptr;
+    ret = lib_loader.loadLibrary(__NppiccLibNameCuVer);
+    if (!ret) {
+        ret = lib_loader.loadLibrary(__NppiccLibName);
+        if (!ret) {
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
+            fprintf(stderr, "dlopen libnppicc.so failed!. Please install CUDA toolkit or NPP python wheel.");
+#elif defined(_WIN32) || defined(_WIN64)
+            fprintf(stderr, "LoadLibrary nppicc.dll failed!. Please install CUDA toolkit or NPP python wheel.");
 #endif
         }
     }
@@ -90,17 +116,22 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNppideiLibrary()
 
 }  // namespace
 
-// Load a symbol from all NPP libs that we use, to provide a unified interface
+
 void *NppLoadSymbol(const char *name) {
   nvimgcdcs::LibraryLoader lib_loader;
-  static nvimgcdcs::ILibraryLoader::LibraryHandle nppcDrvLib = loadNppcLibrary();
-  static nvimgcdcs::ILibraryLoader::LibraryHandle nppideiDrvLib = loadNppideiLibrary();
-  // check processing library, core later if symbol not found
-  void *ret = nppideiDrvLib ? lib_loader.getFuncAddress(nppideiDrvLib, name) : nullptr;
-  if (!ret) {
-    ret = nppcDrvLib ? lib_loader.getFuncAddress(nppcDrvLib, name) : nullptr;
+  // check libraries in order: processing library, color conversion, then core
+  static nvimgcdcs::ILibraryLoader::LibraryHandle libs[] = {loadNppideiLibrary(), loadNppiccLibrary(), loadNppcLibrary()};
+  for (auto &lib : libs) {
+    try {
+      void *ret = lib ? lib_loader.getFuncAddress(lib, name) : nullptr;
+      if (ret) {
+        return ret;
+      }
+    } catch (...) {
+      continue;
+    }
   }
-  return ret;
+  return nullptr;
 }
 
 bool nppIsSymbolAvailable(const char *name) {

@@ -668,9 +668,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
 
             switch (image_info.sample_format) {
             case NVIMGCDCS_SAMPLEFORMAT_P_Y:
-                switch (info.channels) {
-                case 1:
-                {
+                if (info.channels == 1) {
                     auto* plane = dst;
                     for (uint32_t i = 0; i < tile_size_y; i++) {
                         auto* row = plane + i * stride_y;
@@ -679,11 +677,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
                             *(row + j * stride_x) = *(tile_row + j * tile_stride_x);
                         }
                     }
-                }
-                break;
-
-                case 3:
-                {
+                } else if (info.channels >= 3) {
                     uint32_t plane_stride = image_info.plane_info[0].height * image_info.plane_info[0].row_stride;
                     for (uint32_t c = 0; c < image_info.num_planes; c++) {
                         auto* plane = dst + c * plane_stride;
@@ -700,10 +694,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
                             }
                         }
                     }
-                }
-                break;
-
-                default:
+                } else {
                     NVIMGCDCS_D_LOG_ERROR("Unexpected number of channels for conversion to grayscale: " << info.channels);
                     return NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
                 }

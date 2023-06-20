@@ -72,10 +72,10 @@ class Logger
         }                                                                    \
     } while (0)
 
-#define NVIMGCDCS_M_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvtiff-module", msg)
-#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvtiff-parser", msg)
-#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvtiff-encoder", msg)
-#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "nvtiff-decoder", msg)
+#define NVIMGCDCS_M_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libtiff-module", msg)
+#define NVIMGCDCS_P_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libtiff-parser", msg)
+#define NVIMGCDCS_E_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libtiff-encoder", msg)
+#define NVIMGCDCS_D_LOG(svr, type, msg) NVIMGCDCS_LOG(svr, type, "libtiff-decoder", msg)
 
 #define NVIMGCDCS_LOG_TRACE(...) NVIMGCDCS_M_LOG(NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
 #define NVIMGCDCS_LOG_DEBUG(...) NVIMGCDCS_M_LOG(NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)

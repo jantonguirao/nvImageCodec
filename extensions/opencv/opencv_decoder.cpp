@@ -463,6 +463,8 @@ nvimgcdcsStatus_t decodeImpl(
     case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
         if (num_channels == 4)
             color_convert(decoded, cv::COLOR_BGRA2RGBA);
+        else if (num_channels == 3)
+            color_convert(decoded, cv::COLOR_BGR2RGB);
         break;
     case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
     case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
