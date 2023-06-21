@@ -130,6 +130,26 @@ set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${NVIMGCODECS_VERSION_BUILD}")
 set(CPACK_STRIP_FILES TRUE)
 set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmake/Package.cmake)
 set(CPACK_COMPONENTS_ALL lib tests)
+
+if(UNIX)
+    configure_file(cpack/ld.so.conf.in cpack/ld.so.conf @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cpack/ld.so.conf
+        DESTINATION "etc/ld.so.conf.d"
+        RENAME ${CPACK_PACKAGE_NAME}.conf
+        COMPONENT lib)
+    configure_file(cpack/debian_lib_postinst.in cpack/lib/postinst @ONLY)
+    configure_file(cpack/debian_lib_prerm.in cpack/lib/prerm @ONLY)
+
+    set(CPACK_DEBIAN_LIB_PACKAGE_CONTROL_EXTRA
+        "${CMAKE_CURRENT_BINARY_DIR}/cpack/lib/postinst"
+        "${CMAKE_CURRENT_BINARY_DIR}/cpack/lib/prerm")
+
+    set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libstdc++6, libc6")
+
+    # as per debian convention, use the library file name
+    set(CPACK_DEBIAN_LIB_PACKAGE_NAME "lib${PROJECT_NAME}")
+endif()
+
 include (CPack)
 
 
