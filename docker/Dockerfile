@@ -34,7 +34,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 # Make sure that libclang is installed after clang
-RUN python3 -m pip install numba future setuptools wheel clang==14.0 flake8 && \
+RUN python3 -m pip install sphinx==4.5.0 sphinx_rtd_theme breathe numba future setuptools wheel clang==14.0 flake8 && \
     python3 -m pip install libclang==14.0.1 && \
     rm -rf /root/.cache/pip
 
