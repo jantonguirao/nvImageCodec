@@ -269,7 +269,7 @@ void ImageGenericDecoder::Worker::processBatch(std::unique_ptr<Work<nvimgcdcsDec
             for (size_t i = 0; i < indices.second; ++i) {
                 int sub_idx = indices.first[i];
                 ProcessingResult r = future->getOne(sub_idx);
-                if (r.success) {
+                if (r.isSuccess()) {
                     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                     work->images_[i]->getImageInfo(&image_info);
                     work->copy_buffer_if_necessary(is_device_output_, sub_idx, image_info.cuda_stream, &r);

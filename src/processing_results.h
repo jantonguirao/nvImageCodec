@@ -26,6 +26,10 @@ struct ProcessingResult
     nvimgcdcsProcessingStatus_t status_ = NVIMGCDCS_PROCESSING_STATUS_UNKNOWN;
     std::exception_ptr exception_ = nullptr;
 
+    bool isSuccess() const {
+      return status_ == NVIMGCDCS_PROCESSING_STATUS_SUCCESS && exception_ == nullptr;
+    }
+
     static ProcessingResult success() { return {NVIMGCDCS_PROCESSING_STATUS_SUCCESS, {}}; }
     static ProcessingResult failure(nvimgcdcsProcessingStatus_t status) { return {status, {}}; }
     static ProcessingResult failure(std::exception_ptr exception) { return {NVIMGCDCS_PROCESSING_STATUS_FAIL, std::move(exception)}; }

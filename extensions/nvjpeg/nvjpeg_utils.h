@@ -14,6 +14,9 @@
 
 namespace nvjpeg {
 
+int nvjpeg_flat_version(int major, int minor, int patch);
+int nvjpeg_get_version();
+bool nvjpeg_at_least(int major, int minor, int patch);
 unsigned int get_nvjpeg_flags(const char* module_name, const char* options = "");
 
 }

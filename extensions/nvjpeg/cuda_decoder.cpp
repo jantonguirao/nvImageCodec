@@ -31,25 +31,6 @@
 
 namespace nvjpeg {
 
-static int nvjpeg_flat_version(int major, int minor, int patch) {
-    return ((major)*1000000+(minor)*1000+(patch));
-}
-
-static int nvjpeg_get_version() {
-    int major = -1, minor = -1, patch = -1;
-    if (NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MAJOR_VERSION, &major) &&
-        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(MINOR_VERSION, &minor) &&
-        NVJPEG_STATUS_SUCCESS == nvjpegGetProperty(PATCH_LEVEL, &patch)) {
-        return nvjpeg_flat_version(major, minor, patch);
-    } else {
-        return -1;
-    }
-}
-
-static bool nvjpeg_at_least(int major, int minor, int patch) {
-    return nvjpeg_get_version() >= nvjpeg_flat_version(major, minor, patch);
-}
-
 NvJpegCudaDecoderPlugin::NvJpegCudaDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,                  // instance
@@ -480,11 +461,11 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                 // this captures the state of t.stream_ in the cuda event t.event_
                 XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));
                 // this is so that any post processing on image waits for t.event_ i.e. decoding to finish,
-                // without this the post-processing tasks such as encoding, would not know that deocding has finished on this
+                // without this the post-processing tasks such as encoding, would not know that decoding has finished on this
                 // particular image
                 XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, t.event_));
 
-                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);                
+                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             } catch (const NvJpegException& e) {
                 NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg code stream - " << e.info());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
@@ -547,7 +528,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_decode_batch(nvimgcdc
 {
 
     try {
-        NVIMGCDCS_D_LOG_TRACE("nvjpeg_decode_batch");
+        NVIMGCDCS_D_LOG_TRACE("nvjpeg_decode_batch, " << batch_size << " samples");
         XM_CHECK_NULL(decoder);
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images)
@@ -563,8 +544,8 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_decode_batch(nvimgcdc
                 NvJpegCudaDecoderPlugin::DecodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
         }
         return handle->decodeBatch();
-    }     
-    catch (const NvJpegException& e) {        
+    }
+    catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg batch - " << e.info());
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
