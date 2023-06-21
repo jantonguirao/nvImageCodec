@@ -28,6 +28,7 @@ before_script:
         paths:
             - build/python/*.whl
             - build/*.tar.gz
+            - build/*.deb
         expire_in: 2 weeks
 
 build:nvimagecodec:
