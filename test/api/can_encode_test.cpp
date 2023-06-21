@@ -172,9 +172,10 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
 
         for (size_t i = 0; i < expected_statuses_->size(); ++i) {
             nvimgcdcsImageInfo_t out_image_info(image_info_);
+            strcpy(out_image_info.codec_name,"bmp");
             nvimgcdcsCodeStream_t code_stream = nullptr;
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &code_stream, (void*)this,
-                                                    &NvImageCodecsCanEncodeApiTest::GetOutputBufferStatic, "bmp", &out_image_info));
+                                                    &NvImageCodecsCanEncodeApiTest::GetOutputBufferStatic, &out_image_info));
             streams_.push_back(code_stream);
             nvimgcdcsImage_t image;
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &image, &image_info_));

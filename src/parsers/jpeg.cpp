@@ -10,8 +10,9 @@
 
 #include "parsers/jpeg.h"
 #include <nvimgcodecs.h>
-#include <vector>
+#include <string.h>
 #include <array>
+#include <vector>
 
 #include "exception.h"
 #include "exif_orientation.h"
@@ -324,7 +325,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
         image_info->sample_format = num_components > 1 ? NVIMGCDCS_SAMPLEFORMAT_P_RGB : NVIMGCDCS_SAMPLEFORMAT_P_Y;
         image_info->orientation = orientation;
         image_info->chroma_subsampling = subsampling;
-
+        strcpy(image_info->codec_name, "jpeg");
         switch (num_components) {
         case 1:
             image_info->color_spec = NVIMGCDCS_COLORSPEC_GRAY;

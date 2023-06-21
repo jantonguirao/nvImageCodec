@@ -100,9 +100,6 @@ std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_stre
             continue;
         }
 
-        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetCodecName(code_streams[i], codec_name));
-
         int bytes_per_element = static_cast<unsigned int>(image_info.plane_info[0].sample_type) >> (8 + 3);
 
         image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);

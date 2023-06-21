@@ -250,6 +250,8 @@ extern "C"
         nvimgcdcsStructureType_t type;
         void* next;
 
+        char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
+
         nvimgcdcsColorSpec_t color_spec;
         nvimgcdcsChromaSubsampling_t chroma_subsampling;
         nvimgcdcsSampleFormat_t sample_format;
@@ -562,7 +564,6 @@ extern "C"
 
         nvimgcdcsIoStreamDesc_t io_stream;
 
-        nvimgcdcsStatus_t (*getCodecName)(void* instance, char* codec_name);
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
     };
     typedef struct nvimgcdcsCodeStreamDesc* nvimgcdcsCodeStreamDesc_t;
@@ -764,12 +765,11 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const unsigned char* data, size_t length);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
-        const char* file_name, const char* codec_name, const nvimgcdcsImageInfo_t* image_info);
+        const char* file_name, const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
-        void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const char* codec_name, const nvimgcdcsImageInfo_t* image_info);
+        void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t code_stream);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t code_stream, nvimgcdcsImageInfo_t* image_info);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetCodecName(nvimgcdcsCodeStream_t code_stream, char* codec_name);
 
     //Decoder
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(

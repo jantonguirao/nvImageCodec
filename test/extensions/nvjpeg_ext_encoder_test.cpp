@@ -109,9 +109,10 @@ TEST_P(NvJpegExtEncoderTestSingleImage, ValidFormatAndParameters)
 
     nvimgcdcsImageInfo_t cs_image_info(image_info_);
     cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
+    strcpy(cs_image_info.codec_name,"jpeg");
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
-                                            &NvJpegExtEncoderTestSingleImage::GetBufferStatic, "jpeg", &cs_image_info));
+                                            &NvJpegExtEncoderTestSingleImage::GetBufferStatic, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
@@ -273,10 +274,10 @@ TEST_P(NvJpegExtEncoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
 
     nvimgcdcsImageInfo_t cs_image_info(image_info_);
     cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
-
+    strcpy(cs_image_info.codec_name, "jpeg");
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
-     &NvJpegExtEncoderTestSingleImageWithStatus::GetBufferStatic,"jpeg", &cs_image_info));
+     &NvJpegExtEncoderTestSingleImageWithStatus::GetBufferStatic, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));

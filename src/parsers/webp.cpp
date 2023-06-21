@@ -11,6 +11,7 @@
 #include "parsers/webp.h"
 #include <nvimgcodecs.h>
 #include <vector>
+#include <string.h>
 
 #include "exception.h"
 #include "exif_orientation.h"
@@ -50,6 +51,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
         NVIMGCDCS_LOG_ERROR("Unexpected structure type");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
+    strcpy(image_info->codec_name, "webp");
 
     if (io_stream_length < (4 + 4 + 4)) { // RIFF + file size + WEBP
         NVIMGCDCS_LOG_ERROR("Unexpected end of stream");

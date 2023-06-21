@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <filesystem>
 #include <fstream>
-
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -161,8 +161,6 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsCodeStreamCreateFromFile(instance, &code_stream, image_names[0].c_str());
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcsCodeStreamGetImageInfo(code_stream, &image_info);
-    char codec_name[NVIMGCDCS_MAX_CODEC_NAME_SIZE];
-    nvimgcdcsCodeStreamGetCodecName(code_stream, codec_name);
 
     // Prepare decode parameters
     nvimgcdcsDecodeParams_t decode_params{};
@@ -273,7 +271,8 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     }
 
     nvimgcdcsCodeStream_t code_stream;
-    nvimgcdcsCodeStreamCreateToFile(instance, &code_stream, output_path.string().c_str(), params.output_codec.data(), &image_info);
+    strcpy(image_info.codec_name, params.output_codec.c_str());
+    nvimgcdcsCodeStreamCreateToFile(instance, &code_stream, output_path.string().c_str(), &image_info);
 
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
