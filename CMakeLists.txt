@@ -8,6 +8,9 @@ if (NVIMGCODECS_FLAVOR)
     set(NVIMGCODECS_FLAVOR_MINUS "-${NVIMGCODECS_FLAVOR}")  # -nightly, -weekly, etc
 endif()
 
+# Used when creating special builds
+set(PROJECT_VERSION_SUFFIX "-alpha.1")
+
 if (NOT ARCH)
     set(ARCH "x86_64")
 endif()
@@ -21,7 +24,7 @@ if(NOT BUILD_ID)
 endif()
 
 set(NVIMGCODECS_VERSION_WITH_BUILD "${NVIMGCODECS_VERSION}.${BUILD_ID}")
-project(${NVIMGCODECS_PROJECT_NAME} VERSION ${NVIMGCODECS_VERSION_WITH_BUILD} LANGUAGES CXX CUDA)
+project(${NVIMGCODECS_PROJECT_NAME} VERSION ${NVIMGCODECS_VERSION} LANGUAGES CXX CUDA)
 set(CUDA_VERSION "${CMAKE_CUDA_COMPILER_VERSION}")
 
 # Include custom cmake modules/scripts
@@ -33,6 +36,15 @@ parse_cuda_version(${CUDA_VERSION} CUDA_VERSION_MAJOR CUDA_VERSION_MINOR CUDA_VE
 add_definitions("-DCUDA_VERSION_MAJOR=${CUDA_VERSION_MAJOR}")
 add_definitions("-DCUDA_VERSION_MINOR=${CUDA_VERSION_MINOR}")
 add_definitions("-DCUDA_VERSION_PATCH=${CUDA_VERSION_PATCH}")
+
+if(UNIX)
+    set(NVIMGCODECS_SYSTEM_NAME "${CMAKE_SYSTEM_PROCESSOR}-linux")
+else()
+    set(NVIMGCODECS_SYSTEM_NAME "${CMAKE_SYSTEM_PROCESSOR}-win")
+endif()
+
+set(NVIMGCODECS_BUILD_SUFFIX "cuda${CUDA_VERSION_MAJOR}-${NVIMGCODECS_SYSTEM_NAME}")
+
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -72,18 +84,71 @@ propagate_option(WITH_DYNAMIC_NPP)
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
 
+
+
 if(WIN32)
-set(CPACK_GENERATOR "ZIP")
+    set(CPACK_GENERATOR "ZIP")
 else()
-set(CPACK_GENERATOR "TGZ")
+    set(CPACK_GENERATOR "TGZ;DEB")
+
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+        set(CMAKE_INSTALL_PREFIX "/opt/nvidia/nvimgcodecs" CACHE PATH "where nvImageCodecs will be installed" FORCE)
+    endif()
+
+    set(CPACK_COMPONENTS_GROUPING IGNORE)
+
+    # Debian options
+    set(CPACK_DEBIAN_ENABLE_COMPONENT_DEPENDS true)
+    set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION ON)
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS off)
+    set(CPACK_DEBIAN_COMPRESSION_TYPE xz)
+
+    # Create several .debs, one for each component
+    set(CPACK_DEB_COMPONENT_INSTALL ON)
+
+    # Archive options
+    set(CPACK_ARCHIVE_THREADS 0) # use all cores
+    set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 endif()
 
-set(CPACK_PACKAGE_NAME "nvimgcodecs")
+set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VENDOR "NVIDIA CORPORATION")
+set(CPACK_PACKAGE_CONTACT "nvImageCodecs Support <nvimgcodecs@exchange.nvidia.com>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GPU Accelerated Image Codecs library")
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_FILE_NAME ${CPACK_PACKAGE_NAME}-${PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION "${NVIMGCODECS_VERSION}${PROJECT_VERSION_SUFFIX}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
+set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
+set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
+set(CPACK_PACKAGE_VERSION_TWEAK "${PROJECT_VERSION_TWEAK}")
+set(CPACK_PACKAGE_VERSION_SUFFIX "${PROJECT_VERSION_SUFFIX}")
+#set(PROJECT_VERSION "${PROJECT_VERSION}${PROJECT_VERSION_SUFFIX}")
+# we split the file name components with '-', so the version component can't
+# have this character, let's replace it by '_'
+string(REPLACE "-" "_" tmp ${CPACK_PACKAGE_VERSION})
+set(NVIMGCODECS_VERSION_BUILD "${tmp}-${NVIMGCODECS_BUILD_SUFFIX}")
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${NVIMGCODECS_VERSION_BUILD}")
 set(CPACK_STRIP_FILES TRUE)
+set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmake/Package.cmake)
+set(CPACK_COMPONENTS_ALL lib tests)
+
+if(UNIX)
+    configure_file(cpack/ld.so.conf.in cpack/ld.so.conf @ONLY)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cpack/ld.so.conf
+        DESTINATION "etc/ld.so.conf.d"
+        RENAME ${CPACK_PACKAGE_NAME}.conf
+        COMPONENT lib)
+    configure_file(cpack/debian_lib_postinst.in cpack/lib/postinst @ONLY)
+    configure_file(cpack/debian_lib_prerm.in cpack/lib/prerm @ONLY)
+
+    set(CPACK_DEBIAN_LIB_PACKAGE_CONTROL_EXTRA
+        "${CMAKE_CURRENT_BINARY_DIR}/cpack/lib/postinst"
+        "${CMAKE_CURRENT_BINARY_DIR}/cpack/lib/prerm")
+
+    set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libstdc++6, libc6")
+
+    # as per debian convention, use the library file name
+    set(CPACK_DEBIAN_LIB_PACKAGE_NAME "lib${PROJECT_NAME}")
+endif()
 
 include (CPack)
 
@@ -104,15 +169,15 @@ message(STATUS "Targeted CUDA PTX architectures: ${CUDA_PTX_ARCHS}")
 include(SetCUDAArchitectures)
 
 if(WIN32)
-include(third_party/generate_product_version)
+    include(third_party/generate_product_version)
 
-generate_product_version(ProductVersionFiles
-    NAME "NVIDIA nvImageCodecs library"
-    VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR}
-    VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR}
-    VERSION_PATCH ${CMAKE_PROJECT_VERSION_PATCH}
-    VERSION_REVISION ${CMAKE_PROJECT_VERSION_TWEAK}
-    COMPANY_NAME NVIDIA Corporation)
+    generate_product_version(ProductVersionFiles
+        NAME "NVIDIA nvImageCodecs library"
+        VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR}
+        VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR}
+        VERSION_PATCH ${CMAKE_PROJECT_VERSION_PATCH}
+        VERSION_REVISION ${CMAKE_PROJECT_VERSION_TWEAK}
+        COMPANY_NAME NVIDIA Corporation)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -136,15 +201,15 @@ include(Dependencies)
 add_subdirectory(external)
 
 if(BUILD_LIBRARY)
-add_subdirectory(src)
+    add_subdirectory(src)
 endif()
 
 if(BUILD_SAMPLES)
-add_subdirectory(example)
+    add_subdirectory(example)
 endif()
 
 if(BUILD_PYTHON)
-add_subdirectory(python)
+    add_subdirectory(python)
 endif()
 
 #if(BUILD_DOCS)
@@ -152,8 +217,8 @@ endif()
 #endif()
 
 if(BUILD_TEST)
-enable_testing()
-add_subdirectory(test)
+    enable_testing()
+    add_subdirectory(test)
 endif()
 
 set (NVIMGCDCS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/)

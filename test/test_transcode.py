@@ -5,7 +5,7 @@ import subprocess
 
 
 img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
-exec_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../build/bin/bin"))
+exec_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../bin"))
 transcode_exec="nvimtrans"
 
 

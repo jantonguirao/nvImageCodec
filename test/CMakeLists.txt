@@ -115,8 +115,23 @@ foreach(testapp nvimgcodecs_tests)
 endforeach()
 
 install(TARGETS ${FILESTOPACK}
-    DESTINATION test COMPONENT Applications
+    DESTINATION test COMPONENT tests
 )
+
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_python.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_transcode.py
+    DESTINATION test
+    COMPONENT tests
+)
+
+install(DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/../resources
+    DESTINATION .
+    COMPONENT tests
+)
+
+
 
 add_test(NAME nvImageCodecsTest-L0 COMMAND nvimgcodecs_tests --gtest_filter=-*Parser*:*Ext* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 add_test(NAME nvImageCodecsTest-L1-Builtin_Parsers COMMAND nvimgcodecs_tests --gtest_filter=*Parser* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

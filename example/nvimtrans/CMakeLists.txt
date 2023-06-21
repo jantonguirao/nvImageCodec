@@ -16,5 +16,5 @@ set_property(TARGET ${NVIMGCDCS_EXAMPLE_NAME} PROPERTY CUDA_SEPARABLE_COMPILATIO
 target_link_libraries(${NVIMGCDCS_EXAMPLE_NAME} PUBLIC nvimgcodecs nvpnm_ext_static CUDA::cudart)
 
 install(TARGETS ${NVIMGCDCS_EXAMPLE_NAME}
-    DESTINATION bin COMPONENT Applications
-  )
+    DESTINATION bin COMPONENT lib
+)

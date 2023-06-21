@@ -42,7 +42,7 @@ std::string GetDefaultExtensionsPath() {
         // If this comes from a shared_object in the installation dir, 
         // we trim the nvimgcodecs dir and add "extensions" to the path
         // Examples:
-        // /usr/lib/nvimgcodecs/lib64/libnvimgcodecs.so -> /usr/lib/nvimgcodecs/extensions
+        // /opt/nvidia/nvimgcodecs/lib64/libnvimgcodecs.so -> /opt/nvidia/nvimgcodecs/extensions
         // ~/.local/lib/python3.8/site-packages/nvidia/nvimgcodecs/libnvimgcodecs.so ->
         //      ~/.local/lib/python3.8/site-packages/nvidia/nvimgcodecs/extensions
         auto pos = path.find("nvimgcodecs/");
@@ -50,7 +50,7 @@ std::string GetDefaultExtensionsPath() {
            return path.substr(0, pos + strlen("nvimgcodecs/")) + "extensions";
         }
     }
-    return "/usr/lib/nvimgcodecs/extensions";
+    return "/opt/nvidia/nvimgcodecs/extensions";
 }
 
 char GetPathSeparator() {
