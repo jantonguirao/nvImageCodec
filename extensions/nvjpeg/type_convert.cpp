@@ -15,7 +15,7 @@ nvjpegOutputFormat_t nvimgcdcs_to_nvjpeg_format(nvimgcdcsSampleFormat_t nvimgcdc
     case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
         return NVJPEG_OUTPUT_UNCHANGED;
     case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
-        return NVJPEG_OUTPUT_UNCHANGED;
+        return NVJPEG_OUTPUT_RGBI;
     case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
         return NVJPEG_OUTPUT_RGB;
     case NVIMGCDCS_SAMPLEFORMAT_I_RGB:

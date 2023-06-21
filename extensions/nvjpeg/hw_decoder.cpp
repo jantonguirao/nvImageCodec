@@ -118,13 +118,23 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         if (params->enable_orientation) {
             nvjpegExifOrientation_t orientation = nvimgcdcs_to_nvjpeg_orientation(image_info.orientation);
             if (orientation != NVJPEG_ORIENTATION_NORMAL) {
-                *result = NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
-                continue;
+                if (!nvjpegIsSymbolAvailable("nvjpegDecodeParamsSetExifOrientation")) {
+                    NVIMGCDCS_D_LOG_INFO("nvjpegDecodeParamsSetExifOrientation not available");
+                    *result = NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
+                    continue;
+                }
+                NVIMGCDCS_D_LOG_DEBUG("Setting up EXIF orientation " << orientation);
+                if (NVJPEG_STATUS_SUCCESS != nvjpegDecodeParamsSetExifOrientation(nvjpeg_params.get(), orientation)) {
+                    NVIMGCDCS_D_LOG_INFO("nvjpegDecodeParamsSetExifOrientation failed");
+                    *result = NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
+                    continue;
+                }
+                need_params = true;
             }
         }
 
         if (params->enable_roi && image_info.region.ndim > 0) {
-             if (!nvjpegIsSymbolAvailable("nvjpegDecodeBatchedEx")) {
+            if (!nvjpegIsSymbolAvailable("nvjpegDecodeBatchedEx")) {
                 NVIMGCDCS_D_LOG_INFO("ROI HW decoding not supported in this nvjpeg version");
                 *result = NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED;
                 continue;
@@ -160,7 +170,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
     nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
-        NVIMGCDCS_D_LOG_TRACE("nvjpeg_can_decode");
+        NVIMGCDCS_D_LOG_TRACE("nvjpeg_hw_can_decode");
         XM_CHECK_NULL(decoder);
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(code_streams);
@@ -396,8 +406,37 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         image->getImageInfo(image->instance, &image_info);
         unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
-
         const auto* params = decode_state_batch_->samples_[sample_idx].params;
+
+        if (params->enable_orientation) {
+            nvjpegExifOrientation_t orientation = nvimgcdcs_to_nvjpeg_orientation(image_info.orientation);
+
+            // This is a workaround for a known bug in nvjpeg.
+            if (!nvjpeg_at_least(12, 2, 0)) {
+                if (orientation == NVJPEG_ORIENTATION_ROTATE_90)
+                    orientation = NVJPEG_ORIENTATION_ROTATE_270;
+                else if (orientation == NVJPEG_ORIENTATION_ROTATE_270)
+                    orientation = NVJPEG_ORIENTATION_ROTATE_90;
+            }
+
+            if (orientation == NVJPEG_ORIENTATION_UNKNOWN) {
+                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED);
+                continue;
+            }
+
+            if (orientation != NVJPEG_ORIENTATION_NORMAL) {
+                need_params = true;
+                if (!nvjpegIsSymbolAvailable("nvjpegDecodeParamsSetExifOrientation")) {
+                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED);
+                    continue;
+                }
+                if(NVJPEG_STATUS_SUCCESS != nvjpegDecodeParamsSetExifOrientation(nvjpeg_params_ptr.get(), orientation)) {
+                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED);
+                    continue;
+                }
+            }
+        }
+
         if (params->enable_roi && image_info.region.ndim > 0) {
             need_params = true;
             auto region = image_info.region;
@@ -405,9 +444,15 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
                 "Setting up ROI :" << region.start[0] << ", " << region.start[1] << ", " << region.end[0] << ", " << region.end[1]);
             auto roi_width = region.end[1] - region.start[1];
             auto roi_height = region.end[0] - region.start[0];
-            XM_CHECK_NVJPEG(nvjpegDecodeParamsSetROI(nvjpeg_params_ptr.get(), region.start[1], region.start[0], roi_width, roi_height));
+            if (NVJPEG_STATUS_SUCCESS != nvjpegDecodeParamsSetROI(nvjpeg_params_ptr.get(), region.start[1], region.start[0], roi_width, roi_height)) {
+                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED);
+                continue;
+            }
         } else {
-            XM_CHECK_NVJPEG(nvjpegDecodeParamsSetROI(nvjpeg_params_ptr.get(), 0, 0, -1, -1));
+            if (NVJPEG_STATUS_SUCCESS != nvjpegDecodeParamsSetROI(nvjpeg_params_ptr.get(), 0, 0, -1, -1)) {
+                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED);
+                continue;
+            }
         }
 
         // get output image
@@ -474,7 +519,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsD
 {
 
     try {
-        NVIMGCDCS_D_LOG_TRACE("nvjpeg_decode_batch");
+        NVIMGCDCS_D_LOG_TRACE("nvjpeg_hw_decode_batch, " << batch_size << " samples");
         XM_CHECK_NULL(decoder);
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images)
