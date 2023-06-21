@@ -64,8 +64,7 @@ bool DefaultDebugMessenger::debugCallback(nvimgcdcsDebugMessageSeverity_t messag
     }
 
     std::cerr << TERM_NORMAL;
-    std::cerr << "[" << callback_data->codec_id << "(ver:" << callback_data->codec_version
-              << ")] ";
+    std::cerr << "[" << callback_data->codec_id << "] ";
     std::cerr << callback_data->message << std::endl;
 
     return false;
