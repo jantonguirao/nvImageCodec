@@ -29,6 +29,7 @@ before_script:
             - build/python/*.whl
             - build/*.tar.gz
             - build/*.deb
+            - docs/sphinx/_build/html
         expire_in: 2 weeks
 
 build:nvimagecodec:
@@ -49,5 +50,4 @@ build:nvimagecodec:
 
 
 # Documentation jobs
-# include: '.gitlab/ci/build_docs.yml'
-
+include: '.gitlab/ci/build_docs.yml'
