@@ -212,9 +212,9 @@ if(BUILD_PYTHON)
     add_subdirectory(python)
 endif()
 
-#if(BUILD_DOCS)
-#add_subdirectory(docs)
-#endif()
+if(BUILD_DOCS)
+    add_subdirectory(docs)
+endif()
 
 if(BUILD_TEST)
     enable_testing()

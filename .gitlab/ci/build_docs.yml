@@ -1,15 +1,14 @@
-.build-nvimagecodec-docs-script: &build-nvimagecodec-docs-script |
+.build-nvimagecodecs-docs-script: &build-nvimagecodecs-docs-script |
     # Get build type
-    source /etc/bashrc
     source .gitlab/ci/build_type.sh
     # Build
     mkdir -p build
     cd build
-    cmake -DCMAKE_BUILD_TYPE=$NVIMAGECODEC_BUILD_TYPE -DBUILD_DOCS=ON -DBUILD_TEST=OFF ..
+    cmake -DCMAKE_BUILD_TYPE=$NVIMAGECODECS_BUILD_TYPE -DBUILD_DOCS=ON -DBUILD_TEST=OFF ..
     nice -n 19 make docs
     cd ..
 
-docs:nvjpeg2k:
+docs:nvimagecodecs:
     stage: build
     tags:
         - docker
@@ -22,9 +21,9 @@ docs:nvjpeg2k:
         refs:
             - /^docs.*$/ # branch contains "docs"
     script:
-        - *build-nvimagecodec-docs-script
+        - *build-nvimagecodecs-docs-script
         - mkdir -p html
-        - cp -r docs/nvimagecodec/_build/html/* html
+        - cp -r docs/sphinx/_build/html/* html
 
 pages:
     stage: deploy
@@ -40,11 +39,11 @@ pages:
         refs:
             - master
         changes:
-            - docs/nvimagecodec/**/*
+            - docs/sphinx/**/*
             - docs/CMakeLists.txt
             - CMakeLists.txt
     script:
-        - *build-nvimagecodec-docs-script
+        - *build-nvimagecodecs-docs-script
         - mkdir .public
-        - cp -r docs/nvimagecodec/_build/html/* .public
+        - cp -r docs/sphinx/_build/html/* .public
         - mv .public public
