@@ -124,15 +124,8 @@ IImageDecoder* ImageGenericDecoder::Worker::getDecoder()
         decoder_ = codec_->createDecoder(index_, device_id_, options_.c_str());
         if (decoder_) {
             decode_state_batch_ = decoder_->createDecodeStateBatch();
-            size_t capabilities_size;
-            const nvimgcdcsCapability_t* capabilities_ptr;
-            decoder_->getCapabilities(&capabilities_ptr, &capabilities_size);
-            if (capabilities_size)
-                is_device_output_ =
-                    std::find(capabilities_ptr, capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-                        NVIMGCDCS_CAPABILITY_DEVICE_OUTPUT) != capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-            else
-                is_device_output_ = false;
+            auto backend_kind = decoder_->getBackendKind();
+            is_device_output_ = backend_kind != NVIMGCDCS_BACKEND_KIND_CPU_ONLY;
         }
     }
     return decoder_.get();

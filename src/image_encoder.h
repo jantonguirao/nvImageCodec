@@ -26,8 +26,8 @@ class ImageEncoder : public IImageEncoder
   public:
     ImageEncoder(const nvimgcdcsEncoderDesc_t desc, int device_id);
     ~ImageEncoder() override;
+    nvimgcdcsBackendKind_t getBackendKind() const override;
     std::unique_ptr<IEncodeState> createEncodeStateBatch() const override;
-    void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) override;
     void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params,
         std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const override;
     std::unique_ptr<ProcessingResultsFuture> encode(IEncodeState* encode_state_batch,

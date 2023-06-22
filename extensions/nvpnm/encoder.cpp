@@ -20,7 +20,6 @@
 
 struct nvimgcdcsEncoder
 {
-    std::vector<nvimgcdcsCapability_t> capabilities_ = {NVIMGCDCS_CAPABILITY_HOST_INPUT};
 };
 
 static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
@@ -104,24 +103,6 @@ static nvimgcdcsStatus_t pnm_destroy(nvimgcdcsEncoder_t encoder)
 {
     NVIMGCDCS_E_LOG_TRACE("pnm_destroy_encoder");
     delete encoder;
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t pnm_get_capabilities(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    NVIMGCDCS_E_LOG_TRACE("pnm_get_capabilities");
-    if (encoder == 0)
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-
-    if (capabilities) {
-        *capabilities = encoder->capabilities_.data();
-    }
-
-    if (size) {
-        *size = encoder->capabilities_.size();
-    } else {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -269,9 +250,9 @@ struct nvimgcdcsEncoderDesc nvpnm_encoder = {
     NULL,                // instance     
     "nvpnm",             // id           
     "pnm",               // codec_type   
+    NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
     pnm_create,
     pnm_destroy,
-    pnm_get_capabilities,
     pnm_can_encode,
     pnm_encode_batch
 };

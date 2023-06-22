@@ -27,7 +27,6 @@ class LibjpegTurboDecoderPlugin
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
 
     struct nvimgcdcsDecoderDesc decoder_desc_;
-    std::vector<nvimgcdcsCapability_t> capabilities_;
     const nvimgcdcsFrameworkDesc_t framework_;
 };
 

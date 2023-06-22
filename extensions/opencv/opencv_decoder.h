@@ -28,7 +28,7 @@ class OpenCVDecoderPlugin
 
     const char* codec_name_;
     struct nvimgcdcsDecoderDesc decoder_desc_;
-    std::vector<nvimgcdcsCapability_t> capabilities_;
+    
     const nvimgcdcsFrameworkDesc_t framework_;
 };
 

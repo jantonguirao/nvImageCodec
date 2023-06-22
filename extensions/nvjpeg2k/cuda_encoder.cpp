@@ -23,9 +23,9 @@ NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t fram
           this,               // instance
           "nvjpeg2k_encoder", // id
           "jpeg2k",           // codec_type
-          static_create, Encoder::static_destroy, Encoder::static_get_capabilities, Encoder::static_can_encode,
+          NVIMGCDCS_BACKEND_KIND_GPU_ONLY,
+          static_create, Encoder::static_destroy, Encoder::static_can_encode,
           Encoder::static_encode_batch}
-    , capabilities_{NVIMGCDCS_CAPABILITY_DEVICE_INPUT}
     , framework_(framework)
 {
 }
@@ -53,7 +53,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
         if (params->backends != nullptr) {
             *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
             for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU) {
+                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_GPU_ONLY) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
                 }
             }
@@ -149,10 +149,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEnc
     }
 }
 
-NvJpeg2kEncoderPlugin::Encoder::Encoder(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
-    : capabilities_(capabilities)
-    , framework_(framework)
+NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id)
+    : framework_(framework)
     , device_id_(device_id)
 {
     XM_CHECK_NVJPEG2K(nvjpeg2kEncoderCreateSimple(&handle_));
@@ -167,7 +165,7 @@ NvJpeg2kEncoderPlugin::Encoder::Encoder(
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, int device_id)
 {
-    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(capabilities_, framework_, device_id));
+    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -206,36 +204,6 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_destroy(nvimgcdcsEncode
         return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    if (capabilities) {
-        *capabilities = capabilities_.data();
-    }
-
-    if (size) {
-        *size = capabilities_.size();
-    } else {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_get_capabilities(
-    nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    try {
-        NVIMGCDCS_E_LOG_TRACE("jpeg2k_get_capabilities");
-        XM_CHECK_NULL(encoder);
-        XM_CHECK_NULL(capabilities);
-        XM_CHECK_NULL(size);
-        auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin::Encoder*>(encoder);
-        return handle->getCapabilities(capabilities, size);
-    } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_E_LOG_ERROR("Could not retrieve nvjpeg2k encoder capabilites " << e.info());
-        return e.nvimgcdcsStatus();
-    }
 }
 
 NvJpeg2kEncoderPlugin::EncodeState::EncodeState(nvjpeg2kEncoder_t handle, nvimgcdcsDeviceAllocator_t* device_allocator,
@@ -503,7 +471,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             } catch (const NvJpeg2kException& e) {
-                NVIMGCDCS_D_LOG_ERROR("Could not encode jpeg2k code stream - " << e.info());
+                NVIMGCDCS_E_LOG_ERROR("Could not encode jpeg2k code stream - " << e.info());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
             if (tmp_buffer) {

@@ -216,7 +216,7 @@ PNGParserPlugin::PNGParserPlugin()
           this,         // instance
           "png_parser", // id
           "png",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info}
 {
 }
 
@@ -292,36 +292,6 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t PNGParserPlugin::Parser::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    if (capabilities) {
-        *capabilities = capabilities_.data();
-    }
-
-    if (size) {
-        *size = capabilities_.size();
-    } else {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t PNGParserPlugin::Parser::static_get_capabilities(
-    nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("png_get_capabilities");
-        CHECK_NULL(parser);
-        CHECK_NULL(capabilities);
-        CHECK_NULL(size);
-        auto handle = reinterpret_cast<PNGParserPlugin::Parser*>(parser);
-        return handle->getCapabilities(capabilities, size);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve png parser capabilites - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
 }
 
 nvimgcdcsStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)

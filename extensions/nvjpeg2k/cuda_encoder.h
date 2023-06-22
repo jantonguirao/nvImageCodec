@@ -60,24 +60,22 @@ class NvJpeg2kEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id);
+        Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id);
         ~Encoder();
 
-        nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
+        
         nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
             nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t encode(int sample_idx);
         nvimgcdcsStatus_t encodeBatch();
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsEncoder_t encoder);
-        static nvimgcdcsStatus_t static_get_capabilities(
-            nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
         static nvimgcdcsStatus_t static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
             nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
         static nvimgcdcsStatus_t static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
             nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
-        const std::vector<nvimgcdcsCapability_t>& capabilities_;
+        
         nvjpeg2kEncoder_t handle_;
         const nvimgcdcsFrameworkDesc_t framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
@@ -88,7 +86,7 @@ class NvJpeg2kEncoderPlugin
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id);
 
     struct nvimgcdcsEncoderDesc encoder_desc_;
-    std::vector<nvimgcdcsCapability_t> capabilities_;
+    
     const nvimgcdcsFrameworkDesc_t framework_;
 };
 
