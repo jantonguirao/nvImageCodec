@@ -3,6 +3,7 @@ set(NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME nvjpeg_ext)
 set(NVIMGCDCS_NVJPEG_EXT_SRC
   cuda_decoder.cpp
   hw_decoder.cpp
+  lossless_decoder.cpp
   cuda_encoder.cpp
   type_convert.cpp
   nvjpeg_ext.cpp

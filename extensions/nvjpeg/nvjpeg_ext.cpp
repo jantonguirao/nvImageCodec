@@ -10,6 +10,7 @@
 
 #include <nvimgcodecs.h>
 #include "cuda_decoder.h"
+#include "lossless_decoder.h"
 #include "cuda_encoder.h"
 #include "errors_handling.h"
 #include "hw_decoder.h"
@@ -24,25 +25,29 @@ struct NvJpegImgCodecsExtension
         : framework_(framework)
         , jpeg_hw_decoder_(framework)
         , jpeg_cuda_decoder_(framework)
-        , jpeg_cuda_encoder_(framework)
+        , jpeg_lossless_decoder_(framework)
+        , jpeg_cuda_encoder_(framework)        
     {
         framework->registerEncoder(framework->instance, jpeg_cuda_encoder_.getEncoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
         if (jpeg_hw_decoder_.isPlatformSupported())
             framework->registerDecoder(framework->instance, jpeg_hw_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_VERY_HIGH);
         framework->registerDecoder(framework->instance, jpeg_cuda_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
+        framework->registerDecoder(framework->instance, jpeg_lossless_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
     }
     ~NvJpegImgCodecsExtension(){
         framework_->unregisterEncoder(framework_->instance, jpeg_cuda_encoder_.getEncoderDesc());
         if (jpeg_hw_decoder_.isPlatformSupported())
             framework_->unregisterDecoder(framework_->instance, jpeg_hw_decoder_.getDecoderDesc());
         framework_->unregisterDecoder(framework_->instance, jpeg_cuda_decoder_.getDecoderDesc());
+        framework_->unregisterDecoder(framework_->instance, jpeg_lossless_decoder_.getDecoderDesc());
     }
 
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
     NvJpegHwDecoderPlugin jpeg_hw_decoder_;
     NvJpegCudaDecoderPlugin jpeg_cuda_decoder_;
-    NvJpegCudaEncoderPlugin jpeg_cuda_encoder_;
+    NvJpegLosslessDecoderPlugin jpeg_lossless_decoder_;
+    NvJpegCudaEncoderPlugin jpeg_cuda_encoder_;    
 };
 
 } // namespace nvjpeg
