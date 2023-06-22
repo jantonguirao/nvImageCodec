@@ -144,7 +144,7 @@ if(UNIX)
         "${CMAKE_CURRENT_BINARY_DIR}/cpack/lib/postinst"
         "${CMAKE_CURRENT_BINARY_DIR}/cpack/lib/prerm")
 
-    set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libstdc++6, libc6")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6 (>= 2.3.1-6), libstdc++6 (>=6.0)")
 
     # as per debian convention, use the library file name
     set(CPACK_DEBIAN_LIB_PACKAGE_NAME "lib${PROJECT_NAME}")
