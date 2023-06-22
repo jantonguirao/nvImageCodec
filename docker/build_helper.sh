@@ -61,7 +61,7 @@ export TEST_BUNDLED_LIBS=${TEST_BUNDLED_LIBS:-YES}
 export LD_LIBRARY_PATH="${PWD}:${LD_LIBRARY_PATH}"
 export Python_EXECUTABLE=$(which python)
 
-cmake ../ -DCMAKE_INSTALL_PREFIX=/opt/nvimgcodecs                    \
+cmake ../                                                            \
       -DARCH=${ARCH}                                                 \
       -DCUDA_TARGET_ARCHS=${CUDA_TARGET_ARCHS}                       \
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}                         \
@@ -92,9 +92,12 @@ cmake ../ -DCMAKE_INSTALL_PREFIX=/opt/nvimgcodecs                    \
 make -j"$(grep ^processor /proc/cpuinfo | wc -l)"
 make install
 
+cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+mkdir -p ${WHL_OUTDIR}
+cp *.tar.gz *.deb ${WHL_OUTDIR}/
+
 if [ "${BUILD_WHEEL}" = "ON" ]; then
     make wheel
-    mkdir -p ${WHL_OUTDIR}
     cp python/*.whl ${WHL_OUTDIR}/
     # TODO(janton): custom bundle path prefix(?)
     # TODO(janton): test bundled libs
