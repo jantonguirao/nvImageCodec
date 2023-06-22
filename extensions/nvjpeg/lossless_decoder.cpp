@@ -329,31 +329,16 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch()
     };
     */
     int nsamples = decode_state_batch_->samples_.size();
-    /* does not make sense to sort because we are using batched API
-    using sort_elem_t = std::tuple<uint32_t, uint64_t, int>;
-    std::vector<sort_elem_t> sample_meta(nsamples);
-    for (int i = 0; i < nsamples; i++) {
-        nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[i].image;
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        image->getImageInfo(image->instance, &image_info);
-        uint64_t area = image_info.plane_info[0].height * image_info.plane_info[0].width;
-        sample_meta[i] = sort_elem_t{subsampling_score(image_info.chroma_subsampling), area, i};
-    }
-    auto order = [](const sort_elem_t& lhs, const sort_elem_t& rhs) { return lhs > rhs; };
-    std::sort(sample_meta.begin(), sample_meta.end(), order);
-    */
-
+    
     std::vector<const unsigned char*> batched_bitstreams;
     std::vector<size_t> batched_bitstreams_size;
     std::vector<nvjpegImage_t> batched_output;
     std::vector<nvimgcdcsImageInfo_t> batched_image_info;
 
     nvjpegOutputFormat_t nvjpeg_format;
-
-    // for (auto& elem : sample_meta) {
+    
     for (int sample_idx = 0; sample_idx < nsamples; sample_idx++)
     {
-        // int sample_idx = std::get<2>(elem);
         nvimgcdcsCodeStreamDesc_t code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
         nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
         nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[sample_idx].image;
@@ -361,8 +346,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch()
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         image->getImageInfo(image->instance, &image_info);
         unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
-
-        // get output image
+     
         nvjpegImage_t nvjpeg_image;
         unsigned char* ptr = device_buffer;
         for (uint32_t c = 0; c < image_info.num_planes; ++c) {
