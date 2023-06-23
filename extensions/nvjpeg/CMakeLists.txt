@@ -10,12 +10,9 @@ set(NVIMGCDCS_NVJPEG_EXT_SRC
   exception.cpp
 )
 if (${CUDA_VERSION_MAJOR} GREATER_EQUAL 12 AND ${CUDA_VERSION_MINOR} GREATER_EQUAL 1)
-  message("including lossless decoder")  
-  message(${CUDA_VERSION_MAJOR})
-  message(${CUDA_VERSION_MINOR})
   list(APPEND NVIMGCDCS_NVJPEG_EXT_SRC lossless_decoder.cpp)
 else()
-  message("not including lossless decoder")
+  list(APPEND NVIMGCDCS_NVJPEG_EXT_SRC dummy_lossless_decoder.cpp)
 endif()
 
 

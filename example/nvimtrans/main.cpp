@@ -157,12 +157,10 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
     // Preparing output image_info
     if (jpeg_image_info.encoding == NVIMGCDCS_JPEG_ENCODING_LOSSLESS_HUFFMAN) {
-        image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED;
-        image_info.color_spec = NVIMGCDCS_COLORSPEC_GRAY; 
+        image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED;        
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
     } else {
-        image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-        image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;        
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
     }
         

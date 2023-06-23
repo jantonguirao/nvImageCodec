@@ -52,9 +52,9 @@ bool IsSofMarker(const jpeg_marker_t& marker)
 
 nvimgcdcsSampleDataType_t precision_to_sample_type(int precision)
 {
-    if (precision == 8)
+    if (precision <= 8)
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-    else if (precision == 16)
+    else if (precision <= 16)
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
     else
     return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;

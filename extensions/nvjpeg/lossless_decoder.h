@@ -12,7 +12,6 @@
 
 #include <nvimgcodecs.h>
 #include <nvjpeg.h>
-//#include "/home/nhimthani/nvjpeg/build/bin/include/nvjpeg.h"
 #include <future>
 #include <vector>
 

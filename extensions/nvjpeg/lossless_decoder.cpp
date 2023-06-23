@@ -28,7 +28,7 @@ namespace nvjpeg {
 NvJpegLosslessDecoderPlugin::NvJpegLosslessDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,                // instance
-          "nvjpeg_hw_decoder", // id
+          "nvjpeg_lossless_decoder", // id
           "jpeg",              // codec_type
           static_create, Decoder::static_destroy, Decoder::static_get_capabilities, Decoder::static_can_decode,
           Decoder::static_decode_batch}
@@ -36,6 +36,11 @@ NvJpegLosslessDecoderPlugin::NvJpegLosslessDecoderPlugin(const nvimgcdcsFramewor
           NVIMGCDCS_CAPABILITY_LAYOUT_INTERLEAVED}
     , framework_(framework)
 {
+}
+
+bool NvJpegLosslessDecoderPlugin::isPlatformSupported()
+{
+    return true;
 }
 
 nvimgcdcsDecoderDesc_t NvJpegLosslessDecoderPlugin::getDecoderDesc()
@@ -78,17 +83,15 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
                 continue;
             }
         }
+        else
+        {
+            *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
+            continue;
+        }
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        (*image)->getImageInfo((*image)->instance, &image_info); // TODO this image info is for decoded output, correct? 
-        
-        /* TODO: Color spec is not well defined for lossless jpeg, should this be removed? */
-        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY,
-            NVIMGCDCS_COLORSPEC_SYCC, NVIMGCDCS_COLORSPEC_CMYK, NVIMGCDCS_COLORSPEC_YCCK};
-        if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
-            *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
-        }
-                
+        (*image)->getImageInfo((*image)->instance, &image_info);
+                                
         if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_444) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
         }       
@@ -136,7 +139,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::static_can_decode(nvimgc
     nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
-        NVIMGCDCS_D_LOG_TRACE("nvjpeg_can_decode");
+        NVIMGCDCS_D_LOG_TRACE("nvjpeg_lossless_can_decode");
         XM_CHECK_NULL(decoder);
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(code_streams);
@@ -145,7 +148,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::static_can_decode(nvimgc
         auto handle = reinterpret_cast<NvJpegLosslessDecoderPlugin::Decoder*>(decoder);
         return handle->canDecode(status, handle->handle_, code_streams, images, batch_size, params);
     } catch (const NvJpegException& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not check if nvjpeg can decode - " << e.info());
+        NVIMGCDCS_D_LOG_ERROR("Could not check if lossless nvjpeg can decode - " << e.info());
         return e.nvimgcdcsStatus();
     }
 }
@@ -171,20 +174,25 @@ NvJpegLosslessDecoderPlugin::Decoder::Decoder(
     , framework_(framework)
     , device_id_(device_id)
 {
-    if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
-        device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
-        device_allocator_.dev_malloc = framework->device_allocator->device_malloc;
-        device_allocator_.dev_free = framework->device_allocator->device_free;
-    }
+    bool use_nvjpeg_create_ex_v2 = false;
+    if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
+        if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
+            device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
+            device_allocator_.dev_malloc = framework->device_allocator->device_malloc;
+            device_allocator_.dev_free = framework->device_allocator->device_free;
+        }
 
-    if (framework->pinned_allocator && framework->pinned_allocator->pinned_malloc && framework->pinned_allocator->pinned_free) {
-        pinned_allocator_.pinned_ctx = framework->pinned_allocator->pinned_ctx;
-        pinned_allocator_.pinned_malloc = framework->pinned_allocator->pinned_malloc;
-        pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
+        if (framework->pinned_allocator && framework->pinned_allocator->pinned_malloc && framework->pinned_allocator->pinned_free) {
+            pinned_allocator_.pinned_ctx = framework->pinned_allocator->pinned_ctx;
+            pinned_allocator_.pinned_malloc = framework->pinned_allocator->pinned_malloc;
+            pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
+        }
+        use_nvjpeg_create_ex_v2 =
+            device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free;
     }
 
     unsigned int nvjpeg_flags = get_nvjpeg_flags("nvjpeg_lossless_decoder", options);
-    if (device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free) {
+    if (use_nvjpeg_create_ex_v2) {
         XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_LOSSLESS_JPEG, &device_allocator_, &pinned_allocator_, nvjpeg_flags, &handle_));
     } else {
         XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_LOSSLESS_JPEG, nullptr, nullptr, nvjpeg_flags, &handle_));
@@ -215,7 +223,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::create(nvimgcdcsDecoder_t* decode
 nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
     try {
-        NVIMGCDCS_D_LOG_TRACE("nvjpeg_create");
+        NVIMGCDCS_D_LOG_TRACE("nvjpeg_lossless_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
@@ -239,7 +247,7 @@ NvJpegLosslessDecoderPlugin::Decoder::~Decoder()
 nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::static_destroy(nvimgcdcsDecoder_t decoder)
 {
     try {
-        NVIMGCDCS_D_LOG_TRACE("nvjpeg_destroy");
+        NVIMGCDCS_D_LOG_TRACE("nvjpeg_lossless_destroy");
         XM_CHECK_NULL(decoder);
         NvJpegLosslessDecoderPlugin::Decoder* handle = reinterpret_cast<NvJpegLosslessDecoderPlugin::Decoder*>(decoder);
         delete handle;
@@ -304,30 +312,7 @@ NvJpegLosslessDecoderPlugin::DecodeState::~DecodeState()
 
 nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch()
 {
-    NVTX3_FUNC_RANGE();
-    /* lossless decoder only has sampling 444
-    auto subsampling_score = [](nvimgcdcsChromaSubsampling_t subsampling) -> uint32_t {
-        switch (subsampling) {
-        case NVIMGCDCS_SAMPLING_444:
-            return 8;
-        case NVIMGCDCS_SAMPLING_422:
-            return 7;
-        case NVIMGCDCS_SAMPLING_420:
-            return 6;
-        case NVIMGCDCS_SAMPLING_440:
-            return 5;
-        case NVIMGCDCS_SAMPLING_411:
-            return 4;
-        case NVIMGCDCS_SAMPLING_410:
-            return 3;
-        case NVIMGCDCS_SAMPLING_GRAY:
-            return 2;
-        case NVIMGCDCS_SAMPLING_410V:
-        default:
-            return 1;
-        }
-    };
-    */
+    NVTX3_FUNC_RANGE();    
     int nsamples = decode_state_batch_->samples_.size();
     
     std::vector<const unsigned char*> batched_bitstreams;
@@ -336,7 +321,8 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch()
     std::vector<nvimgcdcsImageInfo_t> batched_image_info;
 
     nvjpegOutputFormat_t nvjpeg_format;
-    
+    bool eligible_image = true;
+
     for (int sample_idx = 0; sample_idx < nsamples; sample_idx++)
     {
         nvimgcdcsCodeStreamDesc_t code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
@@ -358,17 +344,24 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch()
         if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED && image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
             nvjpeg_format = NVJPEG_OUTPUT_UNCHANGEDI_U16;
         else
-            return NVIMGCDCS_EXTENSION_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
+        {
+            eligible_image = false;
+            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+        }
+        
+        if (eligible_image)
+        {
+            const void* encoded_stream_data = nullptr;
+            size_t encoded_stream_data_size = 0;
+            io_stream->raw_data(io_stream->instance, &encoded_stream_data);
+            io_stream->size(io_stream->instance, &encoded_stream_data_size);
 
-        const void* encoded_stream_data = nullptr;
-        size_t encoded_stream_data_size = 0;
-        io_stream->raw_data(io_stream->instance, &encoded_stream_data);
-        io_stream->size(io_stream->instance, &encoded_stream_data_size);
-
-        batched_bitstreams.push_back(static_cast<const unsigned char*>(encoded_stream_data));
-        batched_bitstreams_size.push_back(encoded_stream_data_size);
-        batched_output.push_back(nvjpeg_image);
-        batched_image_info.push_back(image_info);
+            batched_bitstreams.push_back(static_cast<const unsigned char*>(encoded_stream_data));
+            batched_bitstreams_size.push_back(encoded_stream_data_size);
+            batched_output.push_back(nvjpeg_image);
+            batched_image_info.push_back(image_info);
+        }
+        
     }
 
     try {
@@ -409,7 +402,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::static_decode_batch(nvim
 {
 
     try {
-        NVIMGCDCS_D_LOG_TRACE("nvjpeg_decode_batch");
+        NVIMGCDCS_D_LOG_TRACE("nvjpeg_lossless_decode_batch");
         XM_CHECK_NULL(decoder);
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images)
