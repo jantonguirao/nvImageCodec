@@ -60,18 +60,22 @@ const char* getErrorString(nvjpeg2kStatus_t eStatus_)
 
 NvJpeg2kException::NvJpeg2kException(nvjpeg2kStatus_t eStatus, const std::string& rMessage, const std::string& rLoc)
     : eStatus_(eStatus)
+    , eCudaStatus_(cudaSuccess)
+    , isCudaStatus_(false)
     , sMessage_(rMessage)
     , sLocation_(rLoc)
+
 {
-    ;
 }
 
 NvJpeg2kException::NvJpeg2kException(cudaError_t eCudaStatus, const std::string& rMessage, const std::string& rLoc)
-    : eCudaStatus_(eCudaStatus)
+    : eStatus_(NVJPEG2K_STATUS_SUCCESS)
+    , eCudaStatus_(eCudaStatus)
+    , isCudaStatus_(true)
     , sMessage_(rMessage)
     , sLocation_(rLoc)
+
 {
-    isCudaStatus_ = true;;
 }
 
 const char* NvJpeg2kException::what() const throw()

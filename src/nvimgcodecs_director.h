@@ -14,29 +14,33 @@
 #include "codec_registry.h"
 #include "debug_messenger.h"
 #include "default_debug_messenger.h"
-#include "log.h"
-#include "plugin_framework.h"
 #include "default_executor.h"
 #include "image_generic_decoder.h"
 #include "image_generic_encoder.h"
+#include "log.h"
+#include "plugin_framework.h"
 
 namespace nvimgcdcs {
 
 class NvImgCodecsDirector
 {
   public:
-    struct DefaultDebugMessengerRegistrator
+    struct DefaultDebugMessengerManager
     {
-        DefaultDebugMessengerRegistrator(DefaultDebugMessenger* dbg_messenger)
-            : debug_messenger_(dbg_messenger->getDesc())
+        DefaultDebugMessengerManager(uint32_t message_severity, uint32_t message_type, bool register_messenger)
         {
-            Logger::get().registerDebugMessenger(&debug_messenger_);
+            if (register_messenger) {
+                dbg_messenger_ = std::make_unique<DefaultDebugMessenger>(message_severity, message_type);
+                Logger::get().registerDebugMessenger(dbg_messenger_.get());
+            }
         };
-        ~DefaultDebugMessengerRegistrator()
+        ~DefaultDebugMessengerManager()
         {
-            Logger::get().unregisterDebugMessenger(&debug_messenger_);
+            if (dbg_messenger_) {
+                Logger::get().unregisterDebugMessenger(dbg_messenger_.get());
+            }
         };
-        DebugMessenger debug_messenger_;
+        std::unique_ptr<DefaultDebugMessenger> dbg_messenger_;
     };
 
     explicit NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_info);
@@ -47,8 +51,7 @@ class NvImgCodecsDirector
 
     nvimgcdcsDeviceAllocator_t* device_allocator_;
     nvimgcdcsPinnedAllocator_t* pinned_allocator_;
-    DefaultDebugMessenger debug_messenger_;
-    DefaultDebugMessengerRegistrator registrator_;
+    DefaultDebugMessengerManager default_debug_messenger_manager_;
     CodecRegistry codec_registry_;
     PluginFramework plugin_framework_;
 };

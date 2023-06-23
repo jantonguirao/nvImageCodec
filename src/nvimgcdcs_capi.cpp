@@ -609,9 +609,8 @@ nvimgcdcsStatus_t nvimgcdcsDebugMessengerCreate(
     NVIMGCDCSAPI_TRY
         {
             CHECK_NULL(instance)
-            if (messengerDesc == NULL) {
-                messengerDesc = instance->director_.debug_messenger_.getDesc();
-            }
+            CHECK_NULL(messengerDesc)
+            
             *dbgMessenger = new nvimgcdcsDebugMessenger(messengerDesc);
             (*dbgMessenger)->instance_ = instance;
             Logger::get().registerDebugMessenger(&(*dbgMessenger)->debug_messenger_);
