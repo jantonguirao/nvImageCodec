@@ -9,15 +9,16 @@
  */
 
 #include "hw_decoder.h"
-#include "nvjpeg_utils.h"
 #include <nvimgcodecs.h>
 #include <cassert>
+#include <cmath>
 #include <cstring>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <sstream>
 #include <vector>
+#include "nvjpeg_utils.h"
 
 #include <nvtx3/nvtx3.hpp>
 
@@ -68,6 +69,23 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
     auto result = status;
     auto code_stream = code_streams;
     nvimgcdcsImageDesc_t* image = images;
+
+    bool hw_dec_enabled = true;
+    if (params->backends != nullptr) {
+        for (int b = 0; b < params->num_backends; ++b) {
+            if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY) {
+                *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+                if (params->backends[b].load_hint > 0.0f && params->backends[b].load_hint <= 1.0f)
+                    hw_load_ = params->backends[b].load_hint;
+                else
+                    hw_load_ = 1.0f;
+                NVIMGCDCS_P_LOG_INFO("HW decoder is enabled, hw_load=" << hw_load_);
+                hw_dec_enabled = true;
+                break;
+            }
+        }
+    }
+
     for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
         *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
         nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -229,6 +247,18 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
+    nvjpegStatus_t hw_dec_info_status = NVJPEG_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
+    hw_dec_info_status = nvjpegGetHardwareDecoderInfo(handle_, &num_hw_engines_, &num_cores_per_hw_engine_);
+    if (hw_dec_info_status != NVJPEG_STATUS_SUCCESS) {
+        num_hw_engines_ = 0;
+        num_cores_per_hw_engine_ = 0;
+        hw_load_ = 0.0f;
+    } else {
+        NVIMGCDCS_D_LOG_INFO(
+            "HW decoder available num_hw_engines=" << num_hw_engines_ << " num_cores_per_hw_engine=" << num_cores_per_hw_engine_);
+        hw_load_ = 1.0f;
+    }
+
     decode_state_batch_ =
         std::make_unique<NvJpegHwDecoderPlugin::DecodeState>(handle_, &device_allocator_, &pinned_allocator_, num_threads);
     parse_state_ = std::make_unique<NvJpegHwDecoderPlugin::ParseState>(handle_);
@@ -353,6 +383,15 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
     auto& state = decode_state_batch_->state_;
     auto& handle = decode_state_batch_->handle_;
 
+    size_t batch_size = sample_meta.size();
+    size_t max_hw_dec_load = static_cast<size_t>(std::round(hw_load_ * batch_size));
+    // Adjusting the load to utilize all the cores available
+    size_t tail = max_hw_dec_load % num_cores_per_hw_engine_;
+    if (tail > 0)
+      max_hw_dec_load = max_hw_dec_load + num_cores_per_hw_engine_ - tail;
+    if (max_hw_dec_load > batch_size)
+      max_hw_dec_load = batch_size;
+
     for (size_t i = 0; i < sample_meta.size(); i++) {
         XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle, &batched_nvjpeg_params[i]));
         batched_nvjpeg_params_ptrs.emplace_back(batched_nvjpeg_params[i], &nvjpegDecodeParamsDestroy);
@@ -362,6 +401,12 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
         nvimgcdcsCodeStreamDesc_t code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
         nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
         nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[sample_idx].image;
+
+        if (i >= max_hw_dec_load) {
+            NVIMGCDCS_D_LOG_INFO("Dropping sample " << i << " to be picked by the next decoder");
+            image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SATURATED);
+            continue;
+        }
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         image->getImageInfo(image->instance, &image_info);
