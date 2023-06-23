@@ -99,7 +99,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
         if (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED)
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
         
-        if (!(image_info.num_planes == 1 && image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16))
+        if (!(image_info.num_planes <= 2 && image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16))
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
         
         nvimgcdcsIoStreamDesc_t io_stream = (*code_stream)->io_stream;
