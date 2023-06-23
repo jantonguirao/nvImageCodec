@@ -4,5 +4,5 @@ recursive-include nvidia/nvimgcodecs/include *.hpp
 recursive-include nvidia/nvimgcodecs/include *.cuh
 recursive-include nvidia/nvimgcodecs/include *.inl
 #recursive-include nvidia/nvimgcodecs *.bin
-recursive-include nvidia/nvimgcodecs *.so
+recursive-include nvidia/nvimgcodecs *.so*
 recursive-include nvidia/nvimgcodecs/extensions *.so
