@@ -51,7 +51,8 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
     std::stringstream ver_ss{};
     ver_ss << NVIMGCDCS_STREAM_VER(properties.version);
     m.attr("__version__") = ver_ss.str();
-   
+    m.attr("__cuda_version__") = properties.cudart_version;
+
     Module::exportToPython(m, module.instance_);
     MctMode::exportToPython(m);
     ChromaSubsampling::exportToPython(m);
