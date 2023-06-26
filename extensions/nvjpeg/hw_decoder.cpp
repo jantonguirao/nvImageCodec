@@ -248,17 +248,21 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework
     int num_threads = executor->get_num_threads(executor->instance);
 
     nvjpegStatus_t hw_dec_info_status = NVJPEG_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
-    hw_dec_info_status = nvjpegGetHardwareDecoderInfo(handle_, &num_hw_engines_, &num_cores_per_hw_engine_);
-    if (hw_dec_info_status != NVJPEG_STATUS_SUCCESS) {
-        num_hw_engines_ = 0;
-        num_cores_per_hw_engine_ = 0;
-        hw_load_ = 0.0f;
+    if (nvjpeg_at_least(11, 9, 0) && nvjpegIsSymbolAvailable("nvjpegGetHardwareDecoderInfo")) {
+        hw_dec_info_status = nvjpegGetHardwareDecoderInfo(handle_, &num_hw_engines_, &num_cores_per_hw_engine_);
+        if (hw_dec_info_status != NVJPEG_STATUS_SUCCESS) {
+            NVIMGCDCS_D_LOG_INFO("nvjpegGetHardwareDecoderInfo failed with return code " << hw_dec_info_status);
+            num_hw_engines_ = 0;
+            num_cores_per_hw_engine_ = 0;
+            hw_load_ = 0.0f;
+        }
     } else {
-        NVIMGCDCS_D_LOG_INFO(
-            "HW decoder available num_hw_engines=" << num_hw_engines_ << " num_cores_per_hw_engine=" << num_cores_per_hw_engine_);
-        hw_load_ = 1.0f;
+        num_hw_engines_ = 1;
+        num_cores_per_hw_engine_ = 5;
+        hw_dec_info_status = NVJPEG_STATUS_SUCCESS;
     }
-
+    NVIMGCDCS_D_LOG_INFO(
+        "HW decoder available num_hw_engines=" << num_hw_engines_ << " num_cores_per_hw_engine=" << num_cores_per_hw_engine_);
     decode_state_batch_ =
         std::make_unique<NvJpegHwDecoderPlugin::DecodeState>(handle_, &device_allocator_, &pinned_allocator_, num_threads);
     parse_state_ = std::make_unique<NvJpegHwDecoderPlugin::ParseState>(handle_);
@@ -371,6 +375,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
     std::vector<size_t> batched_bitstreams_size;
     std::vector<nvjpegImage_t> batched_output;
     std::vector<nvimgcdcsImageInfo_t> batched_image_info;
+    std::vector<size_t> processed_samples;
     nvjpegOutputFormat_t nvjpeg_format;
     bool need_params = false;
 
@@ -379,6 +384,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
     std::vector<nvjpeg_params_ptr> batched_nvjpeg_params_ptrs;
     batched_nvjpeg_params.resize(sample_meta.size());
     batched_nvjpeg_params_ptrs.reserve(sample_meta.size());
+    processed_samples.reserve(sample_meta.size());
 
     auto& state = decode_state_batch_->state_;
     auto& handle = decode_state_batch_->handle_;
@@ -391,6 +397,8 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
       max_hw_dec_load = max_hw_dec_load + num_cores_per_hw_engine_ - tail;
     if (max_hw_dec_load > batch_size)
       max_hw_dec_load = batch_size;
+    max_hw_dec_load = 1;  // TODO(janton): workaround
+    NVIMGCDCS_D_LOG_INFO("max_hw_dec_load=" << max_hw_dec_load);
 
     for (size_t i = 0; i < sample_meta.size(); i++) {
         XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle, &batched_nvjpeg_params[i]));
@@ -480,6 +488,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
         batched_bitstreams_size.push_back(encoded_stream_data_size);
         batched_output.push_back(nvjpeg_image);
         batched_image_info.push_back(image_info);
+        processed_samples.push_back(sample_idx);
     }
 
     try {
@@ -499,8 +508,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
             XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, decode_state_batch_->stream_));
         }
 
-        for (auto& elem : sample_meta) {
-            int sample_idx = std::get<2>(elem);
+        for (auto sample_idx : processed_samples) {
             nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[sample_idx].image;
             nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             image->getImageInfo(image->instance, &image_info);
@@ -509,8 +517,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
         }
     } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not decode jpeg code stream - " << e.info());
-        for (auto& elem : sample_meta) {
-            int sample_idx = std::get<2>(elem);
+        for (auto sample_idx : processed_samples) {
             nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[sample_idx].image;
             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }

@@ -168,6 +168,9 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
     if (decoder) {
         NVIMGCDCS_LOG_DEBUG("code streams: " << work->code_streams_.size());
         decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask, &status);
+        for (size_t i = 0; i < work->code_streams_.size(); i++) {
+            NVIMGCDCS_LOG_DEBUG("canDecode status #" << i << " : " << status[i]);
+        }
     } else {
         NVIMGCDCS_LOG_ERROR("Could not create decoder");
         work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
