@@ -7,12 +7,26 @@ set(NVIMGCDCS_NVJPEG_EXT_SRC
   type_convert.cpp
   nvjpeg_ext.cpp
   nvjpeg_utils.cpp
-  exception.cpp
+  exception.cpp    
 )
-if (${CUDA_VERSION_MAJOR} GREATER_EQUAL 12 AND ${CUDA_VERSION_MINOR} GREATER_EQUAL 1)
+
+include(CheckCXXSourceCompiles)
+  check_cxx_source_compiles(
+          "#include <nvjpeg.h>
+          int main(){
+            return NVJPEG_BACKEND_LOSSLESS_JPEG != 6;
+          }"
+          NVJPEG_LOSSLESS_SUPPORTED)
+  if (NVJPEG_LOSSLESS_SUPPORTED)
+    message("nvJPEG lossless supported")
+    add_definitions(-DNVJPEG_LOSSLESS_SUPPORTED=1)
+  else()
+    message("nvJPEG lossless NOT supported")
+    add_definitions(-DNVJPEG_LOSSLESS_SUPPORTED=0)
+  endif()
+
+if (NVJPEG_LOSSLESS_SUPPORTED)
   list(APPEND NVIMGCDCS_NVJPEG_EXT_SRC lossless_decoder.cpp)
-else()
-  list(APPEND NVIMGCDCS_NVJPEG_EXT_SRC dummy_lossless_decoder.cpp)
 endif()
 
 

@@ -58,24 +58,19 @@ class NvJpegLosslessDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id,
-            const char* options = nullptr);
+        Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const char* options = nullptr);
         ~Decoder();
-
-        nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
+        
         nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvjpegHandle_t handle, nvimgcdcsCodeStreamDesc_t* code_streams,
             nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decodeBatch();
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
-        static nvimgcdcsStatus_t static_get_capabilities(
-            nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
         static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
             nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
             nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-
-        const std::vector<nvimgcdcsCapability_t>& capabilities_;
+        
         nvjpegHandle_t handle_;
 
         nvjpegDevAllocatorV2_t device_allocator_;
@@ -90,8 +85,7 @@ class NvJpegLosslessDecoderPlugin
 
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
 
-    struct nvimgcdcsDecoderDesc decoder_desc_;
-    std::vector<nvimgcdcsCapability_t> capabilities_;
+    struct nvimgcdcsDecoderDesc decoder_desc_;    
     const nvimgcdcsFrameworkDesc_t framework_;
 };
 

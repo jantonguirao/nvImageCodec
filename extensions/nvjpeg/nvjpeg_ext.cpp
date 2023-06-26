@@ -10,7 +10,9 @@
 
 #include <nvimgcodecs.h>
 #include "cuda_decoder.h"
-#include "lossless_decoder.h"
+#if NVJPEG_LOSSLESS_SUPPORTED
+    #include "lossless_decoder.h"
+#endif
 #include "cuda_encoder.h"
 #include "errors_handling.h"
 #include "hw_decoder.h"
@@ -20,36 +22,42 @@ namespace nvjpeg {
 
 struct NvJpegImgCodecsExtension
 {
-  public:
-    explicit NvJpegImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
+  public:  
+    explicit NvJpegImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)    
         : framework_(framework)
         , jpeg_hw_decoder_(framework)
-        , jpeg_cuda_decoder_(framework)
+        , jpeg_cuda_decoder_(framework)        
+        , jpeg_cuda_encoder_(framework)
+        #if NVJPEG_LOSSLESS_SUPPORTED
         , jpeg_lossless_decoder_(framework)
-        , jpeg_cuda_encoder_(framework)        
+        #endif
     {
         framework->registerEncoder(framework->instance, jpeg_cuda_encoder_.getEncoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
         if (jpeg_hw_decoder_.isPlatformSupported())
             framework->registerDecoder(framework->instance, jpeg_hw_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_VERY_HIGH);
         framework->registerDecoder(framework->instance, jpeg_cuda_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
-        if (jpeg_lossless_decoder_.isPlatformSupported())
-            framework->registerDecoder(framework->instance, jpeg_lossless_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
+#if NVJPEG_LOSSLESS_SUPPORTED     
+        framework->registerDecoder(framework->instance, jpeg_lossless_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_HIGH);
+#endif
     }
     ~NvJpegImgCodecsExtension(){
         framework_->unregisterEncoder(framework_->instance, jpeg_cuda_encoder_.getEncoderDesc());
         if (jpeg_hw_decoder_.isPlatformSupported())
             framework_->unregisterDecoder(framework_->instance, jpeg_hw_decoder_.getDecoderDesc());
         framework_->unregisterDecoder(framework_->instance, jpeg_cuda_decoder_.getDecoderDesc());
-        if (jpeg_lossless_decoder_.isPlatformSupported())
-            framework_->unregisterDecoder(framework_->instance, jpeg_lossless_decoder_.getDecoderDesc());
+#if NVJPEG_LOSSLESS_SUPPORTED      
+        framework_->unregisterDecoder(framework_->instance, jpeg_lossless_decoder_.getDecoderDesc());
+#endif
     }
 
   private:
     const nvimgcdcsFrameworkDesc_t framework_;
     NvJpegHwDecoderPlugin jpeg_hw_decoder_;
-    NvJpegCudaDecoderPlugin jpeg_cuda_decoder_;
-    NvJpegLosslessDecoderPlugin jpeg_lossless_decoder_;
-    NvJpegCudaEncoderPlugin jpeg_cuda_encoder_;    
+    NvJpegCudaDecoderPlugin jpeg_cuda_decoder_;    
+    NvJpegCudaEncoderPlugin jpeg_cuda_encoder_;
+#if NVJPEG_LOSSLESS_SUPPORTED
+    NvJpegLosslessDecoderPlugin jpeg_lossless_decoder_;    
+#endif
 };
 } // namespace nvjpeg
 
