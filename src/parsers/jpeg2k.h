@@ -27,19 +27,18 @@ class JPEG2KParserPlugin
     {
         Parser();
 
-        nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
+        
         nvimgcdcsStatus_t parseJP2(nvimgcdcsIoStreamDesc_t io_stream);
         nvimgcdcsStatus_t parseCodeStream(nvimgcdcsIoStreamDesc_t io_stream);
         nvimgcdcsStatus_t getImageInfo(
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsParser_t parser);
-        static nvimgcdcsStatus_t static_get_capabilities(
-            nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size);
+
         static nvimgcdcsStatus_t static_get_image_info(nvimgcdcsParser_t parser,
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
 
-        std::vector<nvimgcdcsCapability_t> capabilities_{NVIMGCDCS_CAPABILITY_HOST_INPUT};
+        
     
         uint16_t num_components, CSiz;
         uint32_t height = 0, width;

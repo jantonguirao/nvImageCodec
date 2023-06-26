@@ -164,23 +164,21 @@ struct DecodeState
 
 struct DecoderImpl
 {
-    DecoderImpl(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id);
+    DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id);
     ~DecoderImpl();
 
-    nvimgcdcsStatus_t getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size);
+    
     nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
         int batch_size, const nvimgcdcsDecodeParams_t* params);
     nvimgcdcsStatus_t decodeBatch(
         nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
     static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
-    static nvimgcdcsStatus_t static_get_capabilities(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
     static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
         nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
     static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
         nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-
-    const std::vector<nvimgcdcsCapability_t>& capabilities_;
+    
     const nvimgcdcsFrameworkDesc_t framework_;
     int device_id_;
     std::unique_ptr<DecodeState> decode_state_batch_;
@@ -192,9 +190,9 @@ OpenCVDecoderPlugin::OpenCVDecoderPlugin(const char* codec_name, const nvimgcdcs
           this,             // instance
           "opencv_decoder", // id
           codec_name_,      // codec_type
-          static_create, DecoderImpl::static_destroy, DecoderImpl::static_get_capabilities, DecoderImpl::static_can_decode,
+          NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
+          static_create, DecoderImpl::static_destroy, DecoderImpl::static_can_decode,
           DecoderImpl::static_decode_batch}
-    , capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT}
     , framework_(framework)
 {}
 
@@ -300,9 +298,8 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
     }
 }
 
-DecoderImpl::DecoderImpl(const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
-    : capabilities_(capabilities)
-    , framework_(framework)
+DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id)
+    : framework_(framework)
     , device_id_(device_id)
 {
     nvimgcdcsExecutorDesc_t executor;
@@ -313,7 +310,7 @@ DecoderImpl::DecoderImpl(const std::vector<nvimgcdcsCapability_t>& capabilities,
 
 nvimgcdcsStatus_t OpenCVDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(capabilities_, framework_, device_id));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -352,35 +349,6 @@ nvimgcdcsStatus_t DecoderImpl::static_destroy(nvimgcdcsDecoder_t decoder)
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t DecoderImpl::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    if (capabilities) {
-        *capabilities = capabilities_.data();
-    }
-
-    if (size) {
-        *size = capabilities_.size();
-    } else {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t DecoderImpl::static_get_capabilities(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    try {
-        NVIMGCDCS_D_LOG_TRACE("opencv_get_capabilities");
-        XM_CHECK_NULL(decoder);
-        XM_CHECK_NULL(capabilities);
-        XM_CHECK_NULL(size);
-        auto handle = reinterpret_cast<DecoderImpl*>(decoder);
-        return handle->getCapabilities(capabilities, size);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_D_LOG_ERROR("Could not retrieve opencv decoder capabilites " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
 }
 
 nvimgcdcsStatus_t decodeImpl(

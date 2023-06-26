@@ -12,17 +12,13 @@
 
 #include <nvimgcodecs.h>
 
-#include "idebug_messenger.h"
 
 namespace nvimgcdcs {
 
-class DebugMessenger : public IDebugMessenger
+class IDebugMessenger
 {
   public:
-    DebugMessenger(const nvimgcdcsDebugMessengerDesc_t* desc): desc_(*desc){}
-    const nvimgcdcsDebugMessengerDesc_t* getDesc() override { return &desc_; }
-  private:
-    const nvimgcdcsDebugMessengerDesc_t desc_;
+    virtual ~IDebugMessenger() = default;
+    virtual const nvimgcdcsDebugMessengerDesc_t* getDesc() = 0;
 };
-
-} //namespace nvimgcdcs
+} // namespace nvimgcdcs

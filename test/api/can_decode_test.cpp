@@ -44,7 +44,8 @@ class MockDecoderPlugin
               this,                // instance
               "mock_test_decoder", // id
               "bmp",               // codec_type
-              static_create, static_destroy, static_get_capabilities, static_can_decode, static_decode_batch}
+              NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
+              static_create, static_destroy, static_can_decode, static_decode_batch}
     {
     }
     nvimgcdcsDecoderDesc_t getDecoderDesc() { return &decoder_desc_; }
@@ -56,11 +57,6 @@ class MockDecoderPlugin
         return NVIMGCDCS_STATUS_SUCCESS;
     }
     static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder) { return NVIMGCDCS_STATUS_SUCCESS; }
-    static nvimgcdcsStatus_t static_get_capabilities(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
-    {
-        *size = 0;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
     static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
         nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
     {

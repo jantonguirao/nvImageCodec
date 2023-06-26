@@ -32,9 +32,8 @@ NvJpegCudaEncoderPlugin::NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t 
           this,             // instance
           "nvjpeg_encoder", // id
           "jpeg",           // codec_type
-          static_create, Encoder::static_destroy, Encoder::static_get_capabilities, Encoder::static_can_encode,
+          NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU, static_create, Encoder::static_destroy, Encoder::static_can_encode,
           Encoder::static_encode_batch}
-    , capabilities_{NVIMGCDCS_CAPABILITY_DEVICE_INPUT}
     , framework_(framework)
 {
 }
@@ -153,10 +152,8 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_can_encode(nvimgcdcsE
     }
 }
 
-NvJpegCudaEncoderPlugin::Encoder::Encoder(
-    const std::vector<nvimgcdcsCapability_t>& capabilities, const nvimgcdcsFrameworkDesc_t framework, int device_id)
-    : capabilities_(capabilities)
-    , device_allocator_{nullptr, nullptr, nullptr}
+NvJpegCudaEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id)
+    : device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
     , device_id_(device_id)
@@ -195,7 +192,7 @@ NvJpegCudaEncoderPlugin::Encoder::Encoder(
 
 nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, int device_id)
 {
-    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpegCudaEncoderPlugin::Encoder(capabilities_, framework_, device_id));
+    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpegCudaEncoderPlugin::Encoder(framework_, device_id));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -235,36 +232,6 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_destroy(nvimgcdcsEnco
         return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    if (capabilities) {
-        *capabilities = capabilities_.data();
-    }
-
-    if (size) {
-        *size = capabilities_.size();
-    } else {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_get_capabilities(
-    nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    try {
-        NVIMGCDCS_E_LOG_TRACE("nvjpeg_get_capabilities");
-        XM_CHECK_NULL(encoder);
-        XM_CHECK_NULL(capabilities);
-        XM_CHECK_NULL(size);
-        NvJpegCudaEncoderPlugin::Encoder* handle = reinterpret_cast<NvJpegCudaEncoderPlugin::Encoder*>(encoder);
-        return handle->getCapabilities(capabilities, size);
-    } catch (const NvJpegException& e) {
-        NVIMGCDCS_E_LOG_ERROR("Could not retrive nvjpeg encoder capabilites - " << e.info());
-        return e.nvimgcdcsStatus();
-    }
 }
 
 NvJpegCudaEncoderPlugin::EncodeState::EncodeState(nvjpegHandle_t handle, int num_threads)

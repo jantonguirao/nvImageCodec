@@ -595,7 +595,6 @@ extern "C"
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsParser_t parser);
         nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result, nvimgcdcsCodeStreamDesc_t code_stream);
-        nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size);
     };
 
     struct nvimgcdcsEncoderDesc
@@ -606,15 +605,12 @@ extern "C"
         void* instance;    // plugin instance pointer which will be passed back in functions
         const char* id;    // named identifier e.g. nvJpeg2000
         const char* codec; // e.g. jpeg2000
+        nvimgcdcsBackendKind_t backend_kind;
 
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, int device_id);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
-
-        nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
-
         nvimgcdcsStatus_t (*canEncode)(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
             nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
-
         nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
             int batch_size, const nvimgcdcsEncodeParams_t* params);
     };
@@ -629,15 +625,12 @@ extern "C"
         void* instance;    // plugin instance pointer which will be passed back in functions
         const char* id;    // named identifier e.g. nvJpeg2000
         const char* codec; // e.g. jpeg2000
+        nvimgcdcsBackendKind_t backend_kind;
 
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
-
-        nvimgcdcsStatus_t (*getCapabilities)(nvimgcdcsDecoder_t decoder, const nvimgcdcsCapability_t** capabilities, size_t* size);
-
         nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
             nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-
         nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
             int batch_size, const nvimgcdcsDecodeParams_t* params);
     };

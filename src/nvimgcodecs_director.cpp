@@ -33,8 +33,7 @@ static std::unique_ptr<IExecutor> GetExecutor(nvimgcdcsInstanceCreateInfo_t crea
 NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_info)
     : device_allocator_(create_info.device_allocator)
     , pinned_allocator_(create_info.pinned_allocator)
-    , debug_messenger_(create_info.message_severity, create_info.message_type)
-    , registrator_(&debug_messenger_)
+    , default_debug_messenger_manager_(create_info.message_severity, create_info.message_type, create_info.default_debug_messenger)
     , codec_registry_()
     , plugin_framework_(&codec_registry_, std::move(std::make_unique<Environment>()), std::move(std::make_unique<DirectoryScaner>()),
           std::move(std::make_unique<LibraryLoader>()), std::move(GetExecutor(create_info)), device_allocator_, pinned_allocator_,

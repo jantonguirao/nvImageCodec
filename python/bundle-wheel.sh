@@ -100,7 +100,7 @@ make_wheel_record() {
     FSIZE=$(ls -nl $FPATH | awk '{print $5}')
     result="$FPATH,sha256=$HASH,$FSIZE"
     fi
-    flock $TMPDIR/dali_rec.lock echo $result>>$RECORD_FILE
+    flock $TMPDIR/nvimgcodecs_rec.lock echo $result>>$RECORD_FILE
 }
 
 DEPS_LIST=(

@@ -11,15 +11,16 @@
 #pragma once
 
 #include <nvimgcodecs.h>
+#include "idebug_messenger.h"
 
 namespace nvimgcdcs {
 
-class DefaultDebugMessenger
+class DefaultDebugMessenger : public IDebugMessenger
 {
   public:
     DefaultDebugMessenger(uint32_t message_severity, uint32_t message_type);
 
-    const nvimgcdcsDebugMessengerDesc_t* getDesc() { return &desc_; }
+    const nvimgcdcsDebugMessengerDesc_t* getDesc() override { return &desc_; }
 
   private:
     bool debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,

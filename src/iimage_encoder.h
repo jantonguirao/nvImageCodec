@@ -26,8 +26,8 @@ class IImageEncoder
 {
   public:
     virtual ~IImageEncoder() = default;
+    virtual nvimgcdcsBackendKind_t getBackendKind() const = 0;
     virtual std::unique_ptr<IEncodeState> createEncodeStateBatch() const = 0;
-    virtual void getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size) = 0;
     virtual void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
         const nvimgcdcsEncodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const = 0;
     virtual std::unique_ptr<ProcessingResultsFuture> encode(IEncodeState* encode_state_batch,

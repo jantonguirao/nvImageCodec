@@ -8,11 +8,7 @@
 
 struct nvimgcdcsEncoder
 {
-    std::vector<nvimgcdcsCapability_t> capabilities_ = {NVIMGCDCS_CAPABILITY_HOST_INPUT};
 };
-
-struct nvimgcdcsEncodeState
-{};
 
 template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
 int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB, size_t pitchB,
@@ -211,24 +207,6 @@ static nvimgcdcsStatus_t nvbmp_encoder_destroy(nvimgcdcsEncoder_t encoder)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t nvbmp_get_capabilities(nvimgcdcsEncoder_t encoder, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    NVIMGCDCS_E_LOG_TRACE("nvbmp_get_capabilities");
-    if (encoder == 0)
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-
-    if (capabilities) {
-        *capabilities = encoder->capabilities_.data();
-    }
-
-    if (size) {
-        *size = encoder->capabilities_.size();
-    } else {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
 static nvimgcdcsStatus_t nvbmp_encoder_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsEncodeState_t encode_state, nvimgcdcsImageDesc_t image,
     nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
@@ -284,10 +262,10 @@ nvimgcdcsEncoderDesc nvbmp_encoder = {
     NULL,
     NULL,               // instance    
     "nvbmp_encoder",    //id
-    "bmp",              //  codec_type 
+    "bmp",              //  codec_type
+    NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
     nvbmp_encoder_create,
     nvbmp_encoder_destroy, 
-    nvbmp_get_capabilities,
     nvbmp_encoder_can_encode,
     nvbmp_encoder_encode_batch
 };

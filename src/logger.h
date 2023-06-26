@@ -16,7 +16,7 @@
 
 namespace nvimgcdcs {
 
-class DebugMessenger;
+class IDebugMessenger;
 class Logger
 {
   public:
@@ -27,15 +27,15 @@ class Logger
         const nvimgcdcsDebugMessageType_t message_type, const std::string& message);
     void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
-    void registerDebugMessenger(DebugMessenger* messenger);
-    void unregisterDebugMessenger(DebugMessenger* messenger);
+    void registerDebugMessenger(IDebugMessenger* messenger);
+    void unregisterDebugMessenger(IDebugMessenger* messenger);
 
   protected:
     Logger(){};
     virtual ~Logger() {}
 
   private:
-    std::vector<DebugMessenger*> messengers_;
+    std::vector<IDebugMessenger*> messengers_;
 };
 
 } //namespace nvimgcdcs

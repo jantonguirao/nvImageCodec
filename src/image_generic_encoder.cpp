@@ -119,15 +119,8 @@ IImageEncoder* ImageGenericEncoder::Worker::getEncoder()
         encoder_ = codec_->createEncoder(index_, device_id_, options_.c_str());
         if (encoder_) {
             encode_state_batch_ = encoder_->createEncodeStateBatch();
-            size_t capabilities_size;
-            const nvimgcdcsCapability_t* capabilities_ptr;
-            encoder_->getCapabilities(&capabilities_ptr, &capabilities_size);
-            if (capabilities_size)
-                is_input_expected_in_device_ =
-                    std::find(capabilities_ptr, capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t),
-                        NVIMGCDCS_CAPABILITY_DEVICE_INPUT) != capabilities_ptr + capabilities_size * sizeof(nvimgcdcsCapability_t);
-            else
-                is_input_expected_in_device_ = false;
+            auto backend_kind = encoder_->getBackendKind();
+            is_input_expected_in_device_ = backend_kind != NVIMGCDCS_BACKEND_KIND_CPU_ONLY;
         }
     }
     return encoder_.get();
@@ -290,8 +283,7 @@ void ImageGenericEncoder::Worker::processBatch(std::unique_ptr<Work<nvimgcdcsEnc
 //ImageGenericEncoder
 
 ImageGenericEncoder::ImageGenericEncoder(ICodecRegistry* codec_registry, int device_id, const char* options)
-    : capabilities_{NVIMGCDCS_CAPABILITY_HOST_OUTPUT, NVIMGCDCS_CAPABILITY_DEVICE_INPUT, NVIMGCDCS_CAPABILITY_HOST_INPUT}
-    , codec_registry_(codec_registry)
+    : codec_registry_(codec_registry)
     , device_id_(device_id)
     , options_(options ? options : "")
 {

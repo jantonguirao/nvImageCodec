@@ -53,7 +53,6 @@ class ImageGenericEncoder: public IWorkManager<nvimgcdcsEncodeParams_t>
     std::mutex work_mutex_;
     std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> free_work_items_;
     std::map<const ICodec*, std::unique_ptr<Worker>> workers_;
-    std::vector<nvimgcdcsCapability_t> capabilities_;
     ICodecRegistry* codec_registry_;
     int device_id_;
     std::string options_;

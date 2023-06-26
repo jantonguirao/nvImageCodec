@@ -31,17 +31,14 @@ ImageEncoder::~ImageEncoder()
         encoder_desc_->destroy(encoder_);
 }
 
+nvimgcdcsBackendKind_t ImageEncoder::getBackendKind() const 
+{
+    return encoder_desc_->backend_kind;
+}
+
 std::unique_ptr<IEncodeState> ImageEncoder::createEncodeStateBatch() const
 {
     return std::make_unique<EncodeStateBatch>();
-}
-
-void ImageEncoder::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    *capabilities = nullptr;
-    *size = 0;
-    if (encoder_)
-        encoder_desc_->getCapabilities(encoder_, capabilities, size);
 }
 
 void ImageEncoder::canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,

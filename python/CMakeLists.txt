@@ -61,12 +61,12 @@ add_dependencies(copy_libs_to_python_dir
 if (UNIX)
     add_custom_command(
         TARGET copy_libs_to_python_dir
-        COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodecs.so" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs" &&
-                cp "${PROJECT_BINARY_DIR}/extensions/*/*.so*" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions" &&
-                cp -r "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs"
-                )
+        COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodecs.so.0" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs" &&
+        cp "${PROJECT_BINARY_DIR}/extensions/*/*.so*" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions" &&
+        cp -r "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs"
+    )
 else()
-    add_custom_command(
+    add_custom_command(  
         TARGET copy_libs_to_python_dir
         COMMAND echo "TODO copy_libs_to_python_dir")
 endif()

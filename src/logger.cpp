@@ -10,7 +10,7 @@
 #include "logger.h"
 #include <nvimgcodecs.h>
 #include <algorithm>
-#include "debug_messenger.h"
+#include "idebug_messenger.h"
 
 namespace nvimgcdcs {
 
@@ -32,18 +32,18 @@ void Logger::log(const nvimgcdcsDebugMessageSeverity_t message_severity, const n
     const nvimgcdcsDebugMessageData_t* data)
 {
     for (auto dbgmsg : messengers_) {
-        if ((dbgmsg->desc_.message_severity & message_severity) && (dbgmsg->desc_.message_type & message_type)) {
-            dbgmsg->desc_.user_callback(message_severity, message_type, data, dbgmsg->desc_.userData);
+        if ((dbgmsg->getDesc()->message_severity & message_severity) && (dbgmsg->getDesc()->message_type & message_type)) {
+            dbgmsg->getDesc()->user_callback(message_severity, message_type, data, dbgmsg->getDesc()->userData);
         }
     }
 }
 
-void Logger::registerDebugMessenger(DebugMessenger* messenger)
+void Logger::registerDebugMessenger(IDebugMessenger* messenger)
 {
     messengers_.push_back(messenger);
 }
 
-void Logger::unregisterDebugMessenger(DebugMessenger* messenger)
+void Logger::unregisterDebugMessenger(IDebugMessenger* messenger)
 {
     auto it = std::find(messengers_.begin(), messengers_.end(), messenger);
     if (it != messengers_.end()) {

@@ -115,7 +115,7 @@ JPEG2KParserPlugin::JPEG2KParserPlugin()
           this,            // instance
           "jpeg2k_parser", // id
           "jpeg2k",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info, Parser::static_get_capabilities}
+          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info}
 {
 }
 
@@ -197,36 +197,6 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_destroy(nvimgcdcsParser_t p
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getCapabilities(const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    if (capabilities) {
-        *capabilities = capabilities_.data();
-    }
-
-    if (size) {
-        *size = capabilities_.size();
-    } else {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_get_capabilities(
-    nvimgcdcsParser_t parser, const nvimgcdcsCapability_t** capabilities, size_t* size)
-{
-    try {
-        NVIMGCDCS_LOG_TRACE("jpeg2k_get_capabilities");
-        CHECK_NULL(parser);
-        CHECK_NULL(capabilities);
-        CHECK_NULL(size);
-        auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
-        return handle->getCapabilities(capabilities, size);
-    } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve jpeg2k parser capabilites - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
-    }
 }
 
 nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseJP2(nvimgcdcsIoStreamDesc_t io_stream)
