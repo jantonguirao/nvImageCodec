@@ -29,11 +29,12 @@ class IImage;
 class ICodeStream;
 class ICodecRegistry;
 class ICodec;
+class EncoderWorker;
 
 class ImageGenericEncoder: public IWorkManager<nvimgcdcsEncodeParams_t>
 {
   public:
-    explicit ImageGenericEncoder(ICodecRegistry* codec_registry, int device_id, const char *options = nullptr);
+    explicit ImageGenericEncoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char *options = nullptr);
     ~ImageGenericEncoder() override;
     void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params,
         nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
@@ -41,8 +42,7 @@ class ImageGenericEncoder: public IWorkManager<nvimgcdcsEncodeParams_t>
         const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params);
 
   private:
-    class Worker;
-    ImageGenericEncoder::Worker* getWorker(const ICodec* codec, int device_id, const std::string& option);
+    EncoderWorker* getWorker(const ICodec* codec);
 
     std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> createNewWork(
         const ProcessingResultsPromise& results, const void* params);
@@ -52,9 +52,10 @@ class ImageGenericEncoder: public IWorkManager<nvimgcdcsEncodeParams_t>
 
     std::mutex work_mutex_;
     std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> free_work_items_;
-    std::map<const ICodec*, std::unique_ptr<Worker>> workers_;
+    std::map<const ICodec*, std::unique_ptr<EncoderWorker>> workers_;
     ICodecRegistry* codec_registry_;
     int device_id_;
+    std::vector<nvimgcdcsBackend_t> backends_;
     std::string options_;
 };
 

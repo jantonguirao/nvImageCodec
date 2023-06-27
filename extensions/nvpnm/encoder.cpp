@@ -17,10 +17,8 @@
         }                                                      \
     }
 
-
 struct nvimgcdcsEncoder
-{
-};
+{};
 
 static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
     nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
@@ -38,14 +36,6 @@ static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
             NVIMGCDCS_E_LOG_INFO("cannot encode because it is not pnm codec but " << cs_image_info.codec_name);
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
-        }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
         }
         if (*result != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
             continue;
@@ -92,7 +82,8 @@ static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsPro
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pnm_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
+static nvimgcdcsStatus_t pnm_create(
+    void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     NVIMGCDCS_E_LOG_TRACE("pnm_create_encoder");
     *encoder = new nvimgcdcsEncoder();
@@ -187,8 +178,8 @@ int write_pnm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
     return 0;
 }
 
-static nvimgcdcsStatus_t pnm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t image,
-    nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t pnm_encode(
+    nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pnm_encode");
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -209,9 +200,7 @@ static nvimgcdcsStatus_t pnm_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDe
             image_info.num_planes, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
         image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
     } else {
-        image->imageReady(
-            image->instance, NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED | NVIMGCDCS_PROCESSING_STATUS_FAIL);
-
+        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED | NVIMGCDCS_PROCESSING_STATUS_FAIL);
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }

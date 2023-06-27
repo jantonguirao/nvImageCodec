@@ -11,7 +11,6 @@
 #pragma once
 
 #include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
 #include <memory>
 #include <string>
 #include "iimage_decoder_factory.h"
@@ -26,7 +25,9 @@ class ImageDecoderFactory : public IImageDecoderFactory
     explicit ImageDecoderFactory(const nvimgcdcsDecoderDesc_t desc);
     std::string getDecoderId() const override;
     std::string getCodecName() const override;
-    std::unique_ptr<IImageDecoder> createDecoder(int device_id, const char* options) const override;
+    nvimgcdcsBackendKind_t getBackendKind() const override;
+    std::unique_ptr<IImageDecoder> createDecoder(
+        int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options) const override;
 
   private:
     const nvimgcdcsDecoderDesc_t decoder_desc_;

@@ -30,7 +30,7 @@ Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, const std::string&
     , instance_(instance)
 {
     nvimgcdcsEncoder_t encoder;
-    nvimgcdcsEncoderCreate(instance, &encoder, device_id, options.c_str());
+    nvimgcdcsEncoderCreate(instance, &encoder, device_id, 0, nullptr, options.c_str());
     encoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type>(encoder, EncoderDeleter{});
 }
 

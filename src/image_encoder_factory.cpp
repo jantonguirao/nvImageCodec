@@ -15,7 +15,7 @@
 namespace nvimgcdcs {
 
 ImageEncoderFactory::ImageEncoderFactory(const nvimgcdcsEncoderDesc_t desc)
-    :  encoder_desc_(desc)
+    : encoder_desc_(desc)
 {
 }
 
@@ -29,8 +29,14 @@ std::string ImageEncoderFactory::getEncoderId() const
     return encoder_desc_->id;
 }
 
-std::unique_ptr<IImageEncoder> ImageEncoderFactory::createEncoder(int device_id) const
+nvimgcdcsBackendKind_t ImageEncoderFactory::getBackendKind() const
 {
-    return std::make_unique<ImageEncoder>(encoder_desc_, device_id);
+    return encoder_desc_->backend_kind;
+}
+
+std::unique_ptr<IImageEncoder> ImageEncoderFactory::createEncoder(
+    int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options) const
+{
+    return std::make_unique<ImageEncoder>(encoder_desc_, device_id, backend_params, options);
 }
 } // namespace nvimgcdcs

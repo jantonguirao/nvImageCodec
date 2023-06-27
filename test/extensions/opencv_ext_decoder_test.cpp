@@ -92,7 +92,7 @@ class OpenCVExtDecoderTest : public ::testing::Test, public CommonExtDecoderTest
         images_.clear();
         streams_.clear();
 
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, nullptr));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         params_.enable_orientation = true;
         params_.enable_color_conversion = true;

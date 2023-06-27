@@ -11,6 +11,7 @@
 #pragma once
 
 #include <vector>
+#include <map>
 
 #include <nvimgcodecs.h>
 #include "processing_results.h"

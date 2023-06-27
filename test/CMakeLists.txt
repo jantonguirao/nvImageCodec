@@ -9,6 +9,8 @@ set(SRCS
     thread_pool_test.cpp
     processing_results_test.cpp
     device_guard_test.cpp
+    decoder_worker_test.cpp
+    encoder_worker_test.cpp
     parsers/bmp_test.cpp
     parsers/jpeg_test.cpp
     parsers/jpeg2k_test.cpp

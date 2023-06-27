@@ -87,7 +87,7 @@ class NvJpegCudaDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id,
+        Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
             const char* options = nullptr);
         ~Decoder();
 
@@ -113,11 +113,12 @@ class NvJpegCudaDecoderPlugin
         const nvimgcdcsFrameworkDesc_t framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
         int device_id_;
+        const nvimgcdcsBackendParams_t* backend_params_;
     };
 
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
+    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
+    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
     struct nvimgcdcsDecoderDesc decoder_desc_;
     

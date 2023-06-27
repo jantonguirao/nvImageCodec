@@ -42,7 +42,7 @@ class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
     {
         NvJpegExtTestBase::SetUp();
         const char* options = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, options));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, options));
 
         jpeg_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
         jpeg_enc_params_.optimized_huffman = false;
@@ -50,7 +50,6 @@ class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
         params_.next = &jpeg_enc_params_;
         params_.quality = 95;
         params_.target_psnr = 0;
-        params_.num_backends = 0; //Zero means that all backends are allowed.
         params_.mct_mode = NVIMGCDCS_MCT_MODE_YCC;
         out_jpeg_image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     }

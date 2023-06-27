@@ -18,6 +18,7 @@
 #include "code_stream.h"
 #include "codec_registry.h"
 #include "exception.h"
+#include "file_ext_codec.h"
 #include "icodec.h"
 #include "idecode_state.h"
 #include "iencode_state.h"
@@ -29,10 +30,9 @@
 #include "iostream_factory.h"
 #include "log.h"
 #include "nvimgcodecs_director.h"
+#include "nvimgcodecs_type_utils.h"
 #include "plugin_framework.h"
 #include "processing_results.h"
-#include "nvimgcodecs_type_utils.h"
-#include "file_ext_codec.h"
 
 namespace fs = std::filesystem;
 
@@ -280,8 +280,7 @@ static nvimgcdcsStatus_t nvimgcdcsStreamCreate(nvimgcdcsInstance_t instance, nvi
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(
-    nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name)
+nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name)
 {
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
 
@@ -310,7 +309,8 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name, const nvimgcdcsImageInfo_t* image_info)
+nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(
+    nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name, const nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
     NVIMGCDCSAPI_TRY
@@ -326,8 +326,8 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance, 
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
-    void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info)
+nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, void* ctx,
+    nvimgcdcsGetBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
     NVIMGCDCSAPI_TRY
@@ -382,8 +382,8 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(nvimgcdcsCodeStream_t code_str
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
-    nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id,
+    int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -393,7 +393,8 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
             CHECK_NULL(decoder)
             if (device_id == -1)
                 CHECK_CUDA(cudaGetDevice(&device_id));
-            std::unique_ptr<ImageGenericDecoder> image_decoder = instance->director_.createGenericDecoder(device_id, options);
+            std::unique_ptr<ImageGenericDecoder> image_decoder =
+                instance->director_.createGenericDecoder(device_id, num_backends, backends, options);
             *decoder = new nvimgcdcsDecoder();
             (*decoder)->image_decoder_ = std::move(image_decoder);
             (*decoder)->instance_ = instance;
@@ -514,8 +515,8 @@ nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsIm
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(
-    nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id,
+    int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -525,7 +526,8 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(
             CHECK_NULL(encoder)
             if (device_id == -1)
                 CHECK_CUDA(cudaGetDevice(&device_id));
-            std::unique_ptr<ImageGenericEncoder> image_encoder = instance->director_.createGenericEncoder(device_id, options);
+            std::unique_ptr<ImageGenericEncoder> image_encoder =
+                instance->director_.createGenericEncoder(device_id, num_backends, backends, options);
             *encoder = new nvimgcdcsEncoder();
             (*encoder)->image_encoder_ = std::move(image_encoder);
             (*encoder)->instance_ = instance;
@@ -547,8 +549,8 @@ nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder)
 }
 
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
-    const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
-    bool force_format)
+    const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params,
+    nvimgcdcsProcessingStatus_t* processing_status, bool force_format)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -610,7 +612,7 @@ nvimgcdcsStatus_t nvimgcdcsDebugMessengerCreate(
         {
             CHECK_NULL(instance)
             CHECK_NULL(messengerDesc)
-            
+
             *dbgMessenger = new nvimgcdcsDebugMessenger(messengerDesc);
             (*dbgMessenger)->instance_ = instance;
             Logger::get().registerDebugMessenger(&(*dbgMessenger)->debug_messenger_);

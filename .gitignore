@@ -1,5 +1,6 @@
 *~
 build*/*
+docs/sphinx/_build/*
 bin/*
 .idea
 .vscode

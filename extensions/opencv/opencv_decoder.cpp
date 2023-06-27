@@ -164,7 +164,7 @@ struct DecodeState
 
 struct DecoderImpl
 {
-    DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id);
+    DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
     ~DecoderImpl();
 
     
@@ -181,6 +181,7 @@ struct DecoderImpl
     
     const nvimgcdcsFrameworkDesc_t framework_;
     int device_id_;
+    const nvimgcdcsBackendParams_t* backend_params_;
     std::unique_ptr<DecodeState> decode_state_batch_;
 };
 
@@ -217,17 +218,6 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             strcmp(cs_image_info.codec_name, "webp") != 0) {
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
-        }
-
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
-                continue;
         }
 
         nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -298,9 +288,10 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
     }
 }
 
-DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id)
+DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
     : framework_(framework)
     , device_id_(device_id)
+    , backend_params_(backend_params)
 {
     nvimgcdcsExecutorDesc_t executor;
     framework_->getExecutor(framework_->instance, &executor);
@@ -308,20 +299,22 @@ DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id
     decode_state_batch_ = std::make_unique<DecodeState>(num_threads);
 }
 
-nvimgcdcsStatus_t OpenCVDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t OpenCVDecoderPlugin::create(
+    nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(framework_, device_id));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(framework_, device_id, backend_params));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t OpenCVDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t OpenCVDecoderPlugin::static_create(
+    void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("opencv_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         auto handle = reinterpret_cast<OpenCVDecoderPlugin*>(instance);
-        handle->create(decoder, device_id, options);
+        handle->create(decoder, device_id, backend_params, options);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create opencv decoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error

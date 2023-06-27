@@ -16,10 +16,10 @@
 
 namespace nvimgcdcs {
 
-ImageEncoder::ImageEncoder(const nvimgcdcsEncoderDesc_t desc, int device_id)
+ImageEncoder::ImageEncoder(const nvimgcdcsEncoderDesc_t desc, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : encoder_desc_(desc)
 {
-    auto ret = encoder_desc_->create(encoder_desc_->instance, &encoder_, device_id);
+    auto ret = encoder_desc_->create(encoder_desc_->instance, &encoder_, device_id, backend_params, options);
     if (ret != NVIMGCDCS_STATUS_SUCCESS) {
         encoder_ = nullptr;
     }

@@ -58,14 +58,6 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessin
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-        }
 
         nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(cs_image_info.next);
         while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
@@ -152,11 +144,13 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_can_encode(nvimgcdcsE
     }
 }
 
-NvJpegCudaEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id)
+NvJpegCudaEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
     , device_id_(device_id)
+    , backend_params_(backend_params)
+    , options_(options)
 {
     if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
         device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
@@ -190,13 +184,15 @@ NvJpegCudaEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framewo
     encode_state_batch_ = std::make_unique<NvJpegCudaEncoderPlugin::EncodeState>(handle_, num_threads);
 }
 
-nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, int device_id)
+nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::create(
+    nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
-    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpegCudaEncoderPlugin::Encoder(framework_, device_id));
+    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpegCudaEncoderPlugin::Encoder(framework_, device_id, backend_params, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
+nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::static_create(
+    void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("jpeg_create_encoder");
@@ -205,7 +201,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::static_create(void* instance, nvimgcd
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         NvJpegCudaEncoderPlugin* handle = reinterpret_cast<NvJpegCudaEncoderPlugin*>(instance);
-        handle->create(encoder, device_id);
+        handle->create(encoder, device_id, backend_params, options);
     } catch (const NvJpegException& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not create nvjpeg encoder - " << e.info());
         return e.nvimgcdcsStatus();

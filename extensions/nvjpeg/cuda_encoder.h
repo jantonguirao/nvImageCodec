@@ -52,7 +52,7 @@ class NvJpegCudaEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id);
+        Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
         ~Encoder();
 
         
@@ -74,10 +74,13 @@ class NvJpegCudaEncoderPlugin
         const nvimgcdcsFrameworkDesc_t framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
         int device_id_;
+        const nvimgcdcsBackendParams_t* backend_params_; std::string options_;
     };
 
-    nvimgcdcsStatus_t create(nvimgcdcsEncoder_t* encoder, int device_id);
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id);
+    nvimgcdcsStatus_t create(
+        nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    static nvimgcdcsStatus_t static_create(
+        void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
     struct nvimgcdcsEncoderDesc encoder_desc_;
     

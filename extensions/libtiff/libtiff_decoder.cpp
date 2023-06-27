@@ -30,7 +30,8 @@ class DecoderHelper
   public:
     explicit DecoderHelper(nvimgcdcsIoStreamDesc_t io_stream)
         : io_stream_(io_stream)
-    {}
+    {
+    }
 
     static tmsize_t read(thandle_t handle, void* buffer, tmsize_t n)
     {
@@ -271,7 +272,8 @@ struct DecodeState
 {
     DecodeState(int num_threads)
         : per_thread_(num_threads)
-    {}
+    {
+    }
     ~DecodeState() = default;
 
     struct PerThreadResources
@@ -291,10 +293,9 @@ struct DecodeState
 
 struct DecoderImpl
 {
-    DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id);
+    DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
     ~DecoderImpl();
 
-    
     nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
         int batch_size, const nvimgcdcsDecodeParams_t* params);
     nvimgcdcsStatus_t decodeBatch(
@@ -306,9 +307,9 @@ struct DecoderImpl
     static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
         nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
-    
     const nvimgcdcsFrameworkDesc_t framework_;
     int device_id_;
+    const nvimgcdcsBackendParams_t* backend_params_;
     std::unique_ptr<DecodeState> decode_state_batch_;
 };
 
@@ -317,11 +318,11 @@ LibtiffDecoderPlugin::LibtiffDecoderPlugin(const nvimgcdcsFrameworkDesc_t framew
           this,              // instance
           "libtiff_decoder", // id
           "tiff",            // codec_type
-          NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
-          static_create, DecoderImpl::static_destroy, DecoderImpl::static_can_decode,
+          NVIMGCDCS_BACKEND_KIND_CPU_ONLY, static_create, DecoderImpl::static_destroy, DecoderImpl::static_can_decode,
           DecoderImpl::static_decode_batch}
     , framework_(framework)
-{}
+{
+}
 
 nvimgcdcsDecoderDesc_t LibtiffDecoderPlugin::getDecoderDesc()
 {
@@ -344,17 +345,6 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             continue;
         }
 
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
-                continue;
-        }
-
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*image)->getImageInfo((*image)->instance, &image_info);
 
@@ -374,26 +364,21 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
         }
 
         if (image_info.num_planes == 1) {
-            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR ||
-                image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB)
+            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB)
                 *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
         } else if (image_info.num_planes > 1) {
-            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR ||
-                image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
+            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
                 image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED)
                 *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
         }
-        if (image_info.num_planes != 1 && image_info.num_planes != 3 &&
-            image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED)
+        if (image_info.num_planes != 1 && image_info.num_planes != 3 && image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED)
             *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
 
         if (image_info.plane_info[0].num_channels == 1) {
-            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR ||
-                image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB)
+            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB)
                 *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
         } else if (image_info.plane_info[0].num_channels > 1) {
-            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR ||
-                image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB ||
+            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB ||
                 image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED)
                 *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
         }
@@ -428,9 +413,10 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
     }
 }
 
-DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id)
+DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
     : framework_(framework)
     , device_id_(device_id)
+    , backend_params_(backend_params)
 {
     nvimgcdcsExecutorDesc_t executor;
     framework_->getExecutor(framework_->instance, &executor);
@@ -438,20 +424,22 @@ DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id
     decode_state_batch_ = std::make_unique<DecodeState>(num_threads);
 }
 
-nvimgcdcsStatus_t LibtiffDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t LibtiffDecoderPlugin::create(
+    nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(framework_, device_id));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(framework_, device_id, backend_params));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t LibtiffDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t LibtiffDecoderPlugin::static_create(
+    void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("libtiff_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         auto handle = reinterpret_cast<LibtiffDecoderPlugin*>(instance);
-        handle->create(decoder, device_id, options);
+        handle->create(decoder, device_id, backend_params, options);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create libtiff decoder - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
@@ -670,8 +658,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
                 break;
             case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
-            case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
-            {
+            case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED: {
                 uint32_t plane_stride = image_info.plane_info[0].height * image_info.plane_info[0].row_stride;
                 for (uint32_t c = 0; c < image_info.num_planes; c++) {
                     uint32_t dst_p = c;
@@ -686,19 +673,17 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
                         }
                     }
                 }
-            }
-            break;
+            } break;
 
             case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
             case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
-            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
-            {
+            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED: {
                 for (uint32_t i = 0; i < tile_size_y; i++) {
                     auto* row = dst + i * stride_y;
                     auto* tile_row = src + i * tile_stride_y;
                     for (uint32_t j = 0; j < tile_size_x; j++) {
-                        auto *pixel = row + j * stride_x;
-                        auto *tile_pixel = tile_row + j * tile_stride_x;
+                        auto* pixel = row + j * stride_x;
+                        auto* tile_pixel = tile_row + j * tile_stride_x;
                         for (uint32_t c = 0; c < image_info.plane_info[0].num_channels; c++) {
                             uint32_t out_c = c;
                             if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR)
@@ -707,8 +692,7 @@ nvimgcdcsStatus_t decodeImplTyped2(nvimgcdcsImageInfo_t& image_info, TIFF* tiff,
                         }
                     }
                 }
-            }
-            break;
+            } break;
 
             case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
             default:
@@ -757,20 +741,20 @@ nvimgcdcsStatus_t decodeImpl(
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
     auto tiff = OpenTiff(io_stream);
     auto info = GetTiffInfo(tiff.get());
-    switch(image_info.plane_info[0].sample_type) {
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
-            return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
-            return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
-            return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
-            return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
-            return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
-        default:
-            NVIMGCDCS_D_LOG_ERROR("Invalid data type: " << image_info.plane_info[0].sample_type);
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    switch (image_info.plane_info[0].sample_type) {
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
+        return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
+        return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
+        return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
+        return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
+        return decodeImplTyped<uint8_t>(image_info, tiff.get(), info);
+    default:
+        NVIMGCDCS_D_LOG_ERROR("Invalid data type: " << image_info.plane_info[0].sample_type);
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 }
 

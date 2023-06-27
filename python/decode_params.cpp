@@ -17,7 +17,7 @@
 namespace nvimgcdcs {
 
 DecodeParams::DecodeParams()
-    : decode_params_{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, nullptr, true, false, true, 0, nullptr}
+    : decode_params_{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, nullptr, true, false, true}
 {
 }
 

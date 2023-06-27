@@ -38,6 +38,8 @@ set(NVIMGCDCS_SRCS
     parsers/pnm.cpp
     parsers/webp.cpp
     parsers/parsers_ext_module.cpp
+    decoder_worker.cpp
+    encoder_worker.cpp
 )
 
 # Build the library
