@@ -318,7 +318,7 @@ extern "C"
 
         // fraction of the samples that will be picked by this backend.
         // The remaining samples will be marked as "saturated" status and will be picked by the next backend.
-        // This is just a hint and a particular implementation can choose to ignored or reinterpret it.
+        // This is just a hint and a particular implementation can choose to ignore it.
         float load_hint;
     } nvimgcdcsBackendParams_t;
     

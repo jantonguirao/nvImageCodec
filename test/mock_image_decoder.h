@@ -35,6 +35,7 @@ class MockImageDecoder : public IImageDecoder
         (const, override));
     MOCK_METHOD(std::unique_ptr<ProcessingResultsFuture>, decode,
         (IDecodeState*, const std::vector<ICodeStream*>&, const std::vector<IImage*>&, const nvimgcdcsDecodeParams_t*), (override));
+    MOCK_METHOD(const char*, decoderId, (), (const, override));
 };
 
 

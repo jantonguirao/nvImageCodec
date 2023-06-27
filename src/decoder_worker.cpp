@@ -168,6 +168,9 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
     if (decoder) {
         NVIMGCDCS_LOG_DEBUG("code streams: " << work->code_streams_.size());
         decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask, &status);
+        for (size_t i = 0; i < work->code_streams_.size(); i++) {
+            NVIMGCDCS_LOG_INFO("[" << decoder->decoderId() << "]" << " canDecode status sample #" << i << " : " << status[i]);
+        }
     } else {
         NVIMGCDCS_LOG_ERROR("Could not create decoder");
         work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
@@ -202,11 +205,13 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
                 int sub_idx = indices.first[i];
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.isSuccess()) {
+                    NVIMGCDCS_LOG_INFO("[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
                     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                     work->images_[i]->getImageInfo(&image_info);
                     work->copy_buffer_if_necessary(is_device_output_, sub_idx, image_info.cuda_stream, &r);
                     work->results_.set(work->indices_[sub_idx], r);
                 } else { // failed to decode
+                    NVIMGCDCS_LOG_INFO("[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
                     if (fallback_worker) {
                         // if there's fallback, we don't set the result, but try to use the fallback first
                         if (!fallback_work)

@@ -19,7 +19,7 @@ RUN rm -f /opt/python/cp27-cp27m
 
 # patchelf Needed to patch rpath of dependencies in bundle-wheel.sh
 RUN cd /tmp && export PATCHELF_VERSION=0.17.2 && export PATCHELF_ARCH=x86_64 && \
-    wget https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}-${PATCHELF_ARCH}.tar.gz && \ 
+    wget https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}-${PATCHELF_ARCH}.tar.gz && \
     tar xzvf patchelf-${PATCHELF_VERSION}-${PATCHELF_ARCH}.tar.gz && \
     mv bin/patchelf /usr/local/bin/ && \
     cd
@@ -107,8 +107,8 @@ ENV PYBIN=${PYTHONPATH}/bin \
     PYLIB=${PYTHONPATH}/lib
 
 ENV PATH=/opt/python/cp36-cp36/bin:/opt/python/cp37-cp37m/bin:/opt/python/cp38-cp38/bin:/opt/python/cp39-cp39/bin:${PYBIN}:/opt/python/cp310-cp310/bin:/opt/python/cp311-cp311/bin:${PYBIN}:${PATH} \
-    LD_LIBRARY_PATH=/usr/local/lib:/opt/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}:/opt/python/cp36-cp36/lib:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LD_LIBRARY_PATH} \
-    LIBRARY_PATH=/usr/local/lib:/opt/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}:/opt/python/cp36-cp36/lib:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LIBRARY_PATH}
+    LD_LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}:/opt/python/cp36-cp36/lib:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LD_LIBRARY_PATH} \
+    LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}:/opt/python/cp36-cp36/lib:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LIBRARY_PATH}
 
 RUN ln -s /opt/python/cp${PYV}* /opt/python/v
 

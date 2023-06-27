@@ -98,4 +98,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
     return future;
 }
 
+const char* ImageDecoder::decoderId() const {
+    return decoder_desc_->id;
+}
+
 } // namespace nvimgcdcs

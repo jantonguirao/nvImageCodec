@@ -81,6 +81,9 @@ class NvJpegHwDecoderPlugin
         std::unique_ptr<ParseState> parse_state_;
         int device_id_;
         const nvimgcdcsBackendParams_t* backend_params_;
+        unsigned int num_hw_engines_;
+        unsigned int num_cores_per_hw_engine_;
+        float hw_load_ = 1.0f;
     };
 
     nvimgcdcsStatus_t create(
