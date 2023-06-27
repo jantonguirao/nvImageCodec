@@ -77,7 +77,20 @@ Module ::~Module()
 
 void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 {
-    m.def("as_image", [instance](py::handle src) -> Image { return Image(instance, src.ptr()); });
+    m.def(
+        "as_image",
+        [instance](py::handle source_buffer, intptr_t cuda_stream) -> Image { return Image(instance, source_buffer.ptr(), cuda_stream); },
+        R"pbdoc(
+            Wrap an external buffer as an image and tie the buffer lifetime to the image
+
+            Args:
+                source_buffer: Object with __cuda_array_interface__.
+                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
+            Returns:
+                nvimgcodecs.Image
+
+        )pbdoc",
+        "source_buffer"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>());
 }
 
 } // namespace nvimgcdcs

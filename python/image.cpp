@@ -20,29 +20,27 @@ static std::string format_str_from_type(nvimgcdcsSampleDataType_t type)
 {
     switch (type) {
     case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
-        return "=b";
+        return "|i1";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
-        return "=B";
+        return "|u1";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
-        return "=h";
+        return "<i2";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
-        return "=H";
+        return "<u2";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_INT32:
-        return "=i";
+        return "<i4";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32:
-        return "=I";
+        return "<u4";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_INT64:
-        return "=q";
+        return "<i8";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64:
-        return "=Q";
+        return "<u8";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16:
-        return "=e";
+        return "<f2";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
-        return "=f";
+        return "<f4";
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64:
-        return "=d";
-        /* case NVIMGCDCS_BOOL:
-        return "=?";*/
+        return "<f8";
     default:
         break;
     }
@@ -57,15 +55,27 @@ static nvimgcdcsSampleDataType_t type_from_format_str(const std::string& typestr
             return NVIMGCDCS_SAMPLE_DATA_TYPE_INT8;
         if (py::dtype(typestr).kind() == 'u')
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-
     } else if (itemsize == 2) {
         if (py::dtype(typestr).kind() == 'i')
             return NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
         if (py::dtype(typestr).kind() == 'u')
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+        if (py::dtype(typestr).kind() == 'f')
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16;
     } else if (itemsize == 4) {
+        if (py::dtype(typestr).kind() == 'i')
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT32;
+        if (py::dtype(typestr).kind() == 'u')
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32;
         if (py::dtype(typestr).kind() == 'f')
             return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
+    } else if (itemsize == 8) {
+        if (py::dtype(typestr).kind() == 'i')
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT64;
+        if (py::dtype(typestr).kind() == 'u')
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64;
+        if (py::dtype(typestr).kind() == 'f')
+            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64;
     }
     return NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN;
 }
@@ -105,7 +115,7 @@ Image::Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info)
     initCudaArrayInterface(image_info);
 }
 
-Image::Image(nvimgcdcsInstance_t instance, PyObject* o)
+Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
     : img_buffer_size_(0)
 {
     if (!o) {
@@ -160,7 +170,8 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o)
         } else {
             image_info.cuda_stream = reinterpret_cast<cudaStream_t>(*stream);
         }
-    } 
+    }
+    image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
 
     bool is_interleaved = true; //TODO detect interleaved if we have HWC layout
 
@@ -211,7 +222,7 @@ void Image::initCudaArrayInterface(nvimgcdcsImageInfo_t* image_info)
     void* buffer = image_info->buffer;
     std::string format = format_str_from_type(image_info->plane_info[0].sample_type);
     std::vector<ssize_t> shape{image_info->num_planes, image_info->plane_info[0].height, image_info->plane_info[0].width};
-    bool is_interleaved = static_cast<int>(image_info->sample_format) % 2 == 0;
+    bool is_interleaved = static_cast<int>(image_info->sample_format) % 2 == 0 || image_info->num_planes == 1;
     try {
         int bytes_per_element = static_cast<unsigned int>(image_info->plane_info[0].sample_type) >> (8 + 3);
         py::tuple strides_tuple = is_interleaved ? py::make_tuple(image_info->plane_info[0].row_stride,
@@ -225,7 +236,7 @@ void Image::initCudaArrayInterface(nvimgcdcsImageInfo_t* image_info)
                 : py::make_tuple(image_info->num_planes, image_info->plane_info[0].height, image_info->plane_info[0].width);
 
         py::object strides = is_interleaved ? py::object(py::none()) : py::object(strides_tuple);
-        py::object stream = image_info->cuda_stream ? py::int_((intptr_t)(image_info->cuda_stream)) : py::int_(1); 
+        py::object stream = image_info->cuda_stream ? py::int_((intptr_t)(image_info->cuda_stream)) : py::int_(1);
         // clang-format off
         cuda_array_interface_ = 
              py::dict {
