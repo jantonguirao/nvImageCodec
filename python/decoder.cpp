@@ -27,7 +27,7 @@ Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, const std::string&
     , instance_(instance)
 {
     nvimgcdcsDecoder_t decoder;
-    nvimgcdcsDecoderCreate(instance, &decoder, device_id, options.c_str());
+    nvimgcdcsDecoderCreate(instance, &decoder, device_id, 0, nullptr, options.c_str());
     decoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsDecoder_t>::type>(decoder, DecoderDeleter{});
 }
 
@@ -147,7 +147,7 @@ std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_stre
     skip_samples = 0;
     for (size_t i = 0; i < decode_status.size(); ++i) {
         if (decode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
-            std::cerr << "Something went wrong during decoding image #" << i << " it will not be included in output" << std::endl;
+            std::cerr << "Error: Something went wrong during decoding image #" << i << " it will not be included in output" << std::endl;
             py_images.erase(py_images.begin() + i - skip_samples);
             skip_samples++;
         }

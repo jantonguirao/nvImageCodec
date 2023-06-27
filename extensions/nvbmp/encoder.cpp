@@ -7,8 +7,7 @@
 #include "log.h"
 
 struct nvimgcdcsEncoder
-{
-};
+{};
 
 template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
 int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB, size_t pitchB,
@@ -38,12 +37,12 @@ int writeBMP(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, c
     headers[4] = width;           // biWidth
     headers[5] = height;          // biHeight
 
-    headers[7] = 0;          // biCompression
-    headers[8] = paddedsize; // biSizeImage
-    headers[9] = 0;          // biXPelsPerMeter
-    headers[10] = 0;         // biYPelsPerMeter
-    headers[11] = 0;         // biClrUsed
-    headers[12] = 0;         // biClrImportant
+    headers[7] = 0;               // biCompression
+    headers[8] = paddedsize;      // biSizeImage
+    headers[9] = 0;               // biXPelsPerMeter
+    headers[10] = 0;              // biYPelsPerMeter
+    headers[11] = 0;              // biClrUsed
+    headers[12] = 0;              // biClrImportant
 
     size_t written_size;
     std::string bm("BM");
@@ -143,14 +142,6 @@ static nvimgcdcsStatus_t nvbmp_encoder_can_encode(nvimgcdcsEncoder_t encoder, nv
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-        }
         if (params->mct_mode != NVIMGCDCS_MCT_MODE_RGB) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED;
         }
@@ -192,7 +183,8 @@ static nvimgcdcsStatus_t nvbmp_encoder_can_encode(nvimgcdcsEncoder_t encoder, nv
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_encoder_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
+static nvimgcdcsStatus_t nvbmp_encoder_create(
+    void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_create");
 

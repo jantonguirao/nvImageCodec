@@ -24,16 +24,7 @@ static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsP
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_CPU_ONLY) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
-                continue;
-        }
+
         if (params->enable_roi) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED;
         }
@@ -68,7 +59,8 @@ static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsP
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+static nvimgcdcsStatus_t nvbmp_decoder_create(
+    void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_create");
     *decoder = new nvimgcdcsDecoder();

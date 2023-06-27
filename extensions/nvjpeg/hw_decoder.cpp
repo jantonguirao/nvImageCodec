@@ -77,14 +77,6 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-        }
 
         nvjpegDecodeParams_t nvjpeg_params_;
         XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle, &nvjpeg_params_));
@@ -195,11 +187,12 @@ NvJpegHwDecoderPlugin::ParseState::~ParseState()
     }
 }
 
-NvJpegHwDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const char* options)
+NvJpegHwDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
     , device_id_(device_id)
+    , backend_params_(backend_params)
 {
     bool use_nvjpeg_create_ex_v2 = false;
     if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
@@ -241,13 +234,13 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework
     parse_state_ = std::make_unique<NvJpegHwDecoderPlugin::ParseState>(handle_);
 }
 
-nvimgcdcsStatus_t NvJpegHwDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t NvJpegHwDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegHwDecoderPlugin::Decoder(framework_, device_id, options));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegHwDecoderPlugin::Decoder(framework_, device_id, backend_params, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegHwDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t NvJpegHwDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("nvjpeg_create");
@@ -256,7 +249,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::static_create(void* instance, nvimgcdcs
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         NvJpegHwDecoderPlugin* handle = reinterpret_cast<NvJpegHwDecoderPlugin*>(instance);
-        return handle->create(decoder, device_id, options);
+        return handle->create(decoder, device_id, backend_params, options);
     } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg decoder - " << e.info());
         return e.nvimgcdcsStatus();

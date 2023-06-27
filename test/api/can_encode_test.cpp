@@ -47,7 +47,8 @@ class MockEncoderPlugin
     nvimgcdcsEncoderDesc_t getEncoderDesc() { return &encoder_desc_; }
 
   private:
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
+    static nvimgcdcsStatus_t static_create(
+        void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     {
         *encoder = static_cast<nvimgcdcsEncoder_t>(instance);
         return NVIMGCDCS_STATUS_SUCCESS;
@@ -155,7 +156,7 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &extension_, mock_extension_->getExtensionDesc()));
         }
         const char* options = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, options));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, options));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;

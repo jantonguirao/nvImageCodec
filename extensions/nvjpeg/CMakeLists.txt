@@ -2,39 +2,40 @@ set(NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME nvjpeg_ext)
 
 set(NVIMGCDCS_NVJPEG_EXT_SRC
   cuda_decoder.cpp
-  hw_decoder.cpp  
+  hw_decoder.cpp
   cuda_encoder.cpp
   type_convert.cpp
   nvjpeg_ext.cpp
   nvjpeg_utils.cpp
-  exception.cpp    
+  exception.cpp
 )
 
 include(CheckCXXSourceCompiles)
-  check_cxx_source_compiles(
-          "#include <nvjpeg.h>
+set(CMAKE_REQUIRED_INCLUDES "${CUDAToolkit_INCLUDE_DIRS}")
+check_cxx_source_compiles(
+  "#include <nvjpeg.h>
           int main(){
             return NVJPEG_BACKEND_LOSSLESS_JPEG != 6;
           }"
-          NVJPEG_LOSSLESS_SUPPORTED)
-  if (NVJPEG_LOSSLESS_SUPPORTED)
-    message("nvJPEG lossless supported")
-    add_definitions(-DNVJPEG_LOSSLESS_SUPPORTED=1)
-  else()
-    message("nvJPEG lossless NOT supported")
-    add_definitions(-DNVJPEG_LOSSLESS_SUPPORTED=0)
-  endif()
+  NVJPEG_LOSSLESS_SUPPORTED)
 
-if (NVJPEG_LOSSLESS_SUPPORTED)
-  list(APPEND NVIMGCDCS_NVJPEG_EXT_SRC lossless_decoder.cpp)
+if(NVJPEG_LOSSLESS_SUPPORTED)
+  message("nvJPEG lossless supported")
+  add_definitions(-DNVJPEG_LOSSLESS_SUPPORTED=1)
+else()
+  message("nvJPEG lossless NOT supported")
+  add_definitions(-DNVJPEG_LOSSLESS_SUPPORTED=0)
 endif()
 
+if(NVJPEG_LOSSLESS_SUPPORTED)
+  list(APPEND NVIMGCDCS_NVJPEG_EXT_SRC lossless_decoder.cpp)
+endif()
 
 add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCDCS_NVJPEG_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_NVJPEG_EXT_SRC})
 
 if(NOT WITH_DYNAMIC_NVJPEG)
-  if (UNIX)
+  if(UNIX)
     target_link_libraries(${NVIMGCDCS_NVJPEG_EXT_LIBRARY_NAME}
       PUBLIC CUDA::cudart_static CUDA::nvjpeg_static CUDA::culibos)
   else()

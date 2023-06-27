@@ -53,14 +53,14 @@ NvImgCodecsDirector::~NvImgCodecsDirector()
 {
 }
 
-std::unique_ptr<ImageGenericDecoder> NvImgCodecsDirector::createGenericDecoder(int device_id, const char* options)
+std::unique_ptr<ImageGenericDecoder> NvImgCodecsDirector::createGenericDecoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
 {
-    return std::make_unique<ImageGenericDecoder>(&codec_registry_, device_id, options);
+    return std::make_unique<ImageGenericDecoder>(device_id, num_backends, backends, options);
 }
 
-std::unique_ptr<ImageGenericEncoder> NvImgCodecsDirector::createGenericEncoder(int device_id, const char* options)
+std::unique_ptr<ImageGenericEncoder> NvImgCodecsDirector::createGenericEncoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
 {
-    return std::make_unique<ImageGenericEncoder>(&codec_registry_, device_id, options);
+    return std::make_unique<ImageGenericEncoder>(device_id, num_backends, backends, options);
 }
 
 } // namespace nvimgcdcs

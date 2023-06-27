@@ -38,7 +38,7 @@ class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase
     {
         NvJpeg2kExtTestBase::SetUp();
         const char* options = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, options));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, options));
 
         jpeg2k_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
         jpeg2k_enc_params_.stream_type = NVIMGCDCS_JPEG2K_STREAM_J2K;
@@ -50,7 +50,6 @@ class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg2k_enc_params_, 0};
         params_.quality = 0;
         params_.target_psnr = 30;
-        params_.num_backends = 0; //Zero means that all backends are allowed.
         params_.mct_mode = NVIMGCDCS_MCT_MODE_YCC;
     }
 

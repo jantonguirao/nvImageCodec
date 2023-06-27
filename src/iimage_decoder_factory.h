@@ -11,7 +11,6 @@
 #pragma once
 
 #include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
 #include <memory>
 #include <string>
 
@@ -25,6 +24,8 @@ class IImageDecoderFactory
     virtual ~IImageDecoderFactory() = default;
     virtual std::string getDecoderId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual std::unique_ptr<IImageDecoder> createDecoder(int device_id, const char* options) const = 0;
+    virtual nvimgcdcsBackendKind_t getBackendKind() const = 0;
+    virtual std::unique_ptr<IImageDecoder> createDecoder(
+        int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options) const = 0;
 };
 } // namespace nvimgcdcs

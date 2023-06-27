@@ -39,18 +39,15 @@ int Codec::getDecodersNum() const
     return decoders_.size();
 }
 
-std::unique_ptr<IImageDecoder> Codec::createDecoder(int index, int device_id, const char* options) const
+IImageDecoderFactory* Codec::getDecoderFactory(int index) const
 {
     if (size_t(index) >= decoders_.size()) {
-        return std::unique_ptr<IImageDecoder>();
+        return nullptr;
     }
     auto it = decoders_.begin();
     for (int i = 0; i < index; ++i)
         it++;
-    if (it != decoders_.end())
-        return it->second->createDecoder(device_id, options);
-    else
-        return std::unique_ptr<IImageDecoder>();
+    return it != decoders_.end() ? it->second.get(): nullptr;
 }
 
 int Codec::getEncodersNum() const
@@ -58,15 +55,15 @@ int Codec::getEncodersNum() const
     return encoders_.size();
 }
 
-std::unique_ptr<IImageEncoder> Codec::createEncoder(int index, int device_id, const char* options) const
+IImageEncoderFactory* Codec::getEncoderFactory(int index) const
 {
     if (size_t(index) >= encoders_.size()) {
-        return std::unique_ptr<IImageEncoder>();
+        return nullptr;
     }
     auto it = encoders_.begin();
     for (int i = 0; i < index; ++i)
         it++;
-    return it->second->createEncoder(device_id);
+    return it != encoders_.end() ? it->second.get() : nullptr;
 }
 
 const std::string& Codec::name() const

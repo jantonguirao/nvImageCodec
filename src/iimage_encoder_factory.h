@@ -21,9 +21,11 @@ class IImageEncoder;
 class IImageEncoderFactory
 {
   public:
-    virtual ~IImageEncoderFactory()          = default;
+    virtual ~IImageEncoderFactory() = default;
     virtual std::string getEncoderId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual std::unique_ptr<IImageEncoder> createEncoder(int device_id) const = 0;
+    virtual nvimgcdcsBackendKind_t getBackendKind() const = 0;
+    virtual std::unique_ptr<IImageEncoder> createEncoder(
+        int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options) const = 0;
 };
 } // namespace nvimgcdcs

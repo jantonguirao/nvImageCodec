@@ -67,6 +67,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_IMAGE_PROCESSOR_DESC,
+        NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsStructureType_t;
 
@@ -315,12 +316,19 @@ extern "C"
         nvimgcdcsStructureType_t type;
         void* next;
 
-        nvimgcdcsBackendKind_t kind;
-
         // fraction of the samples that will be picked by this backend.
         // The remaining samples will be marked as "saturated" status and will be picked by the next backend.
         // This is just a hint and a particular implementation can choose to ignored or reinterpret it.
         float load_hint;
+    } nvimgcdcsBackendParams_t;
+    
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;
+        void* next;
+
+        nvimgcdcsBackendKind_t kind;
+        nvimgcdcsBackendParams_t params;
     } nvimgcdcsBackend_t;
 
     typedef enum
@@ -359,7 +367,7 @@ extern "C"
         NVIMGCDCS_MCT_MODE_RGB = 1,
         NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
     } nvimgcdcsMctMode_t;
-    
+
     typedef struct
     {
         nvimgcdcsStructureType_t type;
@@ -370,9 +378,6 @@ extern "C"
         //For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
         //For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.
         bool enable_color_conversion;
-
-        int num_backends; // Zero means that all backends are allowed.
-        nvimgcdcsBackend_t* backends;
     } nvimgcdcsDecodeParams_t;
 
     typedef struct
@@ -383,9 +388,6 @@ extern "C"
         float quality;
         float target_psnr;
         nvimgcdcsMctMode_t mct_mode;
-
-        int num_backends; //Zero means that all backends are allowed.
-        nvimgcdcsBackend_t* backends;
     } nvimgcdcsEncodeParams_t;
 
     typedef enum
@@ -607,7 +609,7 @@ extern "C"
         const char* codec; // e.g. jpeg2000
         nvimgcdcsBackendKind_t backend_kind;
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, int device_id);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
         nvimgcdcsStatus_t (*canEncode)(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
             nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
@@ -627,7 +629,8 @@ extern "C"
         const char* codec; // e.g. jpeg2000
         nvimgcdcsBackendKind_t backend_kind;
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
+        nvimgcdcsStatus_t (*create)(
+            void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
         nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
             nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
@@ -699,7 +702,7 @@ extern "C"
     // Function to provide buffer with requested size. There can be few cases when it is called:
     // 1) init  - when called with used_size == 0 - for initial allocation before any data is actually written
     // 2) update - when called with used_size < req_size - for update with used_size and possibility of reallocation if needed
-    // 3) terminate - when called with used_size == req_size - for init/update with end size of used data 
+    // 3) terminate - when called with used_size == req_size - for init/update with end size of used data
     // Note 1: When returned pointer for the same context changed, new buffer will be used from the beginning and used_size will be reset
     //         There is no internal copy of previous content
     // Note 2: Currently only case 3) is supported (we know end used size from the beginning) and cases 1) and 2) are reserved for future use
@@ -757,30 +760,30 @@ extern "C"
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const unsigned char* data, size_t length);
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
-        const char* file_name, const nvimgcdcsImageInfo_t* image_info);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(
+        nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name, const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
         void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamDestroy(nvimgcdcsCodeStream_t code_stream);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t code_stream, nvimgcdcsImageInfo_t* image_info);
 
     //Decoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
-        nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id,
+        int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, const nvimgcdcsCodeStream_t* streams,
-        const nvimgcdcsImage_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
-        bool force_format);
+        const nvimgcdcsImage_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params,
+        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, const nvimgcdcsCodeStream_t* streams,
         const nvimgcdcsImage_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params, nvimgcdcsFuture_t* future);
 
     //Encoder
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(
-        nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id, const char* options);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id,
+        int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
-        const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
-        bool force_format);
+        const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params,
+        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
         const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params, nvimgcdcsFuture_t* future);
 

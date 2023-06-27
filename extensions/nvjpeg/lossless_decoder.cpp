@@ -68,16 +68,6 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_GPU_ONLY) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
-                continue;
-        }
                 
         nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(cs_image_info.next);
         while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
@@ -172,11 +162,12 @@ NvJpegLosslessDecoderPlugin::ParseState::~ParseState()
 
 
 NvJpegLosslessDecoderPlugin::Decoder::Decoder(
-    const nvimgcdcsFrameworkDesc_t framework, int device_id, const char* options)    
+    const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)    
     : device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
     , device_id_(device_id)
+    , backend_params_(backend_params)
 {
     bool use_nvjpeg_create_ex_v2 = false;
     if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
@@ -218,13 +209,13 @@ NvJpegLosslessDecoderPlugin::Decoder::Decoder(
     parse_state_ = std::make_unique<NvJpegLosslessDecoderPlugin::ParseState>(handle_);
 }
 
-nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegLosslessDecoderPlugin::Decoder(framework_, device_id, options));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegLosslessDecoderPlugin::Decoder(framework_, device_id, backend_params, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("nvjpeg_lossless_create");
@@ -233,7 +224,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::static_create(void* instance, nvi
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         NvJpegLosslessDecoderPlugin* handle = reinterpret_cast<NvJpegLosslessDecoderPlugin*>(instance);
-        return handle->create(decoder, device_id, options);
+        return handle->create(decoder, device_id, backend_params, options);
     } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg lossless decoder - " << e.info());
         return e.nvimgcdcsStatus();

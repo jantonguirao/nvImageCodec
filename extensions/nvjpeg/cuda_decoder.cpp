@@ -62,16 +62,6 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-            if (*result == NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED)
-                continue;
-        }
 
         nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(cs_image_info.next);
         while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
@@ -143,11 +133,12 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_can_decode(nvimgcdcsD
     }
 }
 
-NvJpegCudaDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const char* options)
+NvJpegCudaDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
     , device_id_(device_id)
+    , backend_params_(backend_params)
 {
     bool use_nvjpeg_create_ex_v2 = false;
     if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
@@ -188,13 +179,13 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framewo
         std::make_unique<NvJpegCudaDecoderPlugin::DecodeState>(handle_, &device_allocator_, &pinned_allocator_, num_threads);
 }
 
-nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
-    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegCudaDecoderPlugin::Decoder(framework_, device_id, options));
+    *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpegCudaDecoderPlugin::Decoder(framework_, device_id, backend_params, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const char* options)
+nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("nvjpeg_create");
@@ -203,7 +194,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::static_create(void* instance, nvimgcd
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         NvJpegCudaDecoderPlugin* handle = reinterpret_cast<NvJpegCudaDecoderPlugin*>(instance);
-        handle->create(decoder, device_id, options);
+        handle->create(decoder, device_id, backend_params, options);
     } catch (const NvJpegException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg decoder - " << e.info());
         return e.nvimgcdcsStatus();

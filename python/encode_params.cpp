@@ -20,7 +20,7 @@ EncodeParams::EncodeParams()
     : jpeg2k_encode_params_{NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0, NVIMGCDCS_JPEG2K_STREAM_JP2, NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL,
           5, 64, 64, true}
     , jpeg_encode_params_{NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, &jpeg2k_encode_params_, false}
-    , encode_params_{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg_encode_params_, 95, 50, NVIMGCDCS_MCT_MODE_RGB, 0, nullptr}
+    , encode_params_{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg_encode_params_, 95, 50, NVIMGCDCS_MCT_MODE_RGB}
     , jpeg_image_info_{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0, NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT}
     , chroma_subsampling_{NVIMGCDCS_SAMPLING_444}
 {

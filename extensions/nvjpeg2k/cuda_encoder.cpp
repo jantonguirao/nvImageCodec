@@ -50,14 +50,6 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
             *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
-        if (params->backends != nullptr) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED;
-            for (int b = 0; b < params->num_backends; ++b) {
-                if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_GPU_ONLY) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                }
-            }
-        }
 
         nvimgcdcsJpeg2kEncodeParams_t* j2k_encode_params = static_cast<nvimgcdcsJpeg2kEncodeParams_t*>(params->next);
         while (j2k_encode_params && j2k_encode_params->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS)
@@ -149,9 +141,11 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEnc
     }
 }
 
-NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id)
+NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : framework_(framework)
     , device_id_(device_id)
+    , backend_params_(backend_params)
+    , options_(options)
 {
     XM_CHECK_NVJPEG2K(nvjpeg2kEncoderCreateSimple(&handle_));
 
@@ -163,13 +157,14 @@ NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework
             framework->pinned_allocator, device_id_, num_threads);
 }
 
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(nvimgcdcsEncoder_t* encoder, int device_id)
+nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(
+    nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
-    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(framework_, device_id));
+    *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(framework_, device_id, backend_params, options));
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id)
+nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg2k_create_encoder");
@@ -178,7 +173,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(void* instance, nvimgcdcs
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin*>(instance);
-        return handle->create(encoder, device_id);
+        return handle->create(encoder, device_id, backend_params, options);
     } catch (const NvJpeg2kException& e) {
         NVIMGCDCS_E_LOG_ERROR("Could not create nvjpeg2k encoder - " << e.info());
         return e.nvimgcdcsStatus();
