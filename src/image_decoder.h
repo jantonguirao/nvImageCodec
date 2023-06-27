@@ -33,6 +33,7 @@ class ImageDecoder : public IImageDecoder
     std::unique_ptr<ProcessingResultsFuture> decode(IDecodeState* decode_state_batch,
         const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
         const nvimgcdcsDecodeParams_t* params) override;
+    const char* decoderId() const override;
 
   private:
     const nvimgcdcsDecoderDesc_t decoder_desc_;

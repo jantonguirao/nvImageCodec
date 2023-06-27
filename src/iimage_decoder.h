@@ -33,6 +33,7 @@ class IImageDecoder
     virtual std::unique_ptr<ProcessingResultsFuture> decode(IDecodeState* decode_state_batch,
         const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
         const nvimgcdcsDecodeParams_t* params) = 0;
+    virtual const char* decoderId() const = 0;
 };
 
 } // namespace nvimgcdcs

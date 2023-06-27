@@ -105,8 +105,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
 
         for (uint32_t p = 0; p < image_info.num_planes; ++p) {
             auto sample_type = image_info.plane_info[p].sample_type;
-            if ((sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) ||
-                ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED) && (sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16))) {
+            if (sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
                 *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
             }
         }
