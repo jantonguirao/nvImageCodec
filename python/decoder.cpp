@@ -105,9 +105,16 @@ std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_stre
         image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
 
         //Decode to format
-        constexpr bool decode_to_interleaved = true;
-        image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-        image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        bool decode_to_interleaved = true;
+        if (image_info.num_planes > 1) {
+            image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+            image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        } else {
+            image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_Y;
+            image_info.color_spec = NVIMGCDCS_COLORSPEC_GRAY;
+            decode_to_interleaved = false;
+        }
+
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
 
         bool swap_wh = params.decode_params_.enable_orientation && ((image_info.orientation.rotated / 90) % 2);

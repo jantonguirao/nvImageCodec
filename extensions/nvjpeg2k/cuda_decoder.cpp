@@ -160,7 +160,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(
     void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
-        NVIMGCDCS_D_LOG_TRACE("jpeg2k_create");        
+        NVIMGCDCS_D_LOG_TRACE("jpeg2k_create");
         XM_CHECK_NULL(instance);
         XM_CHECK_NULL(decoder);
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
@@ -170,14 +170,14 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(
     } catch (const NvJpeg2kException& e) {
         NVIMGCDCS_D_LOG_ERROR("Could not create nvjpeg2k decoder - " << e.info());
         return e.nvimgcdcsStatus();
-    }    
+    }
 }
 
 NvJpeg2kDecoderPlugin::Decoder::~Decoder()
 {
     decode_state_batch_.reset();
     if (handle_)
-        XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDestroy(handle_));    
+        XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDestroy(handle_));
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_destroy(nvimgcdcsDecoder_t decoder)
@@ -230,7 +230,7 @@ NvJpeg2kDecoderPlugin::DecodeState::DecodeState(nvjpeg2kHandle_t handle, nvimgcd
 
 NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
 {
-    for (auto& res : per_thread_) {        
+    for (auto& res : per_thread_) {
         if (res.event_) {
             XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
         }
@@ -239,7 +239,7 @@ NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
         }
         if (res.state_) {
             XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(res.state_));
-        }        
+        }
     }
 }
 
@@ -252,7 +252,7 @@ NvJpeg2kDecoderPlugin::ParseState::~ParseState()
 {
     if (nvjpeg2k_stream_) {
         XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kStreamDestroy(nvjpeg2k_stream_));
-    }    
+    }
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
@@ -270,7 +270,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
             nvimgcdcsImageDesc_t image = decode_state->samples_[sample_idx].image;
             const nvimgcdcsDecodeParams_t* params = decode_state->samples_[sample_idx].params;
             auto handle_ = decode_state->handle_;
-            void *decode_tmp_buffer = nullptr;
+            void* decode_tmp_buffer = nullptr;
             size_t decode_tmp_buffer_sz = 0;
             try {
                 nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -314,6 +314,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 auto height = comp.component_height;
                 auto width = comp.component_width;
                 auto bpp = comp.precision;
+                auto sgn = comp.sgn;
                 auto num_components = jpeg2k_info.num_components;
                 if (bpp > 16) {
                     NVIMGCDCS_D_LOG_ERROR("Unexpected bitdepth");
@@ -327,18 +328,34 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 
                 size_t bytes_per_sample;
                 nvimgcdcsSampleDataType_t orig_data_type;
-                if (bpp <= 8) {
-                    output_image.pixel_type = NVJPEG2K_UINT8;
-                    orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-                    bytes_per_sample = 1;
-                } else if (bpp <= 16) {
-                    output_image.pixel_type = NVJPEG2K_UINT16;
-                    orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
-                    bytes_per_sample = 2;
+                if (sgn) {
+                    if (bpp <= 8) {
+                        NVIMGCDCS_D_LOG_ERROR("for signed type unsupported bit depth <=8");
+                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                        return;
+                    } else if (bpp <= 16) {
+                        output_image.pixel_type = NVJPEG2K_INT16;
+                        orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
+                        bytes_per_sample = 2;
+                    } else {
+                        NVIMGCDCS_D_LOG_ERROR("bit depth not supported");
+                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                        return;
+                    }
                 } else {
-                    NVIMGCDCS_D_LOG_ERROR("bit depth not supported");
-                    image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
-                    return;
+                    if (bpp <= 8) {
+                        output_image.pixel_type = NVJPEG2K_UINT8;
+                        orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+                        bytes_per_sample = 1;
+                    } else if (bpp <= 16) {
+                        output_image.pixel_type = NVJPEG2K_UINT16;
+                        orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+                        bytes_per_sample = 2;
+                    } else {
+                        NVIMGCDCS_D_LOG_ERROR("bit depth not supported");
+                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                        return;
+                    }
                 }
 
                 bool interleaved = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB;
