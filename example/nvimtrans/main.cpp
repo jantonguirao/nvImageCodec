@@ -156,10 +156,14 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     decode_params.enable_orientation = !params.ignore_orientation;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
     // Preparing output image_info
-    image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-    image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-    image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
-
+    if (jpeg_image_info.encoding == NVIMGCDCS_JPEG_ENCODING_LOSSLESS_HUFFMAN) {
+        image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED;        
+        image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+    } else {
+        image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;        
+        image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+    }
+        
     bool swap_wh = decode_params.enable_orientation && ((image_info.orientation.rotated / 90) % 2);
     if (swap_wh) {
         std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
@@ -218,7 +222,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     }
     nvimgcdcsFutureDestroy(decode_future);
 
-    std::cout << "Saving to " << output_path.string() << " file" << std::endl;
+    std::cout << "Saving to " << output_path.string() << " file" << std::endl;    
 
     nvimgcdcsJpegImageInfo_t out_jpeg_image_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     nvimgcdcsEncodeParams_t encode_params{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
