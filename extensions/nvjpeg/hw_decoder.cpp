@@ -70,21 +70,12 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
     auto code_stream = code_streams;
     nvimgcdcsImageDesc_t* image = images;
 
-    bool hw_dec_enabled = true;
-    if (params->backends != nullptr) {
-        for (int b = 0; b < params->num_backends; ++b) {
-            if (params->backends[b].kind == NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY) {
-                *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                if (params->backends[b].load_hint > 0.0f && params->backends[b].load_hint <= 1.0f)
-                    hw_load_ = params->backends[b].load_hint;
-                else
-                    hw_load_ = 1.0f;
-                NVIMGCDCS_P_LOG_DEBUG("HW decoder is enabled, hw_load=" << hw_load_);
-                hw_dec_enabled = true;
-                break;
-            }
-        }
+    hw_load_ = 1.0f;
+    *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+    if (backend_params_ != nullptr && backend_params_->load_hint > 0.0f && backend_params_->load_hint <= 1.0f) {
+        hw_load_ = backend_params_->load_hint;
     }
+    NVIMGCDCS_D_LOG_DEBUG("HW decoder is enabled, hw_load=" << hw_load_);
 
     for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
         *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;

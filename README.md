@@ -1,6 +1,6 @@
 # nvImageCodecs
 
-nvImageCodecs is a library of accelerated codecs with unified interface. 
+nvImageCodecs is a library of accelerated codecs with unified interface.
 It is designed as a framework for extension modules which delivers codec plugins.
 
 Currently there are following codecs supported:
@@ -18,16 +18,16 @@ To get a local copy up and running follow these steps.
 
 ### Pre-requisites
 - git
-- git lfs (images used for testing are stored as lfs files) 
+- git lfs (images used for testing are stored as lfs files)
 - CMake >= 3.14
-- gcc >= 9.4 
+- gcc >= 9.4
 - NVIDIA CUDA >= 11.8
 - libjpeg-turbo >= 2.0.0
 - opencv >= 3.0.0
 - Python for tests and examples
 - Python packages: clang==14 wheel setuptools
 - Supported systems:
-  - Windows >= 10 
+  - Windows >= 10
   - Ubuntu >= 20.04
   - WSL2 with Ubuntu >= 20.04
 
@@ -45,7 +45,7 @@ tar -xvf nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia
 
 #### DEB File Installation
 ```
-sudo apt-get install -y ./nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb 
+sudo apt-get install -y ./nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
 ```
 #### Python WHL File Installation
 
@@ -68,24 +68,24 @@ make
 
 #### Build CVCUDA samples
 
-To build CV-CUDA samples, additionally CV-CUDA has to be installed and CVCUDA_DIR and NVCV_TYPES_DIR 
+To build CV-CUDA samples, additionally CV-CUDA has to be installed and CVCUDA_DIR and NVCV_TYPES_DIR
 need to point folders with *-config.cmake files. Apart of that, BUILD_CVCUDA_SAMPLES variable must be set to ON.
 
 ### Instalation from sources
 
-##### Linux 
+##### Linux
 ```
 cd build
 cmake --install . --config Release -prefix /opt/nvidia/nvimgcodecs
 ```
 
 After execution there should be:
-- all extension modules in /opt/nvimgcodecs/extensions (it is default directory for extension discovery)
+- all extension modules in /opt/nvidia/nvimgcodecs/extensions (it is default directory for extension discovery)
 - libnvimgcodecs.so in /opt/nvidia/nvimgcodecs/lib64
 
 Add directory with libnvimgcodecs.so to LD_LIBRARY_PATH
 
-``` 
+```
 export LD_LIBRARY_PATH=/opt/nvidia/nvimgcodecs/lib64:$LD_LIBRARY_PATH
 ```
 
@@ -165,4 +165,3 @@ This will generate in build directory *.zip or *tar.xz files
 
 - [CUDA/C++ Coding Style Guide](https://docs.google.com/document/d/1jNvQBMQhoIQMSot4WFUop8Bl2bCUxvuX7Xa4910RDQI/edit)
 - There is .clang-format file in the main project directory
-
