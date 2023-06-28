@@ -469,15 +469,20 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 NVIMGCDCS_E_LOG_ERROR("Could not encode jpeg2k code stream - " << e.info());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
-            if (tmp_buffer) {
-                if (encode_state->device_allocator_) {
-                    encode_state->device_allocator_->device_free(
-                        encode_state->device_allocator_->device_ctx, tmp_buffer, tmp_buffer_sz, t.stream_);
-                } else {
-                    XM_CHECK_CUDA(cudaFreeAsync(&tmp_buffer, t.stream_));
+            try {
+                if (tmp_buffer) {
+                    if (encode_state->device_allocator_) {
+                        encode_state->device_allocator_->device_free(
+                            encode_state->device_allocator_->device_ctx, tmp_buffer, tmp_buffer_sz, t.stream_);
+                    } else {
+                        XM_CHECK_CUDA(cudaFreeAsync(tmp_buffer, t.stream_));
+                    }
+
+                    tmp_buffer = nullptr;
+                    tmp_buffer_sz = 0;
                 }
-                tmp_buffer = nullptr;
-                tmp_buffer_sz = 0;
+            } catch (const NvJpeg2kException& e) {
+                NVIMGCDCS_E_LOG_ERROR("Could not free buffer - " << e.info());
             }
         });
 

@@ -84,7 +84,6 @@ void Encoder::encode(const std::vector<Image>& images, const EncodeParams& param
     nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);
     std::vector<nvimgcdcsProcessingStatus_t> encode_status(status_size);
     nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
-
     for (size_t i = 0; i < encode_status.size(); ++i) {
         if (encode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
             std::cerr << "Error: Something went wrong during encoding image #" << i << " it will not be included in output" << std::endl;
@@ -140,7 +139,7 @@ std::vector<py::bytes> Encoder::encode(
 
     data_list.reserve(images.size());
     auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream) -> void {
-        if (skip_item) {
+        if (skip_item && py_objects[i].ptr_) {
             Py_DECREF(py_objects[i].ptr_);
         } else {
             data_list.push_back(py::reinterpret_steal<py::object>(py_objects[i].ptr_));
