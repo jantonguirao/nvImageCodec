@@ -439,44 +439,9 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decodeBatch()
     std::unique_ptr<std::remove_pointer<nvjpegDecodeParams_t>::type, decltype(&nvjpegDecodeParamsDestroy)> nvjpeg_params_raii(
         nvjpeg_params, &nvjpegDecodeParamsDestroy);
 
-    auto subsampling_score = [](nvimgcdcsChromaSubsampling_t subsampling) -> uint32_t {
-        switch (subsampling) {
-        case NVIMGCDCS_SAMPLING_444:
-            return 8;
-        case NVIMGCDCS_SAMPLING_422:
-            return 7;
-        case NVIMGCDCS_SAMPLING_420:
-            return 6;
-        case NVIMGCDCS_SAMPLING_440:
-            return 5;
-        case NVIMGCDCS_SAMPLING_411:
-            return 4;
-        case NVIMGCDCS_SAMPLING_410:
-            return 3;
-        case NVIMGCDCS_SAMPLING_GRAY:
-            return 2;
-        case NVIMGCDCS_SAMPLING_410V:
-        default:
-            return 1;
-        }
-    };
     int nsamples = decode_state_batch_->samples_.size();
-    using sort_elem_t = std::tuple<uint32_t, uint64_t, int>;
-    std::vector<sort_elem_t> sample_meta(nsamples);
-    for (int i = 0; i < nsamples; i++) {
-        nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[i].image;
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        image->getImageInfo(image->instance, &image_info);
-        uint64_t area = image_info.plane_info[0].height * image_info.plane_info[0].width;
-        sample_meta[i] = sort_elem_t{subsampling_score(image_info.chroma_subsampling), area, i};
-    }
-    auto order = [](const sort_elem_t& lhs, const sort_elem_t& rhs) { return lhs > rhs; };
-    std::sort(sample_meta.begin(), sample_meta.end(), order);
-
-    for (auto& elem : sample_meta) {
-        int sample_idx = std::get<2>(elem);
-        this->decode(sample_idx);
-    }
+    for (int i = 0; i < nsamples; i++)
+        this->decode(i);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
