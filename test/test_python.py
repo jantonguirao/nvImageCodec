@@ -35,10 +35,14 @@ def compare_cv_images(test_images, ref_images):
         compare_image(test_img, ref_img)
 
 
+@t.mark.parametrize("backends", [None,
+                                 [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
+                                     nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
+    [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
 @t.mark.parametrize("decode_data", [True, False])
 @t.mark.parametrize(
     "input_img_file",
-    ["bmp/cat-111793_640.bmp",
+    [   "bmp/cat-111793_640.bmp",
 
         "jpeg/padlock-406986_640_410.jpg",
         "jpeg/padlock-406986_640_411.jpg",
@@ -71,8 +75,11 @@ def compare_cv_images(test_images, ref_images):
         "jpeg2k/cat-1245673_640-12bit.jp2",
      ]
 )
-def test_decode_single_image(tmp_path, input_img_file, decode_data):
-    decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1")
+def test_decode_single_image(tmp_path, input_img_file, decode_data, backends):
+    if backends:
+        decoder = nvimgcodecs.Decoder(backends = backends, options=":fancy_upsampling=1")
+    else:
+        decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1") 
 
     input_img_path = os.path.join(img_dir_path, input_img_file)
     if decode_data:
@@ -88,13 +95,17 @@ def test_decode_single_image(tmp_path, input_img_file, decode_data):
     compare_images([test_img], [ref_img])
 
 
+@t.mark.parametrize("backends", [None,
+                                 [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
+                                     nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
+                                 [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
 @t.mark.parametrize("cuda_stream", [None, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
 @t.mark.parametrize("decode_data", [True, False])
 @t.mark.parametrize(
     "input_images_batch",
     [("bmp/cat-111793_640.bmp",
 
-        "jpeg/padlock-406986_640_410.jpg",
+      "jpeg/padlock-406986_640_410.jpg",
       "jpeg/padlock-406986_640_411.jpg",
       "jpeg/padlock-406986_640_420.jpg",
       "jpeg/padlock-406986_640_422.jpg",
@@ -128,13 +139,15 @@ def test_decode_single_image(tmp_path, input_img_file, decode_data):
       "base/4k_lossless.jp2")
      ]
 )
-def test_decode_batch(tmp_path, input_images_batch, decode_data, cuda_stream):
+def test_decode_batch(tmp_path, input_images_batch, decode_data, backends, cuda_stream):
     input_images = [os.path.join(img_dir_path, img)
                     for img in input_images_batch]
     ref_images = [cv2.imread(img, cv2.IMREAD_COLOR |
                              cv2.IMREAD_ANYDEPTH) for img in input_images]
-    decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1")
-
+    if backends:
+        decoder = nvimgcodecs.Decoder(backends = backends, options=":fancy_upsampling=1")
+    else:
+        decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1") 
     if decode_data:
         data_list = []
         for img in input_images:

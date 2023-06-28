@@ -10,10 +10,11 @@
 
 #include "encoder.h"
 
+#include <string.h>
 #include <filesystem>
 #include <iostream>
-#include <string.h>
 #include "../src/file_ext_codec.h"
+#include "backend.h"
 #include "error_handling.h"
 
 namespace fs = std::filesystem;
@@ -25,14 +26,38 @@ struct Encoder::EncoderDeleter
     void operator()(nvimgcdcsEncoder_t encoder) { nvimgcdcsEncoderDestroy(encoder); }
 };
 
-Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, const std::string& options)
+Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, const std::vector<Backend>& backends, const std::string& options)
     : encoder_(nullptr)
     , instance_(instance)
 {
+    std::vector<nvimgcdcsBackend_t> nvimgcds_backends(backends.size());
+    for (size_t i = 0; i < backends.size(); ++i) {
+        nvimgcds_backends[i] = backends[i].backend_;
+    }
+
+    auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
     nvimgcdcsEncoder_t encoder;
-    nvimgcdcsEncoderCreate(instance, &encoder, device_id, 0, nullptr, options.c_str());
+    nvimgcdcsEncoderCreate(instance, &encoder, device_id, nvimgcds_backends.size(), backends_ptr, options.c_str());
     encoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type>(encoder, EncoderDeleter{});
 }
+
+Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id,  const std::vector<nvimgcdcsBackendKind_t>& backend_kinds, const std::string& options)
+    : encoder_(nullptr)
+    , instance_(instance)
+{
+    std::vector<nvimgcdcsBackend_t> nvimgcds_backends(backend_kinds.size());
+    for (size_t i = 0; i < backend_kinds.size(); ++i) {
+        nvimgcds_backends[i].kind = backend_kinds[i];
+        nvimgcds_backends[i].params = {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f};
+    }
+
+    auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
+    nvimgcdcsEncoder_t encoder;
+    nvimgcdcsEncoderCreate(instance, &encoder, device_id, nvimgcds_backends.size(), backends_ptr, options.c_str());
+    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type>(encoder, EncoderDeleter{});
+}
+
+
 
 Encoder::~Encoder()
 {
@@ -84,7 +109,6 @@ void Encoder::encode(const std::vector<Image>& images, const EncodeParams& param
     nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);
     std::vector<nvimgcdcsProcessingStatus_t> encode_status(status_size);
     nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
-
     for (size_t i = 0; i < encode_status.size(); ++i) {
         if (encode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
             std::cerr << "Error: Something went wrong during encoding image #" << i << " it will not be included in output" << std::endl;
@@ -140,7 +164,7 @@ std::vector<py::bytes> Encoder::encode(
 
     data_list.reserve(images.size());
     auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream) -> void {
-        if (skip_item) {
+        if (skip_item && py_objects[i].ptr_) {
             Py_DECREF(py_objects[i].ptr_);
         } else {
             data_list.push_back(py::reinterpret_steal<py::object>(py_objects[i].ptr_));
@@ -184,17 +208,34 @@ void Encoder::encode(const std::vector<std::string>& file_names, const std::vect
 void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 {
     py::class_<Encoder>(m, "Encoder")
-        .def(py::init<>([instance](int device_id, const std::string& options) { return new Encoder(instance, device_id, options); }),
+        .def(py::init<>([instance](int device_id, const std::vector<Backend>& backends, const std::string& options) {
+            return new Encoder(instance, device_id, backends, options);
+        }),
             R"pbdoc(
             Initialize encoder.
 
             Args:
                 device_id: Device id to execute encoding on.
-                options: Encoder specific options  
+                backends: List of allowed backends. If empty, all backends are allowed with default parameters.
+                options: Encoder specific options.  
 
             )pbdoc",
 
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "options"_a = "")
+            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "backends"_a = std::vector<Backend>(), "options"_a = "")
+        .def(py::init<>([instance](int device_id, const std::vector<nvimgcdcsBackendKind_t>& backend_kinds, const std::string& options) {
+            return new Encoder(instance, device_id, backend_kinds, options);
+        }),
+            R"pbdoc(
+            Initialize encoder.
+
+            Args:
+                device_id: Device id to execute encoding on.
+                backend_kinds: List of allowed backend kinds. If empty, all backends are allowed with default parameters.
+                options: Encoder specific options.
+
+            )pbdoc",
+            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "backend_kinds"_a = std::vector<nvimgcdcsBackendKind_t>(),
+            "options"_a = ":fancy_upsampling=0")
         .def("encode", py::overload_cast<Image, const std::string&, const EncodeParams&, intptr_t>(&Encoder::encode),
             R"pbdoc(
             Encode image to buffer.
@@ -238,8 +279,8 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
         )pbdoc",
             "images"_a, "codec"_a, "params"_a = EncodeParams(), "cuda_stream"_a = 0)
         .def("encode",
-            py::overload_cast<const std::vector<std::string>&, const std::vector<Image>&, const std::string&, const EncodeParams&, intptr_t>(
-                &Encoder::encode),
+            py::overload_cast<const std::vector<std::string>&, const std::vector<Image>&, const std::string&, const EncodeParams&,
+                intptr_t>(&Encoder::encode),
             R"pbdoc(
             Encode batch of images to files.
 

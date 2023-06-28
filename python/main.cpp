@@ -26,6 +26,9 @@
 #include "chroma_subsampling.h"
 #include "jpeg2k_bitstream_type.h"
 #include "jpeg2k_prog_order.h"
+#include "backend_kind.h"
+#include "backend_params.h"
+#include "backend.h"
 
 #include <iostream>
 
@@ -54,6 +57,9 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
     m.attr("__cuda_version__") = properties.cudart_version;
 
     Module::exportToPython(m, module.instance_);
+    BackendKind::exportToPython(m);
+    BackendParams::exportToPython(m);
+    Backend::exportToPython(m);
     MctMode::exportToPython(m);
     ChromaSubsampling::exportToPython(m);
     Jpeg2kBitstreamType::exportToPython(m);

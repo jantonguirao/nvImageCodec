@@ -19,6 +19,7 @@
 
 #include "image.h"
 #include "decode_params.h"
+#include "backend.h"
 
 namespace nvimgcdcs {
 
@@ -28,7 +29,8 @@ using namespace py::literals;
 class Decoder
 {
   public:
-    explicit Decoder(nvimgcdcsInstance_t instance, int device_id, const std::string& options);
+    Decoder(nvimgcdcsInstance_t instance, int device_id, const std::vector<Backend>& backends, const std::string& options);
+    Decoder(nvimgcdcsInstance_t instance, int device_id, const std::vector<nvimgcdcsBackendKind_t>& backend_kinds, const std::string& options);
     ~Decoder();
 
     Image decode(const std::string& file_name, const DecodeParams& params, intptr_t cuda_stream);

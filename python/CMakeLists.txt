@@ -29,7 +29,10 @@ set(PY_NVIMGCDCS_SRCS
     chroma_subsampling.cpp
     jpeg2k_prog_order.cpp
     jpeg2k_bitstream_type.cpp
-    error_handling.cpp)
+    error_handling.cpp
+    backend_kind.cpp
+    backend_params.cpp
+    backend.cpp)
 
 build_per_python_lib(nvimgcodecs_python
     OUTPUT_NAME nvimgcodecs_impl

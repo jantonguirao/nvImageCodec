@@ -10,9 +10,6 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include <nvimgcodecs.h>
 
 #include <pybind11/pybind11.h>
@@ -22,18 +19,16 @@ namespace nvimgcdcs {
 namespace py = pybind11;
 using namespace py::literals;
 
-class DecodeParams
+class BackendParams
 {
   public:
-    DecodeParams();    
-    bool getEnableOrientation() {return decode_params_.enable_orientation;}
-    void setEnableOrientation(bool enable){decode_params_.enable_orientation = enable;};
-    bool getEnableColorConversion() {return decode_params_.enable_color_conversion;}
-    void setEnableColorConversion(bool enable){decode_params_.enable_color_conversion = enable;};
+    BackendParams();
+    float getLoadHint() { return backend_params_.load_hint; }
+    void setLoadHint(float load_hint) { backend_params_.load_hint = load_hint; };
 
     static void exportToPython(py::module& m);
 
-    nvimgcdcsDecodeParams_t decode_params_;
+    nvimgcdcsBackendParams_t backend_params_;
 };
 
 } // namespace nvimgcdcs

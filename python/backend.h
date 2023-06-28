@@ -10,30 +10,36 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include <nvimgcodecs.h>
 
 #include <pybind11/pybind11.h>
+
+#include "backend_kind.h"
+#include "backend_params.h"
 
 namespace nvimgcdcs {
 
 namespace py = pybind11;
 using namespace py::literals;
 
-class DecodeParams
+class Backend
 {
   public:
-    DecodeParams();    
-    bool getEnableOrientation() {return decode_params_.enable_orientation;}
-    void setEnableOrientation(bool enable){decode_params_.enable_orientation = enable;};
-    bool getEnableColorConversion() {return decode_params_.enable_color_conversion;}
-    void setEnableColorConversion(bool enable){decode_params_.enable_color_conversion = enable;};
+    Backend();
+    nvimgcdcsBackendKind_t getBackendKind() { return backend_.kind; }
+    void setBackendKind(nvimgcdcsBackendKind_t backend_kind) { backend_.kind = backend_kind; };
+    float getLoadHint() { return backend_.params.load_hint; }
+    void setLoadHint(float load_hint) { backend_.params.load_hint = load_hint; };
+    BackendParams getBackendParams() {
+        BackendParams bp;
+        bp.backend_params_ = backend_.params;
+        return bp;
+    }
+    void setBackendParams(const BackendParams& backend_params) { backend_.params = backend_params.backend_params_; };
 
     static void exportToPython(py::module& m);
 
-    nvimgcdcsDecodeParams_t decode_params_;
+    nvimgcdcsBackend_t backend_;
 };
 
 } // namespace nvimgcdcs
