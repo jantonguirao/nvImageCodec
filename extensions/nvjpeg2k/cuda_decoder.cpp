@@ -329,16 +329,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 size_t bytes_per_sample;
                 nvimgcdcsSampleDataType_t orig_data_type;
                 if (sgn) {
-                    if (bpp <= 8) {
-                        NVIMGCDCS_D_LOG_ERROR("unsupported bit depth for a signed type. It must be 8 > bpp <= 16");
-                        image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
-                        return;
-                    } else if (bpp <= 16) {
+                    if ((bpp > 8) && (bpp <= 16)) {
                         output_image.pixel_type = NVJPEG2K_INT16;
                         orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
                         bytes_per_sample = 2;
                     } else {
-                        NVIMGCDCS_D_LOG_ERROR("bit depth not supported");
+                        NVIMGCDCS_D_LOG_ERROR("unsupported bit depth for a signed type. It must be 8 > bpp <= 16");
                         image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                         return;
                     }
