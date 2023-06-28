@@ -106,13 +106,11 @@ std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_stre
 
         //Decode to format
         bool decode_to_interleaved = true;
-        if (image_info.num_planes > 1) {
+        if (params.decode_params_.enable_color_conversion) {
             image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-        } else {
-            image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_Y;
-            image_info.color_spec = NVIMGCDCS_COLORSPEC_GRAY;
-            decode_to_interleaved = false;
+            image_info.plane_info[0].num_channels = decode_to_interleaved ? 3 /*I_RGB*/ : 1 /*P_RGB*/;
+            image_info.num_planes = decode_to_interleaved ? 1 : image_info.num_planes;
         }
 
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
@@ -121,9 +119,6 @@ std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_stre
         if (swap_wh) {
             std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
         }
-
-        image_info.plane_info[0].num_channels = decode_to_interleaved ? 3 /*I_RGB*/ : 1 /*P_RGB*/;
-        image_info.num_planes = decode_to_interleaved ? 1 : image_info.num_planes;
 
         size_t device_pitch_in_bytes = image_info.plane_info[0].width * bytes_per_element * image_info.plane_info[0].num_channels;
 

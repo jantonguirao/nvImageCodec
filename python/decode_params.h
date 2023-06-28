@@ -28,6 +28,8 @@ class DecodeParams
     DecodeParams();    
     bool getEnableOrientation() {return decode_params_.enable_orientation;}
     void setEnableOrientation(bool enable){decode_params_.enable_orientation = enable;};
+    bool getEnableColorConversion() {return decode_params_.enable_color_conversion;}
+    void setEnableColorConversion(bool enable){decode_params_.enable_color_conversion = enable;};
 
     static void exportToPython(py::module& m);
 

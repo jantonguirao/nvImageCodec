@@ -56,7 +56,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*image)->getImageInfo((*image)->instance, &image_info);
         static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
-            NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
+            NVIMGCDCS_COLORSPEC_UNKNOWN, NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
         if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
         }
