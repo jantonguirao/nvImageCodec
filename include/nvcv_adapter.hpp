@@ -20,7 +20,7 @@
 #include <nvcv/ImageData.hpp>
 #include <nvcv/ImageFormat.hpp>
 
-    namespace nvimgcdcs { namespace adapter { namespace nvcv { namespace {
+namespace nvimgcdcs { namespace adapter { namespace nvcv { namespace {
 
 #define CHECK_NVCV(call)                                     \
     {                                                        \
@@ -95,10 +95,10 @@ constexpr auto ext2loc_css(NVCVChromaSubsampling in)
 constexpr auto ext2loc_sample_type(NVCVDataKind data_kind, int32_t bpp)
 {
     switch (data_kind) {
-    case NVCV_DATA_KIND_SIGNED: 
+    case NVCV_DATA_KIND_SIGNED:
         if (bpp <= 8)
             return NVIMGCDCS_SAMPLE_DATA_TYPE_INT8;
-        else if ((bpp > 8) &&  (bpp <= 16))
+        else if ((bpp > 8) && (bpp <= 16))
             return NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
         else if ((bpp > 16) && (bpp <= 32))
             return NVIMGCDCS_SAMPLE_DATA_TYPE_INT32;
@@ -106,8 +106,8 @@ constexpr auto ext2loc_sample_type(NVCVDataKind data_kind, int32_t bpp)
             return NVIMGCDCS_SAMPLE_DATA_TYPE_INT64;
         else
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
-    
-    case NVCV_DATA_KIND_UNSIGNED: 
+
+    case NVCV_DATA_KIND_UNSIGNED:
         if (bpp <= 8)
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
         else if ((bpp > 8) && (bpp <= 16))
@@ -118,7 +118,7 @@ constexpr auto ext2loc_sample_type(NVCVDataKind data_kind, int32_t bpp)
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64;
         else
             return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
-    
+
     case NVCV_DATA_KIND_FLOAT:
         if (bpp <= 16)
             return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16;
