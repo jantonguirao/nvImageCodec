@@ -72,47 +72,40 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
     return code;
 }
 
-#ifdef NDEBUG
-//TODO TEMP!!! #define VERBOSE_ERRORS
-#else
+#ifndef NDEBUG
     #define VERBOSE_ERRORS
 #endif
-
-// TODO use Logger
-// TODO move to separate file
 
 #define NVIMGCDCSAPI_TRY try
 
 #ifndef VERBOSE_ERRORS
-    #define NVIMGCDCSAPI_CATCH(a)                                  \
-        catch (const Exception& e)                                 \
-        {                                                          \
-            a = getCAPICode(e.status());                           \
-        }                                                          \
-        catch (...)                                                \
-        {                                                          \
-            std::cerr << "Unknown NVIMGCODECS error" << std::endl; \
-            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                   \
+    #define NVIMGCDCSAPI_CATCH(a)                             \
+        catch (const Exception& e)                            \
+        {                                                     \
+            a = getCAPICode(e.status());                      \
+        }                                                     \
+        catch (...)                                           \
+        {                                                     \
+            NVIMGCDCS_LOG_ERROR("Unknown NVIMGCODECS error"); \
+            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;              \
         }
 #else
-    #define NVIMGCDCSAPI_CATCH(a)                                     \
-        catch (const Exception& e)                                    \
-        {                                                             \
-            std::cerr << "Error status: " << e.status() << std::endl; \
-            std::cerr << "Where: " << e.where() << std::endl;         \
-            std::cerr << "Message: " << e.message() << std::endl;     \
-            std::cerr << "What: " << e.what() << std::endl;           \
-            a = getCAPICode(e.status());                              \
-        }                                                             \
-        catch (const std::runtime_error& e)                           \
-        {                                                             \
-            std::cerr << "Error: " << e.what() << std::endl;          \
-            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                      \
-        }                                                             \
-        catch (...)                                                   \
-        {                                                             \
-            std::cerr << "Unknown NVIMGCODECS error" << std::endl;    \
-            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                      \
+    #define NVIMGCDCSAPI_CATCH(a)                                                                                                   \
+        catch (const Exception& e)                                                                                                  \
+        {                                                                                                                           \
+            NVIMGCDCS_LOG_ERROR(                                                                                                    \
+                "Error status: " << e.status() << " Where: " << e.where() << " Message: " << e.message() << " What: " << e.what()); \
+            a = getCAPICode(e.status());                                                                                            \
+        }                                                                                                                           \
+        catch (const std::runtime_error& e)                                                                                         \
+        {                                                                                                                           \
+            NVIMGCDCS_LOG_ERROR(e.what());                                                                                          \
+            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                                                                                    \
+        }                                                                                                                           \
+        catch (...)                                                                                                                 \
+        {                                                                                                                           \
+            NVIMGCDCS_LOG_ERROR("Unknown NVIMGCODECS error");                                                                       \
+            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                                                                                    \
         }
 #endif
 
