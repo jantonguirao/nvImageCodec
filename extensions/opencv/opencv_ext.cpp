@@ -29,7 +29,7 @@ struct OpenCVImgCodecsExtension
         framework->registerDecoder(framework->instance, bmp_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
         framework->registerDecoder(framework->instance, pnm_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
         framework->registerDecoder(framework->instance, tiff_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
-        framework->registerDecoder(framework->instance, webp_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
+    framework->registerDecoder(framework->instance, webp_decoder_.getDecoderDesc(), NVIMGCDCS_PRIORITY_LOW);
     }
 
     ~OpenCVImgCodecsExtension()
