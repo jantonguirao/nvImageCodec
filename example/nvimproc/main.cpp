@@ -28,9 +28,7 @@
 
 #include <nvcv_adapter.hpp>
 
-#define COMMAND_PARAMS_IMPLEMENTATION
 #include "command_line_params.h"
-#include "nvimgcodecs_type_utils.h"
 
 namespace fs = std::filesystem;
 
@@ -41,6 +39,9 @@ namespace fs = std::filesystem;
  * CVCuda Tensor along with a few operators.
  *
  * Input Batch Tensor -> Crop -> Resize -> WriteImage
+ * 
+ * Compatibility: CV-CUDA v0.3.0 Beta
+ * 
  */
 
 inline void CheckCudaError(cudaError_t code, const char* file, const int line)
@@ -60,24 +61,6 @@ inline void CheckCudaError(cudaError_t code, const char* file, const int line)
 
 double wtime(void)
 {
-#if defined(_WIN32)
-    LARGE_INTEGER t;
-    static double oofreq;
-    static int checkedForHighResTimer;
-    static BOOL hasHighResTimer;
-
-    if (!checkedForHighResTimer) {
-        hasHighResTimer = QueryPerformanceFrequency(&t);
-        oofreq = 1.0 / (double)t.QuadPart;
-        checkedForHighResTimer = 1;
-    }
-    if (hasHighResTimer) {
-        QueryPerformanceCounter(&t);
-        return (double)t.QuadPart * oofreq;
-    } else {
-        return (double)GetTickCount() / 1000.0;
-    }
-#else
     struct timespec tp;
     int rv = clock_gettime(CLOCK_MONOTONIC, &tp);
 
@@ -85,8 +68,6 @@ double wtime(void)
         return 0;
 
     return tp.tv_nsec / 1.0E+9 + (double)tp.tv_sec;
-
-#endif
 }
 
 uint32_t verbosity2severity(int verbose)
@@ -104,6 +85,11 @@ uint32_t verbosity2severity(int verbose)
         result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE;
 
     return result;
+}
+
+inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
+{
+    return static_cast<unsigned int>(sample_type) >> (8 + 3);
 }
 
 typedef std::vector<std::string> FileNames;
@@ -192,14 +178,13 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     }
     image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
-    //Allocate buffer
     CHECK_CUDA_ERROR(cudaMallocAsync(&image_info.buffer, image_info.buffer_size, stream));
 
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
     nvimgcdcsDecoder_t decoder;
-    nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT, nullptr);
+    nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr);
 
     nvimgcdcsFuture_t future;
     nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future);
@@ -226,7 +211,8 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
 }
 
 void fill_encode_params(const CommandLineParams& params, fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
-    nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcdcsJpegEncodeParams_t* jpeg_encode_params)
+    nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcdcsJpegEncodeParams_t* jpeg_encode_params,
+    nvimgcdcsJpegImageInfo_t* jpeg_image_info)
 {
     encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS;
     encode_params->quality = params.quality;
@@ -246,7 +232,7 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
         encode_params->next = jpeg2k_encode_params;
     } else if (params.output_codec == "jpeg") {
         jpeg_encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
-        jpeg_encode_params->encoding = params.jpeg_encoding;
+        jpeg_image_info->encoding = params.jpeg_encoding;
         jpeg_encode_params->optimized_huffman = params.optimized_huffman;
         encode_params->next = jpeg_encode_params;
     }
@@ -277,13 +263,14 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
-    nvimgcdcsEncodeParams_t encode_params{};
-    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{};
-    nvimgcdcsJpegEncodeParams_t jpeg_encode_params{};
-    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params);
+    nvimgcdcsJpegImageInfo_t out_jpeg_image_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+    nvimgcdcsEncodeParams_t encode_params{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
+    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
+    nvimgcdcsJpegEncodeParams_t jpeg_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
+    fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params, &out_jpeg_image_info);
 
     nvimgcdcsEncoder_t encoder;
-    nvimgcdcsEncoderCreate(instance, &encoder);
+    nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr);
 
     nvimgcdcsFuture_t future;
     nvimgcdcsEncoderEncode(encoder, &image, &code_stream, 1, &encode_params, &future);
@@ -391,7 +378,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     reformatOp(stream, resizedTensor, outTensor);
 
     // tag: Copy the buffer to CPU and write resized image into output file
-    const NVCVTensorData& out_tensor_data = outTensor.exportData()->cdata();
+    NVCVTensorData out_tensor_data = outTensor.exportData().cdata();
     encode_one_image(instance, params, out_tensor_data, output_path, stream);
 
     // tag: Clean up
@@ -420,8 +407,7 @@ int main(int argc, const char* argv[])
     if (status != -1) {
         return status;
     }
-
-    int num_devices;
+    int num_devices = 0;
     cudaGetDeviceCount(&num_devices);
     if (params.list_cuda_devices) {
         list_cuda_devices(num_devices);
@@ -435,11 +421,17 @@ int main(int argc, const char* argv[])
         return EXIT_FAILURE;
     }
 
+    nvimgcdcsProperties_t properties{NVIMGCDCS_STRUCTURE_TYPE_PROPERTIES, 0};
+    nvimgcdcsGetProperties(&properties);
+    std::cout << "nvImageCodecs version: " << NVIMGCDCS_STREAM_VER(properties.version) << std::endl;
+    std::cout << " - Extension API version: " << NVIMGCDCS_STREAM_VER(properties.ext_api_version) << std::endl;
+    std::cout << " - CUDA Runtime version: " << properties.cudart_version / 1000 << "." << (properties.cudart_version % 1000) / 10
+              << std::endl;
     cudaDeviceProp props;
     int dev = 0;
     cudaGetDevice(&dev);
     cudaGetDeviceProperties(&props, dev);
-    std::cout << "Using GPU - " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
+    std::cout << "Using GPU: " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
 
     nvimgcdcsInstance_t instance;
     nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
@@ -448,7 +440,6 @@ int main(int argc, const char* argv[])
     instance_create_info.default_debug_messenger = true;
     instance_create_info.message_severity = verbosity2severity(params.verbose);
     instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
-
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
 

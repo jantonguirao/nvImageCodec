@@ -14,6 +14,7 @@ if(UNIX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
   set_target_properties(${NVIMGCDCS_LIBTIFF_EXT_LIBRARY_NAME} PROPERTIES
     POSITION_INDEPENDENT_CODE ON
+    PREFIX ""
     VERSION ${PROJECT_VERSION}
     NO_SONAME OFF)
 else()

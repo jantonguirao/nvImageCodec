@@ -13,20 +13,22 @@
 #include "nvimgcodecs.h"
 #include <memory>
 #include <vector>
+#include <string>
 
 namespace opencv {
 
 class OpenCVDecoderPlugin
 {
   public:
-    explicit OpenCVDecoderPlugin(const char* codec_name, const nvimgcdcsFrameworkDesc_t framework);
+    explicit OpenCVDecoderPlugin(const std::string& codec_name, const nvimgcdcsFrameworkDesc_t framework);
     nvimgcdcsDecoderDesc_t getDecoderDesc();
 
   private:
     nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    const char* codec_name_;
+    std::string codec_name_;
+    std::string plugin_id_;
     struct nvimgcdcsDecoderDesc decoder_desc_;
     
     const nvimgcdcsFrameworkDesc_t framework_;

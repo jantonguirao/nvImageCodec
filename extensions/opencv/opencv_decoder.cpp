@@ -185,12 +185,13 @@ struct DecoderImpl
     std::unique_ptr<DecodeState> decode_state_batch_;
 };
 
-OpenCVDecoderPlugin::OpenCVDecoderPlugin(const char* codec_name, const nvimgcdcsFrameworkDesc_t framework)
+OpenCVDecoderPlugin::OpenCVDecoderPlugin(const std::string& codec_name, const nvimgcdcsFrameworkDesc_t framework)
     : codec_name_(codec_name)
+    , plugin_id_("opencv_" + codec_name_ + "_decoder")
     , decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
-          this,             // instance
-          "opencv_decoder", // id
-          codec_name_,      // codec_type
+          this,                    
+          plugin_id_.c_str(),      
+          codec_name_.c_str(),      
           NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
           static_create, DecoderImpl::static_destroy, DecoderImpl::static_can_decode,
           DecoderImpl::static_decode_batch}
