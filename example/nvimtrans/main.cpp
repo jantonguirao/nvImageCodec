@@ -1,3 +1,14 @@
+/*
+ * Copyright (c) 2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+ *
+ * NVIDIA CORPORATION and its licensors retain all intellectual property
+ * and proprietary rights in and to this software, related documentation
+ * and any modifications thereto.  Any use, reproduction, disclosure or
+ * distribution of this software and related documentation without an express
+ * license agreement from NVIDIA CORPORATION is strictly prohibited.
+ */
+
+
 #include <cuda_runtime_api.h>
 #include <extensions/nvpnm/nvpnm_ext.h>
 #include <nvimgcodecs.h>
@@ -13,7 +24,6 @@
 #include <string>
 #include <vector>
 #include "command_line_params.h"
-#include "nvimgcodecs_type_utils.h"
 
 namespace fs = std::filesystem;
 
@@ -88,6 +98,10 @@ uint32_t verbosity2severity(int verbose)
     return result;
 }
 
+inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
+{
+    return static_cast<unsigned int>(sample_type)>> (8+3);
+}
 
 void fill_encode_params(const CommandLineParams& params, fs::path output_path, nvimgcdcsEncodeParams_t* encode_params,
     nvimgcdcsJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcdcsJpegEncodeParams_t* jpeg_encode_params,

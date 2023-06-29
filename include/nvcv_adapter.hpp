@@ -8,17 +8,19 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
+//Compatibility: CV-CUDA v0 .3.0 Beta
+
 #pragma once
 
 #include <map>
 #include <tuple>
 
 #include <nvimgcodecs.h>
-#include <nvcv/IImage.hpp>
-#include <nvcv/IImageData.hpp>
+
+#include <nvcv/ImageData.hpp>
 #include <nvcv/ImageFormat.hpp>
 
-namespace nvimgcdcs { namespace adapter { namespace nvcv { namespace {
+    namespace nvimgcdcs { namespace adapter { namespace nvcv { namespace {
 
 #define CHECK_NVCV(call)                                     \
     {                                                        \
@@ -153,8 +155,9 @@ constexpr auto ext2loc_sample_type(NVCVDataType data_type)
         return NVIMGCDCS_SAMPLE_DATA_TYPE_INT64;
     case NVCV_DATA_TYPE_U64:
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64;
-    case NVCV_DATA_TYPE_F16:
-        return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16;
+    //TODO
+    //case NVCV_DATA_TYPE_F16:
+    //    return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16;
     case NVCV_DATA_TYPE_F32:
         return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
     case NVCV_DATA_TYPE_F64:
@@ -187,7 +190,7 @@ constexpr auto loc2ext_dtype(nvimgcdcsSampleDataType_t in)
     case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64:
         return NVCV_DATA_TYPE_U64;
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16:
-        return NVCV_DATA_TYPE_F16;
+        return NVCV_DATA_TYPE_NONE; //TODO
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
         return NVCV_DATA_TYPE_F32;
     case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64:
