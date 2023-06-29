@@ -8,6 +8,7 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 #include "image_decoder.h"
+#include <algorithm>
 #include <cassert>
 #include "decode_state_batch.h"
 #include "exception.h"
@@ -44,6 +45,53 @@ std::unique_ptr<IDecodeState> ImageDecoder::createDecodeStateBatch() const
     return std::make_unique<DecodeStateBatch>();
 }
 
+
+static void sortSamples(std::vector<size_t>& order, ICodeStream *const * streams, int batch_size)
+{
+    order.clear();
+    auto subsampling_score = [](nvimgcdcsChromaSubsampling_t subsampling) -> uint32_t {
+        switch (subsampling) {
+        case NVIMGCDCS_SAMPLING_444:
+            return 8;
+        case NVIMGCDCS_SAMPLING_422:
+            return 7;
+        case NVIMGCDCS_SAMPLING_420:
+            return 6;
+        case NVIMGCDCS_SAMPLING_440:
+            return 5;
+        case NVIMGCDCS_SAMPLING_411:
+            return 4;
+        case NVIMGCDCS_SAMPLING_410:
+            return 3;
+        case NVIMGCDCS_SAMPLING_GRAY:
+            return 2;
+        case NVIMGCDCS_SAMPLING_410V:
+        default:
+            return 1;
+        }
+    };
+
+    using sort_elem_t = std::tuple<uint32_t, uint64_t, int>;
+    std::vector<sort_elem_t> sample_meta;
+    sample_meta.reserve(batch_size);
+    for (int i = 0; i < batch_size; i++) {
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        streams[i]->getImageInfo(&image_info);
+        uint64_t area = image_info.plane_info[0].height * image_info.plane_info[0].width;
+        // we prefer i to be in ascending order
+        sample_meta.push_back(sort_elem_t{subsampling_score(image_info.chroma_subsampling), area, -i});
+    }
+    auto order_fn = [](const sort_elem_t& lhs, const sort_elem_t& rhs) { return lhs > rhs; };
+    std::sort(sample_meta.begin(), sample_meta.end(), order_fn);
+
+    order.resize(batch_size);
+    for (int i = 0; i < batch_size; ++i) {
+        int sample_idx = -std::get<2>(sample_meta[i]);
+        order[i] = sample_idx;
+    }
+}
+
+
 void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
     const nvimgcdcsDecodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const
 {
@@ -58,15 +106,23 @@ void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, cons
         return;
     }
 
+    std::vector<size_t> order;
+    sortSamples(order, code_streams.data(), code_streams.size());
+    assert(order.size() == code_streams.size());
+
     std::vector<nvimgcdcsCodeStreamDesc*> cs_descs(code_streams.size());
     std::vector<nvimgcdcsImageDesc*> im_descs(code_streams.size());
+    std::vector<nvimgcdcsProcessingStatus_t> internal_status(code_streams.size(), NVIMGCDCS_STATUS_NOT_INITIALIZED);
     for (size_t i = 0; i < code_streams.size(); ++i) {
-        cs_descs[i] = code_streams[i]->getCodeStreamDesc();
-        im_descs[i] = images[i]->getImageDesc();
+        int orig_idx = order[i];
+        cs_descs[i] = code_streams[orig_idx]->getCodeStreamDesc();
+        im_descs[i] = images[orig_idx]->getImageDesc();
     }
-    decoder_desc_->canDecode(decoder_, &(*status)[0], &cs_descs[0], &im_descs[0], code_streams.size(), params);
+    decoder_desc_->canDecode(decoder_, &internal_status[0], &cs_descs[0], &im_descs[0], code_streams.size(), params);
     for (size_t i = 0; i < code_streams.size(); ++i) {
-        (*result)[i] = (*status)[i] == NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        int orig_idx = order[i];
+        (*status)[orig_idx] = internal_status[i];
+        (*result)[orig_idx] = internal_status[i] == NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
     }
 }
 
@@ -82,13 +138,18 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
     auto future = results.getFuture();
     decode_state_batch->setPromise(std::move(results));
 
-    std::vector<nvimgcdcsCodeStreamDesc*> code_stream_descs;
-    std::vector<nvimgcdcsImageDesc*> image_descs;
+    std::vector<size_t> order;
+    sortSamples(order, code_streams.data(), code_streams.size());
+    assert(order.size() == code_streams.size());
+
+    std::vector<nvimgcdcsCodeStreamDesc*> code_stream_descs(code_streams.size());
+    std::vector<nvimgcdcsImageDesc*> image_descs(code_streams.size());
 
     for (size_t i = 0; i < code_streams.size(); ++i) {
-        code_stream_descs.push_back(code_streams[i]->getCodeStreamDesc());
-        image_descs.push_back(images[i]->getImageDesc());
-        images[i]->setIndex(i);
+        int orig_idx = order[i];
+        code_stream_descs[i] = code_streams[orig_idx]->getCodeStreamDesc();
+        image_descs[i] = images[orig_idx]->getImageDesc();
+        images[i]->setIndex(orig_idx);
         images[i]->setPromise(decode_state_batch->getPromise());
     }
 
