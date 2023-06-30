@@ -17,17 +17,23 @@
 .. _prerequisites:
 
 
-Prerequisites
--------------
+Pre-requisites
+--------------
 
 Following are the required dependencies to compile nvImageCodecs samples.
 
 * Ubuntu >= 20.04
 * CUDA driver >= 11.8
+* CUDA Toolit >= 11.8
+* Supported systems:
+  - Windows >= 10
+  - Ubuntu >= 20.04
+  - WSL2 with Ubuntu >= 20.04
 
 C++ Samples' Dependencies:
 
-*  TODO
+* CMake >= 3.14
+* gcc >= 9.4
 
 Python Samples' Dependencies:
 

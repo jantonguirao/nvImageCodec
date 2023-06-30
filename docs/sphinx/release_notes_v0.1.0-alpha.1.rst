@@ -17,7 +17,7 @@
 .. _v0.1.0-alpha.1:
 
 v0.1.0-alpha.1
-========
+==============
 
 NvImageCodecs-0.1.0-alpha.1 is the first release of nvImageCodecs. This release is for evaluation purposes only.
 

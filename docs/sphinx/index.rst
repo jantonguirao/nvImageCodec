@@ -16,7 +16,7 @@
 
 NVIDIA nvImageCodecs
 ======================================
-nvImageCodecs is a library of accelerated codecs with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
+The nvImageCodecs is a library of accelerated codecs with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
 
 This nvImageCodecs release includes the following key features:
 
@@ -36,15 +36,18 @@ Currently there are following native codec extensions:
    * CUDA jpeg decoder
    * CUDA lossless jpeg decoder
    * CUDA jpeg encoder
+
 * nvjpeg2k_ext
 
-   * CUDA jpeg 2000 decoder
+   * CUDA jpeg 2000 decoder (including High Throughput jpeg2000)
    * CUDA jpeg 2000 encoder 
-* nvbmp_ext (as an example extension module)
+
+* nvbmp_ext
 
    * CPU bmp reader
    * CPU bmp writer
-* nvpnm_ext (as an example extension module)
+
+* nvpnm_ext
 
    * CPU pnm (ppm, pbm, pgm) writer
 
@@ -53,9 +56,11 @@ Additionally as a fallback there are following 3rd party codec extensions:
 * libturbo-jpeg_ext
 
    * CPU jpeg decoder
+
 * libtiff_ext 
 
    * CPU tiff decoder
+
 * opencv_ext
 
    * CPU jpeg decoder
@@ -98,7 +103,6 @@ Copyright
    :maxdepth: 1
    :hidden:
    
-   License <license>
    Installation <installation>
    Getting Started <getting_started> 
 
@@ -116,3 +120,10 @@ Copyright
    :hidden:
 
    0.1.0-alpha.1 <release_notes_v0.1.0-alpha.1>  
+
+.. toctree::
+   :caption: References
+   :maxdepth: 1
+   :hidden:
+
+   License <license>
