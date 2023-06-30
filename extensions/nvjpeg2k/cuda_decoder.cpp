@@ -70,6 +70,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
 
         static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
             NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED,
+            NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED,
             NVIMGCDCS_SAMPLEFORMAT_P_RGB,
             NVIMGCDCS_SAMPLEFORMAT_I_RGB,
             NVIMGCDCS_SAMPLEFORMAT_P_Y,
@@ -354,7 +355,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                     }
                 }
 
-                bool interleaved = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB;
+                bool interleaved = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
+                                   image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED;
                 bool gray = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y;
 
                 nvjpeg2kDecodeParams_t decode_params;
@@ -499,8 +501,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                         }
 
                     bool is_rgb = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
-                                  (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED && image_info.num_planes == 3);
-                    bool is_rgba = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED && image_info.num_planes == 4;
+                                  (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED && num_components == 3);
+                    bool is_rgba = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED && num_components == 4;
                     bool is_u8 = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
                     bool is_u16 = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
                     bool is_s16 = image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;

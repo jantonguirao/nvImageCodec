@@ -155,7 +155,7 @@ struct Work
         }
     }
 
-    void copy_buffer_if_necessary(bool is_device_output, int sub_idx, cudaStream_t stream, ProcessingResult* r)
+    void copy_buffer_if_necessary(bool is_device_output, int sub_idx, ProcessingResult* r)
     {
         auto it = idx2orig_buffer_.find(sub_idx);
         try {
@@ -163,7 +163,7 @@ struct Work
                 nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 images_[sub_idx]->getImageInfo(&image_info);
                 auto copy_direction = is_device_output ? cudaMemcpyDeviceToHost : cudaMemcpyHostToDevice;
-                CHECK_CUDA(cudaMemcpyAsync(it->second, image_info.buffer, image_info.buffer_size, copy_direction, stream));
+                CHECK_CUDA(cudaMemcpyAsync(it->second, image_info.buffer, image_info.buffer_size, copy_direction, image_info.cuda_stream));
                 image_info.buffer = it->second;
                 image_info.buffer_kind = image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE
                                              ? NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST

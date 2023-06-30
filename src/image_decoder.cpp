@@ -149,8 +149,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
         int orig_idx = order[i];
         code_stream_descs[i] = code_streams[orig_idx]->getCodeStreamDesc();
         image_descs[i] = images[orig_idx]->getImageDesc();
-        images[i]->setIndex(orig_idx);
-        images[i]->setPromise(decode_state_batch->getPromise());
+        images[orig_idx]->setIndex(orig_idx);
+        images[orig_idx]->setPromise(decode_state_batch->getPromise());
     }
 
     decoder_desc_->decode(
