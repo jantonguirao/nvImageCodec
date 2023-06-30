@@ -206,9 +206,7 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.isSuccess()) {
                     NVIMGCDCS_LOG_INFO("[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
-                    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-                    work->images_[i]->getImageInfo(&image_info);
-                    work->copy_buffer_if_necessary(is_device_output_, sub_idx, image_info.cuda_stream, &r);
+                    work->copy_buffer_if_necessary(is_device_output_, sub_idx, &r);
                     work->results_.set(work->indices_[sub_idx], r);
                 } else { // failed to decode
                     NVIMGCDCS_LOG_INFO("[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
