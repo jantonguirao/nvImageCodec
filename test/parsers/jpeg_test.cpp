@@ -310,7 +310,39 @@ TEST_F(JPEGParserPluginTest, File_vs_MemoryStream)
     info2.next = nullptr;
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info2));
 
-    EXPECT_EQ(0, std::memcmp(&info, &info2, sizeof(info)));
+    EXPECT_EQ(info.type, info2.type);
+    EXPECT_EQ(info.next, info2.next);
+    EXPECT_STREQ(info.codec_name, info2.codec_name);
+    EXPECT_EQ(info.color_spec, info2.color_spec);
+    EXPECT_EQ(info.chroma_subsampling, info2.chroma_subsampling);
+    EXPECT_EQ(info.sample_format, info2.sample_format);
+    EXPECT_EQ(info.orientation.type, info2.orientation.type);
+    EXPECT_EQ(info.orientation.next, info2.orientation.next);
+    EXPECT_EQ(info.orientation.rotated, info2.orientation.rotated);
+    EXPECT_EQ(info.orientation.flip_x, info2.orientation.flip_x);
+    EXPECT_EQ(info.orientation.flip_y, info2.orientation.flip_y);
+    EXPECT_EQ(info.region.type, info.region.type);
+    EXPECT_EQ(info.region.next, info.region.next);
+    EXPECT_EQ(info.region.ndim, info.region.ndim);
+    for (int d = 0; d < info.region.ndim; d++) {
+        EXPECT_EQ(info.region.start[d], info2.region.start[d]);
+        EXPECT_EQ(info.region.end[d], info2.region.end[d]);
+    }
+    EXPECT_EQ(info.num_planes, info2.num_planes);
+    for (int p = 0; p < info.num_planes; p++) {
+        EXPECT_EQ(info.plane_info[p].type, info2.plane_info[p].type);
+        EXPECT_EQ(info.plane_info[p].next, info2.plane_info[p].next);
+        EXPECT_EQ(info.plane_info[p].width, info2.plane_info[p].width);
+        EXPECT_EQ(info.plane_info[p].height, info2.plane_info[p].height);
+        EXPECT_EQ(info.plane_info[p].row_stride, info2.plane_info[p].row_stride);
+        EXPECT_EQ(info.plane_info[p].num_channels, info2.plane_info[p].num_channels);
+        EXPECT_EQ(info.plane_info[p].sample_type, info2.plane_info[p].sample_type);
+        EXPECT_EQ(info.plane_info[p].precision, info2.plane_info[p].precision);
+    }
+    EXPECT_EQ(info.buffer, info2.buffer);
+    EXPECT_EQ(info.buffer_size, info2.buffer_size);
+    EXPECT_EQ(info.buffer_kind, info2.buffer_kind);
+    EXPECT_EQ(info.cuda_stream, info2.cuda_stream);
 }
 
 TEST_F(JPEGParserPluginTest, Error_CreateStream_Empty)
