@@ -89,7 +89,7 @@ class PluginFramework
     std::unique_ptr<ILibraryLoader> library_loader_;
     std::map<std::string, Extension> extensions_;
     std::unique_ptr<IExecutor> executor_;
-    struct nvimgcdcsFrameworkDesc framework_desc_;
+    nvimgcdcsFrameworkDesc_t framework_desc_;
     ICodecRegistry* codec_registry_;
     std::vector<std::string> extension_paths_;
 };

@@ -22,7 +22,7 @@ namespace nvjpeg2k {
 class NvJpeg2kEncoderPlugin
 {
   public:
-    explicit NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
+    explicit NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsEncoderDesc_t* getEncoderDesc();
 
   private:
@@ -60,7 +60,7 @@ class NvJpeg2kEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        Encoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
         ~Encoder();
 
         
@@ -77,7 +77,7 @@ class NvJpeg2kEncoderPlugin
 
         
         nvjpeg2kEncoder_t handle_;
-        const nvimgcdcsFrameworkDesc_t framework_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
         int device_id_;
         const nvimgcdcsBackendParams_t* backend_params_;
@@ -91,7 +91,7 @@ class NvJpeg2kEncoderPlugin
 
     nvimgcdcsEncoderDesc_t encoder_desc_;
     
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg2k

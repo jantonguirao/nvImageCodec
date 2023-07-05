@@ -924,7 +924,7 @@ extern "C"
     typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
 
-    struct nvimgcdcsFrameworkDesc
+    typedef struct
     {
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         const void* next;              /**< Is NULL or a pointer to an extension structure type. */
@@ -947,8 +947,7 @@ extern "C"
 
         nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t** result);
         nvimgcdcsLogFunc_t log;
-    };
-    typedef struct nvimgcdcsFrameworkDesc* nvimgcdcsFrameworkDesc_t;
+    } nvimgcdcsFrameworkDesc_t;
 
     /**
      * @brief Extension description
@@ -963,7 +962,7 @@ extern "C"
         uint32_t version;              /**< Extension version. Used when registering extension to check if there are newer.*/
         uint32_t ext_api_version;      /**< The version of nvImageCodecs extension API with which the extension was built. */
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework);
+        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsExtension_t extension);
     } nvimgcdcsExtensionDesc_t;
 

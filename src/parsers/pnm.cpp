@@ -236,7 +236,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_get_image_info(
 class PnmParserExtension
 {
   public:
-    explicit PnmParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit PnmParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -244,11 +244,11 @@ class PnmParserExtension
     ~PnmParserExtension() { framework_->unregisterParser(framework_->instance, pnm_parser_plugin_.getParserDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     PNMParserPlugin pnm_parser_plugin_;
 };
 
-nvimgcdcsStatus_t pnm_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t pnm_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("pnm_parser_extension_create");
     try {

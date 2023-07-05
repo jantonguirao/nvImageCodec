@@ -286,7 +286,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::static_get_image_info(
 class BmpParserExtension
 {
   public:
-    explicit BmpParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit BmpParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -297,11 +297,11 @@ class BmpParserExtension
     }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     BMPParserPlugin bmp_parser_plugin_;
 };
 
-nvimgcdcsStatus_t bmp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t bmp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("bmp_parser_extension_create");
     try {

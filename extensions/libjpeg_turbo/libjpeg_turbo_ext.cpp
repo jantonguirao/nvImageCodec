@@ -13,7 +13,7 @@ namespace libjpeg_turbo {
 struct LibjpegTurboImgCodecsExtension
 {
   public:
-    explicit LibjpegTurboImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit LibjpegTurboImgCodecsExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
         , jpeg_decoder_(framework)
     {
@@ -22,13 +22,13 @@ struct LibjpegTurboImgCodecsExtension
     ~LibjpegTurboImgCodecsExtension() { framework_->unregisterDecoder(framework_->instance, jpeg_decoder_.getDecoderDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     LibjpegTurboDecoderPlugin jpeg_decoder_;
 };
 
 } // namespace libjpeg_turbo
 
-nvimgcdcsStatus_t libjpegTurboExtensionCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t libjpegTurboExtensionCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");

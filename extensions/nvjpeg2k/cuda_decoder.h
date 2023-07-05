@@ -20,7 +20,7 @@ namespace nvjpeg2k {
 class NvJpeg2kDecoderPlugin
 {
   public:
-    explicit NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
+    explicit NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsDecoderDesc_t* getDecoderDesc();
 
   private:
@@ -69,7 +69,7 @@ class NvJpeg2kDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
+        Decoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
         ~Decoder();
 
         
@@ -89,7 +89,7 @@ class NvJpeg2kDecoderPlugin
         nvjpeg2kHandle_t handle_;
         nvjpeg2kDeviceAllocatorV2_t device_allocator_;
         nvjpeg2kPinnedAllocatorV2_t pinned_allocator_;
-        const nvimgcdcsFrameworkDesc_t framework_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
         int device_id_;
         const nvimgcdcsBackendParams_t* backend_params_;
@@ -101,7 +101,7 @@ class NvJpeg2kDecoderPlugin
 
     nvimgcdcsDecoderDesc_t decoder_desc_;
     
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg2k

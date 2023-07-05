@@ -18,7 +18,7 @@
 
 namespace nvjpeg2k {
 
-NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
+NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
     : encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL,
           this,               // instance
           "nvjpeg2k_encoder", // id
@@ -141,7 +141,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEnc
     }
 }
 
-NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : framework_(framework)
     , device_id_(device_id)
     , backend_params_(backend_params)

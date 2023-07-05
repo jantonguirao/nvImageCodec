@@ -270,7 +270,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_get_image_info(
 class TiffParserExtension
 {
   public:
-    explicit TiffParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit TiffParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -278,11 +278,11 @@ class TiffParserExtension
     ~TiffParserExtension() { framework_->unregisterParser(framework_->instance, tiff_parser_plugin_.getParserDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     TIFFParserPlugin tiff_parser_plugin_;
 };
 
-nvimgcdcsStatus_t tiff_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t tiff_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("tiff_parser_extension_create");
     try {

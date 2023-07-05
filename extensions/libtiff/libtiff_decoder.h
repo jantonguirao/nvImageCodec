@@ -19,7 +19,7 @@ namespace libtiff {
 class LibtiffDecoderPlugin
 {
   public:
-    explicit LibtiffDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
+    explicit LibtiffDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsDecoderDesc_t* getDecoderDesc();
 
   private:
@@ -30,7 +30,7 @@ class LibtiffDecoderPlugin
 
     nvimgcdcsDecoderDesc_t decoder_desc_;
 
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace libtiff

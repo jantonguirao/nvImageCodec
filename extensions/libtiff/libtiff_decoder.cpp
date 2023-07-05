@@ -293,7 +293,7 @@ struct DecodeState
 
 struct DecoderImpl
 {
-    DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
+    DecoderImpl(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
     ~DecoderImpl();
 
     nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images,
@@ -307,13 +307,13 @@ struct DecoderImpl
     static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
         nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     int device_id_;
     const nvimgcdcsBackendParams_t* backend_params_;
     std::unique_ptr<DecodeState> decode_state_batch_;
 };
 
-LibtiffDecoderPlugin::LibtiffDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
+LibtiffDecoderPlugin::LibtiffDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,              // instance
           "libtiff_decoder", // id
@@ -413,7 +413,7 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
     }
 }
 
-DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
+DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
     : framework_(framework)
     , device_id_(device_id)
     , backend_params_(backend_params)

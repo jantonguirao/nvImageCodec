@@ -20,7 +20,7 @@ namespace nvjpeg {
 class NvJpegCudaEncoderPlugin
 {
   public:
-    explicit NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
+    explicit NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsEncoderDesc_t* getEncoderDesc();
 
   private:
@@ -52,7 +52,7 @@ class NvJpegCudaEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        Encoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
         ~Encoder();
 
         
@@ -71,7 +71,7 @@ class NvJpegCudaEncoderPlugin
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t device_allocator_;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
-        const nvimgcdcsFrameworkDesc_t framework_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
         int device_id_;
         const nvimgcdcsBackendParams_t* backend_params_; std::string options_;
@@ -84,7 +84,7 @@ class NvJpegCudaEncoderPlugin
 
     nvimgcdcsEncoderDesc_t encoder_desc_;
     
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg

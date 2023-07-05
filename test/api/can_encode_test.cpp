@@ -34,7 +34,7 @@ using test_case_tuple_t =
 class MockEncoderPlugin
 {
   public:
-    explicit MockEncoderPlugin(const nvimgcdcsFrameworkDesc_t framework, const std::vector<nvimgcdcsProcessingStatus_t>& return_status)
+    explicit MockEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework, const std::vector<nvimgcdcsProcessingStatus_t>& return_status)
         : return_status_(return_status)
         , encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL,
               this,                // instance
@@ -90,7 +90,7 @@ struct MockCodecExtensionFactory
 
     struct Extension
     {
-        explicit Extension(const nvimgcdcsFrameworkDesc_t framework, const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses)
+        explicit Extension(const nvimgcdcsFrameworkDesc_t* framework, const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses)
             : framework_(framework)
             , statuses_(statuses)
         {
@@ -106,13 +106,13 @@ struct MockCodecExtensionFactory
                 framework_->unregisterEncoder(framework_->instance, item.getEncoderDesc());
             }
         }
-        const nvimgcdcsFrameworkDesc_t framework_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         std::vector<MockEncoderPlugin> encoders_;
         const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses_;
     };
 
     static nvimgcdcsStatus_t static_extension_create(
-        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
     {
         auto handle = reinterpret_cast<MockCodecExtensionFactory*>(instance);
         *extension = reinterpret_cast<nvimgcdcsExtension_t>(new Extension(framework, handle->statuses_));

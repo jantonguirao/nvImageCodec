@@ -21,7 +21,7 @@ namespace nvjpeg {
 class NvJpegCudaDecoderPlugin
 {
   public:
-    explicit NvJpegCudaDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
+    explicit NvJpegCudaDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsDecoderDesc_t* getDecoderDesc();
 
   private:
@@ -87,7 +87,7 @@ class NvJpegCudaDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
+        Decoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
             const char* options = nullptr);
         ~Decoder();
 
@@ -110,7 +110,7 @@ class NvJpegCudaDecoderPlugin
 
         nvjpegDevAllocatorV2_t device_allocator_;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
-        const nvimgcdcsFrameworkDesc_t framework_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
         int device_id_;
         const nvimgcdcsBackendParams_t* backend_params_;
@@ -122,7 +122,7 @@ class NvJpegCudaDecoderPlugin
 
     nvimgcdcsDecoderDesc_t decoder_desc_;
     
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg

@@ -35,7 +35,7 @@ uint32_t testExtModuleGetVersion()
     return 1;
 }
 
-nvimgcdcsStatus_t testExtModuleCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t testExtModuleCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -214,7 +214,7 @@ class PluginFrameworkExtensionsVersionTest : public ::testing::Test
 
     void TearDown() override {}
 
-    static nvimgcdcsStatus_t ExtCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+    static nvimgcdcsStatus_t ExtCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
     {
         return NVIMGCDCS_STATUS_SUCCESS;
     }

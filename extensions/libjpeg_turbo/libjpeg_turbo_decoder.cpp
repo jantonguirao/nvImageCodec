@@ -46,7 +46,7 @@ struct DecodeState
 struct DecoderImpl
 {
     DecoderImpl(
-        const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, std::string options);
+        const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, std::string options);
     ~DecoderImpl();
 
     nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images,
@@ -62,13 +62,13 @@ struct DecoderImpl
 
     void parseOptions(std::string options);
 
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     int device_id_;
     const nvimgcdcsBackendParams_t* backend_params_;
     std::unique_ptr<DecodeState> decode_state_batch_;
 };
 
-LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
+LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,                    // instance
           "libjpeg_turbo_decoder", // id
@@ -155,7 +155,7 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
 }
 
 DecoderImpl::DecoderImpl(
-    const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, std::string options)
+    const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, std::string options)
     : framework_(framework)
     , device_id_(device_id)
     , backend_params_(backend_params)

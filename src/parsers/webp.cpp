@@ -294,7 +294,7 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::static_get_image_info(
 class WebpParserExtension
 {
   public:
-    explicit WebpParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit WebpParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -302,11 +302,11 @@ class WebpParserExtension
     ~WebpParserExtension() { framework_->unregisterParser(framework_->instance, webp_parser_plugin_.getParserDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     WebpParserPlugin webp_parser_plugin_;
 };
 
-nvimgcdcsStatus_t webp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t webp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("webp_parser_extension_create");
     try {

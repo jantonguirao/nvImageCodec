@@ -137,12 +137,12 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, 
 }
 
 // clang-format off
-nvimgcdcsDecoderDesc nvbmp_decoder = {
+nvimgcdcsDecoderDesc_t nvbmp_decoder = {
     NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
     NULL,
     NULL,               // instance    
-    "nvbmp_decoder",    //id
-    "bmp",              //  codec_type 
+    "nvbmp_decoder",    // id
+    "bmp",              // codec_type 
     NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
     nvbmp_decoder_create,
     nvbmp_decoder_destroy, 

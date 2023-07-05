@@ -326,7 +326,7 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::static_get_image_info(
 class PngParserExtension
 {
   public:
-    explicit PngParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit PngParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -334,11 +334,11 @@ class PngParserExtension
     ~PngParserExtension() { framework_->unregisterParser(framework_->instance, png_parser_plugin_.getParserDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     PNGParserPlugin png_parser_plugin_;
 };
 
-nvimgcdcsStatus_t png_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t png_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("png_parser_extension_create");
     try {

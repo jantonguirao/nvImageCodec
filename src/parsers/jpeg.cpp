@@ -362,7 +362,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_image_info(
 class JpegParserExtension
 {
   public:
-    explicit JpegParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit JpegParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -373,11 +373,11 @@ class JpegParserExtension
     }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     JPEGParserPlugin jpeg_parser_plugin_;
 };
 
-nvimgcdcsStatus_t jpeg_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t jpeg_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("jpeg_parser_extension_create");
     try {

@@ -13,7 +13,7 @@ namespace libtiff {
 struct LibtiffImgCodecsExtension
 {
   public:
-    explicit LibtiffImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit LibtiffImgCodecsExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
         , tiff_decoder_(framework)
     {
@@ -22,13 +22,13 @@ struct LibtiffImgCodecsExtension
     ~LibtiffImgCodecsExtension() { framework_->unregisterDecoder(framework_->instance, tiff_decoder_.getDecoderDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     LibtiffDecoderPlugin tiff_decoder_;
 };
 
 } // namespace libtiff
 
-nvimgcdcsStatus_t libtiffExtensionCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t libtiffExtensionCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");
