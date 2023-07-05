@@ -66,7 +66,7 @@ class NvJpegCudaDecoderPlugin
 
         struct Sample
         {
-            nvimgcdcsCodeStreamDesc_t code_stream;
+            nvimgcdcsCodeStreamDesc_t* code_stream;
             nvimgcdcsImageDesc_t image;
             const nvimgcdcsDecodeParams_t* params;
         };
@@ -92,15 +92,15 @@ class NvJpegCudaDecoderPlugin
         ~Decoder();
 
         
-        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams,
+        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decode(int sample_idx);
         nvimgcdcsStatus_t decodeBatch();
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
         static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-            nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-        static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
+            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
         ParseState* getSampleParseState(int sample_idx);

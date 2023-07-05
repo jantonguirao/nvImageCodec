@@ -64,7 +64,7 @@ nvimgcdcsDecoderDesc_t NvJpegHwDecoderPlugin::getDecoderDesc()
 }
 
 nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvjpegHandle_t handle,
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -178,7 +178,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
 }
 
 nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("nvjpeg_hw_can_decode");
@@ -374,7 +374,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
         batched_nvjpeg_params_ptrs.emplace_back(batched_nvjpeg_params[i], &nvjpegDecodeParamsDestroy);
         auto &nvjpeg_params_ptr = batched_nvjpeg_params_ptrs.back();
 
-        nvimgcdcsCodeStreamDesc_t code_stream = decode_state_batch_->samples_[i].code_stream;
+        nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[i].code_stream;
         nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[i].image;
 
@@ -490,7 +490,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
-nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
+nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
     nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
 

@@ -24,7 +24,7 @@ class ImageParserFactory : public IImageParserFactory
     explicit ImageParserFactory(const struct nvimgcdcsParserDesc* desc);
     std::string getParserId() const override;
     std::string getCodecName() const override;
-    bool canParse(nvimgcdcsCodeStreamDesc_t code_stream) override;
+    bool canParse(nvimgcdcsCodeStreamDesc_t* code_stream) override;
     std::unique_ptr<IImageParser> createParser() const override;
 
   private:

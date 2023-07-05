@@ -153,7 +153,7 @@ struct nvimgcdcsParserDesc* TIFFParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
@@ -168,7 +168,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t TIFFParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t TIFFParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("tiff_parser_can_parse");
@@ -222,7 +222,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t TIFFParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t TIFFParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("tiff_parser_get_image_info");
     try {
@@ -252,7 +252,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
 }
 
 nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("tiff_parser_get_image_info");

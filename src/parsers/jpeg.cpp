@@ -122,7 +122,7 @@ struct nvimgcdcsParserDesc* JPEGParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -131,7 +131,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("jpeg_parser_can_parse");
@@ -185,7 +185,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
     try {
@@ -344,7 +344,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
 }
 
 nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");

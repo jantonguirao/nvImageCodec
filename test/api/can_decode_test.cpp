@@ -59,7 +59,7 @@ class MockDecoderPlugin
     }
     static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder) { return NVIMGCDCS_STATUS_SUCCESS; }
     static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-        nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
     {
         auto handle = reinterpret_cast<MockDecoderPlugin*>(decoder);
         nvimgcdcsProcessingStatus_t* s = status;
@@ -69,7 +69,7 @@ class MockDecoderPlugin
         }
         return NVIMGCDCS_STATUS_SUCCESS;
     }
-    static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
+    static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
         nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
     {
         return NVIMGCDCS_STATUS_SUCCESS;

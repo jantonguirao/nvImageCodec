@@ -23,7 +23,7 @@ class IImageParserFactory
     virtual ~IImageParserFactory() = default;
     virtual std::string getParserId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual bool canParse(nvimgcdcsCodeStreamDesc_t code_stream) = 0;
+    virtual bool canParse(nvimgcdcsCodeStreamDesc_t* code_stream) = 0;
     virtual std::unique_ptr<IImageParser> createParser() const = 0;
 };
 

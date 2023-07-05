@@ -101,7 +101,7 @@ struct nvimgcdcsParserDesc* BMPParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     constexpr size_t min_bmp_stream_size = 18u;
     nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
@@ -125,7 +125,7 @@ nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t BMPParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("bmp_parser_can_parse");
@@ -179,7 +179,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     // https://en.wikipedia.org/wiki/BMP_file_format#DIB_header_(bitmap_information_header)
     NVIMGCDCS_LOG_TRACE("bmp_parser_get_image_info");
@@ -268,7 +268,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
 }
 
 nvimgcdcsStatus_t BMPParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("bmp_parser_get_image_info");

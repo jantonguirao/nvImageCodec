@@ -35,7 +35,7 @@ std::string ImageParser::getCodecName() const
 }
 
 nvimgcdcsStatus_t ImageParser::getImageInfo(
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info)
+    nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageInfo_t* image_info)
 {
     NVIMGCDCS_LOG_TRACE("ImageParser::getImageInfo");
     assert(code_stream);

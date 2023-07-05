@@ -23,7 +23,7 @@ class MockImageParserFactory : public IImageParserFactory
   public:
     MOCK_METHOD(std::string, getParserId, (), (const, override));
     MOCK_METHOD(std::string, getCodecName, (), (const, override));
-    MOCK_METHOD(bool, canParse, (nvimgcdcsCodeStreamDesc_t code_stream), (override));
+    MOCK_METHOD(bool, canParse, (nvimgcdcsCodeStreamDesc_t* code_stream), (override));
     MOCK_METHOD(std::unique_ptr<IImageParser>, createParser, (), (const, override));
 };
 

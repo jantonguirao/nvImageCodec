@@ -29,7 +29,7 @@ class MockCodec : public ICodec
   public:
     MOCK_METHOD(const std::string&, name, (), (const, override));
     MOCK_METHOD(std::unique_ptr<IImageParser>, createParser,
-        (nvimgcdcsCodeStreamDesc_t code_stream), (const, override));
+        (nvimgcdcsCodeStreamDesc_t* code_stream), (const, override));
     MOCK_METHOD(int, getDecodersNum, (), (const, override));
     MOCK_METHOD(IImageDecoderFactory*, getDecoderFactory, (int index), (const, override));
     MOCK_METHOD(int, getEncodersNum, (), (const, override));

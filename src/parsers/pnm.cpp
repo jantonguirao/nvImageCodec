@@ -74,7 +74,7 @@ int ParseInt(nvimgcdcsIoStreamDesc_t* io_stream)
     return int_value;
 }
 
-nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t io_stream_length;
@@ -137,7 +137,7 @@ struct nvimgcdcsParserDesc* PNMParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
@@ -152,7 +152,7 @@ nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNMParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNMParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("pnm_parser_can_parse");
@@ -206,7 +206,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNMParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNMParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("pnm_parser_get_image_info");
     try {
@@ -218,7 +218,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
 }
 
 nvimgcdcsStatus_t PNMParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("pnm_parser_get_image_info");

@@ -55,7 +55,7 @@ void ImageEncoder::canEncode(const std::vector<IImage*>& images, const std::vect
         return;
     }
 
-    std::vector<nvimgcdcsCodeStreamDesc*> cs_descs(code_streams.size());
+    std::vector<nvimgcdcsCodeStreamDesc_t*> cs_descs(code_streams.size());
     std::vector<nvimgcdcsImageDesc*> im_descs(code_streams.size());
     for (size_t i = 0; i < code_streams.size(); ++i) {
         cs_descs[i] = code_streams[i]->getCodeStreamDesc();
@@ -79,7 +79,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(IEncodeState* enco
     auto future = results.getFuture();
     encode_state_batch->setPromise(std::move(results));
 
-    std::vector<nvimgcdcsCodeStreamDesc*> code_stream_descs;
+    std::vector<nvimgcdcsCodeStreamDesc_t*> code_stream_descs;
     std::vector<nvimgcdcsImageDesc*> image_descs;
 
     for (size_t i = 0; i < code_streams.size(); ++i) {

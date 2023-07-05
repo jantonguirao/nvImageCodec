@@ -785,7 +785,7 @@ extern "C"
      * This abstracts source or sink for code stream bytes.
      *  
      */
-    typedef struct nvimgcdcsIOStreamDesc
+    typedef struct
     {
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
@@ -806,7 +806,7 @@ extern "C"
     /**
      * @brief Code stream description.
      */
-    struct nvimgcdcsCodeStreamDesc
+    typedef struct
     {
         nvimgcdcsStructureType_t type;     /**< Is the type of this structure. */
         const void* next;                  /**< Is NULL or a pointer to an extension structure type. */
@@ -816,8 +816,7 @@ extern "C"
         nvimgcdcsIoStreamDesc_t* io_stream; /**< I/O stream which works as a source or sink of code stream bytes */
 
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
-    };
-    typedef struct nvimgcdcsCodeStreamDesc* nvimgcdcsCodeStreamDesc_t;
+    } nvimgcdcsCodeStreamDesc_t;
 
     /**
      * @brief Image description.
@@ -846,10 +845,10 @@ extern "C"
         const char* id;                /**< Codec named identifier e.g. nvJpeg2000 */
         const char* codec;             /**< Codec name e.g. jpeg2000 */
 
-        nvimgcdcsStatus_t (*canParse)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream);
+        nvimgcdcsStatus_t (*canParse)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsParser_t parser);
-        nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result, nvimgcdcsCodeStreamDesc_t code_stream);
+        nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     };
 
     typedef struct nvimgcdcsParserDesc* nvimgcdcsParserDesc_t;
@@ -871,8 +870,8 @@ extern "C"
             const nvimgcdcsBackendParams_t* backend_params, const char* options);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
         nvimgcdcsStatus_t (*canEncode)(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
-            nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
-        nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
+            nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t** code_streams,
             int batch_size, const nvimgcdcsEncodeParams_t* params);
     };
 
@@ -895,8 +894,8 @@ extern "C"
             const nvimgcdcsBackendParams_t* backend_params, const char* options);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
         nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-            nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-        nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
+            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images,
             int batch_size, const nvimgcdcsDecodeParams_t* params);
     };
 

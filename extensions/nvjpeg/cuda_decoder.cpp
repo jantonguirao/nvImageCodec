@@ -47,7 +47,7 @@ nvimgcdcsDecoderDesc_t NvJpegCudaDecoderPlugin::getDecoderDesc()
     return &decoder_desc_;
 }
 
-nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams,
+nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
     nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     auto result = status;
@@ -115,7 +115,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
 }
 
 nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("nvjpeg_can_decode");
@@ -301,7 +301,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
         executor->instance, device_id_, sample_idx, decode_state_batch_.get(), [](int tid, int sample_idx, void* context) -> void {
             nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
             auto* decode_state = reinterpret_cast<NvJpegCudaDecoderPlugin::DecodeState*>(context);
-            nvimgcdcsCodeStreamDesc_t code_stream = decode_state->samples_[sample_idx].code_stream;
+            nvimgcdcsCodeStreamDesc_t* code_stream = decode_state->samples_[sample_idx].code_stream;
             nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
             nvimgcdcsImageDesc_t image = decode_state->samples_[sample_idx].image;
             const nvimgcdcsDecodeParams_t* params = decode_state->samples_[sample_idx].params;
@@ -445,7 +445,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decodeBatch()
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
+nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
     nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
 

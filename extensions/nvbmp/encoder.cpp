@@ -127,7 +127,7 @@ int writeBMP(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t pitchR, 
 }
 
 static nvimgcdcsStatus_t nvbmp_encoder_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_can_encode");
     auto result = status;
@@ -200,7 +200,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_destroy(nvimgcdcsEncoder_t encoder)
 }
 
 static nvimgcdcsStatus_t nvbmp_encoder_encode(
-    nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t* code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("nvbmp_encoder_encode");
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -222,7 +222,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode(
 }
 
 static nvimgcdcsStatus_t nvbmp_encoder_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvbmp_encode_batch");

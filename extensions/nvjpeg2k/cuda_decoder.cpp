@@ -37,7 +37,7 @@ nvimgcdcsDecoderDesc_t NvJpeg2kDecoderPlugin::getDecoderDesc()
     return &decoder_desc_;
 }
 
-nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams,
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
     nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     auto result = status;
@@ -93,7 +93,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("jpeg2k_can_decode");
@@ -267,7 +267,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
             auto& t = decode_state->per_thread_[tid];
             auto* parse_state = t.parse_state_.get();
             auto jpeg2k_state = t.state_;
-            nvimgcdcsCodeStreamDesc_t code_stream = decode_state->samples_[sample_idx].code_stream;
+            nvimgcdcsCodeStreamDesc_t* code_stream = decode_state->samples_[sample_idx].code_stream;
             nvimgcdcsImageDesc_t image = decode_state->samples_[sample_idx].image;
             const nvimgcdcsDecodeParams_t* params = decode_state->samples_[sample_idx].params;
             auto handle_ = decode_state->handle_;
@@ -583,7 +583,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decodeBatch()
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
     nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
 

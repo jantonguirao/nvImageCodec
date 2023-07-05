@@ -36,8 +36,8 @@ class CodeStream : public ICodeStream
     nvimgcdcsStatus_t setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
     std::string getCodecName() const override;
     ICodec* getCodec() const override;
-    nvimgcdcsIOStreamDesc* getInputStreamDesc() override;
-    nvimgcdcsCodeStreamDesc* getCodeStreamDesc() override;
+    nvimgcdcsIoStreamDesc_t* getInputStreamDesc() override;
+    nvimgcdcsCodeStreamDesc_t* getCodeStreamDesc() override;
 
   private:
     void parse();
@@ -68,8 +68,8 @@ class CodeStream : public ICodeStream
     std::unique_ptr<IImageParser> parser_;
     std::unique_ptr<IIoStreamFactory> io_stream_factory_;
     std::unique_ptr<IoStream> io_stream_;
-    nvimgcdcsIOStreamDesc io_stream_desc_;
-    nvimgcdcsCodeStreamDesc code_stream_desc_;
+    nvimgcdcsIoStreamDesc_t io_stream_desc_;
+    nvimgcdcsCodeStreamDesc_t code_stream_desc_;
     std::unique_ptr<nvimgcdcsImageInfo_t> image_info_;
 };
 } // namespace nvimgcdcs

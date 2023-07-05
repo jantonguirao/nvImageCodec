@@ -30,7 +30,7 @@ class ICodec
 
     virtual const std::string& name() const = 0;
 
-    virtual std::unique_ptr<IImageParser> createParser(nvimgcdcsCodeStreamDesc_t code_stream) const = 0;
+    virtual std::unique_ptr<IImageParser> createParser(nvimgcdcsCodeStreamDesc_t* code_stream) const = 0;
     virtual int getDecodersNum() const = 0;
     virtual IImageDecoderFactory* getDecoderFactory(int index) const = 0;
     virtual int getEncodersNum() const = 0;

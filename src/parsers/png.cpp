@@ -68,7 +68,7 @@ static constexpr chunk_type_field_t IEND_TAG{'I', 'E', 'N', 'D'};
 using png_signature_t = std::array<uint8_t, 8>;
 static constexpr png_signature_t PNG_SIGNATURE = {137, 80, 78, 71, 13, 10, 26, 10};
 
-nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
 
     nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
@@ -225,7 +225,7 @@ struct nvimgcdcsParserDesc* PNGParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t read_nbytes = 0;
@@ -240,7 +240,7 @@ nvimgcdcsStatus_t PNGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("png_parser_can_parse");
@@ -294,7 +294,7 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("png_parser_get_image_info");
     try {
@@ -308,7 +308,7 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
 }
 
 nvimgcdcsStatus_t PNGParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("png_parser_get_image_info");

@@ -44,7 +44,7 @@ nvimgcdcsEncoderDesc_t NvJpegCudaEncoderPlugin::getEncoderDesc()
 }
 
 nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -127,7 +127,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessin
 }
 
 nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("jpeg_can_encode");
@@ -268,7 +268,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
         executor->instance, device_id_, sample_idx, encode_state_batch_.get(), [](int tid, int sample_idx, void* task_context) -> void {
             nvtx3::scoped_range marker{"encode " + std::to_string(sample_idx)};
             auto encode_state = reinterpret_cast<NvJpegCudaEncoderPlugin::EncodeState*>(task_context);
-            nvimgcdcsCodeStreamDesc_t code_stream = encode_state->samples_[sample_idx].code_stream_;
+            nvimgcdcsCodeStreamDesc_t* code_stream = encode_state->samples_[sample_idx].code_stream_;
             nvimgcdcsImageDesc_t image = encode_state->samples_[sample_idx].image_;
             const nvimgcdcsEncodeParams_t* params = encode_state->samples_[sample_idx].params;
             auto& handle_ = encode_state->handle_;
@@ -380,7 +380,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encodeBatch()
 }
 
 nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg_encode_batch");

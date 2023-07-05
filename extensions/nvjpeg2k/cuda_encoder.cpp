@@ -36,7 +36,7 @@ nvimgcdcsEncoderDesc_t NvJpeg2kEncoderPlugin::getEncoderDesc()
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -124,7 +124,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg2k_can_encode");
@@ -297,7 +297,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
             auto& t = encode_state->per_thread_[tid];
             auto state_handle = t.state_;
             auto handle = encode_state->handle_;
-            nvimgcdcsCodeStreamDesc_t code_stream = encode_state->samples_[sample_idx].code_stream;
+            nvimgcdcsCodeStreamDesc_t* code_stream = encode_state->samples_[sample_idx].code_stream;
             nvimgcdcsImageDesc_t image = encode_state->samples_[sample_idx].image;
             const nvimgcdcsEncodeParams_t* params = encode_state->samples_[sample_idx].params;
             size_t tmp_buffer_sz = 0;
@@ -499,7 +499,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encodeBatch()
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg2k_encode_batch");
