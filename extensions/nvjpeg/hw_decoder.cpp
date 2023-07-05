@@ -58,7 +58,7 @@ bool NvJpegHwDecoderPlugin::isPlatformSupported()
     }
 }
 
-nvimgcdcsDecoderDesc_t NvJpegHwDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* NvJpegHwDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }

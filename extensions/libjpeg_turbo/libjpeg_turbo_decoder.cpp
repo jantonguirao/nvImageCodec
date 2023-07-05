@@ -79,7 +79,7 @@ LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDes
 {
 }
 
-nvimgcdcsDecoderDesc_t LibjpegTurboDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* LibjpegTurboDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }

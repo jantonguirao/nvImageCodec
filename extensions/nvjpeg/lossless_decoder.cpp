@@ -48,7 +48,7 @@ bool NvJpegLosslessDecoderPlugin::isPlatformSupported()
     return true;
 }
 
-nvimgcdcsDecoderDesc_t NvJpegLosslessDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* NvJpegLosslessDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }

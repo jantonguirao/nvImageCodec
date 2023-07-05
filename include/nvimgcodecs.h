@@ -874,7 +874,7 @@ extern "C"
     /**
      * Decoder description.
     */
-    struct nvimgcdcsDecoderDesc
+    typedef struct
     {
         nvimgcdcsStructureType_t type;       /**< Is the type of this structure. */
         const void* next;                    /**< Is NULL or a pointer to an extension structure type. */
@@ -891,9 +891,7 @@ extern "C"
             nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images,
             int batch_size, const nvimgcdcsDecodeParams_t* params);
-    };
-
-    typedef struct nvimgcdcsDecoderDesc* nvimgcdcsDecoderDesc_t;
+    } nvimgcdcsDecoderDesc_t;
 
     /**
      * @brief Defines decoder or encoder priority in codec.
@@ -942,8 +940,8 @@ extern "C"
 
         nvimgcdcsStatus_t (*registerEncoder)(void* instance, const nvimgcdcsEncoderDesc_t* desc, float priority);
         nvimgcdcsStatus_t (*unregisterEncoder)(void* instance, const nvimgcdcsEncoderDesc_t* desc);
-        nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc, float priority);
-        nvimgcdcsStatus_t (*unregisterDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc);
+        nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t* desc, float priority);
+        nvimgcdcsStatus_t (*unregisterDecoder)(void* instance, const nvimgcdcsDecoderDesc_t* desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const nvimgcdcsParserDesc_t* desc, float priority);
         nvimgcdcsStatus_t (*unregisterParser)(void* instance, const nvimgcdcsParserDesc_t* desc);
 

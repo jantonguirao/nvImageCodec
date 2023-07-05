@@ -22,7 +22,7 @@ class NvJpegCudaDecoderPlugin
 {
   public:
     explicit NvJpegCudaDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
-    nvimgcdcsDecoderDesc_t getDecoderDesc();
+    nvimgcdcsDecoderDesc_t* getDecoderDesc();
 
   private:
     struct ParseState
@@ -120,7 +120,7 @@ class NvJpegCudaDecoderPlugin
 
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    struct nvimgcdcsDecoderDesc decoder_desc_;
+    nvimgcdcsDecoderDesc_t decoder_desc_;
     
     const nvimgcdcsFrameworkDesc_t framework_;
 };

@@ -324,7 +324,7 @@ LibtiffDecoderPlugin::LibtiffDecoderPlugin(const nvimgcdcsFrameworkDesc_t framew
 {
 }
 
-nvimgcdcsDecoderDesc_t LibtiffDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* LibtiffDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }

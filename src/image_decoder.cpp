@@ -19,7 +19,7 @@
 
 namespace nvimgcdcs {
 
-ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t desc, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t* desc, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : decoder_desc_(desc)
 {
     auto ret = decoder_desc_->create(decoder_desc_->instance, &decoder_, device_id, backend_params, options);

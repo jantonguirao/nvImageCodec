@@ -32,7 +32,7 @@ NvJpeg2kDecoderPlugin::NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t fram
 {
 }
 
-nvimgcdcsDecoderDesc_t NvJpeg2kDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* NvJpeg2kDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }

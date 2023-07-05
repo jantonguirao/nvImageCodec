@@ -198,7 +198,7 @@ OpenCVDecoderPlugin::OpenCVDecoderPlugin(const std::string& codec_name, const nv
     , framework_(framework)
 {}
 
-nvimgcdcsDecoderDesc_t OpenCVDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* OpenCVDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }

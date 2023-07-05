@@ -42,7 +42,7 @@ NvJpegCudaDecoderPlugin::NvJpegCudaDecoderPlugin(const nvimgcdcsFrameworkDesc_t 
 {
 }
 
-nvimgcdcsDecoderDesc_t NvJpegCudaDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* NvJpegCudaDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }
