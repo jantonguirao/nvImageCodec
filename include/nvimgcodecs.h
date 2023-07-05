@@ -952,7 +952,7 @@ extern "C"
     /**
      * @brief Extension description
      */
-    typedef struct nvimgcdcsExtensionDesc
+    typedef struct
     {
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
