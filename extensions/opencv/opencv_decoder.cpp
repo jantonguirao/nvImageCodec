@@ -294,7 +294,7 @@ DecoderImpl::DecoderImpl(const nvimgcdcsFrameworkDesc_t framework, int device_id
     , device_id_(device_id)
     , backend_params_(backend_params)
 {
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
     decode_state_batch_ = std::make_unique<DecodeState>(num_threads);
@@ -450,7 +450,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
         decode_state_batch_->samples_[i].params = params;
     }
 
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
         executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(),

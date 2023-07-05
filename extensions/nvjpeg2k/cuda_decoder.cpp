@@ -144,7 +144,7 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework
     }
 
     // create resources per thread
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
@@ -258,7 +258,7 @@ NvJpeg2kDecoderPlugin::ParseState::~ParseState()
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 {
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     executor->launch(
         executor->instance, device_id_, sample_idx, decode_state_batch_.get(), [](int tid, int sample_idx, void* context) -> void {

@@ -767,7 +767,7 @@ extern "C"
      *
      * Codec plugins can use executor available from plugin framework to schedule execution of asynchronous task.  
      */
-    struct nvimgcdcsExecutorDesc
+    typedef struct
     {
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         const void* next;              /**< Is NULL or a pointer to an extension structure type. */
@@ -777,12 +777,7 @@ extern "C"
         nvimgcdcsStatus_t (*launch)(void* instance, int device_id, int sample_idx, void* task_context,
             void (*task)(int thread_id, int sample_idx, void* task_context));
         int (*get_num_threads)(void* instance);
-    };
-
-    /**
-     * @brief Handle to executor description.
-     */
-    typedef struct nvimgcdcsExecutorDesc* nvimgcdcsExecutorDesc_t;
+    } nvimgcdcsExecutorDesc_t;
 
     /**
      * @brief Input/Output stream description.
@@ -964,7 +959,7 @@ extern "C"
         nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc, float priority);
         nvimgcdcsStatus_t (*unregisterParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
 
-        nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t* result);
+        nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t** result);
         nvimgcdcsLogFunc_t log;
     };
     typedef struct nvimgcdcsFrameworkDesc* nvimgcdcsFrameworkDesc_t;
@@ -1027,7 +1022,7 @@ extern "C"
         uint32_t message_severity;                    /**< Severity for default debug messenger */
         uint32_t message_type;                        /**< Message type for default debug messenger */
         int num_cpu_threads;              /**< Number of CPU threads in default executor (0 means default value equal to #cpu_cores) */
-        nvimgcdcsExecutorDesc_t executor; /**< Custom executor */
+        nvimgcdcsExecutorDesc_t* executor; /**< Custom executor */
     } nvimgcdcsInstanceCreateInfo_t;
 
     /**

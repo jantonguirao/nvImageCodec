@@ -149,7 +149,7 @@ NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework
 {
     XM_CHECK_NVJPEG2K(nvjpeg2kEncoderCreateSimple(&handle_));
 
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
@@ -287,7 +287,7 @@ static nvjpeg2kColorSpace_t nvimgcdcs_to_nvjpeg2k_color_spec(nvimgcdcsColorSpec_
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 {
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
 
     executor->launch(

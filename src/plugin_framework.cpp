@@ -139,7 +139,7 @@ nvimgcdcsStatus_t PluginFramework::static_unregister_parser(void* instance, cons
     return handle->unregisterParser(desc);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_get_executor(void* instance, nvimgcdcsExecutorDesc_t* result)
+nvimgcdcsStatus_t PluginFramework::static_get_executor(void* instance, nvimgcdcsExecutorDesc_t** result)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->getExecutor(result);
@@ -403,7 +403,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterParser(const struct nvimgcdcsParser
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::getExecutor(nvimgcdcsExecutorDesc_t* result)
+nvimgcdcsStatus_t PluginFramework::getExecutor(nvimgcdcsExecutorDesc_t** result)
 {
     *result = executor_->getExecutorDesc();
     return NVIMGCDCS_STATUS_SUCCESS;

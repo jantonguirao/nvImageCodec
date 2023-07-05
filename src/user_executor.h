@@ -20,12 +20,12 @@ namespace nvimgcdcs {
 class UserExecutor : public IExecutor
 {
   public:
-    explicit UserExecutor(nvimgcdcsExecutorDesc_t executor_desc) : desc_(executor_desc) {}
+    explicit UserExecutor(nvimgcdcsExecutorDesc_t* executor_desc) : desc_(executor_desc) {}
     ~UserExecutor() override = default;
-    nvimgcdcsExecutorDesc_t getExecutorDesc() override { return desc_; }
+    nvimgcdcsExecutorDesc_t* getExecutorDesc() override { return desc_; }
 
   private:
-    nvimgcdcsExecutorDesc_t desc_;
+    nvimgcdcsExecutorDesc_t* desc_;
 };
 
 } // namespace nvimgcdcs
