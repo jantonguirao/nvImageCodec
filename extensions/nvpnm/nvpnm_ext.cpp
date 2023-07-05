@@ -12,7 +12,7 @@
 #include "error_handling.h"
 #include "log.h"
 
-extern nvimgcdcsEncoderDesc nvpnm_encoder;
+extern nvimgcdcsEncoderDesc_t nvpnm_encoder;
 
 namespace nvimgcdcs {
 

@@ -2,7 +2,7 @@
 #include "error_handling.h"
 #include "log.h"
 
-extern nvimgcdcsEncoderDesc nvbmp_encoder;
+extern nvimgcdcsEncoderDesc_t nvbmp_encoder;
 extern nvimgcdcsDecoderDesc nvbmp_decoder;
 
 namespace nvimgcdcs {

@@ -839,7 +839,7 @@ extern "C"
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         const void* next;              /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                /**< Plugin instance pointer which will be passed back in functions */
+        void* instance;                /**< Parser description instance pointer which will be passed back in functions */
         const char* id;                /**< Codec named identifier e.g. nvJpeg2000 */
         const char* codec;             /**< Codec name e.g. jpeg2000 */
 
@@ -852,12 +852,12 @@ extern "C"
     /**
      * @brief Encoder description.
      */
-    struct nvimgcdcsEncoderDesc
+    typedef struct
     {
         nvimgcdcsStructureType_t type;       /**< Is the type of this structure. */
         const void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                      /**< Plugin instance pointer which will be passed back in functions */
+        void* instance;                      /**< Encoder description instance pointer which will be passed back in functions */
         const char* id;                      /**< Codec named identifier e.g. nvJpeg2000 */
         const char* codec;                   /**< Codec name e.g. jpeg2000 */
         nvimgcdcsBackendKind_t backend_kind; /**< Backend kind */
@@ -869,9 +869,7 @@ extern "C"
             nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams,
             int batch_size, const nvimgcdcsEncodeParams_t* params);
-    };
-
-    typedef struct nvimgcdcsEncoderDesc* nvimgcdcsEncoderDesc_t;
+    } nvimgcdcsEncoderDesc_t;
 
     /**
      * Decoder description.
@@ -881,7 +879,7 @@ extern "C"
         nvimgcdcsStructureType_t type;       /**< Is the type of this structure. */
         const void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                      /**< Plugin instance pointer which will be passed back in functions */
+        void* instance;                      /**< Decoder description instance pointer which will be passed back in functions */
         const char* id;                      /**< Codec named identifier e.g. nvJpeg2000 */
         const char* codec;                   /**< Codec name e.g. jpeg2000 */
         nvimgcdcsBackendKind_t backend_kind; /**< Backend kind */
@@ -942,8 +940,8 @@ extern "C"
         nvimgcdcsDeviceAllocator_t* device_allocator; /**< Pointer to custom device memory allocator */
         nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Pointer to custom pinned memory allocator */
 
-        nvimgcdcsStatus_t (*registerEncoder)(void* instance, const nvimgcdcsEncoderDesc_t desc, float priority);
-        nvimgcdcsStatus_t (*unregisterEncoder)(void* instance, const nvimgcdcsEncoderDesc_t desc);
+        nvimgcdcsStatus_t (*registerEncoder)(void* instance, const nvimgcdcsEncoderDesc_t* desc, float priority);
+        nvimgcdcsStatus_t (*unregisterEncoder)(void* instance, const nvimgcdcsEncoderDesc_t* desc);
         nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc, float priority);
         nvimgcdcsStatus_t (*unregisterDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc);
         nvimgcdcsStatus_t (*registerParser)(void* instance, const nvimgcdcsParserDesc_t* desc, float priority);

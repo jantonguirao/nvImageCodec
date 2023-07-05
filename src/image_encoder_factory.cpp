@@ -14,7 +14,7 @@
 #include "image_encoder.h"
 namespace nvimgcdcs {
 
-ImageEncoderFactory::ImageEncoderFactory(const nvimgcdcsEncoderDesc_t desc)
+ImageEncoderFactory::ImageEncoderFactory(const nvimgcdcsEncoderDesc_t* desc)
     : encoder_desc_(desc)
 {
 }

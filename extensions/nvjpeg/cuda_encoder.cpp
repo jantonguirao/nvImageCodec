@@ -38,7 +38,7 @@ NvJpegCudaEncoderPlugin::NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t 
 {
 }
 
-nvimgcdcsEncoderDesc_t NvJpegCudaEncoderPlugin::getEncoderDesc()
+nvimgcdcsEncoderDesc_t* NvJpegCudaEncoderPlugin::getEncoderDesc()
 {
     return &encoder_desc_;
 }

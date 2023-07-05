@@ -30,7 +30,7 @@ NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t fram
 {
 }
 
-nvimgcdcsEncoderDesc_t NvJpeg2kEncoderPlugin::getEncoderDesc()
+nvimgcdcsEncoderDesc_t* NvJpeg2kEncoderPlugin::getEncoderDesc()
 {
     return &encoder_desc_;
 }

@@ -103,7 +103,7 @@ PluginFramework::~PluginFramework()
     unregisterAllExtensions();
 }
 
-nvimgcdcsStatus_t PluginFramework::static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc, float priority)
+nvimgcdcsStatus_t PluginFramework::static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t* desc, float priority)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerEncoder(desc, priority);
@@ -121,7 +121,7 @@ nvimgcdcsStatus_t PluginFramework::static_register_parser(void* instance, const 
     return handle->registerParser(desc, priority);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_unregister_encoder(void* instance, const nvimgcdcsEncoderDesc_t desc)
+nvimgcdcsStatus_t PluginFramework::static_unregister_encoder(void* instance, const nvimgcdcsEncoderDesc_t* desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->unregisterEncoder(desc);
@@ -340,7 +340,7 @@ ICodec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
     return codec;
 }
 
-nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t desc, float priority)
+nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t* desc, float priority)
 {
     NVIMGCDCS_LOG_INFO("Framework is registering encoder (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
@@ -349,7 +349,7 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::unregisterEncoder(const nvimgcdcsEncoderDesc_t desc)
+nvimgcdcsStatus_t PluginFramework::unregisterEncoder(const nvimgcdcsEncoderDesc_t* desc)
 {
     NVIMGCDCS_LOG_INFO("Framework is unregistering encoder (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = codec_registry_->getCodecByName(desc->codec);

@@ -249,7 +249,7 @@ static nvimgcdcsStatus_t nvbmp_encoder_encode_batch(nvimgcdcsEncoder_t encoder, 
 }
 
 // clang-format off
-nvimgcdcsEncoderDesc nvbmp_encoder = {
+nvimgcdcsEncoderDesc_t nvbmp_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
     NULL,               // instance    

@@ -44,7 +44,7 @@ class MockEncoderPlugin
               static_create, static_destroy, static_can_encode, static_encode_batch}
     {
     }
-    nvimgcdcsEncoderDesc_t getEncoderDesc() { return &encoder_desc_; }
+    nvimgcdcsEncoderDesc_t* getEncoderDesc() { return &encoder_desc_; }
 
   private:
     static nvimgcdcsStatus_t static_create(
@@ -71,7 +71,7 @@ class MockEncoderPlugin
         return NVIMGCDCS_STATUS_SUCCESS;
     }
 
-    struct nvimgcdcsEncoderDesc encoder_desc_;
+    nvimgcdcsEncoderDesc_t encoder_desc_;
     const std::vector<nvimgcdcsProcessingStatus_t>& return_status_;
 };
 

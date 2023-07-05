@@ -23,7 +23,7 @@ class NvJpeg2kEncoderPlugin
 {
   public:
     explicit NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
-    nvimgcdcsEncoderDesc_t getEncoderDesc();
+    nvimgcdcsEncoderDesc_t* getEncoderDesc();
 
   private:
     struct Encoder;
@@ -89,7 +89,7 @@ class NvJpeg2kEncoderPlugin
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    struct nvimgcdcsEncoderDesc encoder_desc_;
+    nvimgcdcsEncoderDesc_t encoder_desc_;
     
     const nvimgcdcsFrameworkDesc_t framework_;
 };

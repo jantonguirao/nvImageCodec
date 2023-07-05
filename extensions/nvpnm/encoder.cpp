@@ -233,7 +233,7 @@ static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsI
 }
 
 // clang-format off
-struct nvimgcdcsEncoderDesc nvpnm_encoder = {
+nvimgcdcsEncoderDesc_t nvpnm_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
     NULL,                // instance     

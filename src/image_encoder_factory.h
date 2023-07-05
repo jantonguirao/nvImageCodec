@@ -23,7 +23,7 @@ class IImageEncoder;
 class ImageEncoderFactory : public IImageEncoderFactory
 {
   public:
-    explicit ImageEncoderFactory(const nvimgcdcsEncoderDesc_t desc);
+    explicit ImageEncoderFactory(const nvimgcdcsEncoderDesc_t* desc);
     std::string getEncoderId() const override;
     std::string getCodecName() const override;
     nvimgcdcsBackendKind_t getBackendKind() const override;
@@ -31,6 +31,6 @@ class ImageEncoderFactory : public IImageEncoderFactory
         int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options) const override;
 
   private:
-    const nvimgcdcsEncoderDesc_t encoder_desc_;
+    const nvimgcdcsEncoderDesc_t* encoder_desc_;
 };
 } // namespace nvimgcdcs
