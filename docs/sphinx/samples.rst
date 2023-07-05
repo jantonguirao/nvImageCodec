@@ -33,5 +33,5 @@ The next section documents the samples showing various use cases across these AP
     C <samples/c_samples>
     Python <samples/python_samples>
 
-Refer to the :ref:`Installation` docs for the sample installation guide using *.deb or .tar installers.
+Refer to the :ref:`Installation` docs for the sample installation guide using ``*.deb`` or ``*.tar`` installers.
 Refer to the sample README for instructions to compile samples from the source.

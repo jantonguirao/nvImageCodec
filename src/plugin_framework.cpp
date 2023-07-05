@@ -175,9 +175,9 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
-    if (extension_desc->api_version > NVIMGCDCS_EXT_API_VER) {
+    if (extension_desc->ext_api_version > NVIMGCDCS_EXT_API_VER) {
         NVIMGCDCS_LOG_WARNING("Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
-                                                              << " Extension API version: " << NVIMGCDCS_STREAM_VER(extension_desc->api_version)
+                                                              << " Extension API version: " << NVIMGCDCS_STREAM_VER(extension_desc->ext_api_version)
                                                               << " newer than framework API version: " << NVIMGCDCS_EXT_API_VER);
         return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
     }

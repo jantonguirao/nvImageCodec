@@ -43,5 +43,5 @@ Python Samples' Dependencies:
 * cuCIM
 * CV-CUDA
 
-Refer to the :ref:`Installation` docs for the sample installation guide using *.deb or .tar installers.
+Refer to the :ref:`Installation` docs for the sample installation guide using ``*.deb`` or ``.tar`` installers.
 Refer to the sample README for instructions to compile samples from the source.
