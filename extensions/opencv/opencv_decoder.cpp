@@ -155,7 +155,7 @@ struct DecodeState
     struct Sample
     {
         nvimgcdcsCodeStreamDesc_t* code_stream;
-        nvimgcdcsImageDesc_t image;
+        nvimgcdcsImageDesc_t* image;
         const nvimgcdcsDecodeParams_t* params;
     };
     std::vector<PerThreadResources> per_thread_;
@@ -168,16 +168,16 @@ struct DecoderImpl
     ~DecoderImpl();
 
     
-    nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images,
+    nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images,
         int batch_size, const nvimgcdcsDecodeParams_t* params);
     nvimgcdcsStatus_t decodeBatch(
-        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
     static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
     static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
     static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
-        nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
     
     const nvimgcdcsFrameworkDesc_t framework_;
     int device_id_;
@@ -204,7 +204,7 @@ nvimgcdcsDecoderDesc_t OpenCVDecoderPlugin::getDecoderDesc()
 }
 
 nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
-    nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -272,7 +272,7 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
 }
 
 nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("opencv_can_decode");
@@ -346,7 +346,7 @@ nvimgcdcsStatus_t DecoderImpl::static_destroy(nvimgcdcsDecoder_t decoder)
 }
 
 nvimgcdcsStatus_t decodeImpl(
-    nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params, std::vector<uint8_t>& buffer)
+    nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params, std::vector<uint8_t>& buffer)
 {
     nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     auto ret = image->getImageInfo(image->instance, &info);
@@ -441,7 +441,7 @@ nvimgcdcsStatus_t decodeImpl(
 }
 
 nvimgcdcsStatus_t DecoderImpl::decodeBatch(
-    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     decode_state_batch_->samples_.resize(batch_size);
     for (int i = 0; i < batch_size; i++) {
@@ -471,7 +471,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
 }
 
 nvimgcdcsStatus_t DecoderImpl::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
-    nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("opencv_decode_batch");

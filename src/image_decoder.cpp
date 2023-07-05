@@ -111,7 +111,7 @@ void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, cons
     assert(order.size() == code_streams.size());
 
     std::vector<nvimgcdcsCodeStreamDesc_t*> cs_descs(code_streams.size());
-    std::vector<nvimgcdcsImageDesc*> im_descs(code_streams.size());
+    std::vector<nvimgcdcsImageDesc_t*> im_descs(code_streams.size());
     std::vector<nvimgcdcsProcessingStatus_t> internal_status(code_streams.size(), NVIMGCDCS_STATUS_NOT_INITIALIZED);
     for (size_t i = 0; i < code_streams.size(); ++i) {
         int orig_idx = order[i];
@@ -143,7 +143,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
     assert(order.size() == code_streams.size());
 
     std::vector<nvimgcdcsCodeStreamDesc_t*> code_stream_descs(code_streams.size());
-    std::vector<nvimgcdcsImageDesc*> image_descs(code_streams.size());
+    std::vector<nvimgcdcsImageDesc_t*> image_descs(code_streams.size());
 
     for (size_t i = 0; i < code_streams.size(); ++i) {
         int orig_idx = order[i];

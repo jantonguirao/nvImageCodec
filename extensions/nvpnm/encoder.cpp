@@ -20,7 +20,7 @@
 struct nvimgcdcsEncoder
 {};
 
-static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
+static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
     nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pnm_can_encode");
@@ -179,7 +179,7 @@ int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t pitchR,
 }
 
 static nvimgcdcsStatus_t pnm_encode(
-    nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t* code_stream, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* image, nvimgcdcsCodeStreamDesc_t* code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pnm_encode");
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -205,7 +205,7 @@ static nvimgcdcsStatus_t pnm_encode(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t** code_streams,
+static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams,
     int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
