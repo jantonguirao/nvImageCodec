@@ -74,8 +74,8 @@ static nvimgcdcsStatus_t nvbmp_decoder_destroy(nvimgcdcsDecoder_t decoder)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_decoder_decode(
+    nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_decode");
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -121,7 +121,7 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, 
         }
         nvimgcdcsStatus_t result = NVIMGCDCS_STATUS_SUCCESS;
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            result = nvbmp_decoder_decode(decoder, nullptr, code_streams[sample_idx], images[sample_idx], params);
+            result = nvbmp_decoder_decode(decoder, code_streams[sample_idx], images[sample_idx], params);
             if (result != NVIMGCDCS_STATUS_SUCCESS) {
                 return result;
             }
