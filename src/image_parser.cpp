@@ -14,7 +14,7 @@
 
 namespace nvimgcdcs {
 
-ImageParser::ImageParser(const struct nvimgcdcsParserDesc* desc)
+ImageParser::ImageParser(const nvimgcdcsParserDesc_t* desc)
     : parser_desc_(desc)
 {
     parser_desc_->create(parser_desc_->instance, &parser_);

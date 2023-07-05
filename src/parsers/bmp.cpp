@@ -96,7 +96,7 @@ BMPParserPlugin::BMPParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* BMPParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* BMPParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }

@@ -20,7 +20,7 @@ class BMPParserPlugin
 {
   public:
     explicit BMPParserPlugin();
-    struct nvimgcdcsParserDesc* getParserDesc();
+    nvimgcdcsParserDesc_t* getParserDesc();
 
   private:
     struct Parser
@@ -42,7 +42,7 @@ class BMPParserPlugin
         void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsParser_t* parser);
 
-    struct nvimgcdcsParserDesc parser_desc_;
+    nvimgcdcsParserDesc_t parser_desc_;
 };
 
 nvimgcdcsStatus_t get_bmp_parser_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);

@@ -20,7 +20,7 @@ class TIFFParserPlugin
 {
   public:
     explicit TIFFParserPlugin();
-    struct nvimgcdcsParserDesc* getParserDesc();
+    nvimgcdcsParserDesc_t* getParserDesc();
 
   private:
     struct Parser
@@ -46,7 +46,7 @@ class TIFFParserPlugin
         void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsParser_t* parser);
 
-    struct nvimgcdcsParserDesc parser_desc_;
+    nvimgcdcsParserDesc_t parser_desc_;
 };
 
 nvimgcdcsStatus_t get_tiff_parser_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);

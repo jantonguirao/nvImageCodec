@@ -15,7 +15,7 @@
 
 namespace nvimgcdcs {
 
-ImageParserFactory::ImageParserFactory(const struct nvimgcdcsParserDesc* desc)
+ImageParserFactory::ImageParserFactory(const nvimgcdcsParserDesc_t* desc)
     : parser_desc_(desc)
 {
 }

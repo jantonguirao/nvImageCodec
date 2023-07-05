@@ -132,7 +132,7 @@ PNMParserPlugin::PNMParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* PNMParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* PNMParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }

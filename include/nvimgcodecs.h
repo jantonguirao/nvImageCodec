@@ -834,7 +834,7 @@ extern "C"
     /**
      * @brief Parser description.
      */
-    struct nvimgcdcsParserDesc
+    typedef struct
     {
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         const void* next;              /**< Is NULL or a pointer to an extension structure type. */
@@ -847,9 +847,7 @@ extern "C"
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsParser_t parser);
         nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result, nvimgcdcsCodeStreamDesc_t* code_stream);
-    };
-
-    typedef struct nvimgcdcsParserDesc* nvimgcdcsParserDesc_t;
+    } nvimgcdcsParserDesc_t;
 
     /**
      * @brief Encoder description.
@@ -948,8 +946,8 @@ extern "C"
         nvimgcdcsStatus_t (*unregisterEncoder)(void* instance, const nvimgcdcsEncoderDesc_t desc);
         nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc, float priority);
         nvimgcdcsStatus_t (*unregisterDecoder)(void* instance, const nvimgcdcsDecoderDesc_t desc);
-        nvimgcdcsStatus_t (*registerParser)(void* instance, const struct nvimgcdcsParserDesc* desc, float priority);
-        nvimgcdcsStatus_t (*unregisterParser)(void* instance, const struct nvimgcdcsParserDesc* desc);
+        nvimgcdcsStatus_t (*registerParser)(void* instance, const nvimgcdcsParserDesc_t* desc, float priority);
+        nvimgcdcsStatus_t (*unregisterParser)(void* instance, const nvimgcdcsParserDesc_t* desc);
 
         nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t** result);
         nvimgcdcsLogFunc_t log;

@@ -117,7 +117,7 @@ JPEGParserPlugin::JPEGParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* JPEGParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* JPEGParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }

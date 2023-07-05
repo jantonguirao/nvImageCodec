@@ -115,7 +115,7 @@ nvimgcdcsStatus_t PluginFramework::static_register_decoder(void* instance, const
     return handle->registerDecoder(desc, priority);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_register_parser(void* instance, const struct nvimgcdcsParserDesc* desc, float priority)
+nvimgcdcsStatus_t PluginFramework::static_register_parser(void* instance, const nvimgcdcsParserDesc_t* desc, float priority)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->registerParser(desc, priority);
@@ -133,7 +133,7 @@ nvimgcdcsStatus_t PluginFramework::static_unregister_decoder(void* instance, con
     return handle->unregisterDecoder(desc);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_unregister_parser(void* instance, const struct nvimgcdcsParserDesc* desc)
+nvimgcdcsStatus_t PluginFramework::static_unregister_parser(void* instance, const nvimgcdcsParserDesc_t* desc)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
     return handle->unregisterParser(desc);
@@ -382,7 +382,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterDecoder(const nvimgcdcsDecoderDesc_
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDesc* desc, float priority)
+nvimgcdcsStatus_t PluginFramework::registerParser(const nvimgcdcsParserDesc_t* desc, float priority)
 {
     NVIMGCDCS_LOG_INFO("Framework is registering parser (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
@@ -391,7 +391,7 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const struct nvimgcdcsParserDe
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PluginFramework::unregisterParser(const struct nvimgcdcsParserDesc* desc)
+nvimgcdcsStatus_t PluginFramework::unregisterParser(const nvimgcdcsParserDesc_t* desc)
 {
     NVIMGCDCS_LOG_INFO("Framework is unregistering parser (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = codec_registry_->getCodecByName(desc->codec);

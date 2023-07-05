@@ -171,7 +171,7 @@ WebpParserPlugin::WebpParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* WebpParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* WebpParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }

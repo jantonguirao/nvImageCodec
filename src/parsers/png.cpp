@@ -220,7 +220,7 @@ PNGParserPlugin::PNGParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* PNGParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* PNGParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }

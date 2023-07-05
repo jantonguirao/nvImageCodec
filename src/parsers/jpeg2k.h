@@ -20,7 +20,7 @@ class JPEG2KParserPlugin
 {
   public:
     explicit JPEG2KParserPlugin();
-    struct nvimgcdcsParserDesc* getParserDesc();
+    nvimgcdcsParserDesc_t* getParserDesc();
 
   private:
     struct Parser
@@ -55,7 +55,7 @@ class JPEG2KParserPlugin
         void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsParser_t* parser);
 
-    struct nvimgcdcsParserDesc parser_desc_;
+    nvimgcdcsParserDesc_t parser_desc_;
 };
 
 nvimgcdcsStatus_t get_jpeg2k_parser_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);

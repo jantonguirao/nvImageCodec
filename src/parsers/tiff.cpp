@@ -148,7 +148,7 @@ TIFFParserPlugin::TIFFParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* TIFFParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* TIFFParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }
