@@ -51,14 +51,14 @@ enum jpeg2k_marker_t : uint16_t
 
 const uint8_t DIFFERENT_BITDEPTH_PER_COMPONENT = 0xFF;
 
-bool ReadBoxHeader(block_type_t& block_type, uint32_t& block_size, nvimgcdcsIoStreamDesc_t io_stream)
+bool ReadBoxHeader(block_type_t& block_type, uint32_t& block_size, nvimgcdcsIoStreamDesc_t* io_stream)
 {
     block_size = ReadValueBE<uint32_t>(io_stream);
     block_type = ReadValue<block_type_t>(io_stream);
     return true;
 }
 
-void SkipBox(nvimgcdcsIoStreamDesc_t io_stream, block_type_t expected_block, const char* box_description)
+void SkipBox(nvimgcdcsIoStreamDesc_t* io_stream, block_type_t expected_block, const char* box_description)
 {
     auto block_size = ReadValueBE<uint32_t>(io_stream);
     auto block_type = ReadValue<block_type_t>(io_stream);
@@ -126,7 +126,7 @@ struct nvimgcdcsParserDesc* JPEG2KParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t JPEG2KParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t bitstream_size = 0;
     io_stream->size(io_stream->instance, &bitstream_size);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -199,7 +199,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_destroy(nvimgcdcsParser_t p
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseJP2(nvimgcdcsIoStreamDesc_t io_stream)
+nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseJP2(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     uint32_t block_size;
     block_type_t block_type;
@@ -263,7 +263,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseJP2(nvimgcdcsIoStreamDesc_t i
     return NVIMGCDCS_STATUS_BAD_CODESTREAM; //  didn't parse codestream
 }
 
-nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseCodeStream(nvimgcdcsIoStreamDesc_t io_stream)
+nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseCodeStream(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     auto marker = ReadValueBE<uint16_t>(io_stream);
     if (marker != SOC_marker) {
@@ -326,7 +326,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
         YOSiz = 0;
         CSiz = 0;
 
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         size_t bitstream_size = 0;
         io_stream->size(io_stream->instance, &bitstream_size);
         if (bitstream_size < 12) {

@@ -97,7 +97,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
         if (!(image_info.num_planes <= 2 && image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16))
             *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
         
-        nvimgcdcsIoStreamDesc_t io_stream = (*code_stream)->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = (*code_stream)->io_stream;
         const void* encoded_stream_data = nullptr;
         size_t encoded_stream_data_size = 0;
         io_stream->raw_data(io_stream->instance, &encoded_stream_data);
@@ -291,7 +291,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch()
     for (int sample_idx = 0; sample_idx < nsamples; sample_idx++)
     {
         nvimgcdcsCodeStreamDesc_t code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[sample_idx].image;
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};

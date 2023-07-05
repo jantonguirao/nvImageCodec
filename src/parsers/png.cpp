@@ -71,7 +71,7 @@ static constexpr png_signature_t PNG_SIGNATURE = {137, 80, 78, 71, 13, 10, 26, 1
 nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
 
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t io_stream_length;
     io_stream->size(io_stream->instance, &io_stream_length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -227,7 +227,7 @@ struct nvimgcdcsParserDesc* PNGParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t PNGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t read_nbytes = 0;
     png_signature_t signature;
     io_stream->seek(io_stream->instance, 0, SEEK_SET);

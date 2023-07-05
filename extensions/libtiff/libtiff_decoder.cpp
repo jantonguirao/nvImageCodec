@@ -28,7 +28,7 @@ namespace libtiff {
 class DecoderHelper
 {
   public:
-    explicit DecoderHelper(nvimgcdcsIoStreamDesc_t io_stream)
+    explicit DecoderHelper(nvimgcdcsIoStreamDesc_t* io_stream)
         : io_stream_(io_stream)
     {
     }
@@ -94,10 +94,10 @@ class DecoderHelper
     }
 
   private:
-    nvimgcdcsIoStreamDesc_t io_stream_;
+    nvimgcdcsIoStreamDesc_t* io_stream_;
 };
 
-std::unique_ptr<TIFF, void (*)(TIFF*)> OpenTiff(nvimgcdcsIoStreamDesc_t io_stream)
+std::unique_ptr<TIFF, void (*)(TIFF*)> OpenTiff(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     TIFF* tiffptr;
     TIFFMapFileProc mapproc = nullptr;

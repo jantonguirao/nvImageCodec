@@ -27,7 +27,7 @@ namespace {
 // comments can appear in the middle of tokens, and the newline at the
 // end is part of the comment, not counted as whitespace
 // http://netpbm.sourceforge.net/doc/pbm.html
-size_t SkipComment(nvimgcdcsIoStreamDesc_t io_stream)
+size_t SkipComment(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     char c;
     size_t skipped = 0;
@@ -38,7 +38,7 @@ size_t SkipComment(nvimgcdcsIoStreamDesc_t io_stream)
     return skipped;
 }
 
-void SkipSpaces(nvimgcdcsIoStreamDesc_t io_stream)
+void SkipSpaces(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     size_t pos;
     io_stream->tell(io_stream->instance, &pos);
@@ -54,7 +54,7 @@ void SkipSpaces(nvimgcdcsIoStreamDesc_t io_stream)
     io_stream->seek(io_stream->instance, pos - 1, SEEK_SET);
 }
 
-int ParseInt(nvimgcdcsIoStreamDesc_t io_stream)
+int ParseInt(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     size_t pos;
     io_stream->tell(io_stream->instance, &pos);
@@ -76,7 +76,7 @@ int ParseInt(nvimgcdcsIoStreamDesc_t io_stream)
 
 nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t io_stream_length;
     io_stream->size(io_stream->instance, &io_stream_length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -139,7 +139,7 @@ struct nvimgcdcsParserDesc* PNMParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);

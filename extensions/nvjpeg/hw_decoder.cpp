@@ -98,7 +98,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle, &nvjpeg_params_));
         std::unique_ptr<std::remove_pointer<nvjpegDecodeParams_t>::type, decltype(&nvjpegDecodeParamsDestroy)> nvjpeg_params(
             nvjpeg_params_, &nvjpegDecodeParamsDestroy);
-        nvimgcdcsIoStreamDesc_t io_stream = (*code_stream)->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = (*code_stream)->io_stream;
         const void* encoded_stream_data = nullptr;
         size_t encoded_stream_data_size = 0;
         io_stream->raw_data(io_stream->instance, &encoded_stream_data);
@@ -375,7 +375,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch()
         auto &nvjpeg_params_ptr = batched_nvjpeg_params_ptrs.back();
 
         nvimgcdcsCodeStreamDesc_t code_stream = decode_state_batch_->samples_[i].code_stream;
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         nvimgcdcsImageDesc_t image = decode_state_batch_->samples_[i].image;
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};

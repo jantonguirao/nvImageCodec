@@ -124,7 +124,7 @@ struct nvimgcdcsParserDesc* JPEGParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
     auto signature = ReadValue<jpeg_marker_t>(io_stream);
     *result = (signature == soi_marker);
@@ -190,7 +190,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
     NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
     try {
         size_t size = 0;
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         io_stream->size(io_stream->instance, &size);
         io_stream->seek(io_stream->instance, 0, SEEK_SET);
 

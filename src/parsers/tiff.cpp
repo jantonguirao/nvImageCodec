@@ -47,7 +47,7 @@ using tiff_magic_t = std::array<uint8_t, 4>;
 constexpr tiff_magic_t le_header = {'I', 'I', 42, 0}, be_header = {'M', 'M', 0, 42};
 
 template <typename T, bool is_little_endian>
-T TiffRead(nvimgcdcsIoStreamDesc_t io_stream)
+T TiffRead(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     if constexpr (is_little_endian) {
         return ReadValueLE<T>(io_stream);
@@ -57,7 +57,7 @@ T TiffRead(nvimgcdcsIoStreamDesc_t io_stream)
 }
 
 template <bool is_little_endian>
-nvimgcdcsStatus_t GetInfoImpl(nvimgcdcsImageInfo_t* info, nvimgcdcsIoStreamDesc_t io_stream)
+nvimgcdcsStatus_t GetInfoImpl(nvimgcdcsImageInfo_t* info, nvimgcdcsIoStreamDesc_t* io_stream)
 {
     io_stream->seek(io_stream->instance, 4, SEEK_SET);
     const auto ifd_offset = TiffRead<uint32_t, is_little_endian>(io_stream);
@@ -155,7 +155,7 @@ struct nvimgcdcsParserDesc* TIFFParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -226,7 +226,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
 {
     NVIMGCDCS_LOG_TRACE("tiff_parser_get_image_info");
     try {
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         size_t length;
         io_stream->size(io_stream->instance, &length);
         io_stream->seek(io_stream->instance, 0, SEEK_SET);

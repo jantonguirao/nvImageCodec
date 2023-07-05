@@ -49,7 +49,7 @@ struct BitmapInfoHeader
 };
 static_assert(sizeof(BitmapInfoHeader) == 40);
 
-static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, int palette_entry_size)
+static bool is_color_palette(nvimgcdcsIoStreamDesc_t* io_stream, size_t ncolors, int palette_entry_size)
 {
     std::vector<uint8_t> entry;
     entry.resize(palette_entry_size);
@@ -65,7 +65,7 @@ static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, 
 }
 
 static int number_of_channels(
-    nvimgcdcsIoStreamDesc_t io_stream, int bpp, int compression_type, size_t ncolors = 0, int palette_entry_size = 0)
+    nvimgcdcsIoStreamDesc_t* io_stream, int bpp, int compression_type, size_t ncolors = 0, int palette_entry_size = 0)
 {
     if (compression_type == BMP_COMPRESSION_RGB || compression_type == BMP_COMPRESSION_RLE8) {
         if (bpp <= 8 && ncolors <= static_cast<unsigned int>(1u << bpp)) {
@@ -104,7 +104,7 @@ struct nvimgcdcsParserDesc* BMPParserPlugin::getParserDesc()
 nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
 {
     constexpr size_t min_bmp_stream_size = 18u;
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     if (length < min_bmp_stream_size) {
@@ -184,7 +184,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
     // https://en.wikipedia.org/wiki/BMP_file_format#DIB_header_(bitmap_information_header)
     NVIMGCDCS_LOG_TRACE("bmp_parser_get_image_info");
     try {
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         size_t length;
         io_stream->size(io_stream->instance, &length);
         if (length < 18u) {

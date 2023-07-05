@@ -98,7 +98,7 @@ static nvimgcdcsStatus_t pnm_destroy(nvimgcdcsEncoder_t encoder)
 }
 
 template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
-int write_pnm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB,
+int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB,
     size_t pitchB, const D* chanA, size_t pitchA, int width, int height, int num_components, uint8_t precision)
 {
     size_t written_size;

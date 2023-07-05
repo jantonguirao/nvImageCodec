@@ -28,8 +28,8 @@ class JPEG2KParserPlugin
         Parser();
 
         
-        nvimgcdcsStatus_t parseJP2(nvimgcdcsIoStreamDesc_t io_stream);
-        nvimgcdcsStatus_t parseCodeStream(nvimgcdcsIoStreamDesc_t io_stream);
+        nvimgcdcsStatus_t parseJP2(nvimgcdcsIoStreamDesc_t* io_stream);
+        nvimgcdcsStatus_t parseCodeStream(nvimgcdcsIoStreamDesc_t* io_stream);
         nvimgcdcsStatus_t getImageInfo(
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
 

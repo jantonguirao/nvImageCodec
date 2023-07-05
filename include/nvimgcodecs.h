@@ -785,7 +785,7 @@ extern "C"
      * This abstracts source or sink for code stream bytes.
      *  
      */
-    struct nvimgcdcsIOStreamDesc
+    typedef struct nvimgcdcsIOStreamDesc
     {
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
@@ -801,12 +801,7 @@ extern "C"
         nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
         nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes, size_t used);
         nvimgcdcsStatus_t (*raw_data)(void* instance, const void**);
-    };
-
-    /** 
-     * @brief I/O Stream description handle
-     */
-    typedef struct nvimgcdcsIOStreamDesc* nvimgcdcsIoStreamDesc_t;
+    } nvimgcdcsIoStreamDesc_t;
 
     /**
      * @brief Code stream description.
@@ -818,7 +813,7 @@ extern "C"
 
         void* instance;                    /**< Code stream description instance pointer which will be passed back in functions */
 
-        nvimgcdcsIoStreamDesc_t io_stream; /**< I/O stream which works as a source or sink of code stream bytes */
+        nvimgcdcsIoStreamDesc_t* io_stream; /**< I/O stream which works as a source or sink of code stream bytes */
 
         nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
     };

@@ -284,7 +284,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 }
                 unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-                nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+                nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 size_t encoded_stream_data_size = 0;
                 io_stream->size(io_stream->instance, &encoded_stream_data_size);
                 const void* encoded_stream_data = nullptr;

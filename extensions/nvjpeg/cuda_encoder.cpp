@@ -355,7 +355,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
                 t.compressed_data_.resize(length);
                 XM_CHECK_NVJPEG(nvjpegEncodeRetrieveBitstream(handle_, jpeg_state_, t.compressed_data_.data(), &length, t.stream_));
 
-                nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+                nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 size_t output_size;
                 io_stream->reserve(io_stream->instance, length, length);
                 io_stream->seek(io_stream->instance, 0, SEEK_SET);

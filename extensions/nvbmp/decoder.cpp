@@ -82,7 +82,7 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode(
     image->getImageInfo(image->instance, &image_info);
     size_t size = 0;
     size_t output_size = 0;
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     io_stream->size(io_stream->instance, &size);
     std::vector<unsigned char> buffer(size);
     static constexpr int kHeaderStart = 14;

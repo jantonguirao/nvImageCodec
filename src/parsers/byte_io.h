@@ -52,7 +52,7 @@ void ReadValueImpl(float &value, const uint8_t* data) {
 }
 
 template <int nbytes, bool is_little_endian, typename T>
-void ReadValueImpl(T &value, nvimgcdcsIoStreamDesc_t io_stream) {
+void ReadValueImpl(T &value, nvimgcdcsIoStreamDesc_t* io_stream) {
   uint8_t data[nbytes];  // NOLINT [runtime/arrays]
   size_t read_nbytes = 0;
   io_stream->read(io_stream->instance, &read_nbytes, data, nbytes);
@@ -89,7 +89,7 @@ T ReadValueBE(const uint8_t* data) {
  * @brief Reads value of size `nbytes` from an input stream (little-endian)
  */
 template <typename T, int nbytes = sizeof(T)>
-T ReadValueLE(nvimgcdcsIoStreamDesc_t stream) {
+T ReadValueLE(nvimgcdcsIoStreamDesc_t* stream) {
   T ret;
   detail::ReadValueImpl<nbytes, true>(ret, stream);
   return ret;
@@ -99,14 +99,14 @@ T ReadValueLE(nvimgcdcsIoStreamDesc_t stream) {
  * @brief Reads value of size `nbytes` from an input stream (big-endian)
  */
 template <typename T, int nbytes = sizeof(T)>
-T ReadValueBE(nvimgcdcsIoStreamDesc_t stream) {
+T ReadValueBE(nvimgcdcsIoStreamDesc_t* stream) {
   T ret;
   detail::ReadValueImpl<nbytes, false>(ret, stream);
   return ret;
 }
 
 template <typename T>
-T ReadValue(nvimgcdcsIoStreamDesc_t io_stream) {
+T ReadValue(nvimgcdcsIoStreamDesc_t* io_stream) {
     size_t read_nbytes = 0;
     T data;
     if (NVIMGCDCS_STATUS_SUCCESS != io_stream->read(io_stream->instance, &read_nbytes, &data, sizeof(T)) || read_nbytes != sizeof(T))
