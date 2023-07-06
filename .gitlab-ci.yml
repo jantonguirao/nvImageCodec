@@ -58,7 +58,7 @@ build:nvimagecodec-cuda12:
         - nvidia-smi
         - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
         - python3 -m pip install artifacts/nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-*.whl
-        - pytest-3 test/test_python.py
+        - pytest-3 -v test/test_python.py
 
 test:nvimagecodec-cuda11:
     extends: .test:nvimagecodec
