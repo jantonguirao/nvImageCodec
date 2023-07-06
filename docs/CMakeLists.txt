@@ -3,7 +3,9 @@ find_package(Sphinx REQUIRED)
 
 add_custom_target(docs)
 
+add_subdirectory(doxygen)
 add_subdirectory(sphinx)
+add_dependencies(docs nvimagecodecs_doxygen_docs)
 add_dependencies(docs nvimagecodecs_sphinx_docs)
-# run pipeline
+add_dependencies(nvimagecodecs_sphinx_docs nvimagecodecs_doxygen_docs)
 

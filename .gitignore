@@ -1,6 +1,7 @@
 *~
 build*/*
 docs/sphinx/_build/*
+docs/doxygen/xml/*
 bin/*
 .idea
 .vscode
