@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 import numpy as np
 import cv2
@@ -35,11 +36,36 @@ def compare_cv_images(test_images, ref_images):
         compare_image(test_img, ref_img)
 
 
+def load_single_image(file_path: str, load_mode: str = None):
+    """
+    Loads a single image to de decoded.
+    :param file_path: Path to file with the image to be loaded.
+    :param load_mode: In what format the image shall be loaded:
+                        "numpy"  - loading using `np.fromfile`,
+                        "python" - loading using Python's `open`,
+                        "path"   - loading skipped, image path will be returned.
+    :return: Encoded image.
+    """
+    if load_mode == "numpy":
+        return np.fromfile(file_path, dtype=np.uint8)
+    elif load_mode == "python":
+        with open(file_path, 'rb') as in_file:
+            return in_file.read()
+    elif load_mode == "path":
+        return file_path
+    else:
+        raise RuntimeError(f"Unknown load mode: {load_mode}")
+
+
+def load_batch(file_paths: list[str], load_mode: str = None):
+    return [load_single_image(f, load_mode) for f in file_paths]
+
+
 @t.mark.parametrize("backends", [None,
                                  [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
                                      nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
-    [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
-@t.mark.parametrize("decode_data", [True, False])
+                                 [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
+@t.mark.parametrize("input_format", ["numpy", "python", "path"])
 @t.mark.parametrize(
     "input_img_file",
     [   "bmp/cat-111793_640.bmp",
@@ -75,19 +101,17 @@ def compare_cv_images(test_images, ref_images):
         "jpeg2k/cat-1245673_640-12bit.jp2",
      ]
 )
-def test_decode_single_image(tmp_path, input_img_file, decode_data, backends):
+def test_decode_single_image(tmp_path, input_img_file, input_format, backends):
     if backends:
         decoder = nvimgcodecs.Decoder(backends = backends, options=":fancy_upsampling=1")
     else:
         decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1") 
 
     input_img_path = os.path.join(img_dir_path, input_img_file)
-    if decode_data:
-        with open(input_img_path, 'rb') as in_file:
-            data = in_file.read()
-            test_img = decoder.decode(data)
-    else:
-        test_img = decoder.decode(input_img_path)
+
+    decoder_input = load_single_image(input_img_path,input_format)
+
+    test_img = decoder.decode(decoder_input)
 
     ref_img = cv2.imread(
         input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
@@ -100,7 +124,7 @@ def test_decode_single_image(tmp_path, input_img_file, decode_data, backends):
                                      nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
                                  [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
 @t.mark.parametrize("cuda_stream", [None, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
-@t.mark.parametrize("decode_data", [True, False])
+@t.mark.parametrize("input_format", ["numpy", "python", "path"])
 @t.mark.parametrize(
     "input_images_batch",
     [("bmp/cat-111793_640.bmp",
@@ -139,7 +163,7 @@ def test_decode_single_image(tmp_path, input_img_file, decode_data, backends):
       "base/4k_lossless.jp2")
      ]
 )
-def test_decode_batch(tmp_path, input_images_batch, decode_data, backends, cuda_stream):
+def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda_stream):
     input_images = [os.path.join(img_dir_path, img)
                     for img in input_images_batch]
     ref_images = [cv2.imread(img, cv2.IMREAD_COLOR |
@@ -147,24 +171,11 @@ def test_decode_batch(tmp_path, input_images_batch, decode_data, backends, cuda_
     if backends:
         decoder = nvimgcodecs.Decoder(backends = backends, options=":fancy_upsampling=1")
     else:
-        decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1") 
-    if decode_data:
-        data_list = []
-        for img in input_images:
-            with open(img, 'rb') as in_file:
-                data = in_file.read()
-                data_list.append(data)
-        if cuda_stream:
-            test_images = decoder.decode(
-                data_list, cuda_stream=cuda_stream.ptr)
-        else:
-            test_images = decoder.decode(data_list)
-    else:
-        if cuda_stream:
-            test_images = decoder.decode(
-                input_images, cuda_stream=cuda_stream.ptr)
-        else:
-            test_images = decoder.decode(input_images)
+        decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1")
+
+    encoded_images = load_batch(input_images, input_format)
+
+    test_images = decoder.decode(encoded_images, cuda_stream=0 if cuda_stream is None else cuda_stream.ptr)
 
     compare_images(test_images, ref_images)
 

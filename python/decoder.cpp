@@ -88,6 +88,15 @@ Image Decoder::decode(py::bytes data, const DecodeParams& params, intptr_t cuda_
         return Image(nullptr);
 }
 
+Image Decoder::decode(py::array_t<uint8_t> data, const DecodeParams& params, intptr_t cuda_stream)
+{
+    std::vector<nvimgcdcsCodeStream_t> code_streams(1);
+    auto img_data = data.unchecked<1>();
+    CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[0], img_data.data(0), img_data.size()));
+    std::vector<Image> images = decode(code_streams, params, cuda_stream);
+    return images.size() == 1 ? images[0] : Image(nullptr);
+}
+
 std::vector<Image> Decoder::decode(const std::vector<std::string>& file_names, const DecodeParams& params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(file_names.size());
@@ -105,6 +114,16 @@ std::vector<Image> Decoder::decode(const std::vector<py::bytes>& data_list, cons
 
         CHECK_NVIMGCDCS(
             nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[i], (unsigned char*)str_view.data(), str_view.size()));
+    }
+    return decode(code_streams, params, cuda_stream);
+}
+
+std::vector<Image> Decoder::decode(const std::vector<py::array_t<uint8_t>>& data_list, const DecodeParams& params, intptr_t cuda_stream)
+{
+    std::vector<nvimgcdcsCodeStream_t> code_streams(data_list.size());
+    for (uint32_t i = 0; i < data_list.size(); i++) {
+        auto img_data = data_list[i].unchecked<1>();
+        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[i], img_data.data(0), img_data.size()));
     }
     return decode(code_streams, params, cuda_stream);
 }
@@ -232,6 +251,20 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
         )pbdoc",
             "data"_a, "params"_a = DecodeParams(), "cuda_stream"_a = 0)
+
+        .def("decode", py::overload_cast<py::array_t<uint8_t>, const DecodeParams&, intptr_t>(&Decoder::decode), R"pbdoc(
+            Executes decoding of NumPy array.
+
+            Args:
+                data: Numpy array with bytes to decode.
+                params: Decode parameters.
+                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
+            Returns:
+                nvimgcodecs.Image
+
+        )pbdoc",
+            "data"_a, "params"_a = DecodeParams(), "cuda_stream"_a = 0)
+
         .def("decode", py::overload_cast<const std::string&, const DecodeParams&, intptr_t>(&Decoder::decode), R"pbdoc(
             Executes decoding of file.
 
@@ -241,9 +274,21 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
             Returns:
                 nvimgcodecs.Image
-
         )pbdoc",
             "file_name"_a, "params"_a = DecodeParams(), "cuda_stream"_a = 0)
+
+        .def("decode", py::overload_cast<const std::vector<py::array_t<uint8_t>>&, const DecodeParams&, intptr_t>(&Decoder::decode), R"pbdoc(
+            Executes NumPy array batch decoding.
+
+            Args:
+                data: List of Numpy arrays with bytes to decode.
+                params: Decode parameters.
+                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
+            Returns:
+                List of decoded nvimgcodecs.Image
+        )pbdoc",
+            "data"_a, "params"_a = DecodeParams(), "cuda_stream"_a = 0)
+
         .def("decode", py::overload_cast<const std::vector<py::bytes>&, const DecodeParams&, intptr_t>(&Decoder::decode), R"pbdoc(
             Executes data batch decoding.
 
