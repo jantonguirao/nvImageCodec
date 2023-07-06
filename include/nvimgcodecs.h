@@ -662,7 +662,7 @@ extern "C"
         nvimgcdcsStructureType_t type;              /**< Is the type of this structure. */
         void* next;                                 /**< Is NULL or a pointer to an extension structure type. */
 
-        nvimgcdcsJpeg2kBitstreamType_t stream_type; /** JPEG2000 code stream type. */
+        nvimgcdcsJpeg2kBitstreamType_t stream_type; /**< JPEG2000 code stream type. */
         nvimgcdcsJpeg2kProgOrder_t prog_order;      /**< JPEG2000 progression order. */
         uint32_t num_resolutions;                   /**< Number of resolutions. */
         uint32_t code_block_w;                      /**< Code block width. Allowed values 32, 64 */
@@ -739,10 +739,10 @@ extern "C"
     /**
      * @brief Debug callback function type.
      * 
-     * @param message_severity Message severity
-     * @param message_type Message type
-     * @param callback_data Debug message data 
-     * @param user_data Pointer that was specified during the setup of the callback 
+     * @param message_severity [in] Message severity
+     * @param message_type [in] Message type
+     * @param callback_data [in] Debug message data 
+     * @param user_data [in] Pointer that was specified during the setup of the callback 
      * @returns true if message should not be passed further to other callbacks and false otherwise 
      */
     typedef bool (*nvimgcdcsDebugCallback_t)(const nvimgcdcsDebugMessageSeverity_t message_severity,
@@ -774,8 +774,25 @@ extern "C"
 
         void* instance;                /**< Executor instance pointer which will be passed back in functions */
 
+        /**
+         * @brief Schedule execution of asynchronous task.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsExecutorDesc_t instance. 
+         * @param device_id [in] Device id on which task will be executed.
+         * @param sample_idx [in] Index of batch sample to process task on; It will be passed back as an argument in task function. 
+         * @param task_context [in] Pointer to task context which will be passed back as an argument in task function.
+         * @param task [in] Pointer to task function to schedule.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*launch)(void* instance, int device_id, int sample_idx, void* task_context,
             void (*task)(int thread_id, int sample_idx, void* task_context));
+
+        /** 
+         * @brief Gets number of threads.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsExecutorDesc_t instance. 
+         * @return Number of threads in executor.
+        */
         int (*get_num_threads)(void* instance);
     } nvimgcdcsExecutorDesc_t;
 
@@ -792,15 +809,95 @@ extern "C"
 
         void* instance;                /**< I/O stream description instance pointer which will be passed back in functions */
 
+        /**
+         * @brief Reads all requested data from the stream.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param output_size [in/out] Pointer to where to return number of read bytes.
+         * @param buf [in]   Pointer to output buffer
+         * @param bytes [in] Number of bytes to read
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*read)(void* instance, size_t* output_size, void* buf, size_t bytes);
+
+        /**
+         * @brief Writes all requested data to the stream.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param output_size [in/out] Pointer to where to return number of written bytes.
+         * @param buf [in]   Pointer to input buffer
+         * @param bytes [in] Number of bytes to write
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*write)(void* instance, size_t* output_size, void* buf, size_t bytes);
+
+        /**
+         * @brief Writes one character to the stream.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param output_size [in/out] Pointer to where to return number of written bytes.
+         * @param ch [in] Character to write.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*putc)(void* instance, size_t* output_size, unsigned char ch);
+        
+        /**
+         * @brief Skips `count` objects in the stream
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param count [in] Number bytes to skip
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*skip)(void* instance, size_t count);
+
+        /**
+         * @brief Moves the read pointer in the stream.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param offset  [in] Offset to move.
+         * @param whence  [in] Beginning - SEEK_SET, SEEK_CUR or SEEK_END.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*seek)(void* instance, size_t offset, int whence);
+
+        /**
+         * @brief Retrieves current position, in bytes from the beginning, in the stream.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param offset  [in/out] Pointer where to return current position.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*tell)(void* instance, size_t* offset);
+
+        /**
+         * @brief Retrieves the length, in bytes, of the stream.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param size  [in/out] Pointer where to return length of the stream.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
+
+        /**
+         * @brief Provides expected bytes which are going to be written and used so far.  
+         * 
+         *  This function gives possibility to pre/re-allocate raw_data buffer
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param bytes [in] Number of expected bytes which are going to be written  .
+         * @param used  [in] Number of bytes used so far.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes, size_t used);
-        nvimgcdcsStatus_t (*raw_data)(void* instance, const void**);
+
+        /**
+         * @brief Retrieves the raw pointer to the data in memory, if available, otherwise returns nullptr  
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param buffer  [in] Pointer were to return pointer to raw data.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*raw_data)(void* instance, const void** buffer);
     } nvimgcdcsIoStreamDesc_t;
 
     /**
@@ -815,7 +912,14 @@ extern "C"
 
         nvimgcdcsIoStreamDesc_t* io_stream; /**< I/O stream which works as a source or sink of code stream bytes */
 
-        nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
+        /**
+         * @brief Retrieves image info information.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsCodeStreamDesc_t instance.
+         * @param image_info [in/out] Points where to return image information.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* image_info);
     } nvimgcdcsCodeStreamDesc_t;
 
     /**
@@ -827,7 +931,23 @@ extern "C"
         const void* next;              /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance;                /**< Image instance pointer which will be passed back in functions */
-        nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* result);
+
+        /**
+         * @brief Retrieves image info information.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsImageDesc_t instance.
+         * @param image_info [in/out] Points where to return image information.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*getImageInfo)(void* instance, nvimgcdcsImageInfo_t* image_info);
+
+        /**
+         * @brief Informs that host side of processing of image is ready.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsImageDesc_t instance.
+         * @param processing_status [in] Processing status.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes} 
+         */
         nvimgcdcsStatus_t (*imageReady)(void* instance, nvimgcdcsProcessingStatus_t processing_status);
     } nvimgcdcsImageDesc_t;
 
@@ -843,10 +963,42 @@ extern "C"
         const char* id;                /**< Codec named identifier e.g. nvJpeg2000 */
         const char* codec;             /**< Codec name e.g. jpeg2000 */
 
+        /** 
+         * @brief Checks whether parser can parse given code stream.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsParserDesc_t instance.
+         * @param result [in/out] Points where to return result of parsing check.
+         * @param code_stream [in] Code stream to parse check.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*canParse)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
+
+        /**
+         * Creates parser.
+         * 
+         * @param [in] Pointer to nvimgcdcsParserDesc_t instance.
+         * @param [in/out] Points where to return handle to created parser.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsParser_t* parser);
+
+        /** 
+         * Destroys parser.
+         * 
+         * @param parser [in] Parser handle to destroy.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsParser_t parser);
-        nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* result, nvimgcdcsCodeStreamDesc_t* code_stream);
+
+        /**
+         * @brief Parses given code stream and returns image information.
+         * 
+         * @param parser [in] Parser handle.
+         * @param image_info [in/out] Points where to return image information.
+         * @param code_stream [in] Code stream to parse.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*getImageInfo)(nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream);
     } nvimgcdcsParserDesc_t;
 
     /**
@@ -860,13 +1012,54 @@ extern "C"
         void* instance;                      /**< Encoder description instance pointer which will be passed back in functions */
         const char* id;                      /**< Codec named identifier e.g. nvJpeg2000 */
         const char* codec;                   /**< Codec name e.g. jpeg2000 */
-        nvimgcdcsBackendKind_t backend_kind; /**< Backend kind */
+        nvimgcdcsBackendKind_t backend_kind; /**< What kind of backend this encoder is using */
 
+        /**
+         * @brief Creates encoder.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsEncoderDesc_t instance.
+         * @param encoder [in/out] Points where to return handle to created encoder.
+         * @param device_id [in] Device id which will be used for encoding.
+         * @param backend_params [in] Parameters used to configure backend.
+         * @param options [in] String with optional, space separated, list of parameters for encoders, in format 
+         *                     <encoder_id>:<parameter_name>=<parameter_value>.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, int device_id,
             const nvimgcdcsBackendParams_t* backend_params, const char* options);
+
+        /** 
+         * Destroys encoder.
+         * 
+         * @param encoder [in] Encoder handle to destroy.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsEncoder_t encoder);
+
+        /**
+         * @brief Checks whether encoder can encode given batch of images to code stream and with provided parameters.
+         * 
+         * @param encoder [in] Encoder handle to use for check.
+         * @param status [in/out] Points to array of batch size and nvimgcdcsProcessingStatus_t type, where result will be returned.
+         * @param images [in] Pointer to array of pointers of batch size with input images to check encoding.
+         * @param code_streams [in/out] Pointer to array of pointers of batch size with output code streams to check encoding with.
+         * @param batch_size [in] Number of items in batch  to check.
+         * @param params [in] Encode parameters which will be used with check.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*canEncode)(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
             nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
+        
+        /**
+         * @brief Encode given batch of images to code streams with provided parameters.
+         * 
+         * @param encoder [in] Encoder handle to use for check.
+         * @param images [in] Pointer to array of pointers of batch size with input images to encode.
+         * @param code_streams [in/out] Pointer to array of pointers of batch size with ouput code streams.
+         * @param batch_size [in] Number of items in batch  to encode.
+         * @param params [in] Encode parameters.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*encode)(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams,
             int batch_size, const nvimgcdcsEncodeParams_t* params);
     } nvimgcdcsEncoderDesc_t;
@@ -884,11 +1077,52 @@ extern "C"
         const char* codec;                   /**< Codec name e.g. jpeg2000 */
         nvimgcdcsBackendKind_t backend_kind; /**< Backend kind */
 
+        /**
+         * @brief Creates decoder.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsDecoderDesc_t instance.
+         * @param encoder [in/out] Points where to return handle to created decoder.
+         * @param device_id [in] Device id which will be used for decoding.
+         * @param backend_params [in] Parameters used to configure backend.
+         * @param options [in] String with optional, space separated, list of parameters for decoders, in format 
+         *                     <encoder_id>:<parameter_name>=<parameter_value>.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id,
             const nvimgcdcsBackendParams_t* backend_params, const char* options);
+
+        /** 
+         * Destroys decoder.
+         * 
+         * @param decoder [in] Decoder handle to destroy.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*destroy)(nvimgcdcsDecoder_t decoder);
+
+        /**
+         * @brief Checks whether decoder can decode given batch of code streams to images with provided parameters.
+         * 
+         * @param decoder [in] Decoder handle to use for check.
+         * @param status [in/out] Points to array of batch size and nvimgcdcsProcessingStatus_t type, where result will be returned.
+         * @param code_streams [in] Pointer to array of pointers of batch size with input code streams to check decoding.
+         * @param images [in] Pointer to array of pointers of batch size with output images to check decoding.
+         * @param batch_size [in] Number of items in batch to check.
+         * @param params [in] Decode parameters which will be used with check.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*canDecode)(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
             nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+
+        /**
+         * @brief Decode given batch of code streams to images with provided parameters.
+         * 
+         * @param encoder [in] Decoder handle to use for decoding.
+         * @param code_streams [in] Pointer to array of pointers of batch size with input code streams.
+         * @param images [in/out] Pointer to array of pointers of batch size with output images.
+         * @param batch_size [in] Number of items in batch  to encode.
+         * @param params [in] Decode parameters.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*decode)(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images,
             int batch_size, const nvimgcdcsDecodeParams_t* params);
     } nvimgcdcsDecoderDesc_t;
@@ -914,16 +1148,19 @@ extern "C"
     } nvimgcdcsPriority_t;
 
     /**
-     * @brief Function type for logging.
+     * @brief Pointer to logging function.
      * 
      * @param instance [in] Plugin framework instance pointer
-     * @param message_severity [in]
-     * @param message_type [in]
-     * @param data [in]
+     * @param message_severity [in] Message severity e.g. error or warning.
+     * @param message_type [in]  Message type e.g. general or performance related.
+     * @param data [in] Debug message data i.e. message string, status, codec etc.
      */
     typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
 
+    /**
+     * @brief Plugin Framework
+     */
     typedef struct
     {
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
@@ -936,34 +1173,108 @@ extern "C"
         uint32_t cudart_version;       /**< The version of CUDA Runtime with which plugin framework was built. */
 
         nvimgcdcsDeviceAllocator_t* device_allocator; /**< Pointer to custom device memory allocator */
-        nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Pointer to custom pinned memory allocator */
+        nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Pointer to custom host pinned memory allocator */
 
+        nvimgcdcsLogFunc_t log;                       /**< Pointer to logging function. @see nvimgcdcsLogFunc_t */
+
+        /**
+         * @brief Registers encoder plugin.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsFrameworkDesc_t instance.
+         * @param desc [in] Pointer to encoder description.
+         * @param priority [in] Priority of encoder. @see nvimgcdcsPriority_t
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*registerEncoder)(void* instance, const nvimgcdcsEncoderDesc_t* desc, float priority);
+
+        /**
+         * @brief Unregisters encoder plugin.
+         *
+         * @param instance [in] Pointer to nvimgcdcsFrameworkDesc_t instance.
+         * @param desc [in] Pointer to encoder description to unregister.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*unregisterEncoder)(void* instance, const nvimgcdcsEncoderDesc_t* desc);
+        
+        /**
+         * @brief Registers decoder plugin.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsFrameworkDesc_t instance.
+         * @param desc [in] Pointer to decoder description.
+         * @param priority [in] Priority of decoder. @see nvimgcdcsPriority_t
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*registerDecoder)(void* instance, const nvimgcdcsDecoderDesc_t* desc, float priority);
+        
+        /**
+         * @brief Unregisters decoder plugin.
+         *
+         * @param instance [in] Pointer to nvimgcdcsFrameworkDesc_t instance.
+         * @param desc [in] Pointer to decoder description to unregister.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*unregisterDecoder)(void* instance, const nvimgcdcsDecoderDesc_t* desc);
+        
+        /**
+         * @brief Registers parser plugin.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsFrameworkDesc_t instance.
+         * @param desc [in] Pointer to parser description.
+         * @param priority [in] Priority of decoder. @see nvimgcdcsPriority_t
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
         nvimgcdcsStatus_t (*registerParser)(void* instance, const nvimgcdcsParserDesc_t* desc, float priority);
+        
+        /**
+         * @brief Unregisters parser plugin.
+         *
+         * @param instance [in] Pointer to nvimgcdcsFrameworkDesc_t instance.
+         * @param desc [in] Pointer to parser description to unregister.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
         nvimgcdcsStatus_t (*unregisterParser)(void* instance, const nvimgcdcsParserDesc_t* desc);
 
-        nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t** result);
-        nvimgcdcsLogFunc_t log;
+        /**
+         * @brief Retrieves executor.
+         *
+         * @param instance [in] Pointer to nvimgcdcsFrameworkDesc_t instance.
+         * @param executor [in] Points where to return handle to executor description.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t** executor);
+
     } nvimgcdcsFrameworkDesc_t;
 
     /**
      * @brief Extension description
      */
-    typedef struct
-    {
-        nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        typedef struct
+        {
+            nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
+            void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                /**< Extension instance pointer which will be passed back in functions */
-        const char* id;                /**< Extension named identifier e.g. nvjpeg_ext */
-        uint32_t version;              /**< Extension version. Used when registering extension to check if there are newer.*/
-        uint32_t ext_api_version;      /**< The version of nvImageCodecs extension API with which the extension was built. */
+            void* instance;                /**< Extension instance pointer which will be passed back in functions */
+            const char* id;                /**< Extension named identifier e.g. nvjpeg_ext */
+            uint32_t version;              /**< Extension version. Used when registering extension to check if there are newer.*/
+            uint32_t ext_api_version;      /**< The version of nvImageCodecs extension API with which the extension was built. */
 
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework);
-        nvimgcdcsStatus_t (*destroy)(nvimgcdcsExtension_t extension);
+            /**
+         * @brief Creates extension.
+         * 
+         * @param instance [in] Pointer to nvimgcdcsExtensionDesc_t instance.
+         * @param extension [in/out] Points where to return handle to created extension. 
+         * @param framework [in] Pointer to framework description which can be use to register plugins.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
+            nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework);
+
+            /** 
+         * Destroys extension.
+         * 
+         * @param extension [in] Extension handle to destroy.
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+        */
+            nvimgcdcsStatus_t (*destroy)(nvimgcdcsExtension_t extension);
     } nvimgcdcsExtensionDesc_t;
 
     /**
@@ -991,7 +1302,7 @@ extern "C"
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsGetProperties(nvimgcdcsProperties_t* properties);
 
     /** 
-     * @brief The nvImageCodecs library instance create information struct.
+     * @brief The nvImageCodecs library instance create information structure.
      */
     typedef struct
     {
@@ -1006,7 +1317,7 @@ extern "C"
         bool default_debug_messenger;                 /**< Create default debug messenger */
         uint32_t message_severity;                    /**< Severity for default debug messenger */
         uint32_t message_type;                        /**< Message type for default debug messenger */
-        int num_cpu_threads;              /**< Number of CPU threads in default executor (0 means default value equal to #cpu_cores) */
+        int num_cpu_threads;              /**< Number of CPU threads in default executor (0 means default value = to number of cpu_cores) */
         nvimgcdcsExecutorDesc_t* executor; /**< Custom executor */
     } nvimgcdcsInstanceCreateInfo_t;
 
@@ -1041,7 +1352,7 @@ extern "C"
     /**
      * @brief Destroys library extension.
      * 
-     * @param instance [in] The extension handle to destroy 
+     * @param extension [in] The extension handle to destroy 
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(nvimgcdcsExtension_t extension);
@@ -1060,7 +1371,7 @@ extern "C"
     /**
      * @brief Destroys debug messenger.
      * 
-     * @param instance [in] The debug messenger handle to destroy 
+     * @param dbg_messenger [in] The debug messenger handle to destroy 
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDebugMessengerDestroy(nvimgcdcsDebugMessenger_t dbg_messenger);
@@ -1081,7 +1392,7 @@ extern "C"
     /**
      * @brief Destroys future.
      * 
-     * @param instance [in] The future handle to destroy 
+     * @param future [in] The future handle to destroy 
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsFutureDestroy(nvimgcdcsFuture_t future);
@@ -1111,7 +1422,7 @@ extern "C"
     /**
      * @brief Destroys image.
      * 
-     * @param instance [in] The image handle to destroy 
+     * @param image [in] The image handle to destroy 
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsImageDestroy(nvimgcdcsImage_t image);

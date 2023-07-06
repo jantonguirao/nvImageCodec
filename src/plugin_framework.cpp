@@ -78,9 +78,9 @@ PluginFramework::PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr
     , library_loader_(std::move(library_loader))
     , executor_(std::move(executor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, this, "nvImageCodecs", NVIMGCDCS_VER, NVIMGCDCS_EXT_API_VER,
-          CUDART_VERSION, device_allocator, pinned_allocator, &static_register_encoder, &static_unregister_encoder,
-          &static_register_decoder, &static_unregister_decoder, &static_register_parser, &static_unregister_parser, &static_get_executor,
-          &static_log}
+          CUDART_VERSION, device_allocator, pinned_allocator, &static_log, &static_register_encoder, &static_unregister_encoder,
+          &static_register_decoder, &static_unregister_decoder, &static_register_parser, &static_unregister_parser, &static_get_executor
+         }
     , codec_registry_(codec_registry)
     , extension_paths_{}
 {
