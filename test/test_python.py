@@ -9,15 +9,21 @@ from nvidia import nvimgcodecs
 img_dir_path = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "../resources"))
 
-MAX_DIFF_THRESHOLD = 4
+def is_fancy_upsampling_available():
+    return nvimgcodecs.__cuda_version__ >= 12010
 
+def get_default_decoder_options():
+    return ":fancy_upsampling=1" if is_fancy_upsampling_available() else ":fancy_upsampling=0"
+
+def get_max_diff_threshold():
+    return 4 if is_fancy_upsampling_available() else 44
 
 def compare_image(test_img, ref_img):
     diff = ref_img.astype(np.int32) - test_img.astype(np.int32)
     diff = np.absolute(diff)
 
     assert test_img.shape == ref_img.shape
-    assert diff.max() <= MAX_DIFF_THRESHOLD
+    assert diff.max() <= get_max_diff_threshold()
 
 
 def compare_images(test_images, ref_images):
@@ -27,7 +33,7 @@ def compare_images(test_images, ref_images):
         ref_img = cv2.cvtColor(ref_images[i], cv2.COLOR_BGR2RGB)
         ref_img = np.asarray(ref_img)
         compare_image(np_test_img, ref_img)
-        
+
 
 def compare_cv_images(test_images, ref_images):
     for i in range(0, len(test_images)):
@@ -68,48 +74,48 @@ def load_batch(file_paths: list[str], load_mode: str = None):
 @t.mark.parametrize("input_format", ["numpy", "python", "path"])
 @t.mark.parametrize(
     "input_img_file",
-    [   "bmp/cat-111793_640.bmp",
+    ["bmp/cat-111793_640.bmp",
 
-        "jpeg/padlock-406986_640_410.jpg",
-        "jpeg/padlock-406986_640_411.jpg",
-        "jpeg/padlock-406986_640_420.jpg",
-        "jpeg/padlock-406986_640_422.jpg",
-        "jpeg/padlock-406986_640_440.jpg",
-        "jpeg/padlock-406986_640_444.jpg",
-        "jpeg/padlock-406986_640_gray.jpg",
-        "jpeg/ycck_colorspace.jpg",
-        "jpeg/cmyk.jpg",
-        "jpeg/cmyk-dali.jpg",
-        "jpeg/progressive-subsampled-imagenet-n02089973_1957.jpg",
+    "jpeg/padlock-406986_640_410.jpg",
+    "jpeg/padlock-406986_640_411.jpg",
+    "jpeg/padlock-406986_640_420.jpg",
+    "jpeg/padlock-406986_640_422.jpg",
+    "jpeg/padlock-406986_640_440.jpg",
+    "jpeg/padlock-406986_640_444.jpg",
+    "jpeg/padlock-406986_640_gray.jpg",
+    "jpeg/ycck_colorspace.jpg",
+    "jpeg/cmyk.jpg",
+    "jpeg/cmyk-dali.jpg",
+    "jpeg/progressive-subsampled-imagenet-n02089973_1957.jpg",
 
-        "jpeg/exif/padlock-406986_640_horizontal.jpg",
-        "jpeg/exif/padlock-406986_640_mirror_horizontal.jpg",
-        "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_270.jpg",
-        "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_90.jpg",
-        "jpeg/exif/padlock-406986_640_mirror_vertical.jpg",
-        "jpeg/exif/padlock-406986_640_no_orientation.jpg",
-        "jpeg/exif/padlock-406986_640_rotate_180.jpg",
-        "jpeg/exif/padlock-406986_640_rotate_270.jpg",
-        "jpeg/exif/padlock-406986_640_rotate_90.jpg",
+    "jpeg/exif/padlock-406986_640_horizontal.jpg",
+    "jpeg/exif/padlock-406986_640_mirror_horizontal.jpg",
+    "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_270.jpg",
+    "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_90.jpg",
+    "jpeg/exif/padlock-406986_640_mirror_vertical.jpg",
+    "jpeg/exif/padlock-406986_640_no_orientation.jpg",
+    "jpeg/exif/padlock-406986_640_rotate_180.jpg",
+    "jpeg/exif/padlock-406986_640_rotate_270.jpg",
+    "jpeg/exif/padlock-406986_640_rotate_90.jpg",
 
-        "jpeg2k/cat-1046544_640.jp2",
-        "jpeg2k/cat-1046544_640.jp2",
-        "jpeg2k/cat-111793_640.jp2",
-        "jpeg2k/tiled-cat-1046544_640.jp2",
-        "jpeg2k/tiled-cat-111793_640.jp2",
-        "jpeg2k/cat-111793_640-16bit.jp2",
-        "jpeg2k/cat-1245673_640-12bit.jp2",
+    "jpeg2k/cat-1046544_640.jp2",
+    "jpeg2k/cat-1046544_640.jp2",
+    "jpeg2k/cat-111793_640.jp2",
+    "jpeg2k/tiled-cat-1046544_640.jp2",
+    "jpeg2k/tiled-cat-111793_640.jp2",
+    "jpeg2k/cat-111793_640-16bit.jp2",
+    "jpeg2k/cat-1245673_640-12bit.jp2",
      ]
 )
 def test_decode_single_image(tmp_path, input_img_file, input_format, backends):
     if backends:
-        decoder = nvimgcodecs.Decoder(backends = backends, options=":fancy_upsampling=1")
+        decoder = nvimgcodecs.Decoder(backends=backends, options=get_default_decoder_options())
     else:
-        decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1") 
+        decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
 
     input_img_path = os.path.join(img_dir_path, input_img_file)
 
-    decoder_input = load_single_image(input_img_path,input_format)
+    decoder_input = load_single_image(input_img_path, input_format)
 
     test_img = decoder.decode(decoder_input)
 
@@ -169,9 +175,9 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
     ref_images = [cv2.imread(img, cv2.IMREAD_COLOR |
                              cv2.IMREAD_ANYDEPTH) for img in input_images]
     if backends:
-        decoder = nvimgcodecs.Decoder(backends = backends, options=":fancy_upsampling=1")
+        decoder = nvimgcodecs.Decoder(backends=backends, options=get_default_decoder_options())
     else:
-        decoder = nvimgcodecs.Decoder(options=":fancy_upsampling=1")
+        decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
 
     encoded_images = load_batch(input_images, input_format)
 
@@ -326,7 +332,7 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
             with open(out_img_path, 'rb') as in_file:
                 test_encoded_img = in_file.read()
                 test_encoded_images.append(test_encoded_img)
-                
+
     test_decoded_images = [cv2.cvtColor(cv2.imdecode(
         np.asarray(bytearray(img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
