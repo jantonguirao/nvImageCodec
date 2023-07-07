@@ -67,6 +67,24 @@ def load_batch(file_paths: list[str], load_mode: str = None):
     return [load_single_image(f, load_mode) for f in file_paths]
 
 
+def decode_single_image_test(tmp_path, input_img_file, input_format, backends):
+    if backends:
+        decoder = nvimgcodecs.Decoder(
+            backends=backends, options=get_default_decoder_options())
+    else:
+        decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+
+    decoder_input = load_single_image(input_img_path, input_format)
+
+    test_img = decoder.decode(decoder_input)
+
+    ref_img = cv2.imread(
+        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+
+    compare_images([test_img], [ref_img])
+
 @t.mark.parametrize("backends", [None,
                                  [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
                                      nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
@@ -83,8 +101,6 @@ def load_batch(file_paths: list[str], load_mode: str = None):
     "jpeg/padlock-406986_640_440.jpg",
     "jpeg/padlock-406986_640_444.jpg",
     "jpeg/padlock-406986_640_gray.jpg",
-    "jpeg/ycck_colorspace.jpg",
-    "jpeg/cmyk.jpg",
     "jpeg/cmyk-dali.jpg",
     "jpeg/progressive-subsampled-imagenet-n02089973_1957.jpg",
 
@@ -107,23 +123,24 @@ def load_batch(file_paths: list[str], load_mode: str = None):
     "jpeg2k/cat-1245673_640-12bit.jp2",
      ]
 )
-def test_decode_single_image(tmp_path, input_img_file, input_format, backends):
-    if backends:
-        decoder = nvimgcodecs.Decoder(backends=backends, options=get_default_decoder_options())
-    else:
-        decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+def test_decode_single_image_common(tmp_path, input_img_file, input_format, backends):
+    decode_single_image_test(tmp_path, input_img_file, input_format, backends)
 
-    input_img_path = os.path.join(img_dir_path, input_img_file)
 
-    decoder_input = load_single_image(input_img_path, input_format)
-
-    test_img = decoder.decode(decoder_input)
-
-    ref_img = cv2.imread(
-        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
-
-    compare_images([test_img], [ref_img])
-
+@t.mark.parametrize("backends", [None,
+                                 [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
+                                     nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
+                                 [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
+@t.mark.parametrize("input_format", ["numpy", "python", "path"])
+@t.mark.parametrize(
+    "input_img_file",
+    ["jpeg/ycck_colorspace.jpg",
+     "jpeg/cmyk.jpg",
+    ]
+)
+@t.mark.skipif(nvimgcodecs.__cuda_version__ < 12010,  reason="requires CUDA >= 12.1")
+def test_decode_single_image_cuda12_only(tmp_path, input_img_file, input_format, backends):
+    decode_single_image_test(tmp_path, input_img_file, input_format, backends)
 
 @t.mark.parametrize("backends", [None,
                                  [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
@@ -142,8 +159,6 @@ def test_decode_single_image(tmp_path, input_img_file, input_format, backends):
       "jpeg/padlock-406986_640_440.jpg",
       "jpeg/padlock-406986_640_444.jpg",
       "jpeg/padlock-406986_640_gray.jpg",
-      "jpeg/ycck_colorspace.jpg",
-      "jpeg/cmyk.jpg",
       "jpeg/cmyk-dali.jpg",
       "jpeg/progressive-subsampled-imagenet-n02089973_1957.jpg",
 
