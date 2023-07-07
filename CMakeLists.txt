@@ -225,3 +225,13 @@ set (NVIMGCDCS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 if(BUILD_EXTENSIONS)
     add_subdirectory(extensions)
 endif()
+
+if(UNIX)
+add_custom_target(coverity COMMAND ../coverity.sh
+  WORKING_DIRECTORY
+    ${CMAKE_CURRENT_BINARY_DIR}
+  COMMENT
+    "Running static analysis for nvImageCodecs code with Coverity"
+  VERBATIM
+  )
+endif()
