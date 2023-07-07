@@ -39,6 +39,7 @@ pages:
         refs:
             - master
         changes:
+            - docs/doxygen/*
             - docs/sphinx/**/*
             - docs/CMakeLists.txt
             - CMakeLists.txt
