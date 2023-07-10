@@ -21,7 +21,7 @@ if [ -d analysis_dir ]; then
 fi
 
 # build
-cov-build --dir analysis_dir make clean nvimgcodecs nvjpeg2k_ext nvjpeg_ext nvbmp_ext nvpnm_ext libjpeg_turbo_ext libtiff_ext opencv_ext nvimgcodecs_python_3.10 nvimgcodecs_python
+cov-build --dir analysis_dir make clean all
 if [ $? -ne 0 ]; then
     echo "Failed to run cov-build!"
     exit 1
