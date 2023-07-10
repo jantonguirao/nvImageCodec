@@ -39,7 +39,7 @@ pages:
     # The logic is: (any of refs) AND (any of changes)
     only:
         refs:
-            - master
+            - main
         changes:
             - docs/doxygen/*
             - docs/sphinx/**/*
