@@ -15,9 +15,11 @@
   # limitations under the License.
 
 C API
-====
+=====
 
 .. toctree::
    :glob:
 
+
+.. doxygenindex:: 
 

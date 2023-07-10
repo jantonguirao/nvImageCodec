@@ -47,7 +47,7 @@ using tiff_magic_t = std::array<uint8_t, 4>;
 constexpr tiff_magic_t le_header = {'I', 'I', 42, 0}, be_header = {'M', 'M', 0, 42};
 
 template <typename T, bool is_little_endian>
-T TiffRead(nvimgcdcsIoStreamDesc_t io_stream)
+T TiffRead(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     if constexpr (is_little_endian) {
         return ReadValueLE<T>(io_stream);
@@ -57,7 +57,7 @@ T TiffRead(nvimgcdcsIoStreamDesc_t io_stream)
 }
 
 template <bool is_little_endian>
-nvimgcdcsStatus_t GetInfoImpl(nvimgcdcsImageInfo_t* info, nvimgcdcsIoStreamDesc_t io_stream)
+nvimgcdcsStatus_t GetInfoImpl(nvimgcdcsImageInfo_t* info, nvimgcdcsIoStreamDesc_t* io_stream)
 {
     io_stream->seek(io_stream->instance, 4, SEEK_SET);
     const auto ifd_offset = TiffRead<uint32_t, is_little_endian>(io_stream);
@@ -148,14 +148,14 @@ TIFFParserPlugin::TIFFParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* TIFFParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* TIFFParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -168,7 +168,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t TIFFParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t TIFFParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("tiff_parser_can_parse");
@@ -222,11 +222,11 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t TIFFParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t TIFFParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("tiff_parser_get_image_info");
     try {
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         size_t length;
         io_stream->size(io_stream->instance, &length);
         io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -252,7 +252,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
 }
 
 nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("tiff_parser_get_image_info");
@@ -270,7 +270,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_get_image_info(
 class TiffParserExtension
 {
   public:
-    explicit TiffParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit TiffParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -278,11 +278,11 @@ class TiffParserExtension
     ~TiffParserExtension() { framework_->unregisterParser(framework_->instance, tiff_parser_plugin_.getParserDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     TIFFParserPlugin tiff_parser_plugin_;
 };
 
-nvimgcdcsStatus_t tiff_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t tiff_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("tiff_parser_extension_create");
     try {

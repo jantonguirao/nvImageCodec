@@ -33,7 +33,7 @@ void Logger::log(const nvimgcdcsDebugMessageSeverity_t message_severity, const n
 {
     for (auto dbgmsg : messengers_) {
         if ((dbgmsg->getDesc()->message_severity & message_severity) && (dbgmsg->getDesc()->message_type & message_type)) {
-            dbgmsg->getDesc()->user_callback(message_severity, message_type, data, dbgmsg->getDesc()->userData);
+            dbgmsg->getDesc()->user_callback(message_severity, message_type, data, dbgmsg->getDesc()->user_data);
         }
     }
 }

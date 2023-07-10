@@ -127,7 +127,7 @@ class IoStream
     virtual void seek(int64_t pos, int whence = SEEK_SET) = 0;
 
     /**
-     * @brief Returns the current read position, in bytes from the beginnging, in the stream.
+     * @brief Returns the current read position, in bytes from the beginning, in the stream.
      */
     virtual int64_t tell() const = 0;
 

@@ -31,7 +31,7 @@ class Codec : public ICodec
   public:
     explicit Codec(const char* name);
     const std::string& name() const override;
-    std::unique_ptr<IImageParser> createParser(nvimgcdcsCodeStreamDesc_t code_stream) const override;
+    std::unique_ptr<IImageParser> createParser(nvimgcdcsCodeStreamDesc_t* code_stream) const override;
     int getDecodersNum() const override;
     IImageDecoderFactory* getDecoderFactory(int index) const override;
     int getEncodersNum() const override;

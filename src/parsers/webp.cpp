@@ -40,9 +40,9 @@ static constexpr chunk_type_t VP8L_TAG = {'V', 'P', '8', 'L'}; // lossless
 static constexpr chunk_type_t VP8X_TAG = {'V', 'P', '8', 'X'}; // extended
 static constexpr chunk_type_t EXIF_TAG = {'E', 'X', 'I', 'F'}; // EXIF
 
-nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t io_stream_length;
     io_stream->size(io_stream->instance, &io_stream_length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -171,14 +171,14 @@ WebpParserPlugin::WebpParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* WebpParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* WebpParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t WebpParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t WebpParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -210,7 +210,7 @@ nvimgcdcsStatus_t WebpParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t WebpParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t WebpParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("webp_parser_can_parse");
@@ -264,7 +264,7 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t WebpParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t WebpParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("webp_parser_get_image_info");
     try {
@@ -276,7 +276,7 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
 }
 
 nvimgcdcsStatus_t WebpParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("webp_parser_get_image_info");
@@ -294,7 +294,7 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::static_get_image_info(
 class WebpParserExtension
 {
   public:
-    explicit WebpParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit WebpParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -302,11 +302,11 @@ class WebpParserExtension
     ~WebpParserExtension() { framework_->unregisterParser(framework_->instance, webp_parser_plugin_.getParserDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     WebpParserPlugin webp_parser_plugin_;
 };
 
-nvimgcdcsStatus_t webp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t webp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("webp_parser_extension_create");
     try {

@@ -27,7 +27,7 @@ namespace {
 // comments can appear in the middle of tokens, and the newline at the
 // end is part of the comment, not counted as whitespace
 // http://netpbm.sourceforge.net/doc/pbm.html
-size_t SkipComment(nvimgcdcsIoStreamDesc_t io_stream)
+size_t SkipComment(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     char c;
     size_t skipped = 0;
@@ -38,7 +38,7 @@ size_t SkipComment(nvimgcdcsIoStreamDesc_t io_stream)
     return skipped;
 }
 
-void SkipSpaces(nvimgcdcsIoStreamDesc_t io_stream)
+void SkipSpaces(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     size_t pos;
     io_stream->tell(io_stream->instance, &pos);
@@ -54,7 +54,7 @@ void SkipSpaces(nvimgcdcsIoStreamDesc_t io_stream)
     io_stream->seek(io_stream->instance, pos - 1, SEEK_SET);
 }
 
-int ParseInt(nvimgcdcsIoStreamDesc_t io_stream)
+int ParseInt(nvimgcdcsIoStreamDesc_t* io_stream)
 {
     size_t pos;
     io_stream->tell(io_stream->instance, &pos);
@@ -74,9 +74,9 @@ int ParseInt(nvimgcdcsIoStreamDesc_t io_stream)
     return int_value;
 }
 
-nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t io_stream_length;
     io_stream->size(io_stream->instance, &io_stream_length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -132,14 +132,14 @@ PNMParserPlugin::PNMParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* PNMParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* PNMParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -152,7 +152,7 @@ nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNMParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNMParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("pnm_parser_can_parse");
@@ -206,7 +206,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNMParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNMParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("pnm_parser_get_image_info");
     try {
@@ -218,7 +218,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
 }
 
 nvimgcdcsStatus_t PNMParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("pnm_parser_get_image_info");
@@ -236,7 +236,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_get_image_info(
 class PnmParserExtension
 {
   public:
-    explicit PnmParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit PnmParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -244,11 +244,11 @@ class PnmParserExtension
     ~PnmParserExtension() { framework_->unregisterParser(framework_->instance, pnm_parser_plugin_.getParserDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     PNMParserPlugin pnm_parser_plugin_;
 };
 
-nvimgcdcsStatus_t pnm_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t pnm_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("pnm_parser_extension_create");
     try {

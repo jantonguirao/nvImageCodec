@@ -19,7 +19,7 @@
 
 namespace nvimgcdcs {
 
-ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t desc, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t* desc, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : decoder_desc_(desc)
 {
     auto ret = decoder_desc_->create(decoder_desc_->instance, &decoder_, device_id, backend_params, options);
@@ -110,8 +110,8 @@ void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, cons
     sortSamples(order, code_streams.data(), code_streams.size());
     assert(order.size() == code_streams.size());
 
-    std::vector<nvimgcdcsCodeStreamDesc*> cs_descs(code_streams.size());
-    std::vector<nvimgcdcsImageDesc*> im_descs(code_streams.size());
+    std::vector<nvimgcdcsCodeStreamDesc_t*> cs_descs(code_streams.size());
+    std::vector<nvimgcdcsImageDesc_t*> im_descs(code_streams.size());
     std::vector<nvimgcdcsProcessingStatus_t> internal_status(code_streams.size(), NVIMGCDCS_STATUS_NOT_INITIALIZED);
     for (size_t i = 0; i < code_streams.size(); ++i) {
         int orig_idx = order[i];
@@ -142,8 +142,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
     sortSamples(order, code_streams.data(), code_streams.size());
     assert(order.size() == code_streams.size());
 
-    std::vector<nvimgcdcsCodeStreamDesc*> code_stream_descs(code_streams.size());
-    std::vector<nvimgcdcsImageDesc*> image_descs(code_streams.size());
+    std::vector<nvimgcdcsCodeStreamDesc_t*> code_stream_descs(code_streams.size());
+    std::vector<nvimgcdcsImageDesc_t*> image_descs(code_streams.size());
 
     for (size_t i = 0; i < code_streams.size(); ++i) {
         int orig_idx = order[i];

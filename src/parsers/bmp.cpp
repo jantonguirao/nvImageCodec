@@ -49,7 +49,7 @@ struct BitmapInfoHeader
 };
 static_assert(sizeof(BitmapInfoHeader) == 40);
 
-static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, int palette_entry_size)
+static bool is_color_palette(nvimgcdcsIoStreamDesc_t* io_stream, size_t ncolors, int palette_entry_size)
 {
     std::vector<uint8_t> entry;
     entry.resize(palette_entry_size);
@@ -65,7 +65,7 @@ static bool is_color_palette(nvimgcdcsIoStreamDesc_t io_stream, size_t ncolors, 
 }
 
 static int number_of_channels(
-    nvimgcdcsIoStreamDesc_t io_stream, int bpp, int compression_type, size_t ncolors = 0, int palette_entry_size = 0)
+    nvimgcdcsIoStreamDesc_t* io_stream, int bpp, int compression_type, size_t ncolors = 0, int palette_entry_size = 0)
 {
     if (compression_type == BMP_COMPRESSION_RGB || compression_type == BMP_COMPRESSION_RLE8) {
         if (bpp <= 8 && ncolors <= static_cast<unsigned int>(1u << bpp)) {
@@ -96,15 +96,15 @@ BMPParserPlugin::BMPParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* BMPParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* BMPParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     constexpr size_t min_bmp_stream_size = 18u;
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t length;
     io_stream->size(io_stream->instance, &length);
     if (length < min_bmp_stream_size) {
@@ -125,7 +125,7 @@ nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t BMPParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("bmp_parser_can_parse");
@@ -179,12 +179,12 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     // https://en.wikipedia.org/wiki/BMP_file_format#DIB_header_(bitmap_information_header)
     NVIMGCDCS_LOG_TRACE("bmp_parser_get_image_info");
     try {
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         size_t length;
         io_stream->size(io_stream->instance, &length);
         if (length < 18u) {
@@ -268,7 +268,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
 }
 
 nvimgcdcsStatus_t BMPParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("bmp_parser_get_image_info");
@@ -286,7 +286,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::static_get_image_info(
 class BmpParserExtension
 {
   public:
-    explicit BmpParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit BmpParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -297,11 +297,11 @@ class BmpParserExtension
     }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     BMPParserPlugin bmp_parser_plugin_;
 };
 
-nvimgcdcsStatus_t bmp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t bmp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("bmp_parser_extension_create");
     try {

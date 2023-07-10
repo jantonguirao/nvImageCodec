@@ -117,21 +117,21 @@ JPEGParserPlugin::JPEGParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* JPEGParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* JPEGParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
     auto signature = ReadValue<jpeg_marker_t>(io_stream);
     *result = (signature == soi_marker);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("jpeg_parser_can_parse");
@@ -185,12 +185,12 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
     try {
         size_t size = 0;
-        nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         io_stream->size(io_stream->instance, &size);
         io_stream->seek(io_stream->instance, 0, SEEK_SET);
 
@@ -344,7 +344,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
 }
 
 nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
@@ -362,7 +362,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_image_info(
 class JpegParserExtension
 {
   public:
-    explicit JpegParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit JpegParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -373,11 +373,11 @@ class JpegParserExtension
     }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     JPEGParserPlugin jpeg_parser_plugin_;
 };
 
-nvimgcdcsStatus_t jpeg_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t jpeg_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("jpeg_parser_extension_create");
     try {

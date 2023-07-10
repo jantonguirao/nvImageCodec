@@ -19,7 +19,7 @@ namespace nvimgcdcs {
 class MockExecutor : public IExecutor
 {
   public:
-    MOCK_METHOD(nvimgcdcsExecutorDesc_t, getExecutorDesc, (), (override));
+    MOCK_METHOD(nvimgcdcsExecutorDesc_t*, getExecutorDesc, (), (override));
 };
 
 } // namespace nvimgcdcs

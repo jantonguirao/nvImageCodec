@@ -152,7 +152,8 @@ This supplement is an exhibit to the Agreement and is incorporated as an integra
 2. Distribution. The following portions of the SDK are distributable under the Agreement: the runtime files .so and .h, nvjpeg2k_0.dll, nvjpeg2k.lib and libnvjpeg2k_static.a.
 
 3. Licensing. If the distribution terms in this Agreement are not suitable for your organization, or for any questions regarding this Agreement, please contact NVIDIA at nvidia-compute-license-questions@nvidia.com.
- (v. November 14, 2020)
+
+(v. November 14, 2020)
 
 
 

@@ -22,24 +22,47 @@ Installation
 Pre-requisites
 --------------
 
-This section describes the recommended dependencies to compile nvImageCodecs
+This section describes the recommended dependencies to use nvImageCodecs
 
 * Ubuntu >= 20.04
 * CUDA driver >= 11.8
+* CUDA Toolit >= 11.8
 
 Setup
 -----
 
-The following steps describe how to install nvImageCodecs. Choose the installation method that meets your environment needs.
+The following steps describe how to install nvImageCodecs from pre-built install packages. Choose the installation method that meets your environment needs.
 
-Download the nvImageCodecs tar/deb package from `here <https://github.com/xxxTODOxxx/releases/tag/v0.1.0-alpha.1>`_
+Download the nvImageCodecs tar/deb package from `here <https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec/-/releases>`_
 
 * Tar File Installation
 
+    Navigate to directory containing the nvImageCodecs tar file.
+
+    Unzip the nvImageCodecs runtime and developer package: ::
+
+        tar -xvf nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
+
+    Optionally Unzip the tests. ::
+
+        tar -xvf nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-tests.tar.gz -C /opt/nvidia/
+
 * Debian Local Installation
 
-* Verifying the Installation on Linux
+    Navigate to directory containing the nvImageCodecs tar file.
 
-* Running the samples on Linux. ::
+    Install the nvImageCodecs runtime and developer package: ::
+
+        sudo apt-get install -y ./nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
+
+    Optionally install the tests. ::
+
+        sudo apt-get install -y ./nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-tests.deb
+
+* Python WHL File Installation. ::
+
+    pip install nvidia_nvimgcodecs_cuda120-0.1.0-py3-none-manylinux2014_x86_64.whl
+
+* Running the samples. ::
 
     Follow the instructions written in the README.md file of the samples directory.

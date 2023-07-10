@@ -20,7 +20,7 @@ Codec::Codec(const char* name)
 {
 }
 
-std::unique_ptr<IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t code_stream) const
+std::unique_ptr<IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t* code_stream) const
 {
     NVIMGCDCS_LOG_TRACE("Codec::getParser " << name_);
     for (const auto& entry : parsers_) {

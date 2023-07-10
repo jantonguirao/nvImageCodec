@@ -19,13 +19,13 @@ namespace nvimgcdcs {
 class ImageParser : public IImageParser
 {
   public:
-    explicit ImageParser(const struct nvimgcdcsParserDesc* desc);
+    explicit ImageParser(const nvimgcdcsParserDesc_t* desc);
     ~ImageParser() override;
     std::string getParserId() const override;
     std::string getCodecName() const override;
-    nvimgcdcsStatus_t getImageInfo(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info) override;
+    nvimgcdcsStatus_t getImageInfo(nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageInfo_t* image_info) override;
   private:
-    const struct nvimgcdcsParserDesc* parser_desc_;
+    const nvimgcdcsParserDesc_t* parser_desc_;
     nvimgcdcsParser_t parser_;
 };
 

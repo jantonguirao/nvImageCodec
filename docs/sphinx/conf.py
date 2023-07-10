@@ -60,12 +60,12 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'en'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store','installation.rst']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 default_role = 'cpp:any'
@@ -105,5 +105,5 @@ def setup(app):
 
 # -- Options for BREATHE -------------------------------------------------
 
-#breathe_default_project = "nvImageCodecs"
-#breathe_projects = { "nvImageCodecs": "_xml" }
+breathe_default_project = "nvImageCodecs"
+breathe_projects = { "nvImageCodecs": "../doxygen/xml" }

@@ -14,7 +14,7 @@
 
 namespace nvimgcdcs {
 
-ImageParser::ImageParser(const struct nvimgcdcsParserDesc* desc)
+ImageParser::ImageParser(const nvimgcdcsParserDesc_t* desc)
     : parser_desc_(desc)
 {
     parser_desc_->create(parser_desc_->instance, &parser_);
@@ -35,7 +35,7 @@ std::string ImageParser::getCodecName() const
 }
 
 nvimgcdcsStatus_t ImageParser::getImageInfo(
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageInfo_t* image_info)
+    nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageInfo_t* image_info)
 {
     NVIMGCDCS_LOG_TRACE("ImageParser::getImageInfo");
     assert(code_stream);

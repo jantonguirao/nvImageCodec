@@ -12,14 +12,14 @@
 #include "error_handling.h"
 #include "log.h"
 
-extern nvimgcdcsEncoderDesc nvpnm_encoder;
+extern nvimgcdcsEncoderDesc_t nvpnm_encoder;
 
 namespace nvimgcdcs {
 
 struct PnmImgCodecsExtension
 {
   public:
-    explicit PnmImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit PnmImgCodecsExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerEncoder(framework->instance, &nvpnm_encoder, NVIMGCDCS_PRIORITY_VERY_LOW);
@@ -27,12 +27,12 @@ struct PnmImgCodecsExtension
     ~PnmImgCodecsExtension() { framework_->unregisterEncoder(framework_->instance, &nvpnm_encoder); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace nvimgcdcs
 
-nvimgcdcsStatus_t nvpnm_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t nvpnm_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvpnm_extension_create");

@@ -38,7 +38,7 @@ using test_case_tuple_t =
 class MockDecoderPlugin
 {
   public:
-    explicit MockDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework, const std::vector<nvimgcdcsProcessingStatus_t>& return_status)
+    explicit MockDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework, const std::vector<nvimgcdcsProcessingStatus_t>& return_status)
         : return_status_(return_status)
         , decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
               this,                // instance
@@ -48,7 +48,7 @@ class MockDecoderPlugin
               static_create, static_destroy, static_can_decode, static_decode_batch}
     {
     }
-    nvimgcdcsDecoderDesc_t getDecoderDesc() { return &decoder_desc_; }
+    nvimgcdcsDecoderDesc_t* getDecoderDesc() { return &decoder_desc_; }
 
   private:
     static nvimgcdcsStatus_t static_create(
@@ -59,7 +59,7 @@ class MockDecoderPlugin
     }
     static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder) { return NVIMGCDCS_STATUS_SUCCESS; }
     static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-        nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
     {
         auto handle = reinterpret_cast<MockDecoderPlugin*>(decoder);
         nvimgcdcsProcessingStatus_t* s = status;
@@ -69,13 +69,13 @@ class MockDecoderPlugin
         }
         return NVIMGCDCS_STATUS_SUCCESS;
     }
-    static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
-        nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
+        nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
     {
         return NVIMGCDCS_STATUS_SUCCESS;
     }
 
-    struct nvimgcdcsDecoderDesc decoder_desc_;
+    nvimgcdcsDecoderDesc_t decoder_desc_;
     const std::vector<nvimgcdcsProcessingStatus_t>& return_status_;
 };
 
@@ -94,7 +94,7 @@ struct MockCodecExtensionFactory
 
     struct Extension
     {
-        explicit Extension(const nvimgcdcsFrameworkDesc_t framework, const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses)
+        explicit Extension(const nvimgcdcsFrameworkDesc_t* framework, const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses)
             : framework_(framework)
             , statuses_(statuses)
         {
@@ -112,13 +112,13 @@ struct MockCodecExtensionFactory
             }
         }
 
-        const nvimgcdcsFrameworkDesc_t framework_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         std::vector<MockDecoderPlugin> decoders_;
         const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses_;
     };
 
     static nvimgcdcsStatus_t static_extension_create(
-        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
     {
         auto handle = reinterpret_cast<MockCodecExtensionFactory*>(instance);
         *extension = reinterpret_cast<nvimgcdcsExtension_t>(new Extension(framework, handle->statuses_));

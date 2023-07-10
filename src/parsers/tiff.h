@@ -20,7 +20,7 @@ class TIFFParserPlugin
 {
   public:
     explicit TIFFParserPlugin();
-    struct nvimgcdcsParserDesc* getParserDesc();
+    nvimgcdcsParserDesc_t* getParserDesc();
 
   private:
     struct Parser
@@ -29,24 +29,24 @@ class TIFFParserPlugin
 
         
         nvimgcdcsStatus_t getImageInfo(
-            nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
+            nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream);
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsParser_t parser);
 
         static nvimgcdcsStatus_t static_get_image_info(nvimgcdcsParser_t parser,
-            nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream);
+            nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream);
 
         
     };
 
-    nvimgcdcsStatus_t canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream);
+    nvimgcdcsStatus_t canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     nvimgcdcsStatus_t create(nvimgcdcsParser_t* parser);
 
     static nvimgcdcsStatus_t static_can_parse(
-        void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream);
+        void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsParser_t* parser);
 
-    struct nvimgcdcsParserDesc parser_desc_;
+    nvimgcdcsParserDesc_t parser_desc_;
 };
 
 nvimgcdcsStatus_t get_tiff_parser_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);

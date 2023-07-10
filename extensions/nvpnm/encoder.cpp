@@ -20,8 +20,8 @@
 struct nvimgcdcsEncoder
 {};
 
-static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+static nvimgcdcsStatus_t pnm_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pnm_can_encode");
     auto result = status;
@@ -98,7 +98,7 @@ static nvimgcdcsStatus_t pnm_destroy(nvimgcdcsEncoder_t encoder)
 }
 
 template <typename D, int SAMPLE_FORMAT = NVIMGCDCS_SAMPLEFORMAT_P_RGB>
-int write_pnm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB,
+int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t pitchR, const D* chanG, size_t pitchG, const D* chanB,
     size_t pitchB, const D* chanA, size_t pitchA, int width, int height, int num_components, uint8_t precision)
 {
     size_t written_size;
@@ -179,7 +179,7 @@ int write_pnm(nvimgcdcsIoStreamDesc_t io_stream, const D* chanR, size_t pitchR, 
 }
 
 static nvimgcdcsStatus_t pnm_encode(
-    nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t image, nvimgcdcsCodeStreamDesc_t code_stream, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* image, nvimgcdcsCodeStreamDesc_t* code_stream, const nvimgcdcsEncodeParams_t* params)
 {
     NVIMGCDCS_E_LOG_TRACE("pnm_encode");
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
@@ -205,7 +205,7 @@ static nvimgcdcsStatus_t pnm_encode(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams,
+static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams,
     int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
@@ -233,7 +233,7 @@ static nvimgcdcsStatus_t pnm_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsI
 }
 
 // clang-format off
-struct nvimgcdcsEncoderDesc nvpnm_encoder = {
+nvimgcdcsEncoderDesc_t nvpnm_encoder = {
     NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC,
     NULL,
     NULL,                // instance     

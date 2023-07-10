@@ -9,7 +9,7 @@ struct nvimgcdcsDecoder
 {};
 
 static nvimgcdcsStatus_t nvbmp_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -74,15 +74,15 @@ static nvimgcdcsStatus_t nvbmp_decoder_destroy(nvimgcdcsDecoder_t decoder)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsDecodeState_t decode_state,
-    nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_decoder_decode(
+    nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params)
 {
     NVIMGCDCS_D_LOG_TRACE("nvbmp_decoder_decode");
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     image->getImageInfo(image->instance, &image_info);
     size_t size = 0;
     size_t output_size = 0;
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     io_stream->size(io_stream->instance, &size);
     std::vector<unsigned char> buffer(size);
     static constexpr int kHeaderStart = 14;
@@ -109,8 +109,8 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode(nvimgcdcsDecoder_t decoder, nvimgc
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
-    nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
+    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvbmp_decoder_decode_batch");
@@ -121,7 +121,7 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, 
         }
         nvimgcdcsStatus_t result = NVIMGCDCS_STATUS_SUCCESS;
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            result = nvbmp_decoder_decode(decoder, nullptr, code_streams[sample_idx], images[sample_idx], params);
+            result = nvbmp_decoder_decode(decoder, code_streams[sample_idx], images[sample_idx], params);
             if (result != NVIMGCDCS_STATUS_SUCCESS) {
                 return result;
             }
@@ -137,12 +137,12 @@ static nvimgcdcsStatus_t nvbmp_decoder_decode_batch(nvimgcdcsDecoder_t decoder, 
 }
 
 // clang-format off
-nvimgcdcsDecoderDesc nvbmp_decoder = {
+nvimgcdcsDecoderDesc_t nvbmp_decoder = {
     NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC,
     NULL,
     NULL,               // instance    
-    "nvbmp_decoder",    //id
-    "bmp",              //  codec_type 
+    "nvbmp_decoder",    // id
+    "bmp",              // codec_type 
     NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
     nvbmp_decoder_create,
     nvbmp_decoder_destroy, 

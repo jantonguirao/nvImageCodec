@@ -26,6 +26,5 @@ The following samples demonstrates the use of nvImageCodecs Python API:
 .. toctree::
     :maxdepth: 1
 
-    TODO
 .. 
    #Classification <python_samples/classification>

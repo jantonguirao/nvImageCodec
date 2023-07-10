@@ -25,7 +25,7 @@ class IImage
     virtual void setIndex(int index) = 0;
     virtual void setImageInfo(const nvimgcdcsImageInfo_t* image_info) = 0;
     virtual void getImageInfo(nvimgcdcsImageInfo_t* image_info) = 0;
-    virtual nvimgcdcsImageDesc_t getImageDesc() = 0;
+    virtual nvimgcdcsImageDesc_t* getImageDesc() = 0;
     virtual void setPromise(const ProcessingResultsPromise& promise) = 0;
 };
 } // namespace nvimgcdcs

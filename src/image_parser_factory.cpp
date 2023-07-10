@@ -15,7 +15,7 @@
 
 namespace nvimgcdcs {
 
-ImageParserFactory::ImageParserFactory(const struct nvimgcdcsParserDesc* desc)
+ImageParserFactory::ImageParserFactory(const nvimgcdcsParserDesc_t* desc)
     : parser_desc_(desc)
 {
 }
@@ -34,7 +34,7 @@ std::unique_ptr<IImageParser> ImageParserFactory::createParser() const
     return std::make_unique<ImageParser>(parser_desc_);
 }
 
-bool ImageParserFactory::canParse(nvimgcdcsCodeStreamDesc_t code_stream)
+bool ImageParserFactory::canParse(nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("ImageParser::canParse");
     assert(code_stream);

@@ -9,7 +9,7 @@ namespace nvjpeg2k {
 struct NvJpeg2kImgCodecsExtension
 {
   public:
-    explicit NvJpeg2kImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit NvJpeg2kImgCodecsExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
         , jpeg2k_decoder_(framework)
         , jpeg2k_encoder_(framework)
@@ -24,14 +24,14 @@ struct NvJpeg2kImgCodecsExtension
     }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     NvJpeg2kDecoderPlugin jpeg2k_decoder_;
     NvJpeg2kEncoderPlugin jpeg2k_encoder_;
 };
 
 } // namespace nvjpeg2k
 
-nvimgcdcsStatus_t nvjpeg2k_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t nvjpeg2k_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvjpeg2k_extension_create");

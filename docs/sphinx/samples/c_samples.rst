@@ -26,4 +26,3 @@ The following samples demonstrates the use of nvImageCodecs C API with cmake:
 .. toctree::
     :maxdepth: 1
 
-    TODO

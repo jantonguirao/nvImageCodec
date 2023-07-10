@@ -22,8 +22,8 @@ namespace nvjpeg2k {
 class NvJpeg2kEncoderPlugin
 {
   public:
-    explicit NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
-    nvimgcdcsEncoderDesc_t getEncoderDesc();
+    explicit NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
+    nvimgcdcsEncoderDesc_t* getEncoderDesc();
 
   private:
     struct Encoder;
@@ -45,8 +45,8 @@ class NvJpeg2kEncoderPlugin
 
         struct Sample
         {
-            nvimgcdcsCodeStreamDesc_t code_stream;
-            nvimgcdcsImageDesc_t image;
+            nvimgcdcsCodeStreamDesc_t* code_stream;
+            nvimgcdcsImageDesc_t* image;
             const nvimgcdcsEncodeParams_t* params;
         };
 
@@ -60,24 +60,24 @@ class NvJpeg2kEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        Encoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
         ~Encoder();
 
         
-        nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
-            nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
+        nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
+            nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t encode(int sample_idx);
         nvimgcdcsStatus_t encodeBatch();
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsEncoder_t encoder);
         static nvimgcdcsStatus_t static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
-            nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
-        static nvimgcdcsStatus_t static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
-            nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
+            nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
+        static nvimgcdcsStatus_t static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images,
+            nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
         
         nvjpeg2kEncoder_t handle_;
-        const nvimgcdcsFrameworkDesc_t framework_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
         int device_id_;
         const nvimgcdcsBackendParams_t* backend_params_;
@@ -89,9 +89,9 @@ class NvJpeg2kEncoderPlugin
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    struct nvimgcdcsEncoderDesc encoder_desc_;
+    nvimgcdcsEncoderDesc_t encoder_desc_;
     
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg2k

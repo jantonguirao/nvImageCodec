@@ -13,7 +13,7 @@ namespace opencv {
 struct OpenCVImgCodecsExtension
 {
   public:
-    explicit OpenCVImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit OpenCVImgCodecsExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
         , jpeg_decoder_("jpeg", framework)
         , jpeg2k_decoder_("jpeg2k", framework)
@@ -43,7 +43,7 @@ struct OpenCVImgCodecsExtension
         framework_->unregisterDecoder(framework_->instance, webp_decoder_.getDecoderDesc());
     }
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     OpenCVDecoderPlugin jpeg_decoder_;
     OpenCVDecoderPlugin jpeg2k_decoder_;
     OpenCVDecoderPlugin png_decoder_;
@@ -57,7 +57,7 @@ struct OpenCVImgCodecsExtension
 
 
 
-nvimgcdcsStatus_t opencvExtensionCreate(void *instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t opencvExtensionCreate(void *instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvimgcdcsExtensionCreate");

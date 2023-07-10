@@ -45,8 +45,8 @@ TEST(codec_registry, get_codec_by_name)
 
 TEST(codec_registry, get_parser_for_given_code_stream)
 {
-    nvimgcdcsCodeStreamDesc code_stream1;
-    nvimgcdcsCodeStreamDesc code_stream2;
+    nvimgcdcsCodeStreamDesc_t code_stream1;
+    nvimgcdcsCodeStreamDesc_t code_stream2;
 
     std::unique_ptr<MockImageParser> parser1 = std::make_unique<MockImageParser>();
     MockImageParser* parser1_ptr             = parser1.get();

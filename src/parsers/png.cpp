@@ -68,10 +68,10 @@ static constexpr chunk_type_field_t IEND_TAG{'I', 'E', 'N', 'D'};
 using png_signature_t = std::array<uint8_t, 8>;
 static constexpr png_signature_t PNG_SIGNATURE = {137, 80, 78, 71, 13, 10, 26, 10};
 
-nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
 
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t io_stream_length;
     io_stream->size(io_stream->instance, &io_stream_length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -220,14 +220,14 @@ PNGParserPlugin::PNGParserPlugin()
 {
 }
 
-struct nvimgcdcsParserDesc* PNGParserPlugin::getParserDesc()
+nvimgcdcsParserDesc_t* PNGParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t read_nbytes = 0;
     png_signature_t signature;
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -240,7 +240,7 @@ nvimgcdcsStatus_t PNGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("png_parser_can_parse");
@@ -294,7 +294,7 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+nvimgcdcsStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     NVIMGCDCS_LOG_TRACE("png_parser_get_image_info");
     try {
@@ -308,7 +308,7 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
 }
 
 nvimgcdcsStatus_t PNGParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t code_stream)
+    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE("png_parser_get_image_info");
@@ -326,7 +326,7 @@ nvimgcdcsStatus_t PNGParserPlugin::Parser::static_get_image_info(
 class PngParserExtension
 {
   public:
-    explicit PngParserExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit PngParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -334,11 +334,11 @@ class PngParserExtension
     ~PngParserExtension() { framework_->unregisterParser(framework_->instance, png_parser_plugin_.getParserDesc()); }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     PNGParserPlugin png_parser_plugin_;
 };
 
-nvimgcdcsStatus_t png_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t png_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("png_parser_extension_create");
     try {

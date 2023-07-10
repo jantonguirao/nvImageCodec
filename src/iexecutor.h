@@ -20,7 +20,7 @@ class IExecutor
 {
   public:
     virtual ~IExecutor() = default;
-    virtual nvimgcdcsExecutorDesc_t getExecutorDesc() = 0;
+    virtual nvimgcdcsExecutorDesc_t* getExecutorDesc() = 0;
 };
 
 } // namespace nvimgcdcs

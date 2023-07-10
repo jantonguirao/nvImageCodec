@@ -20,8 +20,8 @@ namespace nvjpeg {
 class NvJpegHwDecoderPlugin
 {
   public:
-    explicit NvJpegHwDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
-    nvimgcdcsDecoderDesc_t getDecoderDesc();
+    explicit NvJpegHwDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
+    nvimgcdcsDecoderDesc_t* getDecoderDesc();
     static bool isPlatformSupported();
 
   private:
@@ -33,8 +33,8 @@ class NvJpegHwDecoderPlugin
 
         struct Sample
         {
-            nvimgcdcsCodeStreamDesc_t code_stream;
-            nvimgcdcsImageDesc_t image;
+            nvimgcdcsCodeStreamDesc_t* code_stream;
+            nvimgcdcsImageDesc_t* image;
             const nvimgcdcsDecodeParams_t* params;
         };
 
@@ -58,25 +58,25 @@ class NvJpegHwDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
+        Decoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
             const char* options = nullptr);
         ~Decoder();
 
-        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvjpegHandle_t handle, nvimgcdcsCodeStreamDesc_t* code_streams,
-            nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvjpegHandle_t handle, nvimgcdcsCodeStreamDesc_t** code_streams,
+            nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decodeBatch();
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
         static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-            nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-        static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
-            nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
+            nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
         nvjpegHandle_t handle_;
 
         nvjpegDevAllocatorV2_t device_allocator_;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
-        const nvimgcdcsFrameworkDesc_t framework_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
         std::unique_ptr<ParseState> parse_state_;
         int device_id_;
@@ -92,9 +92,9 @@ class NvJpegHwDecoderPlugin
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    struct nvimgcdcsDecoderDesc decoder_desc_;
+    nvimgcdcsDecoderDesc_t decoder_desc_;
 
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg

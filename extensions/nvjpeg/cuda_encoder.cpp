@@ -27,7 +27,7 @@
 
 namespace nvjpeg {
 
-NvJpegCudaEncoderPlugin::NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
+NvJpegCudaEncoderPlugin::NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
     : encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL,
           this,             // instance
           "nvjpeg_encoder", // id
@@ -38,13 +38,13 @@ NvJpegCudaEncoderPlugin::NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t 
 {
 }
 
-nvimgcdcsEncoderDesc_t NvJpegCudaEncoderPlugin::getEncoderDesc()
+nvimgcdcsEncoderDesc_t* NvJpegCudaEncoderPlugin::getEncoderDesc()
 {
     return &encoder_desc_;
 }
 
-nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -127,7 +127,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessin
 }
 
 nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("jpeg_can_encode");
@@ -144,7 +144,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_can_encode(nvimgcdcsE
     }
 }
 
-NvJpegCudaEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+NvJpegCudaEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
@@ -177,7 +177,7 @@ NvJpegCudaEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framewo
         XM_CHECK_NVJPEG(nvjpegSetPinnedMemoryPadding(framework->pinned_allocator->pinned_mem_padding, handle_));
     }
 
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
@@ -262,14 +262,14 @@ NvJpegCudaEncoderPlugin::EncodeState::~EncodeState()
 
 nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
 {
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     executor->launch(
         executor->instance, device_id_, sample_idx, encode_state_batch_.get(), [](int tid, int sample_idx, void* task_context) -> void {
             nvtx3::scoped_range marker{"encode " + std::to_string(sample_idx)};
             auto encode_state = reinterpret_cast<NvJpegCudaEncoderPlugin::EncodeState*>(task_context);
-            nvimgcdcsCodeStreamDesc_t code_stream = encode_state->samples_[sample_idx].code_stream_;
-            nvimgcdcsImageDesc_t image = encode_state->samples_[sample_idx].image_;
+            nvimgcdcsCodeStreamDesc_t* code_stream = encode_state->samples_[sample_idx].code_stream_;
+            nvimgcdcsImageDesc_t* image = encode_state->samples_[sample_idx].image_;
             const nvimgcdcsEncodeParams_t* params = encode_state->samples_[sample_idx].params;
             auto& handle_ = encode_state->handle_;
             auto& t = encode_state->per_thread_[tid];
@@ -355,7 +355,7 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
                 t.compressed_data_.resize(length);
                 XM_CHECK_NVJPEG(nvjpegEncodeRetrieveBitstream(handle_, jpeg_state_, t.compressed_data_.data(), &length, t.stream_));
 
-                nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+                nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 size_t output_size;
                 io_stream->reserve(io_stream->instance, length, length);
                 io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -379,8 +379,8 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encodeBatch()
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images,
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg_encode_batch");

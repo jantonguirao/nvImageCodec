@@ -20,7 +20,7 @@
 
 namespace nvjpeg2k {
 
-NvJpeg2kDecoderPlugin::NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
+NvJpeg2kDecoderPlugin::NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,               // instance
           "nvjpeg2k_decoder", // id
@@ -32,13 +32,13 @@ NvJpeg2kDecoderPlugin::NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t fram
 {
 }
 
-nvimgcdcsDecoderDesc_t NvJpeg2kDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* NvJpeg2kDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }
 
-nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams,
-    nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
+    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -93,7 +93,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("jpeg2k_can_decode");
@@ -110,7 +110,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
     }
 }
 
-NvJpeg2kDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
+NvJpeg2kDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
     : device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
@@ -144,7 +144,7 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(const nvimgcdcsFrameworkDesc_t framework
     }
 
     // create resources per thread
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
@@ -258,7 +258,7 @@ NvJpeg2kDecoderPlugin::ParseState::~ParseState()
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 {
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     executor->launch(
         executor->instance, device_id_, sample_idx, decode_state_batch_.get(), [](int tid, int sample_idx, void* context) -> void {
@@ -267,8 +267,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
             auto& t = decode_state->per_thread_[tid];
             auto* parse_state = t.parse_state_.get();
             auto jpeg2k_state = t.state_;
-            nvimgcdcsCodeStreamDesc_t code_stream = decode_state->samples_[sample_idx].code_stream;
-            nvimgcdcsImageDesc_t image = decode_state->samples_[sample_idx].image;
+            nvimgcdcsCodeStreamDesc_t* code_stream = decode_state->samples_[sample_idx].code_stream;
+            nvimgcdcsImageDesc_t* image = decode_state->samples_[sample_idx].image;
             const nvimgcdcsDecodeParams_t* params = decode_state->samples_[sample_idx].params;
             auto handle_ = decode_state->handle_;
             void* decode_tmp_buffer = nullptr;
@@ -284,7 +284,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 }
                 unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-                nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+                nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 size_t encoded_stream_data_size = 0;
                 io_stream->size(io_stream->instance, &encoded_stream_data_size);
                 const void* encoded_stream_data = nullptr;
@@ -583,8 +583,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decodeBatch()
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
-    nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
+    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
 
     try {

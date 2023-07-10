@@ -20,8 +20,8 @@ namespace opencv {
 class OpenCVDecoderPlugin
 {
   public:
-    explicit OpenCVDecoderPlugin(const std::string& codec_name, const nvimgcdcsFrameworkDesc_t framework);
-    nvimgcdcsDecoderDesc_t getDecoderDesc();
+    explicit OpenCVDecoderPlugin(const std::string& codec_name, const nvimgcdcsFrameworkDesc_t* framework);
+    nvimgcdcsDecoderDesc_t* getDecoderDesc();
 
   private:
     nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
@@ -29,9 +29,9 @@ class OpenCVDecoderPlugin
 
     std::string codec_name_;
     std::string plugin_id_;
-    struct nvimgcdcsDecoderDesc decoder_desc_;
+    nvimgcdcsDecoderDesc_t decoder_desc_;
     
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace opencv

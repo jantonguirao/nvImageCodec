@@ -2,15 +2,15 @@
 #include "error_handling.h"
 #include "log.h"
 
-extern nvimgcdcsEncoderDesc nvbmp_encoder;
-extern nvimgcdcsDecoderDesc nvbmp_decoder;
+extern nvimgcdcsEncoderDesc_t nvbmp_encoder;
+extern nvimgcdcsDecoderDesc_t nvbmp_decoder;
 
 namespace nvimgcdcs {
 
 struct BmpImgCodecsExtension
 {
   public:
-    explicit BmpImgCodecsExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit BmpImgCodecsExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerEncoder(framework->instance, &nvbmp_encoder, NVIMGCDCS_PRIORITY_VERY_LOW);
@@ -23,12 +23,12 @@ struct BmpImgCodecsExtension
     }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace nvimgcdcs
 
-nvimgcdcsStatus_t nvbmp_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t nvbmp_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     Logger::get().registerLogFunc(framework->instance, framework->log);
     NVIMGCDCS_LOG_TRACE("nvbmp_extension_create");

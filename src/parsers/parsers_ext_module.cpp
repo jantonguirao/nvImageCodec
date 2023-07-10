@@ -24,7 +24,7 @@ namespace nvimgcdcs {
 class ParsersExtension
 {
   public:
-    explicit ParsersExtension(const nvimgcdcsFrameworkDesc_t framework)
+    explicit ParsersExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
     {
         framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -46,7 +46,7 @@ class ParsersExtension
     }
 
   private:
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     BMPParserPlugin bmp_parser_plugin_;
     JPEGParserPlugin jpeg_parser_plugin_;
     JPEG2KParserPlugin jpeg2k_parser_plugin_;
@@ -56,7 +56,7 @@ class ParsersExtension
     WebpParserPlugin webp_parser_plugin_;
 };
 
-nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t framework)
+nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
     NVIMGCDCS_LOG_TRACE("parsers_extension_create");
     try {

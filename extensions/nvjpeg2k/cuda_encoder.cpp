@@ -18,7 +18,7 @@
 
 namespace nvjpeg2k {
 
-NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
+NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
     : encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL,
           this,               // instance
           "nvjpeg2k_encoder", // id
@@ -30,13 +30,13 @@ NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t fram
 {
 }
 
-nvimgcdcsEncoderDesc_t NvJpeg2kEncoderPlugin::getEncoderDesc()
+nvimgcdcsEncoderDesc_t* NvJpeg2kEncoderPlugin::getEncoderDesc()
 {
     return &encoder_desc_;
 }
 
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -124,7 +124,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsImageDesc_t* images, nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+    nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg2k_can_encode");
@@ -141,7 +141,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEnc
     }
 }
 
-NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : framework_(framework)
     , device_id_(device_id)
     , backend_params_(backend_params)
@@ -149,7 +149,7 @@ NvJpeg2kEncoderPlugin::Encoder::Encoder(const nvimgcdcsFrameworkDesc_t framework
 {
     XM_CHECK_NVJPEG2K(nvjpeg2kEncoderCreateSimple(&handle_));
 
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
@@ -287,7 +287,7 @@ static nvjpeg2kColorSpace_t nvimgcdcs_to_nvjpeg2k_color_spec(nvimgcdcsColorSpec_
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 {
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
 
     executor->launch(
@@ -297,8 +297,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
             auto& t = encode_state->per_thread_[tid];
             auto state_handle = t.state_;
             auto handle = encode_state->handle_;
-            nvimgcdcsCodeStreamDesc_t code_stream = encode_state->samples_[sample_idx].code_stream;
-            nvimgcdcsImageDesc_t image = encode_state->samples_[sample_idx].image;
+            nvimgcdcsCodeStreamDesc_t* code_stream = encode_state->samples_[sample_idx].code_stream;
+            nvimgcdcsImageDesc_t* image = encode_state->samples_[sample_idx].image;
             const nvimgcdcsEncodeParams_t* params = encode_state->samples_[sample_idx].params;
             size_t tmp_buffer_sz = 0;
             void* tmp_buffer = nullptr;
@@ -458,7 +458,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncodeRetrieveBitstream(handle, state_handle, t.compressed_data_.data(), &length, t.stream_));
 
-                nvimgcdcsIoStreamDesc_t io_stream = code_stream->io_stream;
+                nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 size_t output_size;
                 io_stream->reserve(io_stream->instance, length, length);
                 io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -498,8 +498,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encodeBatch()
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t* images,
-    nvimgcdcsCodeStreamDesc_t* code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
+nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images,
+    nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
         NVIMGCDCS_E_LOG_TRACE("nvjpeg2k_encode_batch");

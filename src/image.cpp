@@ -46,7 +46,7 @@ void Image::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     *image_info = image_info_;
 }
 
-nvimgcdcsImageDesc_t Image::getImageDesc()
+nvimgcdcsImageDesc_t* Image::getImageDesc()
 {
     return &image_desc_;
 }

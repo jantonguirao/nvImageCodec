@@ -102,12 +102,12 @@ ICodec* CodeStream::getCodec() const
     return codec_registry_->getCodecByName(getCodecName().c_str());
 }
 
-nvimgcdcsIOStreamDesc* CodeStream::getInputStreamDesc()
+nvimgcdcsIoStreamDesc_t* CodeStream::getInputStreamDesc()
 {
     return &io_stream_desc_;
 }
 
-nvimgcdcsCodeStreamDesc* CodeStream::getCodeStreamDesc()
+nvimgcdcsCodeStreamDesc_t* CodeStream::getCodeStreamDesc()
 {
     return &code_stream_desc_;
 }

@@ -24,7 +24,7 @@ class ICodeStream;
 class ImageDecoder : public IImageDecoder
 {
   public:
-    ImageDecoder(const nvimgcdcsDecoderDesc_t desc, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    ImageDecoder(const nvimgcdcsDecoderDesc_t* desc, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
     ~ImageDecoder() override;
     nvimgcdcsBackendKind_t getBackendKind() const override;
     std::unique_ptr<IDecodeState> createDecodeStateBatch() const override;
@@ -36,7 +36,7 @@ class ImageDecoder : public IImageDecoder
     const char* decoderId() const override;
 
   private:
-    const nvimgcdcsDecoderDesc_t decoder_desc_;
+    const nvimgcdcsDecoderDesc_t* decoder_desc_;
     nvimgcdcsDecoder_t decoder_;
 };
 

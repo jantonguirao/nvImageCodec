@@ -29,7 +29,7 @@ DefaultExecutor::~DefaultExecutor()
 {
 }
 
-nvimgcdcsExecutorDesc_t DefaultExecutor::getExecutorDesc()
+nvimgcdcsExecutorDesc_t* DefaultExecutor::getExecutorDesc()
 {
     return &desc_;
 }

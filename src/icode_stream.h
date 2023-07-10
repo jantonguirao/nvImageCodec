@@ -32,7 +32,7 @@ class ICodeStream
     virtual nvimgcdcsStatus_t setImageInfo(const nvimgcdcsImageInfo_t* image_info) = 0;
     virtual std::string getCodecName() const = 0;
     virtual ICodec* getCodec() const = 0;
-    virtual nvimgcdcsIOStreamDesc* getInputStreamDesc() = 0;
-    virtual nvimgcdcsCodeStreamDesc* getCodeStreamDesc() = 0;
+    virtual nvimgcdcsIoStreamDesc_t* getInputStreamDesc() = 0;
+    virtual nvimgcdcsCodeStreamDesc_t* getCodeStreamDesc() = 0;
 };
 } // namespace nvimgcdcs

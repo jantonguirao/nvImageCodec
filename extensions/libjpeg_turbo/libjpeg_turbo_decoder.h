@@ -19,16 +19,16 @@ namespace libjpeg_turbo {
 class LibjpegTurboDecoderPlugin
 {
   public:
-    explicit LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework);
-    nvimgcdcsDecoderDesc_t getDecoderDesc();
+    explicit LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
+    nvimgcdcsDecoderDesc_t* getDecoderDesc();
 
   private:
     nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    struct nvimgcdcsDecoderDesc decoder_desc_;
-    const nvimgcdcsFrameworkDesc_t framework_;
+    nvimgcdcsDecoderDesc_t decoder_desc_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
 } // namespace libjpeg_turbo

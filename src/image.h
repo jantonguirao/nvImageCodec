@@ -27,7 +27,7 @@ class Image : public IImage
     void setIndex(int index) override;
     void setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
     void getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
-    nvimgcdcsImageDesc_t getImageDesc() override;
+    nvimgcdcsImageDesc_t* getImageDesc() override;
     void setPromise(const ProcessingResultsPromise& promise) override;
   private:
     nvimgcdcsStatus_t imageReady(nvimgcdcsProcessingStatus_t processing_status);
@@ -39,7 +39,7 @@ class Image : public IImage
     nvimgcdcsImageInfo_t image_info_;
     IDecodeState* decode_state_;
     IEncodeState* encode_state_;
-    nvimgcdcsImageDesc image_desc_;
+    nvimgcdcsImageDesc_t image_desc_;
     std::unique_ptr<ProcessingResultsPromise> promise_;
 };
 } // namespace nvimgcdcs

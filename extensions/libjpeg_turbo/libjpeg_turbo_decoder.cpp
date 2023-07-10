@@ -31,8 +31,8 @@ struct DecodeState
 
     struct Sample
     {
-        nvimgcdcsCodeStreamDesc_t code_stream;
-        nvimgcdcsImageDesc_t image;
+        nvimgcdcsCodeStreamDesc_t* code_stream;
+        nvimgcdcsImageDesc_t* image;
         const nvimgcdcsDecodeParams_t* params;
     };
     std::vector<PerThreadResources> per_thread_;
@@ -46,29 +46,29 @@ struct DecodeState
 struct DecoderImpl
 {
     DecoderImpl(
-        const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, std::string options);
+        const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, std::string options);
     ~DecoderImpl();
 
-    nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images,
+    nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images,
         int batch_size, const nvimgcdcsDecodeParams_t* params);
     nvimgcdcsStatus_t decodeBatch(
-        nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
     static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
     static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-        nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-    static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
-        nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+    static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
+        nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
     void parseOptions(std::string options);
 
-    const nvimgcdcsFrameworkDesc_t framework_;
+    const nvimgcdcsFrameworkDesc_t* framework_;
     int device_id_;
     const nvimgcdcsBackendParams_t* backend_params_;
     std::unique_ptr<DecodeState> decode_state_batch_;
 };
 
-LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDesc_t framework)
+LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
     : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
           this,                    // instance
           "libjpeg_turbo_decoder", // id
@@ -79,13 +79,13 @@ LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDes
 {
 }
 
-nvimgcdcsDecoderDesc_t LibjpegTurboDecoderPlugin::getDecoderDesc()
+nvimgcdcsDecoderDesc_t* LibjpegTurboDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }
 
-nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_streams,
-    nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
+    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     auto result = status;
     auto code_stream = code_streams;
@@ -137,7 +137,7 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
 }
 
 nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("libjpeg_turbo_can_decode");
@@ -155,12 +155,12 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
 }
 
 DecoderImpl::DecoderImpl(
-    const nvimgcdcsFrameworkDesc_t framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, std::string options)
+    const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, std::string options)
     : framework_(framework)
     , device_id_(device_id)
     , backend_params_(backend_params)
 {
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
     decode_state_batch_ = std::make_unique<DecodeState>(num_threads);
@@ -241,7 +241,7 @@ nvimgcdcsStatus_t DecoderImpl::static_destroy(nvimgcdcsDecoder_t decoder)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t decodeImpl(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsImageDesc_t image, const nvimgcdcsDecodeParams_t* params,
+nvimgcdcsStatus_t decodeImpl(nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params,
     std::vector<uint8_t>& buffer, bool fancy_upsampling = true, bool fast_idct = false)
 {
     libjpeg_turbo::UncompressFlags flags;
@@ -353,7 +353,7 @@ nvimgcdcsStatus_t decodeImpl(nvimgcdcsCodeStreamDesc_t code_stream, nvimgcdcsIma
 }
 
 nvimgcdcsStatus_t DecoderImpl::decodeBatch(
-    nvimgcdcsCodeStreamDesc_t* code_streams, nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     decode_state_batch_->samples_.resize(batch_size);
     for (int i = 0; i < batch_size; i++) {
@@ -362,7 +362,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
         decode_state_batch_->samples_[i].params = params;
     }
 
-    nvimgcdcsExecutorDesc_t executor;
+    nvimgcdcsExecutorDesc_t* executor;
     framework_->getExecutor(framework_->instance, &executor);
     for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
         executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(),
@@ -383,8 +383,8 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t DecoderImpl::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t* code_streams,
-    nvimgcdcsImageDesc_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t DecoderImpl::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
+    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
         NVIMGCDCS_D_LOG_TRACE("libjpeg_turbo_decode_batch");
