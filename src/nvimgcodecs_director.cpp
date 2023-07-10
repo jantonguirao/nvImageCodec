@@ -63,4 +63,14 @@ std::unique_ptr<ImageGenericEncoder> NvImgCodecsDirector::createGenericEncoder(i
     return std::make_unique<ImageGenericEncoder>(device_id, num_backends, backends, options);
 }
 
+void NvImgCodecsDirector::registerDebugMessenger(IDebugMessenger* messenger)
+{
+    Logger::get().registerDebugMessenger(messenger);
+}
+
+void NvImgCodecsDirector::unregisterDebugMessenger(IDebugMessenger* messenger)
+{
+    Logger::get().unregisterDebugMessenger(messenger);
+}
+
 } // namespace nvimgcdcs

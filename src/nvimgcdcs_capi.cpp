@@ -608,7 +608,7 @@ nvimgcdcsStatus_t nvimgcdcsDebugMessengerCreate(
 
             *dbgMessenger = new nvimgcdcsDebugMessenger(messengerDesc);
             (*dbgMessenger)->instance_ = instance;
-            Logger::get().registerDebugMessenger(&(*dbgMessenger)->debug_messenger_);
+            instance->director_.registerDebugMessenger(&(*dbgMessenger)->debug_messenger_);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -620,7 +620,7 @@ nvimgcdcsStatus_t nvimgcdcsDebugMessengerDestroy(nvimgcdcsDebugMessenger_t dbgMe
     NVIMGCDCSAPI_TRY
         {
             CHECK_NULL(dbgMessenger)
-            Logger::get().unregisterDebugMessenger(&dbgMessenger->debug_messenger_);
+            dbgMessenger->instance_->director_.unregisterDebugMessenger(&dbgMessenger->debug_messenger_);
             delete dbgMessenger;
         }
     NVIMGCDCSAPI_CATCH(ret)

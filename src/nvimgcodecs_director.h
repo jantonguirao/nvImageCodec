@@ -24,6 +24,8 @@
 
 namespace nvimgcdcs {
 
+class IDebugMessenger;
+
 class NvImgCodecsDirector
 {
   public:
@@ -50,6 +52,8 @@ class NvImgCodecsDirector
 
     std::unique_ptr<ImageGenericDecoder> createGenericDecoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
     std::unique_ptr<ImageGenericEncoder> createGenericEncoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
+    void registerDebugMessenger(IDebugMessenger* messenger);
+    void unregisterDebugMessenger(IDebugMessenger* messenger);
 
     nvimgcdcsDeviceAllocator_t* device_allocator_;
     nvimgcdcsPinnedAllocator_t* pinned_allocator_;
