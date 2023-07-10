@@ -21,7 +21,7 @@ if [ -d analysis_dir ]; then
 fi
 
 # build
-cov-build --dir analysis_dir make clean nvimgcodecs
+cov-build --dir analysis_dir make clean all
 if [ $? -ne 0 ]; then
     echo "Failed to run cov-build!"
     exit 1
