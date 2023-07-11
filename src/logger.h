@@ -13,26 +13,23 @@
 #include <nvimgcodecs.h>
 #include <vector>
 #include <string>
+#include "ilogger.h"
 
 namespace nvimgcdcs {
 
 class IDebugMessenger;
-class Logger
+class Logger : public ILogger
 {
   public:
-    Logger(const Logger&)           = delete;
-    Logger& operator=(const Logger) = delete;
-    static Logger& get();
+    Logger() = default;
+    Logger(IDebugMessenger* messenger);
+    static ILogger* get();
     void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const std::string& message);
+        const nvimgcdcsDebugMessageType_t message_type, const std::string& message) override ;
     void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
-    void registerDebugMessenger(IDebugMessenger* messenger);
-    void unregisterDebugMessenger(IDebugMessenger* messenger);
-
-  protected:
-    Logger(){};
-    virtual ~Logger() {}
+        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data) override;
+    void registerDebugMessenger(IDebugMessenger* messenger) override;
+    void unregisterDebugMessenger(IDebugMessenger* messenger) override;
 
   private:
     std::vector<IDebugMessenger*> messengers_;

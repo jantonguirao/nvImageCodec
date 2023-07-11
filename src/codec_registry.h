@@ -20,16 +20,18 @@
 namespace nvimgcdcs {
 
 class IImageParser;
+class ILogger;
 
 class CodecRegistry : public ICodecRegistry
 {
   public:
-    CodecRegistry();
+    CodecRegistry(ILogger* logger);
     void registerCodec(std::unique_ptr<ICodec> codec) override;
     std::unique_ptr<IImageParser> getParser(
         nvimgcdcsCodeStreamDesc_t* code_stream) const override;
     ICodec* getCodecByName(const char* name)  override;
   private:
+    ILogger* logger_;
     std::deque<ICodec*> codec_ptrs_;
     std::map<std::string, std::unique_ptr<ICodec>> by_name_;
 };

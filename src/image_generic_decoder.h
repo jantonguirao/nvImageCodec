@@ -30,11 +30,12 @@ class ICodeStream;
 class ICodecRegistry;
 class ICodec;
 class DecoderWorker;
+class ILogger;
 
 class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
 {
   public:
-    explicit ImageGenericDecoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char *options = nullptr);
+    explicit ImageGenericDecoder(ILogger* logger, int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char *options = nullptr);
     ~ImageGenericDecoder();
     void canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
         nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
@@ -49,6 +50,7 @@ class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
     void combineWork(Work<nvimgcdcsDecodeParams_t>* target, std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> source);
     void distributeWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work);
 
+    ILogger* logger_;
     std::mutex work_mutex_;
     std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> free_work_items_;
     std::map<const ICodec*, std::unique_ptr<DecoderWorker>> workers_;

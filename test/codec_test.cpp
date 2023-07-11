@@ -16,12 +16,14 @@
 #include "../src/iimage_parser.h"
 #include "../src/iimage_parser_factory.h"
 #include "mock_image_parser_factory.h"
+#include "mock_logger.h"
 
 namespace nvimgcdcs { namespace test {
 
 TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_123)
 {
-    Codec codec("test_codec");
+    MockLogger logger;
+    Codec codec(&logger, "test_codec");
     std::unique_ptr<MockImageParserFactory> factory1 = std::make_unique<MockImageParserFactory>();
     std::unique_ptr<MockImageParserFactory> factory2 = std::make_unique<MockImageParserFactory>();
     std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();
@@ -41,7 +43,8 @@ TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_12
 
 TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_231)
 {
-    Codec codec("test_codec");
+    MockLogger logger;
+    Codec codec(&logger, "test_codec");
     std::unique_ptr<MockImageParserFactory> factory1 = std::make_unique<MockImageParserFactory>();
     std::unique_ptr<MockImageParserFactory> factory2 = std::make_unique<MockImageParserFactory>();
     std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();
@@ -61,7 +64,8 @@ TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_23
 
 TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_321)
 {
-    Codec codec("test_codec");
+    MockLogger logger;
+    Codec codec(&logger, "test_codec");
     std::unique_ptr<MockImageParserFactory> factory1 = std::make_unique<MockImageParserFactory>();
     std::unique_ptr<MockImageParserFactory> factory2 = std::make_unique<MockImageParserFactory>();
     std::unique_ptr<MockImageParserFactory> factory3 = std::make_unique<MockImageParserFactory>();

@@ -11,7 +11,6 @@
 #include <cassert>
 #include <iostream>
 #include "image_parser.h"
-#include "log.h"
 
 namespace nvimgcdcs {
 
@@ -36,7 +35,6 @@ std::unique_ptr<IImageParser> ImageParserFactory::createParser() const
 
 bool ImageParserFactory::canParse(nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    NVIMGCDCS_LOG_TRACE("ImageParser::canParse");
     assert(code_stream);
     bool result = false;
     parser_desc_->canParse(parser_desc_->instance, &result, code_stream);

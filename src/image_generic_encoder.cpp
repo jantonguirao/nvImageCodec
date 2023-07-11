@@ -27,8 +27,9 @@
 namespace nvimgcdcs {
 
 
-ImageGenericEncoder::ImageGenericEncoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
-    : device_id_(device_id)
+ImageGenericEncoder::ImageGenericEncoder(ILogger* logger, int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
+    : logger_(logger)
+    , device_id_(device_id)
     , backends_(num_backends)
     , options_(options ? options : "")
 {
@@ -166,7 +167,7 @@ EncoderWorker* ImageGenericEncoder::getWorker(const ICodec* codec)
 {
     auto it = workers_.find(codec);
     if (it == workers_.end()) {
-        it = workers_.emplace(codec, std::make_unique<EncoderWorker>(this, device_id_, backends_, options_, codec, 0)).first;
+        it = workers_.emplace(codec, std::make_unique<EncoderWorker>(logger_, this, device_id_, backends_, options_, codec, 0)).first;
     }
 
     return it->second.get();
@@ -174,7 +175,7 @@ EncoderWorker* ImageGenericEncoder::getWorker(const ICodec* codec)
 
 void ImageGenericEncoder::distributeWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
 {
-    NVIMGCDCS_LOG_TRACE("distributeWork");
+    NVIMGCDCS_LOG_TRACE_("distributeWork");
     std::map<const ICodec*, std::unique_ptr<Work<nvimgcdcsEncodeParams_t>>> dist;
     for (int i = 0; i < work->getSamplesNum(); i++) {
         ICodec* codec = work->code_streams_[i]->getCodec();

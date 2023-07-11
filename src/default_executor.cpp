@@ -15,8 +15,9 @@
 
 namespace nvimgcdcs {
 
-DefaultExecutor::DefaultExecutor(int num_threads)
-    : desc_{NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC, nullptr, this, &static_launch, &static_get_num_threads}
+DefaultExecutor::DefaultExecutor(ILogger* logger, int num_threads)
+    : logger_(logger)
+    , desc_{NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC, nullptr, this, &static_launch, &static_get_num_threads}
     , num_threads_(num_threads)
 {
     if (num_threads_ == 0) {
@@ -49,7 +50,7 @@ nvimgcdcsStatus_t DefaultExecutor::launch(int device_id, int sample_idx, void* t
         };
         thread_pool.addWork(task_wrapper, 0, true);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(e.what());
+        NVIMGCDCS_LOG_ERROR_(e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR;
     }
 

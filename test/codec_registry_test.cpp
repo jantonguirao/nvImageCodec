@@ -14,6 +14,7 @@
 #include "../src/codec_registry.h"
 #include "mock_codec.h"
 #include "mock_image_parser.h"
+#include "mock_logger.h"
 
 namespace nvimgcdcs { namespace test {
 
@@ -34,7 +35,8 @@ TEST(codec_registry, get_codec_by_name)
     const std::string codec_name2("test_codec_2");
     EXPECT_CALL(*codec2_ptr, name()).WillRepeatedly(ReturnRef(codec_name2));
 
-    CodecRegistry codec_registry;
+    MockLogger logger;
+    CodecRegistry codec_registry(&logger);
 
     codec_registry.registerCodec(std::move(codec1));
     codec_registry.registerCodec(std::move(codec2));
@@ -67,7 +69,8 @@ TEST(codec_registry, get_parser_for_given_code_stream)
     EXPECT_CALL(*codec2_ptr, name()).WillRepeatedly(ReturnRef(codec_name2));
     EXPECT_CALL(*codec2_ptr, createParser(Eq(&code_stream2))).WillOnce(Return(ByMove(std::move(parser2))));
 
-    CodecRegistry codec_registry;
+    MockLogger logger;
+    CodecRegistry codec_registry(&logger);
     codec_registry.registerCodec(std::move(codec1));
     codec_registry.registerCodec(std::move(codec2));
 

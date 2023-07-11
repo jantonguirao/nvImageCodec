@@ -23,13 +23,14 @@ namespace nvimgcdcs {
 class ICodecRegistry;
 class ICodec;
 class IEnvironment;
+class ILogger;
 
 std::string GetDefaultExtensionsPath();
 char GetPathSeparator();
 class PluginFramework
 {
   public:
-    explicit PluginFramework(ICodecRegistry* codec_registry, std::unique_ptr<IEnvironment> env,
+    explicit PluginFramework(ILogger* logger, ICodecRegistry* codec_registry, std::unique_ptr<IEnvironment> env,
         std::unique_ptr<IDirectoryScaner> directory_scaner, std::unique_ptr<ILibraryLoader> library_loader,
         std::unique_ptr<IExecutor> executor, nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator,
         const std::string& extensions_path);
@@ -84,6 +85,7 @@ class PluginFramework
     static nvimgcdcsStatus_t static_log(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* callback_data);
 
+    ILogger* logger_;
     std::unique_ptr<IEnvironment> env_;
     std::unique_ptr<IDirectoryScaner> directory_scaner_;
     std::unique_ptr<ILibraryLoader> library_loader_;

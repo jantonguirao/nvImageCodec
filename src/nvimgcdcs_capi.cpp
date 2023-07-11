@@ -27,7 +27,6 @@
 #include "image.h"
 #include "image_generic_decoder.h"
 #include "image_generic_encoder.h"
-#include "iostream_factory.h"
 #include "log.h"
 #include "nvimgcodecs_director.h"
 #include "nvimgcodecs_type_utils.h"
@@ -79,21 +78,21 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
 #define NVIMGCDCSAPI_TRY try
 
 #ifndef VERBOSE_ERRORS
-    #define NVIMGCDCSAPI_CATCH(a)                             \
-        catch (const Exception& e)                            \
-        {                                                     \
-            a = getCAPICode(e.status());                      \
-        }                                                     \
-        catch (...)                                           \
-        {                                                     \
-            NVIMGCDCS_LOG_ERROR("Unknown NVIMGCODECS error"); \
-            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;              \
+    #define NVIMGCDCSAPI_CATCH(a)                                            \
+        catch (const Exception& e)                                           \
+        {                                                                    \
+            a = getCAPICode(e.status());                                     \
+        }                                                                    \
+        catch (...)                                                          \
+        {                                                                    \
+            NVIMGCDCS_LOG_ERROR( "Unknown NVIMGCODECS error"); \
+            a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                             \
         }
 #else
     #define NVIMGCDCSAPI_CATCH(a)                                                                                                   \
         catch (const Exception& e)                                                                                                  \
         {                                                                                                                           \
-            NVIMGCDCS_LOG_ERROR(                                                                                                    \
+            NVIMGCDCS_LOG_ERROR(                                                                                      \
                 "Error status: " << e.status() << " Where: " << e.where() << " Message: " << e.message() << " What: " << e.what()); \
             a = getCAPICode(e.status());                                                                                            \
         }                                                                                                                           \
@@ -149,6 +148,12 @@ struct nvimgcdcsExtension
 {
     nvimgcdcsInstance_t nvimgcdcs_instance_;
     nvimgcdcsExtension_t extension_ext_handle_;
+};
+
+struct nvimgcdcsCodeStream
+{
+    nvimgcdcsInstance_t nvimgcdcs_instance_;
+    std::unique_ptr<CodeStream> code_stream_;
 };
 
 struct nvimgcdcsImage
@@ -244,30 +249,25 @@ nvimgcdcsStatus_t nvimgcdcsExtensionDestroy(nvimgcdcsExtension_t extension)
     return ret;
 }
 
-struct nvimgcdcsCodeStream
-{
-    explicit nvimgcdcsCodeStream(CodecRegistry* codec_registry)
-        : code_stream_(codec_registry, std::make_unique<IoStreamFactory>())
-    {
-    }
-    nvimgcdcs::CodeStream code_stream_;
-};
+
 
 static nvimgcdcsStatus_t nvimgcdcsStreamCreate(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    nvimgcdcsCodeStream_t stream = nullptr;
     NVIMGCDCSAPI_TRY
         {
+            CHECK_NULL(instance);
             CHECK_NULL(code_stream);
-            stream = new nvimgcdcsCodeStream(&instance->director_.codec_registry_);
-            *code_stream = stream;
+            *code_stream = new nvimgcdcsCodeStream();
+            (*code_stream)->code_stream_ = instance->director_.createCodeStream();
+            (*code_stream)->nvimgcdcs_instance_ = instance;
+   
         }
     NVIMGCDCSAPI_CATCH(ret)
 
     if (ret != NVIMGCDCS_STATUS_SUCCESS) {
-        if (stream) {
-            delete stream;
+        if (*code_stream) {
+            delete *code_stream;
         }
     }
     return ret;
@@ -280,7 +280,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromFile(nvimgcdcsInstance_t instance
     NVIMGCDCSAPI_TRY
         {
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                (*code_stream)->code_stream_.parseFromFile(std::string(file_name));
+                (*code_stream)->code_stream_->parseFromFile(std::string(file_name));
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -295,7 +295,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateFromHostMem(
     NVIMGCDCSAPI_TRY
         {
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                (*code_stream)->code_stream_.parseFromMem(data, size);
+                (*code_stream)->code_stream_->parseFromMem(data, size);
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -311,8 +311,8 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(
             CHECK_NULL(code_stream)
             CHECK_NULL(file_name)
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                (*code_stream)->code_stream_.setOutputToFile(file_name);
-                (*code_stream)->code_stream_.setImageInfo(image_info);
+                (*code_stream)->code_stream_->setOutputToFile(file_name);
+                (*code_stream)->code_stream_->setImageInfo(image_info);
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -329,8 +329,8 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instanc
             CHECK_NULL(image_info)
             CHECK_NULL(get_buffer_func)
             if (ret == NVIMGCDCS_STATUS_SUCCESS) {
-                (*code_stream)->code_stream_.setOutputToHostMem(ctx, get_buffer_func);
-                (*code_stream)->code_stream_.setImageInfo(image_info);
+                (*code_stream)->code_stream_->setOutputToHostMem(ctx, get_buffer_func);
+                (*code_stream)->code_stream_->setImageInfo(image_info);
             }
         }
     NVIMGCDCSAPI_CATCH(ret)
@@ -356,20 +356,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t code_str
         {
             CHECK_NULL(code_stream)
             CHECK_NULL(image_info)
-            return code_stream->code_stream_.getImageInfo(image_info);
-        }
-    NVIMGCDCSAPI_CATCH(ret)
-    return ret;
-}
-
-nvimgcdcsStatus_t nvimgcdcsCodeStreamSetImageInfo(nvimgcdcsCodeStream_t code_stream, nvimgcdcsImageInfo_t* image_info)
-{
-    nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
-    NVIMGCDCSAPI_TRY
-        {
-            CHECK_NULL(code_stream)
-            CHECK_NULL(image_info)
-            code_stream->code_stream_.setImageInfo(image_info);
+            return code_stream->code_stream_->getImageInfo(image_info);
         }
     NVIMGCDCSAPI_CATCH(ret)
     return ret;
@@ -423,7 +410,7 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t deco
             std::vector<nvimgcdcs::IImage*> internal_images;
 
             for (int i = 0; i < batch_size; ++i) {
-                internal_code_streams.push_back(&streams[i]->code_stream_);
+                internal_code_streams.push_back(streams[i]->code_stream_.get());
                 internal_images.push_back(&images[i]->image_);
             }
 
@@ -449,7 +436,7 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDecode(nvimgcdcsDecoder_t decoder, const nvimg
             std::vector<nvimgcdcs::IImage*> internal_images;
 
             for (int i = 0; i < batch_size; ++i) {
-                internal_code_streams.push_back(&streams[i]->code_stream_);
+                internal_code_streams.push_back(streams[i]->code_stream_.get());
                 internal_images.push_back(&images[i]->image_);
             }
             *future = new nvimgcdcsFuture();
@@ -558,7 +545,7 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t enco
             std::vector<nvimgcdcs::IImage*> internal_images;
 
             for (int i = 0; i < batch_size; ++i) {
-                internal_code_streams.push_back(&streams[i]->code_stream_);
+                internal_code_streams.push_back(streams[i]->code_stream_.get());
                 internal_images.push_back(&images[i]->image_);
             }
 
@@ -585,7 +572,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderEncode(nvimgcdcsEncoder_t encoder, const nvimg
             std::vector<nvimgcdcs::IImage*> internal_images;
 
             for (int i = 0; i < batch_size; ++i) {
-                internal_code_streams.push_back(&streams[i]->code_stream_);
+                internal_code_streams.push_back(streams[i]->code_stream_.get());
                 internal_images.push_back(&images[i]->image_);
             }
 

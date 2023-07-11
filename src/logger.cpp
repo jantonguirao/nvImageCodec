@@ -11,13 +11,21 @@
 #include <nvimgcodecs.h>
 #include <algorithm>
 #include "idebug_messenger.h"
+#include "default_debug_messenger.h"
 
 namespace nvimgcdcs {
 
-Logger& Logger::get()
+Logger::Logger(IDebugMessenger* messenger)
 {
-    static Logger instance;
-    return instance;
+    messengers_.push_back(messenger);
+}
+
+ILogger* Logger::get()
+{
+    static DefaultDebugMessenger default_debug_messanger;
+    static Logger instance(&default_debug_messanger);
+    
+    return &instance;
 }
 
 void Logger::log(

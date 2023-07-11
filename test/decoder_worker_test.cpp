@@ -16,6 +16,7 @@
 #include "mock_codec.h"
 #include "mock_image_decoder.h"
 #include "mock_image_decoder_factory.h"
+#include "mock_logger.h"
 
 namespace nvimgcdcs { namespace test {
 
@@ -55,7 +56,7 @@ class DecoderWorkerTest : public TestWithParam<test_case_tuple_t>
             EXPECT_CALL(*codec_.get(), getDecoderFactory(i)).WillRepeatedly(Return(image_dec_factory));
         }
 
-        decoder_worker_ = std::make_unique<DecoderWorker>(nullptr, 0, allowed_backends_, "", codec_.get(), start_index);
+        decoder_worker_ = std::make_unique<DecoderWorker>(&logger_, nullptr, 0, allowed_backends_, "", codec_.get(), start_index);
     }
 
     void TearDown() override
@@ -70,6 +71,7 @@ class DecoderWorkerTest : public TestWithParam<test_case_tuple_t>
         allowed_backends_.clear();
     }
 
+    MockLogger logger_;
     std::unique_ptr<MockCodec> codec_;
     std::vector<std::unique_ptr<MockImageDecoder>> image_decs_;
     std::vector<IImageDecoder*> image_dec_ptrs_;
