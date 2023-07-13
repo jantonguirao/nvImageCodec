@@ -29,8 +29,8 @@ class NvJpeg2kEncoderPlugin
     struct Encoder;
     struct EncodeState
     {
-        explicit EncodeState(nvjpeg2kEncoder_t handle, nvimgcdcsDeviceAllocator_t* device_allocator,
-            nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads);
+        explicit EncodeState(const char* id, const nvimgcdcsFrameworkDesc_t* framework, nvjpeg2kEncoder_t handle,
+            nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads);
         ~EncodeState();
 
         struct PerThreadResources
@@ -50,6 +50,8 @@ class NvJpeg2kEncoderPlugin
             const nvimgcdcsEncodeParams_t* params;
         };
 
+        const char* id_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpeg2kEncoder_t handle_;
         nvimgcdcsDeviceAllocator_t* device_allocator_;
         nvimgcdcsPinnedAllocator_t* pinned_allocator_;
@@ -60,14 +62,15 @@ class NvJpeg2kEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        Encoder(const char* id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
+            const char* options);
         ~Encoder();
 
-        
         nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
             nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t encode(int sample_idx);
-        nvimgcdcsStatus_t encodeBatch();
+        nvimgcdcsStatus_t encodeBatch(
+            nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsEncoder_t encoder);
         static nvimgcdcsStatus_t static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
@@ -75,7 +78,7 @@ class NvJpeg2kEncoderPlugin
         static nvimgcdcsStatus_t static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images,
             nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
-        
+        const char* id_;
         nvjpeg2kEncoder_t handle_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
@@ -89,8 +92,8 @@ class NvJpeg2kEncoderPlugin
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
+    static constexpr const char* id_ = "nvjpeg2k_encoder";
     nvimgcdcsEncoderDesc_t encoder_desc_;
-    
     const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
