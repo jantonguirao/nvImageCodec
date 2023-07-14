@@ -26,7 +26,7 @@ struct NvJpeg2kImgCodecsExtension
     static nvimgcdcsStatus_t nvjpeg2k_extension_create(
         void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
     {
-        NVIMGCDCS_LOG_TRACE(framework, "nvjpeg2k-module", "nvjpeg2k_extension_create");
+        NVIMGCDCS_LOG_TRACE(framework, "nvjpeg2k-ext", "nvjpeg2k_extension_create");
         try {
             XM_CHECK_NULL(framework)
             XM_CHECK_NULL(extension)
@@ -42,7 +42,7 @@ struct NvJpeg2kImgCodecsExtension
         try {
             XM_CHECK_NULL(extension)
             auto ext_handle = reinterpret_cast<nvjpeg2k::NvJpeg2kImgCodecsExtension*>(extension);
-            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "nvjpeg2k-module", "nvjpeg2k_extension_destroy");
+            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "nvjpeg2k-ext", "nvjpeg2k_extension_destroy");
             delete ext_handle;
         } catch (const NvJpeg2kException& e) {
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;

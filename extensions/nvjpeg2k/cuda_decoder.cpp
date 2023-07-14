@@ -276,8 +276,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
             nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
             auto* decode_state = reinterpret_cast<NvJpeg2kDecoderPlugin::DecodeState*>(context);
             auto& t = decode_state->per_thread_[tid];
-            auto framework_ = decode_state->framework_;
-            auto plugin_id_ = decode_state->plugin_id_;
+            auto& framework_ = decode_state->framework_;
+            auto& plugin_id_ = decode_state->plugin_id_;
             auto* parse_state = t.parse_state_.get();
             auto jpeg2k_state = t.state_;
             nvimgcdcsCodeStreamDesc_t* code_stream = decode_state->samples_[sample_idx].code_stream;

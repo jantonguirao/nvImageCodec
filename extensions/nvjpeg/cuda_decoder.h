@@ -33,7 +33,7 @@ class NvJpegCudaDecoderPlugin
 
     struct DecodeState
     {
-        DecodeState(
+        DecodeState(const char* plugin_id,  const nvimgcdcsFrameworkDesc_t* framework,
             nvjpegHandle_t handle, nvjpegDevAllocatorV2_t* device_allocator, nvjpegPinnedAllocatorV2_t* pinned_allocator, int num_threads);
         ~DecodeState();
 
@@ -77,6 +77,8 @@ class NvJpegCudaDecoderPlugin
             nvjpegJpegState_t state = nullptr;
         };
 
+        const char* plugin_id_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t* device_allocator_;
         nvjpegPinnedAllocatorV2_t* pinned_allocator_;
@@ -87,7 +89,7 @@ class NvJpegCudaDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
+        Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
             const char* options = nullptr);
         ~Decoder();
 
@@ -95,7 +97,8 @@ class NvJpegCudaDecoderPlugin
         nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decode(int sample_idx);
-        nvimgcdcsStatus_t decodeBatch();
+        nvimgcdcsStatus_t decodeBatch(
+            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
         static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
@@ -106,8 +109,8 @@ class NvJpegCudaDecoderPlugin
         ParseState* getSampleParseState(int sample_idx);
 
         
+        const char* plugin_id_;
         nvjpegHandle_t handle_;
-
         nvjpegDevAllocatorV2_t device_allocator_;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcdcsFrameworkDesc_t* framework_;
@@ -120,8 +123,8 @@ class NvJpegCudaDecoderPlugin
 
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
+    static constexpr const char* plugin_id_ = "nvjpeg_cuda_decoder";
     nvimgcdcsDecoderDesc_t decoder_desc_;
-    
     const nvimgcdcsFrameworkDesc_t* framework_;
 };
 

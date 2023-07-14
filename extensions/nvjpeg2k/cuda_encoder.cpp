@@ -308,8 +308,8 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
             nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
             auto encode_state = reinterpret_cast<NvJpeg2kEncoderPlugin::EncodeState*>(task_context);
             auto& t = encode_state->per_thread_[tid];
-            auto framework_ = encode_state->framework_;
-            auto plugin_id_ = encode_state->plugin_id_;
+            auto& framework_ = encode_state->framework_;
+            auto& plugin_id_ = encode_state->plugin_id_;
             auto state_handle = t.state_;
             auto handle = encode_state->handle_;
             nvimgcdcsCodeStreamDesc_t* code_stream = encode_state->samples_[sample_idx].code_stream;
