@@ -50,7 +50,7 @@ class NvJpeg2kEncoderPlugin
             const nvimgcdcsEncodeParams_t* params;
         };
 
-        const char* id_;
+        const char* plugin_id_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpeg2kEncoder_t handle_;
         nvimgcdcsDeviceAllocator_t* device_allocator_;
@@ -78,7 +78,7 @@ class NvJpeg2kEncoderPlugin
         static nvimgcdcsStatus_t static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images,
             nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
-        const char* id_;
+        const char* plugin_id_;
         nvjpeg2kEncoder_t handle_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
@@ -92,7 +92,7 @@ class NvJpeg2kEncoderPlugin
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    static constexpr const char* id_ = "nvjpeg2k_encoder";
+    static constexpr const char* plugin_id_ = "nvjpeg2k_encoder";
     nvimgcdcsEncoderDesc_t encoder_desc_;
     const nvimgcdcsFrameworkDesc_t* framework_;
 };

@@ -31,7 +31,7 @@ class NvJpeg2kDecoderPlugin
         explicit ParseState(const char* id, const nvimgcdcsFrameworkDesc_t* framework);
         ~ParseState();
 
-        const char* id_;
+        const char* plugin_id_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpeg2kStream_t nvjpeg2k_stream_;
         std::vector<unsigned char> buffer_;
@@ -62,7 +62,7 @@ class NvJpeg2kDecoderPlugin
             const nvimgcdcsDecodeParams_t* params;
         };
 
-        const char* id_;
+        const char* plugin_id_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpeg2kHandle_t handle_ = nullptr;
         nvimgcdcsDeviceAllocator_t* device_allocator_;
@@ -90,7 +90,7 @@ class NvJpeg2kDecoderPlugin
         static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
-        const char* id_;
+        const char* plugin_id_;
         nvjpeg2kHandle_t handle_;
         nvjpeg2kDeviceAllocatorV2_t device_allocator_;
         nvjpeg2kPinnedAllocatorV2_t pinned_allocator_;
@@ -106,7 +106,7 @@ class NvJpeg2kDecoderPlugin
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    static constexpr const char* id_ = "nvjpeg2k_decoder";
+    static constexpr const char* plugin_id_ = "nvjpeg2k_decoder";
     nvimgcdcsDecoderDesc_t decoder_desc_;
     const nvimgcdcsFrameworkDesc_t* framework_;
 };

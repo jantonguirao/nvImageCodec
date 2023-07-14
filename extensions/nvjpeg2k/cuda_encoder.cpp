@@ -19,7 +19,7 @@
 namespace nvjpeg2k {
 
 NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
-    : encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL, this, id_, "jpeg2k", NVIMGCDCS_BACKEND_KIND_GPU_ONLY, static_create,
+    : encoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_ENCODER_DESC, NULL, this, plugin_id_, "jpeg2k", NVIMGCDCS_BACKEND_KIND_GPU_ONLY, static_create,
           Encoder::static_destroy, Encoder::static_can_encode, Encoder::static_encode_batch}
     , framework_(framework)
 {
@@ -34,7 +34,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
     nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, id_, "nvjpeg2k_can_encode");
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg2k_can_encode");
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images);
@@ -60,12 +60,12 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
                 if ((j2k_encode_params->code_block_w != 32 || j2k_encode_params->code_block_h != 32) &&
                     (j2k_encode_params->code_block_w != 64 || j2k_encode_params->code_block_h != 64)) {
                     *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
-                    NVIMGCDCS_LOG_WARNING(framework_, id_,
+                    NVIMGCDCS_LOG_WARNING(framework_, plugin_id_,
                         "Unsupported block size: " << j2k_encode_params->code_block_w << "x" << j2k_encode_params->code_block_h
                                                    << "(Valid values: 32, 64)");
                 }
                 if (j2k_encode_params->num_resolutions > NVJPEG2K_MAXRES) {
-                    NVIMGCDCS_LOG_WARNING(framework_, id_,
+                    NVIMGCDCS_LOG_WARNING(framework_, plugin_id_,
                         "Unsupported number of resolutions: " << j2k_encode_params->num_resolutions << " (max = " << NVJPEG2K_MAXRES
                                                               << ") ");
                     *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
@@ -125,7 +125,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingS
             }
         }
     } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not check if nvjpeg2k can encode - " << e.info());
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if nvjpeg2k can encode - " << e.info());
         return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -145,7 +145,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEnc
 
 NvJpeg2kEncoderPlugin::Encoder::Encoder(const char* id, const nvimgcdcsFrameworkDesc_t* framework, int device_id,
     const nvimgcdcsBackendParams_t* backend_params, const char* options)
-    : id_(id)
+    : plugin_id_(id)
     , framework_(framework)
     , device_id_(device_id)
     , backend_params_(backend_params)
@@ -157,7 +157,7 @@ NvJpeg2kEncoderPlugin::Encoder::Encoder(const char* id, const nvimgcdcsFramework
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
-    encode_state_batch_ = std::make_unique<NvJpeg2kEncoderPlugin::EncodeState>(id_, framework_,
+    encode_state_batch_ = std::make_unique<NvJpeg2kEncoderPlugin::EncodeState>(plugin_id_, framework_,
         handle_, framework->device_allocator, framework->pinned_allocator, device_id_, num_threads);
 }
 
@@ -165,15 +165,15 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(
     nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, id_, "nvjpeg2k_create_encoder");
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg2k_create_encoder");
         XM_CHECK_NULL(encoder);
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
-        *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(id_, framework_, device_id, backend_params, options));
+        *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(plugin_id_, framework_, device_id, backend_params, options));
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not create nvjpeg2k encoder - " << e.info());
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg2k encoder - " << e.info());
         return e.nvimgcdcsStatus();
     }
 }
@@ -193,12 +193,12 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(
 NvJpeg2kEncoderPlugin::Encoder::~Encoder()
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, id_, "nvjpeg2k_destroy_encoder");
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg2k_destroy_encoder");
         encode_state_batch_.reset();
         if (handle_)
             XM_CHECK_NVJPEG2K(nvjpeg2kEncoderDestroy(handle_));
     } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not properly destroy nvjpeg2k decoder - " << e.info());
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not properly destroy nvjpeg2k decoder - " << e.info());
     }
 }
 
@@ -216,7 +216,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_destroy(nvimgcdcsEncode
 
 NvJpeg2kEncoderPlugin::EncodeState::EncodeState(const char* id, const nvimgcdcsFrameworkDesc_t* framework, nvjpeg2kEncoder_t handle,
     nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads)
-    : id_(id)
+    : plugin_id_(id)
     , framework_(framework)
     , handle_(handle)
     , device_allocator_(device_allocator)
@@ -309,7 +309,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
             auto encode_state = reinterpret_cast<NvJpeg2kEncoderPlugin::EncodeState*>(task_context);
             auto& t = encode_state->per_thread_[tid];
             auto framework_ = encode_state->framework_;
-            auto id_ = encode_state->id_;
+            auto plugin_id_ = encode_state->plugin_id_;
             auto state_handle = t.state_;
             auto handle = encode_state->handle_;
             nvimgcdcsCodeStreamDesc_t* code_stream = encode_state->samples_[sample_idx].code_stream;
@@ -462,10 +462,10 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 input_image.pixel_data = reinterpret_cast<void**>(&encode_input[0]);
                 input_image.pitch_in_bytes = pitch_in_bytes.data();
                 input_image.pixel_type = nvjpeg2k_sample_type;
-                NVIMGCDCS_LOG_DEBUG(framework_, id_, "before encode ");
+                NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_, "before encode ");
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncode(handle, state_handle, encode_params.get(), &input_image, t.stream_));
                 XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));
-                NVIMGCDCS_LOG_DEBUG(framework_, id_, "after encode ");
+                NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_, "after encode ");
 
                 XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
                 size_t length;
@@ -483,7 +483,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             } catch (const NvJpeg2kException& e) {
-                NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not encode jpeg2k code stream - " << e.info());
+                NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not encode jpeg2k code stream - " << e.info());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
             try {
@@ -499,7 +499,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     tmp_buffer_sz = 0;
                 }
             } catch (const NvJpeg2kException& e) {
-                NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not free buffer - " << e.info());
+                NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not free buffer - " << e.info());
             }
         });
 
@@ -510,16 +510,16 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encodeBatch(
     nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, id_, "nvjpeg2k_encode_batch");
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg2k_encode_batch");
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images)
         XM_CHECK_NULL(params)
         if (batch_size < 1) {
-            NVIMGCDCS_LOG_ERROR(framework_, id_, "Batch size lower than 1");
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Batch size lower than 1");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
         encode_state_batch_->samples_.clear();
-        NVIMGCDCS_LOG_DEBUG(framework_, id_, "batch size - " << batch_size);
+        NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_, "batch size - " << batch_size);
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
             encode_state_batch_->samples_.push_back(
                 NvJpeg2kEncoderPlugin::EncodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
@@ -530,7 +530,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encodeBatch(
         }
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not encode jpeg2k batch - " << e.info());
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not encode jpeg2k batch - " << e.info());
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }

@@ -44,7 +44,7 @@
         if (_e != NVJPEG2K_STATUS_SUCCESS) {                       \
             std::stringstream _error;                              \
             _error << "nvjpeg2k Runtime failure: '#" << _e << "'"; \
-            NVIMGCDCS_LOG_ERROR(framework_, id_, _error.str());    \
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, _error.str());    \
         }                                                          \
     }
 
@@ -54,7 +54,7 @@
         if (_e != NVJPEG2K_STATUS_SUCCESS) {                       \
             std::stringstream _error;                              \
             _error << "nvjpeg2k Runtime failure: '#" << _e << "'"; \
-            NVIMGCDCS_LOG_ERROR(framework_, id_, _error.str());    \
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, _error.str());    \
         }                                                          \
     }
 
@@ -64,6 +64,6 @@
         if (_e != cudaSuccess) {                                \
             std::stringstream _error;                           \
             _error << "CUDA Runtime failure: '#" << _e << "'";  \
-            NVIMGCDCS_LOG_ERROR(framework_, id_, _error.str()); \
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, _error.str()); \
         }                                                       \
     }

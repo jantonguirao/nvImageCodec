@@ -21,7 +21,7 @@
 namespace nvjpeg2k {
 
 NvJpeg2kDecoderPlugin::NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL, this, id_, "jpeg2k", NVIMGCDCS_BACKEND_KIND_GPU_ONLY, static_create,
+    : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL, this, plugin_id_, "jpeg2k", NVIMGCDCS_BACKEND_KIND_GPU_ONLY, static_create,
           Decoder::static_destroy, Decoder::static_can_decode, Decoder::static_decode_batch}
     , framework_(framework)
 {
@@ -36,7 +36,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
     nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, id_, "jpeg2k_can_decode");
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg2k_can_decode");
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images);
@@ -92,7 +92,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
             }
         }
     } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not check if nvjpeg2k can decode - " << e.info());
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if nvjpeg2k can decode - " << e.info());
         return e.nvimgcdcsStatus();
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -111,7 +111,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
 
 NvJpeg2kDecoderPlugin::Decoder::Decoder(
     const char* id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
-    : id_(id)
+    : plugin_id_(id)
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
@@ -149,7 +149,7 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(
     framework_->getExecutor(framework_->instance, &executor);
     int num_threads = executor->get_num_threads(executor->instance);
 
-    decode_state_batch_ = std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(id_, framework_,
+    decode_state_batch_ = std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(plugin_id_, framework_,
         handle_, framework->device_allocator, framework->pinned_allocator, device_id_, num_threads);
 }
 
@@ -157,14 +157,14 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(
     nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, id_, "jpeg2k_create");
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg2k_create");
         XM_CHECK_NULL(decoder);
         if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-        *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpeg2kDecoderPlugin::Decoder(id_, framework_, device_id, backend_params));
+        *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new NvJpeg2kDecoderPlugin::Decoder(plugin_id_, framework_, device_id, backend_params));
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not create nvjpeg2k decoder - " << e.info());
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg2k decoder - " << e.info());
         return e.nvimgcdcsStatus();
     }
 }
@@ -184,12 +184,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(
 NvJpeg2kDecoderPlugin::Decoder::~Decoder()
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, id_, "jpeg2k_destroy");
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg2k_destroy");
         decode_state_batch_.reset();
         if (handle_)
             XM_CHECK_NVJPEG2K(nvjpeg2kDestroy(handle_));
     } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not properly destroy nvjpeg2k decoder - " << e.info());
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not properly destroy nvjpeg2k decoder - " << e.info());
     }
 }
 
@@ -206,7 +206,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_destroy(nvimgcdcsDecode
 
 NvJpeg2kDecoderPlugin::DecodeState::DecodeState(const char* id, const nvimgcdcsFrameworkDesc_t* framework, nvjpeg2kHandle_t handle,
     nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads)
-    : id_(id)
+    : plugin_id_(id)
     , framework_(framework)
     , handle_(handle)
     , device_allocator_(device_allocator)
@@ -227,7 +227,7 @@ NvJpeg2kDecoderPlugin::DecodeState::DecodeState(const char* id, const nvimgcdcsF
         XM_CHECK_CUDA(cudaStreamCreateWithFlags(&res.stream_, cudaStreamNonBlocking));
         XM_CHECK_CUDA(cudaEventCreate(&res.event_));
         XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateCreate(handle_, &res.state_));
-        res.parse_state_ = std::make_unique<NvJpeg2kDecoderPlugin::ParseState>(id_, framework_);
+        res.parse_state_ = std::make_unique<NvJpeg2kDecoderPlugin::ParseState>(plugin_id_, framework_);
 
         res.npp_ctx_.nCudaDeviceId = device_id_;
         res.npp_ctx_.hStream = res.stream_;
@@ -254,7 +254,7 @@ NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
 }
 
 NvJpeg2kDecoderPlugin::ParseState::ParseState(const char* id, const nvimgcdcsFrameworkDesc_t* framework)
-    : id_(id)
+    : plugin_id_(id)
     , framework_(framework)
 {
     XM_CHECK_NVJPEG2K(nvjpeg2kStreamCreate(&nvjpeg2k_stream_));
@@ -277,7 +277,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
             auto* decode_state = reinterpret_cast<NvJpeg2kDecoderPlugin::DecodeState*>(context);
             auto& t = decode_state->per_thread_[tid];
             auto framework_ = decode_state->framework_;
-            auto id_ = decode_state->id_;
+            auto plugin_id_ = decode_state->plugin_id_;
             auto* parse_state = t.parse_state_.get();
             auto jpeg2k_state = t.state_;
             nvimgcdcsCodeStreamDesc_t* code_stream = decode_state->samples_[sample_idx].code_stream;
@@ -291,7 +291,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 image->getImageInfo(image->instance, &image_info);
 
                 if (image_info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
-                    NVIMGCDCS_LOG_ERROR(framework_, id_, "Unexpected buffer kind");
+                    NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected buffer kind");
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                     return;
                 }
@@ -309,7 +309,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                         size_t read_nbytes = 0;
                         io_stream->read(io_stream->instance, &read_nbytes, &parse_state->buffer_[0], encoded_stream_data_size);
                         if (read_nbytes != encoded_stream_data_size) {
-                            NVIMGCDCS_LOG_ERROR(framework_, id_, "Unexpected end-of-stream");
+                            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected end-of-stream");
                             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                             return;
                         }
@@ -331,7 +331,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 auto sgn = comp.sgn;
                 auto num_components = jpeg2k_info.num_components;
                 if (bpp > 16) {
-                    NVIMGCDCS_LOG_ERROR(framework_, id_, "Unexpected bitdepth");
+                    NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected bitdepth");
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                     return;
                 }
@@ -348,7 +348,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                         orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
                         bytes_per_sample = 2;
                     } else {
-                        NVIMGCDCS_LOG_ERROR(framework_, id_, "unsupported bit depth for a signed type. It must be 8 > bpp <= 16");
+                        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "unsupported bit depth for a signed type. It must be 8 > bpp <= 16");
                         image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                         return;
                     }
@@ -362,7 +362,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                         orig_data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
                         bytes_per_sample = 2;
                     } else {
-                        NVIMGCDCS_LOG_ERROR(framework_, id_, "bit depth not supported");
+                        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "bit depth not supported");
                         image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                         return;
                     }
@@ -378,24 +378,24 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 size_t row_nbytes;
                 size_t component_nbytes;
                 if (!interleaved && num_components < image_info.num_planes) {
-                    NVIMGCDCS_LOG_ERROR(framework_, id_, "Unexpected number of planes");
+                    NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected number of planes");
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                     return;
                 } else if (interleaved && num_components < image_info.plane_info[0].num_channels) {
-                    NVIMGCDCS_LOG_ERROR(framework_, id_, "Unexpected number of channels");
+                    NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected number of channels");
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                     return;
                 }
                 for (size_t p = 0; p < image_info.num_planes; p++) {
                     if (image_info.plane_info[p].sample_type != orig_data_type) {
-                        NVIMGCDCS_LOG_ERROR(framework_, id_, "Unexpected sample data type");
+                        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected sample data type");
                         image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                         return;
                     }
                 }
                 if (params->enable_roi && image_info.region.ndim > 0) {
                     auto region = image_info.region;
-                    NVIMGCDCS_LOG_DEBUG(framework_, id_,
+                    NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_,
                         "Setting up ROI :" << region.start[0] << ", " << region.start[1] << ", " << region.end[0] << ", " << region.end[1]);
                     uint32_t roi_width = region.end[1] - region.start[1];
                     uint32_t roi_height = region.end[0] - region.start[0];
@@ -403,7 +403,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                         nvjpeg2kDecodeParamsSetDecodeArea(decode_params, region.start[1], region.end[1], region.start[0], region.end[0]));
                     for (size_t p = 0; p < image_info.num_planes; p++) {
                         if (roi_height != image_info.plane_info[p].height || roi_width != image_info.plane_info[p].width) {
-                            NVIMGCDCS_LOG_ERROR(framework_, id_, "Unexpected plane info dimensions");
+                            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected plane info dimensions");
                             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                             return;
                         }
@@ -413,7 +413,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 } else {
                     for (size_t p = 0; p < image_info.num_planes; p++) {
                         if (height != image_info.plane_info[p].height || width != image_info.plane_info[p].width) {
-                            NVIMGCDCS_LOG_ERROR(framework_, id_, "Unexpected plane info dimensions");
+                            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected plane info dimensions");
                             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                             return;
                         }
@@ -423,7 +423,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                 }
 
                 if (image_info.buffer_size < component_nbytes * image_info.num_planes) {
-                    NVIMGCDCS_LOG_ERROR(framework_, id_, "The provided buffer can't hold the decoded image : " << image_info.num_planes);
+                    NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "The provided buffer can't hold the decoded image : " << image_info.num_planes);
                     image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                     return;
                 }
@@ -565,7 +565,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
 
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             } catch (const NvJpeg2kException& e) {
-                NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not decode jpeg2k code stream - " << e.info());
+                NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not decode jpeg2k code stream - " << e.info());
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
             try {
@@ -580,7 +580,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx)
                     decode_tmp_buffer_sz = 0;
                 }
             } catch (const NvJpeg2kException& e) {
-                NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not free buffer - " << e.info());
+                NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not free buffer - " << e.info());
             }
         });
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -590,12 +590,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decodeBatch(
     nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, id_, "nvjpeg2k_decode_batch");
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg2k_decode_batch");
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images)
         XM_CHECK_NULL(params)
         if (batch_size < 1) {
-            NVIMGCDCS_LOG_ERROR(framework_, id_, "Batch size lower than 1");
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Batch size lower than 1");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
 
@@ -612,7 +612,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decodeBatch(
         return NVIMGCDCS_STATUS_SUCCESS;
 
     } catch (const NvJpeg2kException& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, id_, "Could not decode jpeg2k batch - " << e.info());
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not decode jpeg2k batch - " << e.info());
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
