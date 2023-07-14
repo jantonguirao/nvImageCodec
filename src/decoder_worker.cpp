@@ -167,13 +167,13 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
     std::vector<bool> mask(work->code_streams_.size());
     std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
     if (decoder) {
-        NVIMGCDCS_LOG_DEBUG_("code streams: " << work->code_streams_.size());
+        NVIMGCDCS_LOG_DEBUG(logger_, "code streams: " << work->code_streams_.size());
         decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask, &status);
         for (size_t i = 0; i < work->code_streams_.size(); i++) {
-            NVIMGCDCS_LOG_INFO_("[" << decoder->decoderId() << "]" << " canDecode status sample #" << i << " : " << status[i]);
+            NVIMGCDCS_LOG_INFO(logger_, "[" << decoder->decoderId() << "]" << " canDecode status sample #" << i << " : " << status[i]);
         }
     } else {
-        NVIMGCDCS_LOG_ERROR_("Could not create decoder");
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not create decoder");
         work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
         return;
     }
@@ -206,11 +206,11 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
                 int sub_idx = indices.first[i];
                 ProcessingResult r = future->getOne(sub_idx);
                 if (r.isSuccess()) {
-                    NVIMGCDCS_LOG_INFO_("[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
+                    NVIMGCDCS_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
                     work->copy_buffer_if_necessary(is_device_output_, sub_idx, &r);
                     work->results_.set(work->indices_[sub_idx], r);
                 } else { // failed to decode
-                    NVIMGCDCS_LOG_INFO_("[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
+                    NVIMGCDCS_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
                     if (fallback_worker) {
                         // if there's fallback, we don't set the result, but try to use the fallback first
                         if (!fallback_work)

@@ -40,7 +40,7 @@ void CodecRegistry::registerCodec(std::unique_ptr<ICodec> codec)
 std::unique_ptr<IImageParser> CodecRegistry::getParser(
     nvimgcdcsCodeStreamDesc_t* code_stream) const
 {
-    NVIMGCDCS_LOG_TRACE_("CodecRegistry::getParser");
+    NVIMGCDCS_LOG_TRACE(logger_, "CodecRegistry::getParser");
     for (auto* codec : codec_ptrs_) {
         std::unique_ptr<IImageParser> parser = codec->createParser(code_stream);
         if (parser) {

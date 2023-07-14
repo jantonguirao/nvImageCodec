@@ -82,21 +82,21 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
 
     if (image_info->type != NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO) {
-        NVIMGCDCS_LOG_ERROR("Unexpected structure type");
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected structure type");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     strcpy(image_info->codec_name, "pnm");
     // http://netpbm.sourceforge.net/doc/ppm.html
 
     if (io_stream_length < 3) {
-        NVIMGCDCS_LOG_ERROR("Unexpected end of stream");
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected end of stream");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
 
     std::array<uint8_t, 3> header = ReadValue<std::array<uint8_t, 3>>(io_stream);
     bool is_pnm = header[0] == 'P' && header[1] >= '1' && header[1] <= '6' && isspace(header[2]);
     if (!is_pnm) {
-        NVIMGCDCS_LOG_ERROR("Unexpected header");
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected header");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
     // formats "P3" and "P6" are RGB color, all other formats are bitmaps or greymaps
@@ -155,14 +155,14 @@ nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
 nvimgcdcsStatus_t PNMParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("pnm_parser_can_parse");
+        NVIMGCDCS_LOG_TRACE(Logger::get(), "pnm_parser_can_parse");
         CHECK_NULL(instance);
         CHECK_NULL(result);
         CHECK_NULL(code_stream);
         auto handle = reinterpret_cast<PNMParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not check if code stream can be parsed - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not check if code stream can be parsed - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -180,13 +180,13 @@ nvimgcdcsStatus_t PNMParserPlugin::create(nvimgcdcsParser_t* parser)
 nvimgcdcsStatus_t PNMParserPlugin::static_create(void* instance, nvimgcdcsParser_t* parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("pnm_parser_create");
+        NVIMGCDCS_LOG_TRACE(Logger::get(), "pnm_parser_create");
         CHECK_NULL(instance);
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<PNMParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create pnm parser - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not create pnm parser - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -195,12 +195,12 @@ nvimgcdcsStatus_t PNMParserPlugin::static_create(void* instance, nvimgcdcsParser
 nvimgcdcsStatus_t PNMParserPlugin::Parser::static_destroy(nvimgcdcsParser_t parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("pnm_parser_destroy");
+        NVIMGCDCS_LOG_TRACE(Logger::get(), "pnm_parser_destroy");
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<PNMParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy pnm parser - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not destroy pnm parser - " << e.what());
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -208,11 +208,11 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
 
 nvimgcdcsStatus_t PNMParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    NVIMGCDCS_LOG_TRACE("pnm_parser_get_image_info");
+    NVIMGCDCS_LOG_TRACE(Logger::get(), "pnm_parser_get_image_info");
     try {
         return GetImageInfoImpl(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from png stream - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not retrieve image info from png stream - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR;
     }
 }
@@ -221,14 +221,14 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_get_image_info(
     nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("pnm_parser_get_image_info");
+        NVIMGCDCS_LOG_TRACE(Logger::get(), "pnm_parser_get_image_info");
         CHECK_NULL(parser);
         CHECK_NULL(code_stream);
         CHECK_NULL(image_info);
         auto handle = reinterpret_cast<PNMParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from pnm code stream - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not retrieve image info from pnm code stream - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -250,7 +250,7 @@ class PnmParserExtension
 
 nvimgcdcsStatus_t pnm_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
-    NVIMGCDCS_LOG_TRACE("pnm_parser_extension_create");
+    NVIMGCDCS_LOG_TRACE(Logger::get(), "pnm_parser_extension_create");
     try {
         CHECK_NULL(framework)
         CHECK_NULL(extension)
@@ -263,7 +263,7 @@ nvimgcdcsStatus_t pnm_parser_extension_create(void* instance, nvimgcdcsExtension
 
 nvimgcdcsStatus_t pnm_parser_extension_destroy(nvimgcdcsExtension_t extension)
 {
-    NVIMGCDCS_LOG_TRACE("pnm_parser_extension_destroy");
+    NVIMGCDCS_LOG_TRACE(Logger::get(), "pnm_parser_extension_destroy");
     try {
         CHECK_NULL(extension)
         auto ext_handle = reinterpret_cast<nvimgcdcs::PnmParserExtension*>(extension);

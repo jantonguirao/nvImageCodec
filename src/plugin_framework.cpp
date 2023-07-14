@@ -94,7 +94,7 @@ PluginFramework::PluginFramework(ILogger* logger, ICodecRegistry* codec_registry
     std::stringstream ss(effective_ext_path);
     std::string current_path;
     while (getline(ss, current_path, GetPathSeparator())) {
-        NVIMGCDCS_LOG_DEBUG_("Using extension path [" << current_path << "]");
+        NVIMGCDCS_LOG_DEBUG(logger_, "Using extension path [" << current_path << "]");
         extension_paths_.push_back(current_path);
     }
 }
@@ -157,27 +157,27 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(
     nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc, const Module& module)
 {
     if (extension_desc == nullptr) {
-        NVIMGCDCS_LOG_ERROR_("Extension description cannot be null");
+        NVIMGCDCS_LOG_ERROR(logger_, "Extension description cannot be null");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
     if (extension_desc->id == nullptr) {
-        NVIMGCDCS_LOG_ERROR_("Extension id cannot be null");
+        NVIMGCDCS_LOG_ERROR(logger_, "Extension id cannot be null");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
     if (extension_desc->create == nullptr) {
-        NVIMGCDCS_LOG_ERROR_("Could not find  'create' function in extension");
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not find  'create' function in extension");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
     if (extension_desc->destroy == nullptr) {
-        NVIMGCDCS_LOG_ERROR_("Could not find  'destroy' function in extension");
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not find  'destroy' function in extension");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
     if (extension_desc->ext_api_version > NVIMGCDCS_EXT_API_VER) {
-        NVIMGCDCS_LOG_WARNING_("Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+        NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
                                                               << " Extension API version: " << NVIMGCDCS_STREAM_VER(extension_desc->ext_api_version)
                                                               << " newer than framework API version: " << NVIMGCDCS_EXT_API_VER);
         return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
@@ -185,29 +185,29 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(
     auto it = extensions_.find(extension_desc->id);
     if (it != extensions_.end()) {
         if (it->second.desc_.version == extension_desc->version) {
-            NVIMGCDCS_LOG_WARNING_("Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+            NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
                                                                   << " Extension with the same id and version already registered");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         } else if (it->second.desc_.version > extension_desc->version) {
-            NVIMGCDCS_LOG_WARNING_("Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+            NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
                                                                   << " Extension with the same id and newer version: "
                                                                   << NVIMGCDCS_STREAM_VER(it->second.desc_.version) << " already registered");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         } else if (it->second.desc_.version < extension_desc->version) {
-            NVIMGCDCS_LOG_WARNING_("Extension with the same id:" << extension_desc->id << " and older version: " << NVIMGCDCS_STREAM_VER(it->second.desc_.version)
+            NVIMGCDCS_LOG_WARNING(logger_, "Extension with the same id:" << extension_desc->id << " and older version: " << NVIMGCDCS_STREAM_VER(it->second.desc_.version)
                                                                 << " already registered and will be unregistered");
             unregisterExtension(it);
         }
     }
 
-    NVIMGCDCS_LOG_INFO_("Registering extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version));
+    NVIMGCDCS_LOG_INFO(logger_, "Registering extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version));
     PluginFramework::Extension internal_extension;
     internal_extension.desc_ = *extension_desc;
     internal_extension.module_ = module;
     nvimgcdcsStatus_t status =
         internal_extension.desc_.create(internal_extension.desc_.instance, &internal_extension.handle_, &framework_desc_);
     if (status != NVIMGCDCS_STATUS_SUCCESS) {
-        NVIMGCDCS_LOG_ERROR_("Could not create extension");
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not create extension");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     if (extension)
@@ -227,11 +227,11 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
 
 nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::map<std::string, Extension>::const_iterator it)
 {
-    NVIMGCDCS_LOG_INFO_("Unregistering extension " << it->second.desc_.id << " version:" << NVIMGCDCS_STREAM_VER(it->second.desc_.version));
+    NVIMGCDCS_LOG_INFO(logger_, "Unregistering extension " << it->second.desc_.id << " version:" << NVIMGCDCS_STREAM_VER(it->second.desc_.version));
     it->second.desc_.destroy(it->second.handle_);
 
     if (it->second.module_.lib_handle_ != nullptr) {
-        NVIMGCDCS_LOG_INFO_("Unloading extension module:" << it->second.module_.path_);
+        NVIMGCDCS_LOG_INFO(logger_, "Unloading extension module:" << it->second.module_.path_);
         library_loader_->unloadLibrary(it->second.module_.lib_handle_);
     }
     extensions_.erase(it);
@@ -242,7 +242,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterExtension(nvimgcdcsExtension_t exte
 {
     auto it = std::find_if(extensions_.begin(), extensions_.end(), [&](const auto& e) -> bool { return e.second.handle_ == extension; });
     if (it == extensions_.end()) {
-        NVIMGCDCS_LOG_WARNING_("Could not find extension to unregister ");
+        NVIMGCDCS_LOG_WARNING(logger_, "Could not find extension to unregister ");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
 
@@ -266,7 +266,7 @@ void PluginFramework::discoverAndLoadExtModules()
     for (const auto& dir : extension_paths_) {
 
         if (!directory_scaner_->exists(dir)) {
-            NVIMGCDCS_LOG_DEBUG_("Plugin dir does not exists [" << dir << "]");
+            NVIMGCDCS_LOG_DEBUG(logger_, "Plugin dir does not exists [" << dir << "]");
             continue;
         }
         directory_scaner_->start(dir);
@@ -286,28 +286,28 @@ void PluginFramework::discoverAndLoadExtModules()
 
 void PluginFramework::loadExtModule(const std::string& modulePath)
 {
-    NVIMGCDCS_LOG_INFO_("Loading extension module: " << modulePath);
+    NVIMGCDCS_LOG_INFO(logger_, "Loading extension module: " << modulePath);
     PluginFramework::Module module;
     module.path_ = modulePath;
     try {
         module.lib_handle_ = library_loader_->loadLibrary(modulePath);
     } catch (const std::runtime_error& e)
     {
-        NVIMGCDCS_LOG_ERROR_("Could not load extension module library. Error: " << e.what());
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not load extension module library. Error: " << e.what());
         return;
     } catch (...) {
-        NVIMGCDCS_LOG_ERROR_("Could not load extension module library: " << modulePath);
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not load extension module library: " << modulePath);
         return;
     }
 
-    NVIMGCDCS_LOG_TRACE_("Getting extension module entry func");
+    NVIMGCDCS_LOG_TRACE(logger_, "Getting extension module entry func");
     try {
         module.extension_entry_ = reinterpret_cast<nvimgcdcsExtensionModuleEntryFunc_t>(
             library_loader_->getFuncAddress(module.lib_handle_, "nvimgcdcsExtensionModuleEntry"));
 
     } catch (...) {
-        NVIMGCDCS_LOG_ERROR_("Could not find extension module entry function: " << modulePath);
-        NVIMGCDCS_LOG_INFO_("Unloading extension module:" << modulePath);
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not find extension module entry function: " << modulePath);
+        NVIMGCDCS_LOG_INFO(logger_, "Unloading extension module:" << modulePath);
         library_loader_->unloadLibrary(module.lib_handle_);
 
         return;
@@ -315,8 +315,8 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
     nvimgcdcsExtensionDesc_t extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
     nvimgcdcsStatus_t status = module.extension_entry_(&extension_desc);
     if (status != NVIMGCDCS_STATUS_SUCCESS) {
-        NVIMGCDCS_LOG_ERROR_("Could not get extension module description");
-        NVIMGCDCS_LOG_INFO_("Unloading extension module:" << modulePath);
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not get extension module description");
+        NVIMGCDCS_LOG_INFO(logger_, "Unloading extension module:" << modulePath);
         library_loader_->unloadLibrary(module.lib_handle_);
 
         return;
@@ -324,7 +324,7 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
     nvimgcdcsExtension_t extension;
     status = registerExtension(&extension, &extension_desc, module);
     if (status != NVIMGCDCS_STATUS_SUCCESS) {
-        NVIMGCDCS_LOG_INFO_("Unloading extension module:" << modulePath);
+        NVIMGCDCS_LOG_INFO(logger_, "Unloading extension module:" << modulePath);
         library_loader_->unloadLibrary(module.lib_handle_);
     }
 }
@@ -333,7 +333,7 @@ ICodec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
 {
     ICodec* codec = codec_registry_->getCodecByName(codec_name);
     if (codec == nullptr) {
-        NVIMGCDCS_LOG_INFO_("Codec " << codec_name << " not yet registered, registering for first time");
+        NVIMGCDCS_LOG_INFO(logger_, "Codec " << codec_name << " not yet registered, registering for first time");
         std::unique_ptr<Codec> new_codec = std::make_unique<Codec>(logger_, codec_name);
         codec_registry_->registerCodec(std::move(new_codec));
         codec = codec_registry_->getCodecByName(codec_name);
@@ -343,7 +343,7 @@ ICodec* PluginFramework::ensureExistsAndRetrieveCodec(const char* codec_name)
 
 nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t* desc, float priority)
 {
-    NVIMGCDCS_LOG_INFO_("Framework is registering encoder (id:" << desc->id << " codec:" << desc->codec << ")");
+    NVIMGCDCS_LOG_INFO(logger_, "Framework is registering encoder (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     std::unique_ptr<IImageEncoderFactory> encoder_factory = std::make_unique<ImageEncoderFactory>(desc);
     codec->registerEncoderFactory(std::move(encoder_factory), priority);
@@ -352,10 +352,10 @@ nvimgcdcsStatus_t PluginFramework::registerEncoder(const nvimgcdcsEncoderDesc_t*
 
 nvimgcdcsStatus_t PluginFramework::unregisterEncoder(const nvimgcdcsEncoderDesc_t* desc)
 {
-    NVIMGCDCS_LOG_INFO_("Framework is unregistering encoder (id:" << desc->id << " codec:" << desc->codec << ")");
+    NVIMGCDCS_LOG_INFO(logger_, "Framework is unregistering encoder (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = codec_registry_->getCodecByName(desc->codec);
     if (codec == nullptr) {
-        NVIMGCDCS_LOG_WARNING_("Codec " << desc->codec << " not registered");
+        NVIMGCDCS_LOG_WARNING(logger_, "Codec " << desc->codec << " not registered");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     codec->unregisterEncoderFactory(desc->id);
@@ -364,7 +364,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterEncoder(const nvimgcdcsEncoderDesc_
 
 nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t* desc, float priority)
 {
-    NVIMGCDCS_LOG_INFO_("Framework is registering decoder (id:" << desc->id << " codec:" << desc->codec << ")");
+    NVIMGCDCS_LOG_INFO(logger_, "Framework is registering decoder (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     std::unique_ptr<IImageDecoderFactory> decoder_factory = std::make_unique<ImageDecoderFactory>(desc);
     codec->registerDecoderFactory(std::move(decoder_factory), priority);
@@ -373,10 +373,10 @@ nvimgcdcsStatus_t PluginFramework::registerDecoder(const nvimgcdcsDecoderDesc_t*
 
 nvimgcdcsStatus_t PluginFramework::unregisterDecoder(const nvimgcdcsDecoderDesc_t* desc)
 {
-    NVIMGCDCS_LOG_INFO_("Framework is unregistering decoder (id:" << desc->id << " codec:" << desc->codec << ")");
+    NVIMGCDCS_LOG_INFO(logger_, "Framework is unregistering decoder (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = codec_registry_->getCodecByName(desc->codec);
     if (codec == nullptr) {
-        NVIMGCDCS_LOG_WARNING_("Codec " << desc->codec << " not registered");
+        NVIMGCDCS_LOG_WARNING(logger_, "Codec " << desc->codec << " not registered");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     codec->unregisterDecoderFactory(desc->id);
@@ -385,7 +385,7 @@ nvimgcdcsStatus_t PluginFramework::unregisterDecoder(const nvimgcdcsDecoderDesc_
 
 nvimgcdcsStatus_t PluginFramework::registerParser(const nvimgcdcsParserDesc_t* desc, float priority)
 {
-    NVIMGCDCS_LOG_INFO_("Framework is registering parser (id:" << desc->id << " codec:" << desc->codec << ")");
+    NVIMGCDCS_LOG_INFO(logger_, "Framework is registering parser (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = ensureExistsAndRetrieveCodec(desc->codec);
     std::unique_ptr<IImageParserFactory> parser_factory = std::make_unique<ImageParserFactory>(desc);
     codec->registerParserFactory(std::move(parser_factory), priority);
@@ -394,10 +394,10 @@ nvimgcdcsStatus_t PluginFramework::registerParser(const nvimgcdcsParserDesc_t* d
 
 nvimgcdcsStatus_t PluginFramework::unregisterParser(const nvimgcdcsParserDesc_t* desc)
 {
-    NVIMGCDCS_LOG_INFO_("Framework is unregistering parser (id:" << desc->id << " codec:" << desc->codec << ")");
+    NVIMGCDCS_LOG_INFO(logger_, "Framework is unregistering parser (id:" << desc->id << " codec:" << desc->codec << ")");
     ICodec* codec = codec_registry_->getCodecByName(desc->codec);
     if (codec == nullptr) {
-        NVIMGCDCS_LOG_WARNING_("Codec " << desc->codec << " not registered");
+        NVIMGCDCS_LOG_WARNING(logger_, "Codec " << desc->codec << " not registered");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     codec->unregisterParserFactory(desc->id);

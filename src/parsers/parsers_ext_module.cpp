@@ -58,7 +58,7 @@ class ParsersExtension
 
 nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
-    NVIMGCDCS_LOG_TRACE("parsers_extension_create");
+    NVIMGCDCS_LOG_TRACE(Logger::get(), "parsers_extension_create");
     try {
         CHECK_NULL(framework)
         CHECK_NULL(extension)
@@ -71,7 +71,7 @@ nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t*
 
 nvimgcdcsStatus_t parsers_extension_destroy(nvimgcdcsExtension_t extension)
 {
-    NVIMGCDCS_LOG_TRACE("parsers_extension_destroy");
+    NVIMGCDCS_LOG_TRACE(Logger::get(), "parsers_extension_destroy");
     try {
         CHECK_NULL(extension)
         auto ext_handle = reinterpret_cast<nvimgcdcs::ParsersExtension*>(extension);

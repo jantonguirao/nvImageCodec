@@ -50,7 +50,7 @@ nvimgcdcsStatus_t DefaultExecutor::launch(int device_id, int sample_idx, void* t
         };
         thread_pool.addWork(task_wrapper, 0, true);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR_(e.what());
+        NVIMGCDCS_LOG_ERROR(logger_, e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR;
     }
 

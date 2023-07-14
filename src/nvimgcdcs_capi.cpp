@@ -85,25 +85,25 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
         }                                                                    \
         catch (...)                                                          \
         {                                                                    \
-            NVIMGCDCS_LOG_ERROR( "Unknown NVIMGCODECS error"); \
+            NVIMGCDCS_LOG_ERROR(Logger::get(),  "Unknown NVIMGCODECS error"); \
             a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                             \
         }
 #else
     #define NVIMGCDCSAPI_CATCH(a)                                                                                                   \
         catch (const Exception& e)                                                                                                  \
         {                                                                                                                           \
-            NVIMGCDCS_LOG_ERROR(                                                                                      \
+            NVIMGCDCS_LOG_ERROR(Logger::get(),                                                                                       \
                 "Error status: " << e.status() << " Where: " << e.where() << " Message: " << e.message() << " What: " << e.what()); \
             a = getCAPICode(e.status());                                                                                            \
         }                                                                                                                           \
         catch (const std::runtime_error& e)                                                                                         \
         {                                                                                                                           \
-            NVIMGCDCS_LOG_ERROR(e.what());                                                                                          \
+            NVIMGCDCS_LOG_ERROR(Logger::get(), e.what());                                                                                          \
             a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                                                                                    \
         }                                                                                                                           \
         catch (...)                                                                                                                 \
         {                                                                                                                           \
-            NVIMGCDCS_LOG_ERROR("Unknown NVIMGCODECS error");                                                                       \
+            NVIMGCDCS_LOG_ERROR(Logger::get(), "Unknown NVIMGCODECS error");                                                                       \
             a = NVIMGCDCS_STATUS_INTERNAL_ERROR;                                                                                    \
         }
 #endif
@@ -459,7 +459,7 @@ nvimgcdcsStatus_t nvimgcdcsImageCreate(nvimgcdcsInstance_t instance, nvimgcdcsIm
             CHECK_NULL(image_info->buffer)
             if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_UNKNOWN ||
                 image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_UNSUPPORTED) {
-                NVIMGCDCS_LOG_ERROR("Unknown or unsupported buffer kind");
+                NVIMGCDCS_LOG_ERROR(Logger::get(), "Unknown or unsupported buffer kind");
                 return NVIMGCDCS_STATUS_INVALID_PARAMETER;
             }
 

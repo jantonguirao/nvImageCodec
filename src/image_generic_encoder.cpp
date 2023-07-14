@@ -175,7 +175,7 @@ EncoderWorker* ImageGenericEncoder::getWorker(const ICodec* codec)
 
 void ImageGenericEncoder::distributeWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
 {
-    NVIMGCDCS_LOG_TRACE_("distributeWork");
+    NVIMGCDCS_LOG_TRACE(logger_, "distributeWork");
     std::map<const ICodec*, std::unique_ptr<Work<nvimgcdcsEncodeParams_t>>> dist;
     for (int i = 0; i < work->getSamplesNum(); i++) {
         ICodec* codec = work->code_streams_[i]->getCodec();

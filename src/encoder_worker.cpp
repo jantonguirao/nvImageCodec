@@ -160,7 +160,7 @@ static void filter_work(Work<nvimgcdcsEncodeParams_t>* work, const std::vector<b
 
 void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work) noexcept
 {
-    NVIMGCDCS_LOG_TRACE_("processBatch");
+    NVIMGCDCS_LOG_TRACE(logger_, "processBatch");
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
 
@@ -168,10 +168,10 @@ void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> 
     std::vector<bool> mask(work->code_streams_.size());
     std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
     if (encoder) {
-        NVIMGCDCS_LOG_DEBUG_("code streams: " << work->code_streams_.size());
+        NVIMGCDCS_LOG_DEBUG(logger_, "code streams: " << work->code_streams_.size());
         encoder->canEncode(work->images_, work->code_streams_, work->params_, &mask, &status);
     } else {
-        NVIMGCDCS_LOG_ERROR_("Could not create encoder");
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not create encoder");
         work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
         return;
     }

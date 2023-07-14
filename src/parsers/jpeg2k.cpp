@@ -148,14 +148,14 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::canParse(bool* result, nvimgcdcsCodeStream
 nvimgcdcsStatus_t JPEG2KParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg2k_parser_can_parse");
+        NVIMGCDCS_LOG_TRACE(Logger::get(), "jpeg2k_parser_can_parse");
         CHECK_NULL(instance);
         CHECK_NULL(result);
         CHECK_NULL(code_stream);
         auto handle = reinterpret_cast<JPEG2KParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not check if code stream can be parsed - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not check if code stream can be parsed - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -173,13 +173,13 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::create(nvimgcdcsParser_t* parser)
 nvimgcdcsStatus_t JPEG2KParserPlugin::static_create(void* instance, nvimgcdcsParser_t* parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg2k_parser_create");
+        NVIMGCDCS_LOG_TRACE(Logger::get(), "jpeg2k_parser_create");
         CHECK_NULL(instance);
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<JPEG2KParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create jpeg2k parser - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not create jpeg2k parser - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -188,12 +188,12 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::static_create(void* instance, nvimgcdcsPar
 nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_destroy(nvimgcdcsParser_t parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg2k_parser_destroy");
+        NVIMGCDCS_LOG_TRACE(Logger::get(), "jpeg2k_parser_destroy");
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg2k parser - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not destroy jpeg2k parser - " << e.what());
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -212,7 +212,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseJP2(nvimgcdcsIoStreamDesc_t* 
                 ReadBoxHeader(block_type, block_size, io_stream);
                 if (block_type == jp2_image_header) { // Ref. I.5.3.1 Image Header box
                     if (block_size != 22) {
-                        NVIMGCDCS_LOG_ERROR("Invalid JPEG2K image header");
+                        NVIMGCDCS_LOG_ERROR(Logger::get(), "Invalid JPEG2K image header");
                         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
                     }
                     height = ReadValueBE<uint32_t>(io_stream);
@@ -220,7 +220,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseJP2(nvimgcdcsIoStreamDesc_t* 
                     num_components = ReadValueBE<uint16_t>(io_stream);
 
                     if (num_components > NVIMGCDCS_MAX_NUM_PLANES) {
-                        NVIMGCDCS_LOG_ERROR("Too many components " << num_components);
+                        NVIMGCDCS_LOG_ERROR(Logger::get(), "Too many components " << num_components);
                         return NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
                     }
 
@@ -267,19 +267,19 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseCodeStream(nvimgcdcsIoStreamD
 {
     auto marker = ReadValueBE<uint16_t>(io_stream);
     if (marker != SOC_marker) {
-        NVIMGCDCS_LOG_ERROR("SOC marker not found");
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "SOC marker not found");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
     // SOC should be followed by SIZ. Figure A.3
     marker = ReadValueBE<uint16_t>(io_stream);
     if (marker != SIZ_marker) {
-        NVIMGCDCS_LOG_ERROR("SIZ marker not found");
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "SIZ marker not found");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
 
     auto marker_size = ReadValueBE<uint16_t>(io_stream);
     if (marker_size < 41 || marker_size > 49190) {
-        NVIMGCDCS_LOG_ERROR("Invalid SIZ marker size");
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Invalid SIZ marker size");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
 
@@ -296,7 +296,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseCodeStream(nvimgcdcsIoStreamD
 
     // CSiz in table A.9, minimum of 1 and Max of 16384
     if (CSiz > NVIMGCDCS_MAX_NUM_PLANES) {
-        NVIMGCDCS_LOG_ERROR("Too many components " << num_components);
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Too many components " << num_components);
         return NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
     }
 
@@ -305,7 +305,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseCodeStream(nvimgcdcsIoStreamD
         XRSiz[i] = ReadValue<uint8_t>(io_stream);
         YRSiz[i] = ReadValue<uint8_t>(io_stream);
         if (bits_per_component != DIFFERENT_BITDEPTH_PER_COMPONENT && Ssiz[i] != bits_per_component) {
-            NVIMGCDCS_LOG_ERROR("SSiz is expected to match BPC from image header box");
+            NVIMGCDCS_LOG_ERROR(Logger::get(), "SSiz is expected to match BPC from image header box");
             return NVIMGCDCS_STATUS_CODESTREAM_UNSUPPORTED;
         }
     }
@@ -314,7 +314,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::parseCodeStream(nvimgcdcsIoStreamD
 
 nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    NVIMGCDCS_LOG_TRACE("jpeg2k_parser_get_image_info");
+    NVIMGCDCS_LOG_TRACE(Logger::get(), "jpeg2k_parser_get_image_info");
     try {
         num_components = 0;
         height = 0xFFFFFFFF, width = 0xFFFFFFFF;
@@ -335,7 +335,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
         io_stream->seek(io_stream->instance, 0, SEEK_SET);
 
         if (image_info->type != NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO) {
-            NVIMGCDCS_LOG_ERROR("Unexpected structure type");
+            NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected structure type");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
         strcpy(image_info->codec_name, "jpeg2k");
@@ -357,7 +357,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
 
         num_components = num_components > 0 ? num_components : CSiz;
         if (CSiz != num_components) {
-            NVIMGCDCS_LOG_ERROR("Unexpected number of components in main header versus image header box");
+            NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected number of components in main header versus image header box");
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
 
@@ -375,7 +375,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
                 ((image_info->plane_info[p].sample_type >> 8) & 0xff) == (Ssiz[p] & 0x7F) + 1 ? 0 : (Ssiz[p] & 0x7F) + 1;
         }
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg2k stream - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not retrieve image info from jpeg2k stream - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR;
     }
 
@@ -386,14 +386,14 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_get_image_info(
     nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg2k_parser_get_image_info");
+        NVIMGCDCS_LOG_TRACE(Logger::get(), "jpeg2k_parser_get_image_info");
         CHECK_NULL(parser);
         CHECK_NULL(code_stream);
         CHECK_NULL(image_info);
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg2k code stream - " << e.what());
+        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not retrieve image info from jpeg2k code stream - " << e.what());
         return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
     }
 }
@@ -415,7 +415,7 @@ class Jpeg2kParserExtension
 
 nvimgcdcsStatus_t jpeg2k_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
 {
-    NVIMGCDCS_LOG_TRACE("jpeg2k_parser_extension_create");
+    NVIMGCDCS_LOG_TRACE(Logger::get(), "jpeg2k_parser_extension_create");
     try {
         CHECK_NULL(framework)
         CHECK_NULL(extension)
@@ -428,7 +428,7 @@ nvimgcdcsStatus_t jpeg2k_parser_extension_create(void* instance, nvimgcdcsExtens
 
 nvimgcdcsStatus_t jpeg2k_parser_extension_destroy(nvimgcdcsExtension_t extension)
 {
-    NVIMGCDCS_LOG_TRACE("jpeg2k_parser_extension_destroy");
+    NVIMGCDCS_LOG_TRACE(Logger::get(), "jpeg2k_parser_extension_destroy");
     try {
         CHECK_NULL(extension)
         auto ext_handle = reinterpret_cast<nvimgcdcs::Jpeg2kParserExtension*>(extension);
