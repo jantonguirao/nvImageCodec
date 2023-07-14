@@ -15,5 +15,3 @@
         if (!ptr)                                     \
             throw std::runtime_error("null pointer"); \
     }
-
-

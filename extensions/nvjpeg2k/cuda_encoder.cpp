@@ -305,7 +305,7 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 
     executor->launch(
         executor->instance, device_id_, sample_idx, encode_state_batch_.get(), [](int tid, int sample_idx, void* task_context) -> void {
-            nvtx3::scoped_range marker{"decode " + std::to_string(sample_idx)};
+            nvtx3::scoped_range marker{"encode " + std::to_string(sample_idx)};
             auto encode_state = reinterpret_cast<NvJpeg2kEncoderPlugin::EncodeState*>(task_context);
             auto& t = encode_state->per_thread_[tid];
             auto& framework_ = encode_state->framework_;

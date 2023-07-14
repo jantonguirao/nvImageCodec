@@ -11,56 +11,55 @@
 #include "nvpnm_ext.h"
 #include "error_handling.h"
 #include "log.h"
+#include "encoder.h"
 
-extern nvimgcdcsEncoderDesc_t nvpnm_encoder;
-
-namespace nvimgcdcs {
+namespace nvpnm {
 
 struct PnmImgCodecsExtension
 {
   public:
     explicit PnmImgCodecsExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
+        , nvpnm_encoder_(framework)
     {
-        framework->registerEncoder(framework->instance, &nvpnm_encoder, NVIMGCDCS_PRIORITY_VERY_LOW);
+        framework->registerEncoder(framework->instance, nvpnm_encoder_.getEncoderDesc(), NVIMGCDCS_PRIORITY_VERY_LOW);
     }
-    ~PnmImgCodecsExtension() { framework_->unregisterEncoder(framework_->instance, &nvpnm_encoder); }
+    ~PnmImgCodecsExtension() { framework_->unregisterEncoder(framework_->instance, nvpnm_encoder_.getEncoderDesc()); }
+
+    static nvimgcdcsStatus_t nvpnm_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+    {
+        try {
+            XM_CHECK_NULL(framework)
+            NVIMGCDCS_LOG_TRACE(framework, "nvpnm_ext", "nvpnm_extension_create");
+            XM_CHECK_NULL(extension)
+            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new PnmImgCodecsExtension(framework));
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+
+    static nvimgcdcsStatus_t nvpnm_extension_destroy(nvimgcdcsExtension_t extension)
+    {
+        try {
+            XM_CHECK_NULL(extension)
+            auto ext_handle = reinterpret_cast<PnmImgCodecsExtension*>(extension);
+            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "nvpnm_ext", "nvpnm_extension_destroy");
+            delete ext_handle;
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
 
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;
+    NvPnmEncoderPlugin nvpnm_encoder_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvpnm
 
-nvimgcdcsStatus_t nvpnm_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-{
-    Logger::get().registerLogFunc(framework->instance, framework->log);
-    NVIMGCDCS_LOG_TRACE("nvpnm_extension_create");
-    try {
-        XM_CHECK_NULL(framework)
-        XM_CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new nvimgcdcs::PnmImgCodecsExtension(framework));
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t nvpnm_extension_destroy(nvimgcdcsExtension_t extension)
-{
-    NVIMGCDCS_LOG_TRACE("nvpnm_extension_destroy");
-    try {
-        XM_CHECK_NULL(extension)
-        auto ext_handle = reinterpret_cast<nvimgcdcs::PnmImgCodecsExtension*>(extension);
-        delete ext_handle;
-        Logger::get().unregisterLogFunc();
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-// clang-format off
+  // clang-format off
 nvimgcdcsExtensionDesc_t nvpnm_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
@@ -70,8 +69,8 @@ nvimgcdcsExtensionDesc_t nvpnm_extension = {
     NVIMGCDCS_VER,
     NVIMGCDCS_EXT_API_VER,
 
-    nvpnm_extension_create,
-    nvpnm_extension_destroy
+    nvpnm::PnmImgCodecsExtension::nvpnm_extension_create,
+    nvpnm::PnmImgCodecsExtension::nvpnm_extension_destroy
 };
 // clang-format on  
 

@@ -53,10 +53,9 @@ struct NvJpegImgCodecsExtension
 
     static nvimgcdcsStatus_t nvjpeg_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
     {
-
-        NVIMGCDCS_LOG_TRACE(framework, "nvjpeg-ext", "nvjpeg_extension_create");
         try {
             XM_CHECK_NULL(framework)
+            NVIMGCDCS_LOG_TRACE(framework, "nvjpeg-ext", "nvjpeg_extension_create");
             XM_CHECK_NULL(extension)
             *extension = reinterpret_cast<nvimgcdcsExtension_t>(new nvjpeg::NvJpegImgCodecsExtension(framework));
         } catch (const NvJpegException& e) {
@@ -70,7 +69,7 @@ struct NvJpegImgCodecsExtension
         try {
             XM_CHECK_NULL(extension)
             auto ext_handle = reinterpret_cast<nvjpeg::NvJpegImgCodecsExtension*>(extension);
-            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "nvjpeg-ext", "nvjpeg_extension_destroy");
+            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "nvjpeg_ext", "nvjpeg_extension_destroy");
             delete ext_handle;
         } catch (const NvJpegException& e) {
             return e.nvimgcdcsStatus();

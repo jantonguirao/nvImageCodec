@@ -20,15 +20,16 @@
     #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE
 #endif
 
-#define NVIMGCDCS_LOG(framework, id, svr, type, msg)                                                                    \
-    do {                                                                                                                \
-        if (svr >= NVIMGCDCS_SEVERITY) {                                                                                \
-            std::stringstream ss{};                                                                                     \
-            ss << msg;                                                                                                  \
-            const nvimgcdcsDebugMessageData_t data{                                                                     \
-                NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr, ss.str().c_str(), 0, nullptr, id, NVIMGCDCS_VER}; \
-            framework->log(framework->instance, svr, type, &data);                                                      \
-        }                                                                                                               \
+#define NVIMGCDCS_LOG(framework, id, svr, type, msg)                                                                   \
+    do {                                                                                                               \
+        if (svr >= NVIMGCDCS_SEVERITY) {                                                                               \
+            std::stringstream ss{};                                                                                    \
+            ss << msg;                                                                                                 \
+            std::string msg_str{ss.str()};                                                                             \
+            const nvimgcdcsDebugMessageData_t data{                                                                    \
+                NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr, msg_str.c_str(), 0, nullptr, id, NVIMGCDCS_VER}; \
+            framework->log(framework->instance, svr, type, &data);                                                     \
+        }                                                                                                              \
     } while (0)
 
 #define NVIMGCDCS_LOG_TRACE(framework, id, ...) \
