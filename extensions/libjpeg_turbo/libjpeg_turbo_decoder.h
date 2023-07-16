@@ -27,6 +27,7 @@ class LibjpegTurboDecoderPlugin
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
+    static constexpr const char* plugin_id_ = "libjpeg_turbo_decoder";
     nvimgcdcsDecoderDesc_t decoder_desc_;
     const nvimgcdcsFrameworkDesc_t* framework_;
 };
