@@ -577,6 +577,8 @@ extern "C"
                                                                           backends is supported. */
         NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED = 0b100011, /**< Processing failed because codec encoding is unsupported. */
         NVIMGCDCS_PROCESSING_STATUS_RESOLUTION_UNSUPPORTED = 0b1000011, /**< Processing failed because image resolution is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_CODESTREAM_UNSUPPORTED =
+            0b10000011, /**< Processing failed because some feature of compressed stream is unsupported */
 
         //These values below describe cases when processing could be possible but with different image format or parameters
 
