@@ -43,8 +43,6 @@ class NvJpeg2kDecoderPlugin
             nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads);
         ~DecodeState();
 
-
-
         struct PerThreadResources
         {
             cudaStream_t stream_;

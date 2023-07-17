@@ -10,13 +10,13 @@
 
 #include "parsers/webp.h"
 #include <nvimgcodecs.h>
-#include <vector>
 #include <string.h>
+#include <vector>
 
 #include "exception.h"
 #include "exif_orientation.h"
-#include "log.h"
-#include "logger.h"
+#include "log_ext.h"
+
 #include "parsers/byte_io.h"
 #include "parsers/exif.h"
 
@@ -40,7 +40,7 @@ static constexpr chunk_type_t VP8L_TAG = {'V', 'P', '8', 'L'}; // lossless
 static constexpr chunk_type_t VP8X_TAG = {'V', 'P', '8', 'X'}; // extended
 static constexpr chunk_type_t EXIF_TAG = {'E', 'X', 'I', 'F'}; // EXIF
 
-nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t io_stream_length;
@@ -48,26 +48,26 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
 
     if (image_info->type != NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO) {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected structure type");
+        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected structure type");
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     strcpy(image_info->codec_name, "webp");
 
     if (io_stream_length < (4 + 4 + 4)) { // RIFF + file size + WEBP
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected end of stream");
+        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected end of stream");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
 
     // https://developers.google.com/speed/webp/docs/riff_container#webp_file_header
     auto riff = ReadValue<chunk_type_t>(io_stream);
     if (riff != RIFF_TAG) {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected RIFF tag");
+        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected RIFF tag");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
     io_stream->skip(io_stream->instance, sizeof(uint32_t)); // file_size
     auto webp = ReadValue<chunk_type_t>(io_stream);
     if (webp != WEBP_TAG) {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected WEBP tag");
+        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected WEBP tag");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
 
@@ -82,7 +82,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
         const std::array<uint8_t, 3> expected_sync_code{0x9D, 0x01, 0x2A};
         auto sync_code = ReadValue<std::array<uint8_t, 3>>(io_stream);
         if (sync_code != expected_sync_code) {
-            NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected VP8 sync code");
+            NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected VP8 sync code");
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
         width = ReadValueLE<uint16_t>(io_stream) & mask;
@@ -91,7 +91,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
         auto signature_byte = ReadValue<uint8_t>(io_stream);
         const uint8_t expected_signature_byte = 0x2F;
         if (signature_byte != expected_signature_byte) {
-            NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected VP8L signature byte");
+            NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected VP8L signature byte");
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
         auto features = ReadValueLE<uint32_t>(io_stream);
@@ -124,7 +124,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
                     size_t read_nbytes = 0;
                     io_stream->read(io_stream->instance, &read_nbytes, buffer.data(), buffer.size());
                     if (read_nbytes != chunk_size) {
-                        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected end of stream");
+                        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected end of stream");
                         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
                     }
                     cv::ExifReader reader;
@@ -139,7 +139,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
             }
         }
     } else {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Unexpected chunk type");
+        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected chunk type");
         return NVIMGCDCS_STATUS_BAD_CODESTREAM;
     }
 
@@ -162,12 +162,10 @@ nvimgcdcsStatus_t GetImageInfoImpl(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCo
 
 } // namespace
 
-WebpParserPlugin::WebpParserPlugin()
-    : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr,
-          this,          // instance
-          "webp_parser", // id
-          "webp",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info}
+WebpParserPlugin::WebpParserPlugin(const nvimgcdcsFrameworkDesc_t* framework)
+    : framework_(framework)
+    , parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "webp", static_can_parse, static_create,
+          Parser::static_destroy, Parser::static_get_image_info}
 {
 }
 
@@ -178,74 +176,85 @@ nvimgcdcsParserDesc_t* WebpParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t WebpParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-    size_t length;
-    io_stream->size(io_stream->instance, &length);
-    io_stream->seek(io_stream->instance, 0, SEEK_SET);
+    try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "webp_parser_can_parse");
+        CHECK_NULL(result);
+        CHECK_NULL(code_stream);
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+        size_t length;
+        io_stream->size(io_stream->instance, &length);
+        io_stream->seek(io_stream->instance, 0, SEEK_SET);
 
-    if (length < (4 + 4 + 4)) { // RIFF + file size + WEBP
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
+        if (length < (4 + 4 + 4)) { // RIFF + file size + WEBP
+            *result = false;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
 
-    // https://developers.google.com/speed/webp/docs/riff_container#webp_file_header
-    auto riff = ReadValue<chunk_type_t>(io_stream);
-    if (riff != RIFF_TAG) {
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
-    io_stream->skip(io_stream->instance, sizeof(uint32_t)); // file_size
-    auto webp = ReadValue<chunk_type_t>(io_stream);
-    if (webp != WEBP_TAG) {
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
+        // https://developers.google.com/speed/webp/docs/riff_container#webp_file_header
+        auto riff = ReadValue<chunk_type_t>(io_stream);
+        if (riff != RIFF_TAG) {
+            *result = false;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
+        io_stream->skip(io_stream->instance, sizeof(uint32_t)); // file_size
+        auto webp = ReadValue<chunk_type_t>(io_stream);
+        if (webp != WEBP_TAG) {
+            *result = false;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
 
-    auto chunk_type = ReadValue<chunk_type_t>(io_stream);
-    if (chunk_type != VP8_TAG && chunk_type != VP8L_TAG && chunk_type != VP8X_TAG) {
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
+        auto chunk_type = ReadValue<chunk_type_t>(io_stream);
+        if (chunk_type != VP8_TAG && chunk_type != VP8L_TAG && chunk_type != VP8X_TAG) {
+            *result = false;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
+        *result = true;
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
     }
-    *result = true;
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t WebpParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(Logger::get(), "webp_parser_can_parse");
         CHECK_NULL(instance);
-        CHECK_NULL(result);
-        CHECK_NULL(code_stream);
         auto handle = reinterpret_cast<WebpParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not check if code stream can be parsed - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
 }
 
-WebpParserPlugin::Parser::Parser()
+WebpParserPlugin::Parser::Parser(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework)
+    : plugin_id_(plugin_id)
+    , framework_(framework)
 {
+    NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "webp_parser_destroy");
 }
 
 nvimgcdcsStatus_t WebpParserPlugin::create(nvimgcdcsParser_t* parser)
 {
-    *parser = reinterpret_cast<nvimgcdcsParser_t>(new WebpParserPlugin::Parser());
+    try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "webp_parser_create");
+        CHECK_NULL(parser);
+        *parser = reinterpret_cast<nvimgcdcsParser_t>(new WebpParserPlugin::Parser(plugin_id_, framework_));
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create webp parser - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t WebpParserPlugin::static_create(void* instance, nvimgcdcsParser_t* parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(Logger::get(), "webp_parser_create");
         CHECK_NULL(instance);
-        CHECK_NULL(parser);
         auto handle = reinterpret_cast<WebpParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not create webp parser - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -253,25 +262,25 @@ nvimgcdcsStatus_t WebpParserPlugin::static_create(void* instance, nvimgcdcsParse
 nvimgcdcsStatus_t WebpParserPlugin::Parser::static_destroy(nvimgcdcsParser_t parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(Logger::get(), "webp_parser_destroy");
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<WebpParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not destroy webp parser - " << e.what());
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t WebpParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    NVIMGCDCS_LOG_TRACE(Logger::get(), "webp_parser_get_image_info");
     try {
-        return GetImageInfoImpl(image_info, code_stream);
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "webp_parser_get_image_info");
+        CHECK_NULL(code_stream);
+        CHECK_NULL(image_info);
+        return GetImageInfoImpl(plugin_id_, framework_, image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not retrieve image info from png stream - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from png stream - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
     }
 }
 
@@ -279,15 +288,11 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::static_get_image_info(
     nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(Logger::get(), "webp_parser_get_image_info");
         CHECK_NULL(parser);
-        CHECK_NULL(code_stream);
-        CHECK_NULL(image_info);
         auto handle = reinterpret_cast<WebpParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(Logger::get(), "Could not retrieve image info from webp code stream - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
 }
 
@@ -296,41 +301,43 @@ class WebpParserExtension
   public:
     explicit WebpParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
+        , webp_parser_plugin_(framework)
     {
         framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
     ~WebpParserExtension() { framework_->unregisterParser(framework_->instance, webp_parser_plugin_.getParserDesc()); }
 
+    static nvimgcdcsStatus_t webp_parser_extension_create(
+        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+    {
+        try {
+            CHECK_NULL(framework)
+            NVIMGCDCS_LOG_TRACE(framework, "webp_parser_ext", "webp_parser_extension_create");
+            CHECK_NULL(extension)
+            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new WebpParserExtension(framework));
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+
+    static nvimgcdcsStatus_t webp_parser_extension_destroy(nvimgcdcsExtension_t extension)
+    {
+        try {
+            CHECK_NULL(extension)
+            auto ext_handle = reinterpret_cast<nvimgcdcs::WebpParserExtension*>(extension);
+            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "webp_parser_ext", "webp_parser_extension_destroy");
+            delete ext_handle;
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;
     WebpParserPlugin webp_parser_plugin_;
 };
-
-nvimgcdcsStatus_t webp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-{
-    NVIMGCDCS_LOG_TRACE(Logger::get(), "webp_parser_extension_create");
-    try {
-        CHECK_NULL(framework)
-        CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new WebpParserExtension(framework));
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t webp_parser_extension_destroy(nvimgcdcsExtension_t extension)
-{
-    NVIMGCDCS_LOG_TRACE(Logger::get(), "webp_parser_extension_destroy");
-    try {
-        CHECK_NULL(extension)
-        auto ext_handle = reinterpret_cast<nvimgcdcs::WebpParserExtension*>(extension);
-        delete ext_handle;
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
 
 // clang-format off
 nvimgcdcsExtensionDesc_t webp_parser_extension = {
@@ -342,8 +349,8 @@ nvimgcdcsExtensionDesc_t webp_parser_extension = {
     NVIMGCDCS_VER,
     NVIMGCDCS_EXT_API_VER,
 
-    webp_parser_extension_create,
-    webp_parser_extension_destroy
+    WebpParserExtension::webp_parser_extension_create,
+    WebpParserExtension::webp_parser_extension_destroy
 };
 // clang-format on
 
