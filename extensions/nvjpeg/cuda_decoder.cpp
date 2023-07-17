@@ -131,6 +131,28 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_can_decode(nvimgcdcsD
     }
 }
 
+void NvJpegCudaDecoderPlugin::Decoder::parseOptions(const char* options) {
+    gpu_hybrid_huffman_threshold_ = DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD;
+    std::istringstream iss(options ? options : "");
+    std::string token;
+    while (std::getline(iss, token, ' ')) {
+        std::string::size_type colon = token.find(':');
+        std::string::size_type equal = token.find('=');
+        if (colon == std::string::npos || equal == std::string::npos || colon > equal)
+            continue;
+        std::string module = token.substr(0, colon);
+        if (module != "" && module != "nvjpeg_cuda_decoder")
+            continue;
+        std::string option = token.substr(colon + 1, equal - colon - 1);
+        std::string value_str = token.substr(equal + 1);
+
+        std::istringstream value(value_str);
+        if (option == "hybrid_huffman_threshold") {
+            value >> gpu_hybrid_huffman_threshold_;
+        }
+    }
+}
+
 NvJpegCudaDecoderPlugin::Decoder::Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id,
     const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : plugin_id_(plugin_id)
@@ -158,6 +180,8 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(const char* plugin_id, const nvimgcdcs
     }
 
     unsigned int nvjpeg_flags = get_nvjpeg_flags("nvjpeg_cuda_decoder", options);
+    parseOptions(options);
+
     if (use_nvjpeg_create_ex_v2) {
         XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_DEFAULT, &device_allocator_, &pinned_allocator_, nvjpeg_flags, &handle_));
     } else {
@@ -176,7 +200,7 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(const char* plugin_id, const nvimgcdcs
     int num_threads = executor->get_num_threads(executor->instance);
 
     decode_state_batch_ = std::make_unique<NvJpegCudaDecoderPlugin::DecodeState>(
-        plugin_id_, framework_, handle_, &device_allocator_, &pinned_allocator_, num_threads);
+        plugin_id_, framework_, handle_, &device_allocator_, &pinned_allocator_, num_threads, gpu_hybrid_huffman_threshold_);
 }
 
 nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(
@@ -235,12 +259,14 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_destroy(nvimgcdcsDeco
 }
 
 NvJpegCudaDecoderPlugin::DecodeState::DecodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvjpegHandle_t handle,
-    nvjpegDevAllocatorV2_t* device_allocator, nvjpegPinnedAllocatorV2_t* pinned_allocator, int num_threads)
+    nvjpegDevAllocatorV2_t* device_allocator, nvjpegPinnedAllocatorV2_t* pinned_allocator, int num_threads,
+    size_t gpu_hybrid_huffman_threshold)
     : plugin_id_(plugin_id)
     , framework_(framework)
     , handle_(handle)
     , device_allocator_(device_allocator)
     , pinned_allocator_(pinned_allocator)
+    , gpu_hybrid_huffman_threshold_(gpu_hybrid_huffman_threshold)
 {
     per_thread_.reserve(num_threads);
     for (int i = 0; i < num_threads; i++) {
@@ -394,8 +420,11 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                     }
                     encoded_stream_data = &p.parse_state_.buffer_[0];
                 }
-                XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle, static_cast<const unsigned char*>(encoded_stream_data),
-                    encoded_stream_data_size, false, false, p.parse_state_.nvjpeg_stream_));
+                {
+                    nvtx3::scoped_range marker{"nvjpegJpegStreamParse"};
+                    XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle, static_cast<const unsigned char*>(encoded_stream_data),
+                        encoded_stream_data_size, false, false, p.parse_state_.nvjpeg_stream_));
+                }
 
                 nvjpegJpegEncoding_t jpeg_encoding;
                 nvjpegJpegStreamGetJpegEncoding(p.parse_state_.nvjpeg_stream_, &jpeg_encoding);
@@ -406,16 +435,19 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                         p.parse_state_.nvjpeg_stream_, nvjpeg_params.get(), &is_gpu_hybrid_supported));
                 }
 
-                auto& decoder_data =
-                    (image_info.plane_info[0].height * image_info.plane_info[0].width) > (256u * 256u) && is_gpu_hybrid_supported == 0
-                        ? p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID]
-                        : p.decoder_data[NVJPEG_BACKEND_HYBRID];
+                bool is_gpu_hybrid =
+                    (image_info.plane_info[0].height * image_info.plane_info[0].width) > decode_state->gpu_hybrid_huffman_threshold_ &&
+                    is_gpu_hybrid_supported == 0;
+                auto& decoder_data = is_gpu_hybrid ? p.decoder_data[NVJPEG_BACKEND_GPU_HYBRID] : p.decoder_data[NVJPEG_BACKEND_HYBRID];
                 auto& decoder = decoder_data.decoder;
                 auto& state = decoder_data.state;
 
                 XM_CHECK_NVJPEG(nvjpegStateAttachPinnedBuffer(state, p.pinned_buffer_));
 
-                XM_CHECK_NVJPEG(nvjpegDecodeJpegHost(handle, decoder, state, nvjpeg_params.get(), p.parse_state_.nvjpeg_stream_));
+                {
+                    nvtx3::scoped_range marker{"nvjpegDecodeJpegHost (is_gpu_hybrid=" + std::to_string(is_gpu_hybrid) + ")"};
+                    XM_CHECK_NVJPEG(nvjpegDecodeJpegHost(handle, decoder, state, nvjpeg_params.get(), p.parse_state_.nvjpeg_stream_));
+                }
 
                 nvjpegImage_t nvjpeg_image;
                 unsigned char* ptr = device_buffer;
@@ -428,8 +460,13 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx)
                 XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 
                 XM_CHECK_NVJPEG(nvjpegStateAttachDeviceBuffer(state, t.device_buffer_));
+
                 XM_CHECK_NVJPEG(nvjpegDecodeJpegTransferToDevice(handle, decoder, state, p.parse_state_.nvjpeg_stream_, t.stream_));
-                XM_CHECK_NVJPEG(nvjpegDecodeJpegDevice(handle, decoder, state, &nvjpeg_image, t.stream_));
+
+                {
+                    nvtx3::scoped_range marker{"nvjpegDecodeJpegDevice)"};
+                    XM_CHECK_NVJPEG(nvjpegDecodeJpegDevice(handle, decoder, state, &nvjpeg_image, t.stream_));
+                }
 
                 // this captures the state of t.stream_ in the cuda event t.event_
                 XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));

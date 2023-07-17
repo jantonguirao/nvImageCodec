@@ -16,6 +16,8 @@
 #include <vector>
 #include <array>
 
+#define DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD 1000u * 1000u
+
 namespace nvjpeg {
 
 class NvJpegCudaDecoderPlugin
@@ -33,8 +35,9 @@ class NvJpegCudaDecoderPlugin
 
     struct DecodeState
     {
-        DecodeState(const char* plugin_id,  const nvimgcdcsFrameworkDesc_t* framework,
-            nvjpegHandle_t handle, nvjpegDevAllocatorV2_t* device_allocator, nvjpegPinnedAllocatorV2_t* pinned_allocator, int num_threads);
+        DecodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvjpegHandle_t handle,
+            nvjpegDevAllocatorV2_t* device_allocator, nvjpegPinnedAllocatorV2_t* pinned_allocator, int num_threads,
+            size_t gpu_hybrid_huffman_threshold);
         ~DecodeState();
 
         // Set of resources per-thread.
@@ -85,6 +88,8 @@ class NvJpegCudaDecoderPlugin
 
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
+
+        size_t gpu_hybrid_huffman_threshold_ = DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD;
     };
 
     struct Decoder
@@ -108,7 +113,8 @@ class NvJpegCudaDecoderPlugin
 
         ParseState* getSampleParseState(int sample_idx);
 
-        
+        void parseOptions(const char* options);
+
         const char* plugin_id_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t device_allocator_;
@@ -117,6 +123,7 @@ class NvJpegCudaDecoderPlugin
         std::unique_ptr<DecodeState> decode_state_batch_;
         int device_id_;
         const nvimgcdcsBackendParams_t* backend_params_;
+        size_t gpu_hybrid_huffman_threshold_ = DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD;
     };
 
     nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
