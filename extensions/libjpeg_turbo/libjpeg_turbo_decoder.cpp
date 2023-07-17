@@ -255,7 +255,7 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
         nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         auto ret = image->getImageInfo(image->instance, &info);
         if (ret != NVIMGCDCS_STATUS_SUCCESS)
-            return ret;
+            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
 
         flags.sample_format = info.sample_format;
         switch (flags.sample_format) {
@@ -272,14 +272,14 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
             break;
         default:
             NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unsupported sample_format: " << flags.sample_format);
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            return NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
         }
         flags.dct_method = fast_idct ? JDCT_FASTEST : JDCT_DEFAULT;
         flags.fancy_upscaling = fancy_upsampling;
 
         if (info.region.ndim != 0 && info.region.ndim != 2) {
             NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Invalid region of interest");
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            return NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED;
         }
         if (info.region.ndim == 2) {
             flags.crop = true;
@@ -291,7 +291,7 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
             if (flags.crop_x < 0 || flags.crop_y < 0 || flags.crop_height != static_cast<int>(info.plane_info[0].height) ||
                 flags.crop_width != static_cast<int>(info.plane_info[0].width)) {
                 NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Region of interest is out of bounds");
-                return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+                return NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED;
             }
         }
 
@@ -299,13 +299,13 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
         size_t data_size;
         ret = io_stream->size(io_stream->instance, &data_size);
         if (ret != NVIMGCDCS_STATUS_SUCCESS) {
-            return ret;
+            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
         }
 
         const void* ptr;
         ret = io_stream->raw_data(io_stream->instance, &ptr);
         if (ret != NVIMGCDCS_STATUS_SUCCESS) {
-            return ret;
+            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
         }
         const uint8_t* encoded_data = static_cast<const uint8_t*>(ptr);
         if (!ptr && data_size > 0) {
@@ -314,9 +314,9 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
             io_stream->seek(io_stream->instance, 0, SEEK_SET);
             ret = io_stream->read(io_stream->instance, &read_nbytes, buffer.data(), buffer.size());
             if (ret != NVIMGCDCS_STATUS_SUCCESS)
-                return ret;
+                return NVIMGCDCS_PROCESSING_STATUS_FAIL;
             if (read_nbytes != buffer.size()) {
-                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+                return NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED;
             }
             encoded_data = buffer.data();
         }
@@ -335,9 +335,9 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
         }
         auto decoded_image = libjpeg_turbo::Uncompress(encoded_data, data_size, flags);
         if (decoded_image == nullptr) {
-            return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
         } else if (info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-            return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
         }
 
         const uint8_t* src = decoded_image.get();
