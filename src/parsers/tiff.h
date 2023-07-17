@@ -19,24 +19,23 @@ namespace nvimgcdcs {
 class TIFFParserPlugin
 {
   public:
-    explicit TIFFParserPlugin();
+    explicit TIFFParserPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsParserDesc_t* getParserDesc();
 
   private:
     struct Parser
     {
-        Parser();
-
+        Parser(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework);
         
         nvimgcdcsStatus_t getImageInfo(
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream);
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsParser_t parser);
-
         static nvimgcdcsStatus_t static_get_image_info(nvimgcdcsParser_t parser,
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream);
 
-        
+        const char *plugin_id_;
+        const nvimgcdcsFrameworkDesc_t *framework_;
     };
 
     nvimgcdcsStatus_t canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
@@ -46,6 +45,8 @@ class TIFFParserPlugin
         void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsParser_t* parser);
 
+    static constexpr const char* plugin_id_ = "tiff_parser";
+    const nvimgcdcsFrameworkDesc_t* framework_;
     nvimgcdcsParserDesc_t parser_desc_;
 };
 

@@ -10,7 +10,6 @@
 
 #include "device_guard.h"
 #include "exception.h"
-#include "log.h"
 
 namespace nvimgcdcs {
 
@@ -23,10 +22,9 @@ bool cuInitChecked()
 DeviceGuard::DeviceGuard() :
   old_context_(NULL) {
  if (!cuInitChecked()){
-     NVIMGCDCS_LOG_FATAL(
+     throw Exception(INTERNAL_ERROR,
          "Failed to load libcuda.so. "
          "Check your library paths and if the driver is installed correctly.");
-     //TODO throw
  }
   CHECK_CU(cuCtxGetCurrent(&old_context_));
 }
@@ -35,10 +33,9 @@ DeviceGuard::DeviceGuard(int new_device) :
   old_context_(NULL) {
   if (new_device >= 0) {
      if (!cuInitChecked()) {
-         NVIMGCDCS_LOG_FATAL(
+         throw Exception(INTERNAL_ERROR,
              "Failed to load libcuda.so. "
              "Check your library paths and if the driver is installed correctly.");
-            //TODO throw
      }
      CHECK_CU(cuCtxGetCurrent(&old_context_));
      CHECK_CUDA(cudaSetDevice(new_device));
@@ -49,8 +46,8 @@ DeviceGuard::~DeviceGuard() {
   if (old_context_ != NULL) {
     CUresult err = cuCtxSetCurrent(old_context_);
     if (err != CUDA_SUCCESS) {
-        NVIMGCDCS_LOG_ERROR("Failed to recover from DeviceGuard: " << err);
-        std::terminate();
+         std::cerr << "Failed to recover from DeviceGuard: " << err << std::endl;
+         std::terminate();
     }
   }
 }

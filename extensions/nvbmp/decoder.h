@@ -10,26 +10,27 @@
 
 #pragma once
 
-#include "nvimgcodecs.h"
 #include <memory>
 #include <vector>
+#include <nvimgcodecs.h>
 
-namespace libjpeg_turbo {
+namespace nvbmp {
 
-class LibjpegTurboDecoderPlugin
+class NvBmpDecoderPlugin
 {
   public:
-    explicit LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
+    explicit NvBmpDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsDecoderDesc_t* getDecoderDesc();
 
   private:
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    nvimgcdcsStatus_t create(
+        nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    static constexpr const char* plugin_id_ = "libjpeg_turbo_decoder";
+    static constexpr const char* plugin_id_ = "nvbmp_decoder";
     nvimgcdcsDecoderDesc_t decoder_desc_;
     const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
-} // namespace libjpeg_turbo
+} // namespace nvbmp

@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include <nppdefs.h>
 #include <nvimgcodecs.h>
 #include <nvjpeg2k.h>
 #include <memory>
 #include <vector>
-#include <nppdefs.h>
 namespace nvjpeg2k {
 
 class NvJpeg2kDecoderPlugin
@@ -28,23 +28,20 @@ class NvJpeg2kDecoderPlugin
 
     struct ParseState
     {
-        explicit ParseState();
+        explicit ParseState(const char* id, const nvimgcdcsFrameworkDesc_t* framework);
         ~ParseState();
 
+        const char* plugin_id_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpeg2kStream_t nvjpeg2k_stream_;
         std::vector<unsigned char> buffer_;
     };
 
     struct DecodeState
     {
-        explicit DecodeState(nvjpeg2kHandle_t handle, nvimgcdcsDeviceAllocator_t* device_allocator,
-            nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads);
+        explicit DecodeState(const char* id, const nvimgcdcsFrameworkDesc_t* framework, nvjpeg2kHandle_t handle,
+            nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads);
         ~DecodeState();
-
-        nvjpeg2kHandle_t handle_ = nullptr;
-        nvimgcdcsDeviceAllocator_t* device_allocator_;
-        nvimgcdcsPinnedAllocator_t* pinned_allocator_;
-        int device_id_;
 
         struct PerThreadResources
         {
@@ -63,20 +60,26 @@ class NvJpeg2kDecoderPlugin
             const nvimgcdcsDecodeParams_t* params;
         };
 
+        const char* plugin_id_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
+        nvjpeg2kHandle_t handle_ = nullptr;
+        nvimgcdcsDeviceAllocator_t* device_allocator_;
+        nvimgcdcsPinnedAllocator_t* pinned_allocator_;
+        int device_id_;
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
     };
 
     struct Decoder
     {
-        Decoder(const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
+        Decoder(const char* id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
         ~Decoder();
 
-        
         nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decode(int sample_idx);
-        nvimgcdcsStatus_t decodeBatch();
+        nvimgcdcsStatus_t decodeBatch(
+            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvjpeg2kHandle_t getNvjpeg2kHandle();
 
         static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
@@ -85,7 +88,7 @@ class NvJpeg2kDecoderPlugin
         static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
-        
+        const char* plugin_id_;
         nvjpeg2kHandle_t handle_;
         nvjpeg2kDeviceAllocatorV2_t device_allocator_;
         nvjpeg2kPinnedAllocatorV2_t pinned_allocator_;
@@ -95,12 +98,14 @@ class NvJpeg2kDecoderPlugin
         const nvimgcdcsBackendParams_t* backend_params_;
     };
 
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    nvimgcdcsStatus_t create(
+        nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    static nvimgcdcsStatus_t static_create(
+        void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
+    static constexpr const char* plugin_id_ = "nvjpeg2k_decoder";
     nvimgcdcsDecoderDesc_t decoder_desc_;
-    
     const nvimgcdcsFrameworkDesc_t* framework_;
 };
 

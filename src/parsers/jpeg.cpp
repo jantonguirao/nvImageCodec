@@ -16,8 +16,8 @@
 
 #include "exception.h"
 #include "exif_orientation.h"
-#include "log.h"
-#include "logger.h"
+#include "log_ext.h"
+
 #include "parsers/byte_io.h"
 #include "parsers/exif.h"
 
@@ -57,7 +57,7 @@ nvimgcdcsSampleDataType_t precision_to_sample_type(int precision)
     else if (precision <= 16)
         return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
     else
-    return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
+        return NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
 }
 
 nvimgcdcsChromaSubsampling_t chroma_subsampling_from_factors(
@@ -108,12 +108,10 @@ nvimgcdcsChromaSubsampling_t chroma_subsampling_from_factors(
 
 } // namespace
 
-JPEGParserPlugin::JPEGParserPlugin()
-    : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr,
-          this,          // instance
-          "jpeg_parser", // id
-          "jpeg",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info}
+JPEGParserPlugin::JPEGParserPlugin(const nvimgcdcsFrameworkDesc_t* framework)
+    : framework_(framework)
+    , parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "jpeg", static_can_parse, static_create,
+          Parser::static_destroy, Parser::static_get_image_info}
 {
 }
 
@@ -124,49 +122,60 @@ nvimgcdcsParserDesc_t* JPEGParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-    io_stream->seek(io_stream->instance, 0, SEEK_SET);
-    auto signature = ReadValue<jpeg_marker_t>(io_stream);
-    *result = (signature == soi_marker);
+    try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg_parser_can_parse");
+        CHECK_NULL(result);
+        CHECK_NULL(code_stream);
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+        io_stream->seek(io_stream->instance, 0, SEEK_SET);
+        auto signature = ReadValue<jpeg_marker_t>(io_stream);
+        *result = (signature == soi_marker);
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg_parser_can_parse");
         CHECK_NULL(instance);
-        CHECK_NULL(result);
-        CHECK_NULL(code_stream);
         auto handle = reinterpret_cast<JPEGParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not check if code stream can be parsed - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
 }
 
-JPEGParserPlugin::Parser::Parser()
+JPEGParserPlugin::Parser::Parser(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework)
+    : plugin_id_(plugin_id)
+    , framework_(framework)
 {
+    NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg_parser_destroy");
 }
 
 nvimgcdcsStatus_t JPEGParserPlugin::create(nvimgcdcsParser_t* parser)
 {
-    *parser = reinterpret_cast<nvimgcdcsParser_t>(new JPEGParserPlugin::Parser());
+    try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg_parser_create");
+        CHECK_NULL(parser);
+        *parser = reinterpret_cast<nvimgcdcsParser_t>(new JPEGParserPlugin::Parser(plugin_id_, framework_));
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create jpeg parser - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t JPEGParserPlugin::static_create(void* instance, nvimgcdcsParser_t* parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg_parser_create");
         CHECK_NULL(instance);
-        CHECK_NULL(parser);
         auto handle = reinterpret_cast<JPEGParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create jpeg parser - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -174,21 +183,21 @@ nvimgcdcsStatus_t JPEGParserPlugin::static_create(void* instance, nvimgcdcsParse
 nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg_parser_destroy");
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<JPEGParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy jpeg parser - " << e.what());
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
+    NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg_parser_get_image_info");
     try {
+        CHECK_NULL(code_stream);
+        CHECK_NULL(image_info); 
         size_t size = 0;
         nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         io_stream->size(io_stream->instance, &size);
@@ -198,11 +207,11 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
         size_t read_nbytes = 0;
         io_stream->read(io_stream->instance, &read_nbytes, &signature[0], signature.size());
         if (read_nbytes != signature.size()) {
-            NVIMGCDCS_LOG_ERROR("Unexpected end-of-stream");
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected end-of-stream");
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
         if (signature != soi_marker) {
-            NVIMGCDCS_LOG_ERROR("Unexpected signature");
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected signature");
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
 
@@ -225,7 +234,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
             } while (marker[1] == 0xff);
 
             if (!IsValidMarker(marker)) {
-                NVIMGCDCS_LOG_ERROR("Invalid marker");
+                NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Invalid marker");
                 return NVIMGCDCS_STATUS_BAD_CODESTREAM;
             }
             if (marker == sos_marker)
@@ -268,7 +277,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
                 std::vector<uint8_t> exif_block(size - 8);
                 io_stream->read(io_stream->instance, &read_nbytes, exif_block.data(), exif_block.size());
                 if (read_nbytes != exif_block.size()) {
-                    NVIMGCDCS_LOG_ERROR("Failed to read EXIF block");
+                    NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Failed to read EXIF block");
                     return NVIMGCDCS_STATUS_BAD_CODESTREAM;
                 }
 
@@ -292,7 +301,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
             io_stream->seek(io_stream->instance, next_marker_offset, SEEK_SET);
         }
         if (!read_shape) {
-            NVIMGCDCS_LOG_ERROR("Failed to read image dimensions");
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Failed to read image dimensions");
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
 
@@ -313,7 +322,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
             image_info->color_spec = NVIMGCDCS_COLORSPEC_SYCC;
             break;
         default:
-            NVIMGCDCS_LOG_ERROR("Unexpected number of channels" << num_components);
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected number of channels" << num_components);
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
 
@@ -336,8 +345,8 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
         }
 
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg stream - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from jpeg stream - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -347,15 +356,11 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::static_get_image_info(
     nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("jpeg_parser_get_image_info");
         CHECK_NULL(parser);
-        CHECK_NULL(code_stream);
-        CHECK_NULL(image_info);
         auto handle = reinterpret_cast<JPEGParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from jpeg code stream - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
 }
 
@@ -364,44 +369,43 @@ class JpegParserExtension
   public:
     explicit JpegParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
+        , jpeg_parser_plugin_(framework)
     {
         framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
-    ~JpegParserExtension() 
-    { 
-        framework_->unregisterParser(framework_->instance, jpeg_parser_plugin_.getParserDesc()); 
+    ~JpegParserExtension() { framework_->unregisterParser(framework_->instance, jpeg_parser_plugin_.getParserDesc()); }
+
+    static nvimgcdcsStatus_t jpeg_parser_extension_create(
+        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+    {
+        try {
+            CHECK_NULL(framework)
+            NVIMGCDCS_LOG_TRACE(framework, "jpeg_parser_ext", "jpeg_parser_extension_create");
+            CHECK_NULL(extension)
+            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new JpegParserExtension(framework));
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+
+    static nvimgcdcsStatus_t jpeg_parser_extension_destroy(nvimgcdcsExtension_t extension)
+    {
+        try {
+            CHECK_NULL(extension)
+            auto ext_handle = reinterpret_cast<nvimgcdcs::JpegParserExtension*>(extension);
+            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "jpeg_parser_ext", "jpeg_parser_extension_destroy");
+            delete ext_handle;
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
     }
 
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;
     JPEGParserPlugin jpeg_parser_plugin_;
 };
-
-nvimgcdcsStatus_t jpeg_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-{
-    NVIMGCDCS_LOG_TRACE("jpeg_parser_extension_create");
-    try {
-        CHECK_NULL(framework)
-        CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new JpegParserExtension(framework));
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t jpeg_parser_extension_destroy(nvimgcdcsExtension_t extension)
-{
-    NVIMGCDCS_LOG_TRACE("jpeg_parser_extension_destroy");
-    try {
-        CHECK_NULL(extension)
-        auto ext_handle = reinterpret_cast<nvimgcdcs::JpegParserExtension*>(extension);
-        delete ext_handle;
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
 
 // clang-format off
 nvimgcdcsExtensionDesc_t jpeg_parser_extension = {
@@ -413,8 +417,8 @@ nvimgcdcsExtensionDesc_t jpeg_parser_extension = {
     NVIMGCDCS_VER,
     NVIMGCDCS_EXT_API_VER,
 
-    jpeg_parser_extension_create,
-    jpeg_parser_extension_destroy
+    JpegParserExtension::jpeg_parser_extension_create,
+    JpegParserExtension::jpeg_parser_extension_destroy
 };
 // clang-format on
 

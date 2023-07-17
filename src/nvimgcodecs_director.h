@@ -20,42 +20,55 @@
 #include "image_generic_decoder.h"
 #include "image_generic_encoder.h"
 #include "log.h"
+#include "logger.h"
 #include "plugin_framework.h"
+#include "code_stream.h"
 
 namespace nvimgcdcs {
+
+class IDebugMessenger;
 
 class NvImgCodecsDirector
 {
   public:
     struct DefaultDebugMessengerManager
     {
-        DefaultDebugMessengerManager(uint32_t message_severity, uint32_t message_type, bool register_messenger)
+        DefaultDebugMessengerManager(ILogger* logger, uint32_t message_severity, uint32_t message_type, bool register_messenger)
+            : logger_(logger)
         {
             if (register_messenger) {
                 dbg_messenger_ = std::make_unique<DefaultDebugMessenger>(message_severity, message_type);
-                Logger::get().registerDebugMessenger(dbg_messenger_.get());
+                logger_->registerDebugMessenger(dbg_messenger_.get());
             }
         };
         ~DefaultDebugMessengerManager()
         {
             if (dbg_messenger_) {
-                Logger::get().unregisterDebugMessenger(dbg_messenger_.get());
+                logger_->unregisterDebugMessenger(dbg_messenger_.get());
             }
         };
+        ILogger* logger_;
         std::unique_ptr<DefaultDebugMessenger> dbg_messenger_;
     };
 
     explicit NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_info);
     ~NvImgCodecsDirector();
 
-    std::unique_ptr<ImageGenericDecoder> createGenericDecoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
+    std::unique_ptr<CodeStream> createCodeStream();
+    std::unique_ptr<ImageGenericDecoder> createGenericDecoder(
+        int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
     std::unique_ptr<ImageGenericEncoder> createGenericEncoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
+    void registerDebugMessenger(IDebugMessenger* messenger);
+    void unregisterDebugMessenger(IDebugMessenger* messenger);
 
+
+    Logger logger_;
     nvimgcdcsDeviceAllocator_t* device_allocator_;
     nvimgcdcsPinnedAllocator_t* pinned_allocator_;
     DefaultDebugMessengerManager default_debug_messenger_manager_;
     CodecRegistry codec_registry_;
     PluginFramework plugin_framework_;
+
 };
 
 } // namespace nvimgcdcs

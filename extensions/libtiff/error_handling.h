@@ -15,3 +15,11 @@
         if (!ptr)                                     \
             throw std::runtime_error("null pointer"); \
     }
+
+#define LIBTIFF_CALL_SUCCESS 1
+#define LIBTIFF_CALL(call)                                                                                     \
+    do {                                                                                                       \
+        int retcode = (call);                                                                                  \
+        if (LIBTIFF_CALL_SUCCESS != retcode)                                                                   \
+            throw std::runtime_error("libtiff call failed with code " + std::to_string(retcode) + ": " #call); \
+    } while (0)

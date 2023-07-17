@@ -18,9 +18,10 @@
 
 namespace nvimgcdcs {
 
-EncoderWorker::EncoderWorker(IWorkManager<nvimgcdcsEncodeParams_t>* work_manager, int device_id,
+EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcdcsEncodeParams_t>* work_manager, int device_id,
     const std::vector<nvimgcdcsBackend_t>& backends, const std::string& options, const ICodec* codec, int index)
-    : work_manager_(work_manager)
+    : logger_(logger)
+    , work_manager_(work_manager)
     , codec_(codec)
     , index_(index)
     , device_id_(device_id)
@@ -39,7 +40,7 @@ EncoderWorker* EncoderWorker::getFallback()
     if (!fallback_) {
         int n = codec_->getEncodersNum();
         if (index_ + 1 < n) {
-            fallback_ = std::make_unique<EncoderWorker>(work_manager_, device_id_, backends_, options_, codec_, index_ + 1);
+            fallback_ = std::make_unique<EncoderWorker>(logger_, work_manager_, device_id_, backends_, options_, codec_, index_ + 1);
         }
     }
     return fallback_.get();
@@ -159,7 +160,7 @@ static void filter_work(Work<nvimgcdcsEncodeParams_t>* work, const std::vector<b
 
 void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work) noexcept
 {
-    NVIMGCDCS_LOG_TRACE("processBatch");
+    NVIMGCDCS_LOG_TRACE(logger_, "processBatch");
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
 
@@ -167,10 +168,10 @@ void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> 
     std::vector<bool> mask(work->code_streams_.size());
     std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
     if (encoder) {
-        NVIMGCDCS_LOG_DEBUG("code streams: " << work->code_streams_.size());
+        NVIMGCDCS_LOG_DEBUG(logger_, "code streams: " << work->code_streams_.size());
         encoder->canEncode(work->images_, work->code_streams_, work->params_, &mask, &status);
     } else {
-        NVIMGCDCS_LOG_ERROR("Could not create encoder");
+        NVIMGCDCS_LOG_ERROR(logger_, "Could not create encoder");
         work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
         return;
     }

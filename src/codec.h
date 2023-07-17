@@ -25,11 +25,12 @@ namespace nvimgcdcs {
 class IImageParser;
 class IImageEncoder;
 class IImageDecoder;
+class ILogger;
 
 class Codec : public ICodec
 {
   public:
-    explicit Codec(const char* name);
+    explicit Codec(ILogger* logger, const char* name);
     const std::string& name() const override;
     std::unique_ptr<IImageParser> createParser(nvimgcdcsCodeStreamDesc_t* code_stream) const override;
     int getDecodersNum() const override;
@@ -44,6 +45,7 @@ class Codec : public ICodec
     void unregisterParserFactory(const std::string parser_id) override;
 
   private:
+    ILogger* logger_;
     std::string name_;
     std::multimap<float, std::unique_ptr<IImageParserFactory>> parsers_;
     std::multimap<float, std::unique_ptr<IImageEncoderFactory>> encoders_;

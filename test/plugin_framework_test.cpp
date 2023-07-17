@@ -20,6 +20,7 @@
 #include "mock_environment.h"
 #include "mock_executor.h"
 #include "mock_library_loader.h"
+#include "mock_logger.h"
 
 namespace nvimgcdcs { namespace test {
 
@@ -91,7 +92,8 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
 
     std::unique_ptr<MockExecutor> executor = std::make_unique<MockExecutor>();
 
-    PluginFramework framework(
+    MockLogger logger;
+    PluginFramework framework(&logger,
         &codec_registry, std::move(env), std::move(directory_scaner), std::move(library_loader), std::move(executor), nullptr, nullptr, "");
     framework.discoverAndLoadExtModules();
 }
@@ -118,7 +120,7 @@ class PluginFrameworkExtensionsPathTest : public ::testing::Test
         EXPECT_CALL(*env_.get(), getVariable("NVIMGCODECS_EXTENSIONS_PATH")).WillRepeatedly(Return(env_test_path));
         EXPECT_CALL(*directory_scaner_.get(), start(fs::path(expected_test_path))).Times(1);
 
-        PluginFramework framework(&codec_registry_, std::move(env_), std::move(directory_scaner_), std::move(library_loader_),
+        PluginFramework framework(&logger_, &codec_registry_, std::move(env_), std::move(directory_scaner_), std::move(library_loader_),
             std::move(executor_), nullptr, nullptr, soft_test_path);
         framework.discoverAndLoadExtModules();
     }
@@ -131,11 +133,11 @@ class PluginFrameworkExtensionsPathTest : public ::testing::Test
             EXPECT_CALL(*directory_scaner_.get(), start(fs::path(p))).Times(1);
         }
 
-        PluginFramework framework(&codec_registry_, std::move(env_), std::move(directory_scaner_), std::move(library_loader_),
+        PluginFramework framework(&logger_, &codec_registry_, std::move(env_), std::move(directory_scaner_), std::move(library_loader_),
             std::move(executor_), nullptr, nullptr, soft_test_path);
         framework.discoverAndLoadExtModules();
     }
-
+    MockLogger logger_;
     MockCodecRegistry codec_registry_;
     std::unique_ptr<MockEnvironment> env_;
     std::unique_ptr<MockDirectoryScaner> directory_scaner_;
@@ -208,7 +210,7 @@ class PluginFrameworkExtensionsVersionTest : public ::testing::Test
 
         library_loader_ = std::make_unique<MockLibraryLoader>();
         executor_ = std::make_unique<MockExecutor>();
-        framework_ = std::make_unique<PluginFramework>(&codec_registry_, std::move(env_), std::move(directory_scaner_),
+        framework_ = std::make_unique<PluginFramework>(&logger_, &codec_registry_, std::move(env_), std::move(directory_scaner_),
             std::move(library_loader_), std::move(executor_), nullptr, nullptr, "");
     }
 
@@ -221,6 +223,7 @@ class PluginFrameworkExtensionsVersionTest : public ::testing::Test
 
     static nvimgcdcsStatus_t ExtDestroy(nvimgcdcsExtension_t extension) { return NVIMGCDCS_STATUS_SUCCESS; }
 
+    MockLogger logger_;
     MockCodecRegistry codec_registry_;
     std::unique_ptr<MockEnvironment> env_;
     std::unique_ptr<MockDirectoryScaner> directory_scaner_;

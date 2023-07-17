@@ -18,20 +18,17 @@ namespace nvimgcdcs {
 class DefaultDebugMessenger : public IDebugMessenger
 {
   public:
-    DefaultDebugMessenger(uint32_t message_severity, uint32_t message_type);
+    DefaultDebugMessenger(
+        uint32_t message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT, uint32_t message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL);
 
     const nvimgcdcsDebugMessengerDesc_t* getDesc() override { return &desc_; }
 
   private:
-    bool debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type,
+    bool debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
-    static bool static_debug_callback(nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type,
-        const nvimgcdcsDebugMessageData_t* callback_data,
-        void* user_data
-    );
+    static bool static_debug_callback(nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
+        const nvimgcdcsDebugMessageData_t* callback_data, void* user_data);
 
     const nvimgcdcsDebugMessengerDesc_t desc_;
 };

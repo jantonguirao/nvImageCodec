@@ -10,12 +10,12 @@
 
 #include "parsers/bmp.h"
 #include <nvimgcodecs.h>
-#include <vector>
 #include <string.h>
+#include <vector>
 
 #include "exception.h"
-#include "log.h"
-#include "logger.h"
+#include "log_ext.h"
+
 #include "parsers/byte_io.h"
 #include "parsers/exif.h"
 
@@ -87,12 +87,10 @@ static int number_of_channels(
 
 } // namespace
 
-BMPParserPlugin::BMPParserPlugin()
-    : parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr,
-          this,         // instance
-          "bmp_parser", // id
-          "bmp",        // codec_type
-          static_can_parse, static_create, Parser::static_destroy, Parser::static_get_image_info}
+BMPParserPlugin::BMPParserPlugin(const nvimgcdcsFrameworkDesc_t* framework)
+    : framework_(framework)
+    , parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "bmp", static_can_parse, static_create,
+          Parser::static_destroy, Parser::static_get_image_info}
 {
 }
 
@@ -103,64 +101,76 @@ nvimgcdcsParserDesc_t* BMPParserPlugin::getParserDesc()
 
 nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
-    constexpr size_t min_bmp_stream_size = 18u;
-    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-    size_t length;
-    io_stream->size(io_stream->instance, &length);
-    if (length < min_bmp_stream_size) {
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
+    try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "bmp_parser_can_parse");
+        CHECK_NULL(result);
+        CHECK_NULL(code_stream);
+        constexpr size_t min_bmp_stream_size = 18u;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+        size_t length;
+        io_stream->size(io_stream->instance, &length);
+        if (length < min_bmp_stream_size) {
+            *result = false;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
+
+        std::array<uint8_t, 2> signature;
+        size_t output_size = 0;
+        io_stream->seek(io_stream->instance, 0, SEEK_SET);
+        io_stream->read(io_stream->instance, &output_size, signature.data(), signature.size());
+        if (output_size != signature.size()) {
+            *result = false;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
+
+        *result = signature[0] == 'B' && signature[1] == 'M';
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
     }
 
-    std::array<uint8_t, 2> signature;
-    size_t output_size = 0;
-    io_stream->seek(io_stream->instance, 0, SEEK_SET);
-    io_stream->read(io_stream->instance, &output_size, signature.data(), signature.size());
-    if (output_size != signature.size()) {
-        *result = false;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
-
-    *result = signature[0] == 'B' && signature[1] == 'M';
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t BMPParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("bmp_parser_can_parse");
         CHECK_NULL(instance);
-        CHECK_NULL(result);
-        CHECK_NULL(code_stream);
         auto handle = reinterpret_cast<BMPParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not check if code stream can be parsed - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
 }
 
-BMPParserPlugin::Parser::Parser()
+BMPParserPlugin::Parser::Parser(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework)
+    : plugin_id_(plugin_id)
+    , framework_(framework)
 {
+    NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "bmp_parser_destroy");
 }
 
 nvimgcdcsStatus_t BMPParserPlugin::create(nvimgcdcsParser_t* parser)
 {
-    *parser = reinterpret_cast<nvimgcdcsParser_t>(new BMPParserPlugin::Parser());
+    try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "bmp_parser_create");
+        CHECK_NULL(parser);
+        *parser = reinterpret_cast<nvimgcdcsParser_t>(new BMPParserPlugin::Parser(plugin_id_, framework_));
+    } catch (const std::runtime_error& e) {
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create bmp parser - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+    }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
 nvimgcdcsStatus_t BMPParserPlugin::static_create(void* instance, nvimgcdcsParser_t* parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("bmp_parser_create");
         CHECK_NULL(instance);
-        CHECK_NULL(parser);
         auto handle = reinterpret_cast<BMPParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not create bmp parser - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -168,13 +178,11 @@ nvimgcdcsStatus_t BMPParserPlugin::static_create(void* instance, nvimgcdcsParser
 nvimgcdcsStatus_t BMPParserPlugin::Parser::static_destroy(nvimgcdcsParser_t parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("bmp_parser_destroy");
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<BMPParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not destroy bmp parser - " << e.what());
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -182,8 +190,10 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
 nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     // https://en.wikipedia.org/wiki/BMP_file_format#DIB_header_(bitmap_information_header)
-    NVIMGCDCS_LOG_TRACE("bmp_parser_get_image_info");
     try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "bmp_parser_get_image_info");
+        CHECK_NULL(code_stream);
+        CHECK_NULL(image_info);
         nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         size_t length;
         io_stream->size(io_stream->instance, &length);
@@ -192,7 +202,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
         }
 
         if (image_info->type != NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO) {
-            NVIMGCDCS_LOG_ERROR("Unexpected structure type");
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected structure type");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
         strcpy(image_info->codec_name, "bmp");
@@ -232,7 +242,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
                 ncolors = ncolors == 0 ? 1u << bpp : ncolors;
             }
         } else {
-            NVIMGCDCS_LOG_ERROR("Unexpected length of a BMP header");
+            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected length of a BMP header");
             return NVIMGCDCS_STATUS_BAD_CODESTREAM;
         }
 
@@ -260,8 +270,8 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
 
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from bmp stream - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from bmp stream - " << e.what());
+        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -271,15 +281,11 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::static_get_image_info(
     nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE("bmp_parser_get_image_info");
         CHECK_NULL(parser);
-        CHECK_NULL(code_stream);
-        CHECK_NULL(image_info);
         auto handle = reinterpret_cast<BMPParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR("Could not retrieve image info from bmp code stream - " << e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR; //TODO specific error
+        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER; 
     }
 }
 
@@ -288,44 +294,43 @@ class BmpParserExtension
   public:
     explicit BmpParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
+        , bmp_parser_plugin_(framework)
     {
         framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
     }
-    ~BmpParserExtension()
+    ~BmpParserExtension() { framework_->unregisterParser(framework_->instance, bmp_parser_plugin_.getParserDesc()); }
+
+    static nvimgcdcsStatus_t bmp_parser_extension_create(
+        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
     {
-         framework_->unregisterParser(framework_->instance, bmp_parser_plugin_.getParserDesc());
+        try {
+            CHECK_NULL(framework)
+            NVIMGCDCS_LOG_TRACE(framework, "bmp_parser_ext", "bmp_parser_extension_create");
+            CHECK_NULL(extension)
+            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new BmpParserExtension(framework));
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+
+    static nvimgcdcsStatus_t bmp_parser_extension_destroy(nvimgcdcsExtension_t extension)
+    {
+        try {
+            CHECK_NULL(extension)
+            auto ext_handle = reinterpret_cast<nvimgcdcs::BmpParserExtension*>(extension);
+            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "bmp_parser_ext", "bmp_parser_extension_destroy");
+            delete ext_handle;
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
     }
 
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;
     BMPParserPlugin bmp_parser_plugin_;
 };
-
-nvimgcdcsStatus_t bmp_parser_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-{
-    NVIMGCDCS_LOG_TRACE("bmp_parser_extension_create");
-    try {
-        CHECK_NULL(framework)
-        CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new BmpParserExtension(framework));
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t bmp_parser_extension_destroy(nvimgcdcsExtension_t extension)
-{
-    NVIMGCDCS_LOG_TRACE("bmp_parser_extension_destroy");
-    try {
-        CHECK_NULL(extension)
-        auto ext_handle = reinterpret_cast<nvimgcdcs::BmpParserExtension*>(extension);
-        delete ext_handle;
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
 
 // clang-format off
 nvimgcdcsExtensionDesc_t bmp_parser_extension = {
@@ -337,8 +342,8 @@ nvimgcdcsExtensionDesc_t bmp_parser_extension = {
     NVIMGCDCS_VER,
     NVIMGCDCS_EXT_API_VER,
 
-    bmp_parser_extension_create,
-    bmp_parser_extension_destroy
+    BmpParserExtension::bmp_parser_extension_create,
+    BmpParserExtension::bmp_parser_extension_destroy
 };
 // clang-format on
 

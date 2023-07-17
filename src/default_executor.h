@@ -17,10 +17,12 @@
 
 namespace nvimgcdcs {
 
+ class ILogger; 
+
 class DefaultExecutor : public IExecutor
 {
   public:
-    explicit DefaultExecutor(int num_threads);
+    explicit DefaultExecutor(ILogger* logger, int num_threads);
     ~DefaultExecutor() override;
     nvimgcdcsExecutorDesc_t* getExecutorDesc() override;
 
@@ -34,6 +36,7 @@ class DefaultExecutor : public IExecutor
         void (*task)(int thread_id, int sample_idx, void* task_context));
     static int static_get_num_threads(void* instance);
 
+    ILogger* logger_;
     nvimgcdcsExecutorDesc_t desc_;
     int num_threads_;
     std::map<int, ThreadPool> device_id2thread_pool_;

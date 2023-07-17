@@ -27,8 +27,9 @@
 
 namespace nvimgcdcs {
 
-ImageGenericDecoder::ImageGenericDecoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
-    : device_id_(device_id)
+ImageGenericDecoder::ImageGenericDecoder(ILogger* logger, int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
+    : logger_(logger)
+    , device_id_(device_id)
     , backends_(num_backends)
     , options_(options ? options : "")
 {
@@ -167,7 +168,7 @@ DecoderWorker* ImageGenericDecoder::getWorker(const ICodec* codec)
 {
     auto it = workers_.find(codec);
     if (it == workers_.end()) {
-        it = workers_.emplace(codec, std::make_unique<DecoderWorker>(this, device_id_, backends_, options_, codec, 0)).first;
+        it = workers_.emplace(codec, std::make_unique<DecoderWorker>(logger_, this, device_id_, backends_, options_, codec, 0)).first;
     }
 
     return it->second.get();

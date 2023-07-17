@@ -24,43 +24,41 @@ namespace nvimgcdcs {
     #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE
 #endif
 
-#define NVIMGCDCS_LOG(svr, type, msg)               \
-    do {                                            \
-        if (svr >= NVIMGCDCS_SEVERITY) {            \
-            std::stringstream ss{};                 \
-            ss << msg;                              \
-            Logger::get().log(svr, type, ss.str()); \
-        }                                           \
+#define NVIMGCDCS_LOG(logger, svr, type, msg) \
+    do {                                      \
+        if (svr >= NVIMGCDCS_SEVERITY) {      \
+            std::stringstream ss{};           \
+            ss << msg;                        \
+            logger->log(svr, type, ss.str()); \
+        }                                     \
     } while (0)
 
 #ifdef NDEBUG
 
-#define NVIMGCDCS_LOG_TRACE(...)
-
-#define NVIMGCDCS_LOG_DEBUG(...)
+    #define NVIMGCDCS_LOG_TRACE(...)
+    #define NVIMGCDCS_LOG_DEBUG(...)
 
 #else
 
-#define NVIMGCDCS_LOG_TRACE(...) \
-    NVIMGCDCS_LOG(               \
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
-#define NVIMGCDCS_LOG_DEBUG(...) \
-    NVIMGCDCS_LOG(               \
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
+    #define NVIMGCDCS_LOG_TRACE(logger, ...) \
+        NVIMGCDCS_LOG(logger, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
+
+    #define NVIMGCDCS_LOG_DEBUG(logger, ...) \
+        NVIMGCDCS_LOG(logger, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
 
 #endif
 
-#define NVIMGCDCS_LOG_INFO(...) \
-    NVIMGCDCS_LOG(              \
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
-#define NVIMGCDCS_LOG_WARNING(...)                                                               \
-    NVIMGCDCS_LOG(NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, \
-        __VA_ARGS__)
-#define NVIMGCDCS_LOG_ERROR(...) \
-    NVIMGCDCS_LOG(               \
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
-#define NVIMGCDCS_LOG_FATAL(...) \
-    NVIMGCDCS_LOG(                     \
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
+#define NVIMGCDCS_LOG_INFO(logger, ...) \
+    NVIMGCDCS_LOG(logger, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
+
+#define NVIMGCDCS_LOG_WARNING(logger, ...) \
+    NVIMGCDCS_LOG(logger, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
+
+#define NVIMGCDCS_LOG_ERROR(logger, ...) \
+    NVIMGCDCS_LOG(logger, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
+
+#define NVIMGCDCS_LOG_FATAL(logger, ...) \
+    NVIMGCDCS_LOG(logger, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL, NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL, __VA_ARGS__)
+
 
 } //namespace nvimgcdcs

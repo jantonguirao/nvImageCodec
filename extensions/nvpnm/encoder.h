@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2023, NVIDIA CORPORATION.  All rights reserved.
  *
  * NVIDIA CORPORATION and its licensors retain all intellectual property
  * and proprietary rights in and to this software, related documentation
@@ -11,56 +11,41 @@
 #pragma once
 
 #include <nvimgcodecs.h>
-#include <nvjpeg.h>
-#include <future>
+#include <memory>
 #include <vector>
 
-namespace nvjpeg {
+namespace nvpnm {
 
-class NvJpegCudaEncoderPlugin
+class NvPnmEncoderPlugin
 {
   public:
-    explicit NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
+    explicit NvPnmEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsEncoderDesc_t* getEncoderDesc();
 
   private:
-    struct Encoder;
     struct EncodeState
     {
-        explicit EncodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvjpegHandle_t handle, int num_threads);
-        ~EncodeState();
-
-        struct PerThreadResources
-        {
-            cudaStream_t stream_;
-            cudaEvent_t event_;
-            nvjpegEncoderState_t state_;
-            std::vector<unsigned char> compressed_data_; //TODO it should be created with pinned allocator
-        };
-
         struct Sample
         {
-            nvimgcdcsCodeStreamDesc_t* code_stream_;
-            nvimgcdcsImageDesc_t* image_;
+            nvimgcdcsCodeStreamDesc_t* code_stream;
+            nvimgcdcsImageDesc_t* image;
             const nvimgcdcsEncodeParams_t* params;
         };
-        
         const char* plugin_id_;
         const nvimgcdcsFrameworkDesc_t* framework_;
-        nvjpegHandle_t handle_;
-        std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
     };
 
     struct Encoder
     {
-        Encoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        Encoder(
+            const char* id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsBackendParams_t* backend_params, const char* options);
         ~Encoder();
 
-        
         nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
             nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
-        nvimgcdcsStatus_t encode(int sample_idx);
+        static nvimgcdcsProcessingStatus_t encode(const char* id, const nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsImageDesc_t* image,
+            nvimgcdcsCodeStreamDesc_t* code_stream, const nvimgcdcsEncodeParams_t* params);
         nvimgcdcsStatus_t encodeBatch(
             nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
@@ -71,13 +56,10 @@ class NvJpegCudaEncoderPlugin
             nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
 
         const char* plugin_id_;
-        nvjpegHandle_t handle_;
-        nvjpegDevAllocatorV2_t device_allocator_;
-        nvjpegPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
-        int device_id_;
-        const nvimgcdcsBackendParams_t* backend_params_; std::string options_;
+        const nvimgcdcsBackendParams_t* backend_params_;
+        std::string options_;
     };
 
     nvimgcdcsStatus_t create(
@@ -85,9 +67,9 @@ class NvJpegCudaEncoderPlugin
     static nvimgcdcsStatus_t static_create(
         void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
 
-    static constexpr const char* plugin_id_ = "nvjpeg_cuda_encoder";
+    static constexpr const char* plugin_id_ = "nvpnm_encoder";
     nvimgcdcsEncoderDesc_t encoder_desc_;
     const nvimgcdcsFrameworkDesc_t* framework_;
 };
 
-} // namespace nvjpeg
+} // namespace nvpnm

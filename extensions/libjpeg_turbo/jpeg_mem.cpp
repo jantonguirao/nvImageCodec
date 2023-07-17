@@ -40,7 +40,8 @@ struct CallAtExit
 {
     explicit CallAtExit(Callable&& c)
         : callable(std::move(c))
-    {}
+    {
+    }
     ~CallAtExit() noexcept(false) { callable(); }
     Callable callable;
 };
@@ -76,7 +77,8 @@ class FewerArgsForCompiler
         , height_read_(0)
         , height_(0)
         , stride_(0)
-    {}
+    {
+    }
 
     const int datasize_;
     const UncompressFlags flags_;
@@ -153,9 +155,11 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
     case 3:
         cinfo.out_color_space = sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR ? JCS_EXT_BGR : JCS_RGB;
         break;
-    default:
-        NVIMGCDCS_D_LOG_ERROR("Invalid components value " << components);
-        return nullptr;
+    default: {
+        std::stringstream ss{};
+        ss << "Invalid components value " << components;
+        throw std::runtime_error(ss.str());
+    }
     }
 
     if (cinfo.jpeg_color_space == JCS_CMYK || cinfo.jpeg_color_space == JCS_YCCK) {
@@ -178,12 +182,14 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
     // Some of the internal routines do not gracefully handle ridiculously
     // large images, so fail fast.
     if (cinfo.output_width <= 0 || cinfo.output_height <= 0) {
-        NVIMGCDCS_D_LOG_ERROR("Invalid image size: " << cinfo.output_width << " x " << cinfo.output_height);
-        return nullptr;
+        std::stringstream ss{};
+        ss << "Invalid image size: " << cinfo.output_width << " x " << cinfo.output_height;
+        throw std::runtime_error(ss.str());
     }
     if (total_size >= (1LL << 29)) {
-        NVIMGCDCS_D_LOG_ERROR("Image too large: " << total_size);
-        return nullptr;
+        std::stringstream ss{};
+        ss << "Image too large: " << total_size;
+        throw std::runtime_error(ss.str());
     }
 
     if (!jpeg_start_decompress(&cinfo))
@@ -201,10 +207,11 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
 
         // So far, cinfo holds the original input image information.
         if (!IsCropWindowValid(flags, cinfo.output_width, cinfo.output_height)) {
-            NVIMGCDCS_D_LOG_ERROR("Invalid crop window: x=" << flags.crop_x << ", y=" << flags.crop_y << ", w=" << target_output_width
-                                                            << ", h=" << target_output_height << " for image_width: " << cinfo.output_width
-                                                            << " and image_height: " << cinfo.output_height);
-            return nullptr;
+            std::stringstream ss{};
+            ss << "Invalid crop window: x=" << flags.crop_x << ", y=" << flags.crop_y << ", w=" << target_output_width
+               << ", h=" << target_output_height << " for image_width: " << cinfo.output_width
+               << " and image_height: " << cinfo.output_height;
+            throw std::runtime_error(ss.str());
         }
 
         // We are croping one pixel more left and right so pixel on the requested edge
@@ -234,8 +241,9 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
     if (stride == 0) {
         stride = min_stride;
     } else if (stride < min_stride) {
-        NVIMGCDCS_D_LOG_ERROR("Incompatible stride: " << stride << " < " << min_stride);
-        return nullptr;
+        std::stringstream ss{};
+        ss << "Incompatible stride: " << stride << " < " << min_stride;
+        throw std::runtime_error(ss.str());
     }
 
     // Remember stride and height for use in Uncompress
@@ -317,9 +325,11 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
                     case NVIMGCDCS_SAMPLEFORMAT_P_Y:
                         output_line[i] = 0.299f * r + 0.587f * g + 0.114f * b;
                         break;
-                    default:
-                        NVIMGCDCS_D_LOG_ERROR("Unsupported sample format: " << sample_format);
-                        return nullptr;
+                    default: {
+                        std::stringstream ss{};
+                        ss << "Unsupported sample format: " << sample_format;
+                        throw std::runtime_error(ss.str());
+                    }
                     }
                 }
             }
@@ -333,8 +343,10 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
         }
         // Handle error cases
         if (num_lines_read == 0) {
-            NVIMGCDCS_D_LOG_ERROR(
-                "Premature end of JPEG data. Stopped at line " << cinfo.output_scanline - skipped_scanlines << "/" << target_output_height);
+            std::stringstream ss{};
+            ss << "Premature end of JPEG data. Stopped at line " << cinfo.output_scanline - skipped_scanlines << "/"
+               << target_output_height;
+            throw std::runtime_error(ss.str());
             if (!flags.try_recover_truncated_jpeg) {
                 argball->height_read_ = cinfo.output_scanline - skipped_scanlines;
                 error = JPEGERRORS_UNEXPECTED_END_OF_DATA;
@@ -416,10 +428,12 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
             }
         }
         break;
-    default:
+    default: {
         // will never happen, should be catched by the previous switch
-        NVIMGCDCS_D_LOG_ERROR("Invalid components value " << components);
-        return nullptr;
+        std::stringstream ss{};
+        ss << "Invalid components value " << components;
+        throw std::runtime_error(ss.str());
+    }
     }
 
     // Handle errors in JPEG
@@ -432,9 +446,12 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
     case JPEGERRORS_BAD_PARAM:
         jpeg_abort(reinterpret_cast<j_common_ptr>(&cinfo));
         break;
-    default:
-        NVIMGCDCS_D_LOG_ERROR("Unhandled case" << error);
+    default: {
+        std::stringstream ss{};
+        ss << "Unhandled case" << error;
+        throw std::runtime_error(ss.str());
         break;
+    }
     }
     return dstdata;
 }

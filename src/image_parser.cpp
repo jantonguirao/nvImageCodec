@@ -10,7 +10,6 @@
 #include "image_parser.h"
 #include <cassert>
 #include <iostream>
-#include "log.h"
 
 namespace nvimgcdcs {
 
@@ -37,7 +36,6 @@ std::string ImageParser::getCodecName() const
 nvimgcdcsStatus_t ImageParser::getImageInfo(
     nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageInfo_t* image_info)
 {
-    NVIMGCDCS_LOG_TRACE("ImageParser::getImageInfo");
     assert(code_stream);
     assert(parser_desc_->getImageInfo);
     return parser_desc_->getImageInfo(parser_, image_info, code_stream);

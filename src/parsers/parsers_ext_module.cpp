@@ -10,7 +10,7 @@
 
 #include <nvimgcodecs.h>
 #include "exception.h"
-#include "log.h"
+#include "log_ext.h"
 #include "parsers/bmp.h"
 #include "parsers/jpeg.h"
 #include "parsers/jpeg2k.h"
@@ -26,6 +26,13 @@ class ParsersExtension
   public:
     explicit ParsersExtension(const nvimgcdcsFrameworkDesc_t* framework)
         : framework_(framework)
+        , bmp_parser_plugin_(framework)
+        , jpeg_parser_plugin_(framework)
+        , jpeg2k_parser_plugin_(framework)
+        , png_parser_plugin_(framework)
+        , pnm_parser_plugin_(framework)
+        , tiff_parser_plugin_(framework)
+        , webp_parser_plugin_(framework)
     {
         framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
         framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
@@ -45,6 +52,32 @@ class ParsersExtension
         framework_->unregisterParser(framework_->instance, webp_parser_plugin_.getParserDesc());
     }
 
+    static nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+    {
+        try {
+            CHECK_NULL(framework)
+            NVIMGCDCS_LOG_TRACE(framework, "nvimgcdcs_builtin_parsers", "parsers_extension_create");
+            CHECK_NULL(extension)
+            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new ParsersExtension(framework));
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+
+    static nvimgcdcsStatus_t parsers_extension_destroy(nvimgcdcsExtension_t extension)
+    {
+        try {
+            CHECK_NULL(extension)
+            auto ext_handle = reinterpret_cast<nvimgcdcs::ParsersExtension*>(extension);
+            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "nvimgcdcs_builtin_parsers", "parsers_extension_destroy");
+            delete ext_handle;
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;
     BMPParserPlugin bmp_parser_plugin_;
@@ -56,32 +89,6 @@ class ParsersExtension
     WebpParserPlugin webp_parser_plugin_;
 };
 
-nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-{
-    NVIMGCDCS_LOG_TRACE("parsers_extension_create");
-    try {
-        CHECK_NULL(framework)
-        CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new ParsersExtension(framework));
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t parsers_extension_destroy(nvimgcdcsExtension_t extension)
-{
-    NVIMGCDCS_LOG_TRACE("parsers_extension_destroy");
-    try {
-        CHECK_NULL(extension)
-        auto ext_handle = reinterpret_cast<nvimgcdcs::ParsersExtension*>(extension);
-        delete ext_handle;
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-    }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
 // clang-format off
 nvimgcdcsExtensionDesc_t parsers_extension = {
     NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
@@ -92,8 +99,8 @@ nvimgcdcsExtensionDesc_t parsers_extension = {
     NVIMGCDCS_VER,
     NVIMGCDCS_EXT_API_VER, 
 
-    parsers_extension_create,
-    parsers_extension_destroy
+    ParsersExtension::parsers_extension_create,
+    ParsersExtension::parsers_extension_destroy
 };
 // clang-format on
 

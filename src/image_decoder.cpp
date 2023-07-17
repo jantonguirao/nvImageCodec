@@ -14,7 +14,6 @@
 #include "exception.h"
 #include "icode_stream.h"
 #include "iimage.h"
-#include "log.h"
 #include "processing_results.h"
 
 namespace nvimgcdcs {

@@ -19,13 +19,13 @@ namespace nvimgcdcs {
 class JPEG2KParserPlugin
 {
   public:
-    explicit JPEG2KParserPlugin();
+    explicit JPEG2KParserPlugin(const nvimgcdcsFrameworkDesc_t* framework);
     nvimgcdcsParserDesc_t* getParserDesc();
 
   private:
     struct Parser
     {
-        Parser();
+        Parser(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework);
 
         
         nvimgcdcsStatus_t parseJP2(nvimgcdcsIoStreamDesc_t* io_stream);
@@ -38,8 +38,8 @@ class JPEG2KParserPlugin
         static nvimgcdcsStatus_t static_get_image_info(nvimgcdcsParser_t parser,
             nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream);
 
-        
-    
+        const char* plugin_id_;
+        const nvimgcdcsFrameworkDesc_t* framework_;
         uint16_t num_components, CSiz;
         uint32_t height = 0, width;
         uint8_t bits_per_component;
@@ -55,6 +55,8 @@ class JPEG2KParserPlugin
         void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsParser_t* parser);
 
+    static constexpr const char* plugin_id_ = "jpeg2k_parser";
+    const nvimgcdcsFrameworkDesc_t* framework_;
     nvimgcdcsParserDesc_t parser_desc_;
 };
 

@@ -26,6 +26,8 @@
 namespace nvimgcdcs {
 
 class ICodec;
+class ILogger;
+
 /**
  * @brief A worker that processes sub-batches of work to be processed by a particular encoder.
  *
@@ -46,7 +48,7 @@ class EncoderWorker
    * @param work_manager   - creates and recycles work
    * @param codec   - the factory that constructs the encoder for this worker
    */
-    EncoderWorker(IWorkManager<nvimgcdcsEncodeParams_t>* work_manager, int device_id, const std::vector<nvimgcdcsBackend_t>& backends,
+    EncoderWorker(ILogger* logger, IWorkManager<nvimgcdcsEncodeParams_t>* work_manager, int device_id, const std::vector<nvimgcdcsBackend_t>& backends,
         const std::string& options, const ICodec* codec, int index);
     ~EncoderWorker();
 
@@ -71,6 +73,7 @@ class EncoderWorker
    */
     void run();
 
+    ILogger* logger_;
     IWorkManager<nvimgcdcsEncodeParams_t>* work_manager_ = nullptr;
     const ICodec* codec_ = nullptr;
     int index_ = 0;
