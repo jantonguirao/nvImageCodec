@@ -96,29 +96,95 @@ void DecoderWorker::run()
     std::unique_lock lock(mtx_, std::defer_lock);
     while (!stop_requested_) {
         lock.lock();
-        cv_.wait(lock, [&]() { return stop_requested_ || work_ != nullptr; });
+        cv_.wait(lock, [&]() { return stop_requested_ || work_ != nullptr || curr_work_ != nullptr; });
         if (stop_requested_)
             break;
-        assert(work_ != nullptr);
-        auto w = std::move(work_);
-        lock.unlock();
-        processBatch(std::move(w));
+        assert(curr_work_ != nullptr || work_ != nullptr);
+        if (curr_work_) {
+            auto w = std::move(curr_work_);
+            auto f = std::move(curr_results_);
+            lock.unlock();
+            processCurrentResults(std::move(w), std::move(f), false);
+        } else if (work_) {
+            auto w = std::move(work_);
+            lock.unlock();
+            processBatch(std::move(w), false);
+        }
     }
 }
 
-void DecoderWorker::addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work)
+void DecoderWorker::addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate)
 {
     assert(work->getSamplesNum() > 0);
+    if (immediate) {
+        processBatch(std::move(work), immediate);
+    } else {
+        {
+            std::lock_guard guard(mtx_);
+            assert((work->images_.size() == work->code_streams_.size()));
+            if (work_) {
+                work_manager_->combineWork(work_.get(), std::move(work));
+                // no need to notify - a work item was already there, so it will be picked up regardless
+            } else {
+                work_ = std::move(work);
+                cv_.notify_one();
+            }
+        }
+        start();
+    }
+}
+
+void DecoderWorker::processCurrentResults(
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> curr_work, std::unique_ptr<ProcessingResultsFuture> curr_results, bool immediate)
+{
+    assert(curr_work);
+    assert(curr_results);
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> fallback_work;
+    auto fallback_worker = getFallback();
+    for (;;) {
+        auto indices = curr_results->waitForNew();
+        if (indices.second == 0)
+            break; // if wait_new returns with an empty result, it means that everything is ready
+
+        for (size_t i = 0; i < indices.second; ++i) {
+            int sub_idx = indices.first[i];
+            ProcessingResult r = curr_results->getOne(sub_idx);
+            if (r.isSuccess()) {
+                NVIMGCDCS_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
+                curr_work->copy_buffer_if_necessary(is_device_output_, sub_idx, &r);
+                curr_work->results_.set(curr_work->indices_[sub_idx], r);
+            } else { // failed to decode
+                NVIMGCDCS_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
+                if (fallback_worker) {
+                    // if there's fallback, we don't set the result, but try to use the fallback first
+                    if (!fallback_work)
+                        fallback_work = work_manager_->createNewWork(curr_work->results_, curr_work->params_);
+                    fallback_work->moveEntry(curr_work.get(), sub_idx);
+                } else {
+                    // no fallback - just propagate the result to the original promise
+                    curr_work->results_.set(curr_work->indices_[sub_idx], r);
+                }
+            }
+        }
+
+        if (fallback_work && !fallback_work->empty())
+            fallback_worker->addWork(std::move(fallback_work), immediate);
+    }
+    work_manager_->recycleWork(std::move(curr_work));
+}
+
+void DecoderWorker::updateCurrentWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, std::unique_ptr<ProcessingResultsFuture> future)
+{
+    assert(work);
+    assert(future);
     {
         std::lock_guard guard(mtx_);
-        assert((work->images_.size() == work->code_streams_.size()));
-        if (work_) {
-            work_manager_->combineWork(work_.get(), std::move(work));
-            // no need to notify - a work item was already there, so it will be picked up regardless
-        } else {
-            work_ = std::move(work);
-            cv_.notify_one();
-        }
+        // if we acquired the lock, previous results should be cleared
+        assert(!curr_work_);
+        assert(!curr_results_);
+        curr_work_ = std::move(work);
+        curr_results_ = std::move(future);
+        cv_.notify_one();
     }
     start();
 }
@@ -158,7 +224,7 @@ static void filter_work(Work<nvimgcdcsDecodeParams_t>* work, const std::vector<b
     move_work_to_fallback(nullptr, work, keep);
 }
 
-void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work) noexcept
+void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate) noexcept
 {
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
@@ -182,8 +248,11 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
     if (fallback_worker) {
         fallback_work = work_manager_->createNewWork(work->results_, work->params_);
         move_work_to_fallback(fallback_work.get(), work.get(), mask);
-        if (!fallback_work->empty())
-            fallback_worker->addWork(std::move(fallback_work));
+        if (!fallback_work->empty()) {
+            // if all samples go to the fallback, we can afford using the current thread
+            bool fallback_immediate = immediate && work->code_streams_.empty();
+            fallback_worker->addWork(std::move(fallback_work), fallback_immediate);
+        }
     } else {
         for (size_t i = 0; i < mask.size(); i++) {
             if (!mask[i]) {
@@ -196,38 +265,9 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
     if (!work->code_streams_.empty()) {
         work->ensure_expected_buffer_for_decode_each_image(is_device_output_);
         auto future = decoder_->decode(decode_state_batch_.get(), work->code_streams_, work->images_, work->params_);
-
-        for (;;) {
-            auto indices = future->waitForNew();
-            if (indices.second == 0)
-                break; // if wait_new returns with an empty result, it means that everything is ready
-
-            for (size_t i = 0; i < indices.second; ++i) {
-                int sub_idx = indices.first[i];
-                ProcessingResult r = future->getOne(sub_idx);
-                if (r.isSuccess()) {
-                    NVIMGCDCS_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
-                    work->copy_buffer_if_necessary(is_device_output_, sub_idx, &r);
-                    work->results_.set(work->indices_[sub_idx], r);
-                } else { // failed to decode
-                    NVIMGCDCS_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
-                    if (fallback_worker) {
-                        // if there's fallback, we don't set the result, but try to use the fallback first
-                        if (!fallback_work)
-                            fallback_work = work_manager_->createNewWork(work->results_, work->params_);
-                        fallback_work->moveEntry(work.get(), sub_idx);
-                    } else {
-                        // no fallback - just propagate the result to the original promise
-                        work->results_.set(work->indices_[sub_idx], r);
-                    }
-                }
-            }
-
-            if (fallback_work && !fallback_work->empty())
-                fallback_worker->addWork(std::move(fallback_work));
-        }
+        // worker thread will wait for results and schedule fallbacks if needed
+        updateCurrentWork(std::move(work), std::move(future));
     }
-    work_manager_->recycleWork(std::move(work));
 }
 
 } // namespace nvimgcdcs

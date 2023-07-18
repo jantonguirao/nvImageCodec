@@ -464,21 +464,25 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
         nvimgcdcsExecutorDesc_t* executor;
         framework_->getExecutor(framework_->instance, &executor);
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(),
-                [](int tid, int sample_idx, void* context) -> void {
-                    nvtx3::scoped_range marker{"opencv decode " + std::to_string(sample_idx)};
-                    auto* decode_state = reinterpret_cast<DecodeState*>(context);
-                    auto& sample = decode_state->samples_[sample_idx];
-                    auto& thread_resources = decode_state->per_thread_[tid];
-                    auto& plugin_id = decode_state->plugin_id_;
-                    auto& framework = decode_state->framework_;
-                    auto result = decode(plugin_id, framework, sample.code_stream, sample.image, sample.params, thread_resources.buffer);
-                    if (result == NVIMGCDCS_STATUS_SUCCESS) {
-                        sample.image->imageReady(sample.image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
-                    } else {
-                        sample.image->imageReady(sample.image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
-                    }
-                });
+            auto task = [](int tid, int sample_idx, void* context) -> void {
+                nvtx3::scoped_range marker{"opencv decode " + std::to_string(sample_idx)};
+                auto* decode_state = reinterpret_cast<DecodeState*>(context);
+                auto& sample = decode_state->samples_[sample_idx];
+                auto& thread_resources = decode_state->per_thread_[tid];
+                auto& plugin_id = decode_state->plugin_id_;
+                auto& framework = decode_state->framework_;
+                auto result = decode(plugin_id, framework, sample.code_stream, sample.image, sample.params, thread_resources.buffer);
+                if (result == NVIMGCDCS_STATUS_SUCCESS) {
+                    sample.image->imageReady(sample.image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
+                } else {
+                    sample.image->imageReady(sample.image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+                }
+            };
+            if (batch_size == 1) {
+                task(0, sample_idx, decode_state_batch_.get());
+            } else {
+                executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(), std::move(task));
+            }
         }
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {

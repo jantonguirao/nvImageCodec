@@ -42,7 +42,8 @@ class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
     void SetUp()
     {
         NvJpegExtTestBase::SetUp();
-        std::string dec_options{":fancy_upsampling=0"};
+        // reference is decoded with GPU hybrid backend
+        std::string dec_options{":fancy_upsampling=0 nvjpeg_cuda_decoder:hybrid_huffman_threshold=0"};
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, dec_options.c_str()));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         params_.enable_orientation = true;
@@ -119,6 +120,7 @@ TEST_P(NvJpegExtDecoderTestSingleImage, ValidFormatAndParameters)
             ref_buffer_.data() + (image_info_.plane_info[0].height * image_info_.plane_info[0].width) * 2, image_info_.plane_info[0].width,
             image_info_.plane_info[0].width, image_info_.plane_info[0].height);
     }
+
     ASSERT_EQ(
         0, memcmp(reinterpret_cast<void*>(ref_buffer_.data()), reinterpret_cast<void*>(planar_out_buffer_.data()), ref_buffer_.size()));
 }

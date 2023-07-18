@@ -52,7 +52,7 @@ class DecoderWorker
         const std::string& options, const ICodec* codec, int index);
     ~DecoderWorker();
 
-    void addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work);
+    void addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate);
 
     DecoderWorker* getFallback();
     IImageDecoder* getDecoder();
@@ -66,8 +66,30 @@ class DecoderWorker
    *
    * The work is scheduled and the results are waited for. Any failed samples will be added
    * to a fallback work, if a fallback decoder is present.
+   * 
+   * @param work work to execute
+   * @param immediate If true, work is not scheduled to a worker thread but executed in the current
+   *                  thread instead.
    */
-    void processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work) noexcept;
+    void processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate) noexcept;
+
+  /**
+   * @brief Waits for and process current work results
+   * 
+   * @param curr_work 
+   * @param curr_results 
+   * @param immediate 
+   */
+  void processCurrentResults(
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> curr_work, std::unique_ptr<ProcessingResultsFuture> curr_results, bool immediate);
+
+  /**
+   * @brief Set current work future results for processing in the working thread
+   * 
+   * @param work 
+   * @param future 
+   */
+  void updateCurrentWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, std::unique_ptr<ProcessingResultsFuture> future);
 
     /**
    * @brief The main loop of the worker thread.
@@ -85,7 +107,9 @@ class DecoderWorker
     std::mutex mtx_;
     std::condition_variable cv_;
 
-    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work_;
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work_;  // next iteration
+    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> curr_work_;  // current (already scheduled iteration)
+    std::unique_ptr<ProcessingResultsFuture> curr_results_;  // future results from current iteration
     std::thread worker_;
     bool stop_requested_ = false;
     std::once_flag started_;
