@@ -193,7 +193,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS,
-        NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsStructureType_t;
 
     /**
@@ -318,7 +318,7 @@ extern "C"
         NVIMGCDCS_EXTENSION_STATUS_INCOMPLETE_BITSTREAM = 19,
         NVIMGCDCS_EXTENSION_STATUS_EXECUTION_FAILED = 20,
         NVIMGCDCS_EXTENSION_STATUS_CUDA_CALL_ERROR = 21,
-        NVIMGCDCS_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_STATUS_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsStatus_t;
 
     /**
@@ -345,7 +345,7 @@ extern "C"
         NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 0x200B,
         NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64 = 0x400D,
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED = -1,
-        NVIMGCDCS_SAMPLE_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_SAMPLE_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsSampleDataType_t;
 
     /** 
@@ -363,7 +363,7 @@ extern "C"
         NVIMGCDCS_SAMPLING_GRAY = 7,
         NVIMGCDCS_SAMPLING_410V = 8,
         NVIMGCDCS_SAMPLING_UNSUPPORTED = -1,
-        NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsChromaSubsampling_t;
 
     /**
@@ -381,7 +381,7 @@ extern "C"
         NVIMGCDCS_SAMPLEFORMAT_P_Y = 7,         //**< Y component only */
         NVIMGCDCS_SAMPLEFORMAT_P_YUV = 9,       //**< YUV planar format */
         NVIMGCDCS_SAMPLEFORMAT_UNSUPPORTED = -1,
-        NVIMGCDCS_SAMPLEFORMAT_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_SAMPLEFORMAT_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsSampleFormat_t;
 
     /** 
@@ -396,7 +396,7 @@ extern "C"
         NVIMGCDCS_COLORSPEC_CMYK = 4,
         NVIMGCDCS_COLORSPEC_YCCK = 5,
         NVIMGCDCS_COLORSPEC_UNSUPPORTED = -1,
-        NVIMGCDCS_COLORSPEC_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_COLORSPEC_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsColorSpec_t;
 
     /** 
@@ -451,7 +451,7 @@ extern "C"
         NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE = 1, /**< GPU-accessible with planes in pitch-linear layout. */
         NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST = 2,   /**< Host-accessible with planes in pitch-linear layout. */
         NVIMGCDCS_IMAGE_BUFFER_KIND_UNSUPPORTED = -1,
-        NVIMGCDCS_IMAGE_BUFFER_KIND_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_IMAGE_BUFFER_KIND_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsImageBufferKind_t;
 
     /**
@@ -505,7 +505,7 @@ extern "C"
         NVIMGCDCS_JPEG_ENCODING_DIFFERENTIAL_SEQUENTIAL_DCT_ARITHMETIC = 0xcd,
         NVIMGCDCS_JPEG_ENCODING_DIFFERENTIAL_PROGRESSIVE_DCT_ARITHMETIC = 0xce,
         NVIMGCDCS_JPEG_ENCODING_DIFFERENTIAL_LOSSLESS_ARITHMETIC = 0xcf,
-        NVIMGCDCS_JPEG_ENCODING_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_JPEG_ENCODING_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsJpegEncoding_t;
 
     /** 
@@ -592,7 +592,7 @@ extern "C"
         NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED = 0b1000000001, /**< Unsupported number of channels to decode/encode. */
         NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED = 0b10000000001,         /** Selected multi-color transform which is unsupported. */
 
-        NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsProcessingStatus;
 
     /**
@@ -607,7 +607,7 @@ extern "C"
     {
         NVIMGCDCS_MCT_MODE_YCC = 0, /**< During encoding transform RGB color images to YUV */
         NVIMGCDCS_MCT_MODE_RGB = 1, /**< Encode RGB color images without transform */
-        NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsMctMode_t;
 
     /**
@@ -666,7 +666,7 @@ extern "C"
         NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL = 2, //**< Resolution-Position-Component-Layer progression order. */
         NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL = 3, //**< Position-Component-Resolution-Layer progression order. */
         NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL = 4, //**< Component-Position-Resolution-Layer progression order. */
-        NVIMGCDCS_JPEG2K_PROG_ORDER_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_JPEG2K_PROG_ORDER_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsJpeg2kProgOrder_t;
 
     /**
@@ -676,7 +676,7 @@ extern "C"
     {
         NVIMGCDCS_JPEG2K_STREAM_J2K = 0, /**< Corresponds to the JPEG2000 code stream.*/
         NVIMGCDCS_JPEG2K_STREAM_JP2 = 1, /**< Corresponds to the .jp2 container.*/
-        NVIMGCDCS_JPEG2K_STREAM_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_JPEG2K_STREAM_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsJpeg2kBitstreamType_t;
 
     /** 
@@ -730,7 +730,7 @@ extern "C"
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL = 0x0FFFFFFF, /**< Used in case filtering out by message severity */
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT =
             NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL,
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsDebugMessageSeverity_t;
 
     /**
@@ -743,7 +743,7 @@ extern "C"
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION = 2,   /**< Something has happened that indicates a possible mistake */
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE = 4,  /**< Potential non-optimal use */
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL = 0x0FFFFFFF, /**< Used in case filtering out by message type */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsDebugMessageType_t;
 
     /**
@@ -1170,7 +1170,7 @@ extern "C"
         NVIMGCDCS_PRIORITY_LOW = 400,
         NVIMGCDCS_PRIORITY_VERY_LOW = 500,
         NVIMGCDCS_PRIORITY_LOWEST = 1000,
-        NVIMGCDCS_PRIORITY_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_PRIORITY_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsPriority_t;
 
     /**
