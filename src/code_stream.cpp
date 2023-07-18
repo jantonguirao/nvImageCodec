@@ -140,14 +140,14 @@ nvimgcdcsStatus_t CodeStream::skip(size_t count)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t CodeStream::seek(size_t offset, int whence)
+nvimgcdcsStatus_t CodeStream::seek(ptrdiff_t offset, int whence)
 {
     assert(io_stream_);
     io_stream_->seek(offset, whence);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t CodeStream::tell(size_t* offset)
+nvimgcdcsStatus_t CodeStream::tell(ptrdiff_t* offset)
 {
     assert(io_stream_);
     *offset = io_stream_->tell();
@@ -203,14 +203,14 @@ nvimgcdcsStatus_t CodeStream::skip_static(void* instance, size_t count)
     return handle->skip(count);
 }
 
-nvimgcdcsStatus_t CodeStream::seek_static(void* instance, size_t offset, int whence)
+nvimgcdcsStatus_t CodeStream::seek_static(void* instance, ptrdiff_t offset, int whence)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
     return handle->seek(offset, whence);
 }
 
-nvimgcdcsStatus_t CodeStream::tell_static(void* instance, size_t* offset)
+nvimgcdcsStatus_t CodeStream::tell_static(void* instance, ptrdiff_t* offset)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);

@@ -100,7 +100,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFramewo
         height = ((features >> 14) & mask) + 1;
         alpha = features & (1 << (2 * 14));
     } else if (chunk_type == VP8X_TAG) { // extended format
-        size_t curr, end_of_chunk_pos;
+        ptrdiff_t curr, end_of_chunk_pos;
         io_stream->tell(io_stream->instance, &curr);
         end_of_chunk_pos = curr + chunk_size;
 

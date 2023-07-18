@@ -216,7 +216,7 @@ nvimgcdcsStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
         int compression_type = BMP_COMPRESSION_RGB;
         int ncolors = 0;
         int palette_entry_size = 0;
-        size_t palette_start = 0;
+        ptrdiff_t palette_start = 0;
 
         if (length >= 26 && header_size == 12) {
             BitmapCoreHeader header = ReadValue<BitmapCoreHeader>(io_stream);

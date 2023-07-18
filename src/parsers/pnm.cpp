@@ -40,7 +40,7 @@ size_t SkipComment(nvimgcdcsIoStreamDesc_t* io_stream)
 
 void SkipSpaces(nvimgcdcsIoStreamDesc_t* io_stream)
 {
-    size_t pos;
+    ptrdiff_t pos;
     io_stream->tell(io_stream->instance, &pos);
     while (true) {
         char c = ReadValue<char>(io_stream);
@@ -56,7 +56,7 @@ void SkipSpaces(nvimgcdcsIoStreamDesc_t* io_stream)
 
 int ParseInt(nvimgcdcsIoStreamDesc_t* io_stream)
 {
-    size_t pos;
+    ptrdiff_t pos;
     io_stream->tell(io_stream->instance, &pos);
     int int_value = 0;
     while (true) {

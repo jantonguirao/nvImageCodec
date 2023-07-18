@@ -882,7 +882,7 @@ extern "C"
          * @param whence  [in] Beginning - SEEK_SET, SEEK_CUR or SEEK_END.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*seek)(void* instance, size_t offset, int whence);
+        nvimgcdcsStatus_t (*seek)(void* instance, ptrdiff_t offset, int whence);
 
         /**
          * @brief Retrieves current position, in bytes from the beginning, in the stream.
@@ -891,7 +891,7 @@ extern "C"
          * @param offset  [in/out] Pointer where to return current position.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*tell)(void* instance, size_t* offset);
+        nvimgcdcsStatus_t (*tell)(void* instance, ptrdiff_t* offset);
 
         /**
          * @brief Retrieves the length, in bytes, of the stream.

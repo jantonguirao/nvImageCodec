@@ -241,7 +241,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
                 break;
 
             uint16_t size = ReadValueBE<uint16_t>(io_stream);
-            size_t offset = 0;
+            ptrdiff_t offset = 0;
             auto res = io_stream->tell(io_stream->instance, &offset);
             if (res != NVIMGCDCS_STATUS_SUCCESS)
                 return res;

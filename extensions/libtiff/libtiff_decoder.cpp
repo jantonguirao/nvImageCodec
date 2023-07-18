@@ -41,7 +41,7 @@ class DecoderHelper
         DecoderHelper* helper = reinterpret_cast<DecoderHelper*>(handle);
         if (helper->io_stream_->seek(helper->io_stream_->instance, offset, whence) != NVIMGCDCS_STATUS_SUCCESS)
             return -1;
-        size_t curr_offset = 0;
+        ptrdiff_t curr_offset = 0;
         if (helper->io_stream_->tell(helper->io_stream_->instance, &curr_offset) != NVIMGCDCS_STATUS_SUCCESS)
             return -1;
         return curr_offset;
