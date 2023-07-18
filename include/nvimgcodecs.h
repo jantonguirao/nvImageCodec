@@ -937,7 +937,7 @@ extern "C"
         nvimgcdcsIoStreamDesc_t* io_stream; /**< I/O stream which works as a source or sink of code stream bytes */
 
         /**
-         * @brief Retrieves image info information.
+         * @brief Retrieves image information.
          * 
          * @param instance [in] Pointer to nvimgcdcsCodeStreamDesc_t instance.
          * @param image_info [in/out] Points where to return image information.
