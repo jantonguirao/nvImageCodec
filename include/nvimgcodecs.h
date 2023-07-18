@@ -526,10 +526,10 @@ extern "C"
      */
     typedef enum
     {
-        NVIMGCDCS_BACKEND_KIND_CPU_ONLY = 0b1,        /**< Decoding/encoding is executed only on CPU. */
-        NVIMGCDCS_BACKEND_KIND_GPU_ONLY = 0b10,       /**< Decoding/encoding is executed only on GPU. */
-        NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU = 0b11, /**< Decoding/encoding is executed on both CPU and GPU.*/
-        NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY = 0b100,   /**< Decoding/encoding is executed on GPU dedicated hardware engine. */
+        NVIMGCDCS_BACKEND_KIND_CPU_ONLY = 1,       /**< Decoding/encoding is executed only on CPU. */
+        NVIMGCDCS_BACKEND_KIND_GPU_ONLY = 2,       /**< Decoding/encoding is executed only on GPU. */
+        NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU = 3, /**< Decoding/encoding is executed on both CPU and GPU.*/
+        NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY = 4,    /**< Decoding/encoding is executed on GPU dedicated hardware engine. */
     } nvimgcdcsBackendKind_t;
 
     /** 
@@ -564,33 +564,31 @@ extern "C"
      */
     typedef enum
     {
-        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = 0,
-        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0b01,                  /**< Processing finished with success. */
-        NVIMGCDCS_PROCESSING_STATUS_SATURATED = 0b10,                /**< Decoder/encoder could potentially process 
+        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = 0x0,
+        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0x1,                 /**< Processing finished with success. */
+        NVIMGCDCS_PROCESSING_STATUS_SATURATED = 0x2,               /**< Decoder/encoder could potentially process 
                                                                           image but is saturated. 
                                                                           @see nvimgcdcsBackendParams_t load_hint. */
 
-        NVIMGCDCS_PROCESSING_STATUS_FAIL = 0b11,                     /**< Processing failed because unknown reason. */
-        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 0b111,         /**< Processing failed because compressed image stream is corrupted. */
-        NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED = 0b1011,      /**< Processing failed because codec is unsupported */
-        NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED = 0b10011,   /**< Processing failed because no one from allowed
+        NVIMGCDCS_PROCESSING_STATUS_FAIL = 0x3,                    /**< Processing failed because unknown reason. */
+        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 0x7,         /**< Processing failed because compressed image stream is corrupted. */
+        NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED = 0xb,       /**< Processing failed because codec is unsupported */
+        NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED = 0x13,    /**< Processing failed because no one from allowed
                                                                           backends is supported. */
-        NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED = 0b100011, /**< Processing failed because codec encoding is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_RESOLUTION_UNSUPPORTED = 0b1000011, /**< Processing failed because image resolution is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_CODESTREAM_UNSUPPORTED =
-            0b10000011, /**< Processing failed because some feature of compressed stream is unsupported */
+        NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED = 0x23,   /**< Processing failed because codec encoding is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_RESOLUTION_UNSUPPORTED = 0x43, /**< Processing failed because image resolution is unsupported. */
 
         //These values below describe cases when processing could be possible but with different image format or parameters
 
-        NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED = 0b101,          /**< Color specification unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED = 0b1001,        /**< Apply orientation was enabled but it is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED = 0b10001,               /**< Decoding region of interest is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED = 0b100001,         /**< Selected unsupported chroma subsampling . */
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED = 0b1000001,     /**< Selected unsupported sample type. */
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 0b10000001,  /**< Selected unsupported sample format. */
-        NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED = 0b100000001,    /**< Unsupported number of planes to decode/encode. */
-        NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED = 0b1000000001, /**< Unsupported number of channels to decode/encode. */
-        NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED = 0b10000000001,         /** Selected multi-color transform which is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED = 0x5,     /**< Color specification unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED = 0x9,    /**< Apply orientation was enabled but it is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED = 0x11,           /**< Decoding region of interest is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED = 0x21,      /**< Selected unsupported chroma subsampling . */
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED = 0x41,   /**< Selected unsupported sample type. */
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 0x81, /**< Selected unsupported sample format. */
+        NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED = 0x101,   /**< Unsupported number of planes to decode/encode. */
+        NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED = 0x201, /**< Unsupported number of channels to decode/encode. */
+        NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED = 0x401,          /** Selected multi-color transform which is unsupported. */
 
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsProcessingStatus;
