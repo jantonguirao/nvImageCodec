@@ -714,18 +714,18 @@ extern "C"
      */
     typedef enum
     {
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_NONE = 0,
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE = 1,        /**< Diagnostic message useful for developers */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG = 2,        /**< Diagnostic message useful for developers */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO = 4,         /**< Informational message like the creation of a resource */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING = 8,      /**< Message about behavior that is not necessarily an error,
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_NONE = 0x00000000,
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE = 0x00000001,   /**< Diagnostic message useful for developers */
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG = 0x00000010,   /**< Diagnostic message useful for developers */
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO = 0x00000100,    /**< Informational message like the creation of a resource */
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING = 0x00001000, /**< Message about behavior that is not necessarily an error,
                                                                 but very likely a bug in your application */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR = 16,       /**< Message about behavior that is invalid and may cause
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR = 0x00010000,   /**< Message about behavior that is invalid and may cause
                                                                 improper execution or result of operation (e.g. can't open file)
                                                                 but not application */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL = 24,       /**< Message about behavior that is invalid and may cause crashes
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL = 0x00100000,   /**< Message about behavior that is invalid and may cause crashes
                                                                 and forcing to shutdown application */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL = 0x0FFFFFFF, /**< Used in case filtering out by message severity */
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL = 0x0FFFFFFF,     /**< Used in case filtering out by message severity */
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT =
             NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL,
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = INT32_MAX
@@ -736,11 +736,12 @@ extern "C"
      */
     typedef enum
     {
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_NONE = 0,
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL = 1,      /**< Some event has happened that is unrelated to the specification or performance */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION = 2,   /**< Something has happened that indicates a possible mistake */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE = 4,  /**< Potential non-optimal use */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL = 0x0FFFFFFF, /**< Used in case filtering out by message type */
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_NONE = 0x00000000,
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL =
+            0x00000001, /**< Some event has happened that is unrelated to the specification or performance */
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION = 0x00000010,  /**< Something has happened that indicates a possible mistake */
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE = 0x00000100, /**< Potential non-optimal use */
+        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL = 0x0FFFFFFF,         /**< Used in case filtering out by message type */
         NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsDebugMessageType_t;
 
