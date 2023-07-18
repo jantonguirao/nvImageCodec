@@ -77,7 +77,7 @@ class NvJpeg2kDecoderPlugin
 
         nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-        nvimgcdcsStatus_t decode(int sample_idx);
+        nvimgcdcsStatus_t decode(int sample_idx, bool immediate);
         nvimgcdcsStatus_t decodeBatch(
             nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvjpeg2kHandle_t getNvjpeg2kHandle();

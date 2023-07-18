@@ -82,7 +82,10 @@ static nvimgcdcsSampleDataType_t type_from_format_str(const std::string& typestr
 
 struct Image::BufferDeleter
 {
-    void operator()(unsigned char* buffer) { cudaFree(buffer); }
+    cudaStream_t stream;
+    void operator()(unsigned char* buffer) {
+        cudaFreeAsync(buffer, stream);
+    }
 };
 struct Image::ImageDeleter
 {
@@ -103,8 +106,9 @@ Image::Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info)
 {
     if (image_info->buffer == nullptr) {
         unsigned char* buffer;
-        CHECK_CUDA(cudaMalloc((void**)&buffer, image_info->buffer_size));
-        img_buffer_ = std::shared_ptr<unsigned char>(buffer, BufferDeleter{});
+        CHECK_CUDA(cudaMallocAsync((void**)&buffer, image_info->buffer_size, image_info->cuda_stream));
+
+        img_buffer_ = std::shared_ptr<unsigned char>(buffer, BufferDeleter{image_info->cuda_stream});
         img_buffer_size_ = image_info->buffer_size;
         image_info->buffer = buffer;
     }

@@ -189,9 +189,10 @@ void ImageGenericDecoder::distributeWork(std::unique_ptr<Work<nvimgcdcsDecodePar
         w->moveEntry(work.get(), i);
     }
 
+    bool immediate = true;  // first worker will get executed on the current thread
     for (auto& [codec, w] : dist) {
         auto worker = getWorker(codec);
-        worker->addWork(std::move(w));
+        worker->addWork(std::move(w), immediate);
     }
 }
 
