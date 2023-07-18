@@ -577,9 +577,9 @@ extern "C"
                                                                           backends is supported. */
         NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED = 0x23,   /**< Processing failed because codec encoding is unsupported. */
         NVIMGCDCS_PROCESSING_STATUS_RESOLUTION_UNSUPPORTED = 0x43, /**< Processing failed because image resolution is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_CODESTREAM_UNSUPPORTED = 0x83, /**< Processing failed because some feature of compressed stream is unsupported */
 
         //These values below describe cases when processing could be possible but with different image format or parameters
-
         NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED = 0x5,     /**< Color specification unsupported. */
         NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED = 0x9,    /**< Apply orientation was enabled but it is unsupported. */
         NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED = 0x11,           /**< Decoding region of interest is unsupported. */
@@ -732,18 +732,18 @@ extern "C"
     } nvimgcdcsDebugMessageSeverity_t;
 
     /**
-     * @brief Bitmask specifying which types of events cause a debug messenger callback
+     * @brief Bitmask specifying which category of events cause a debug messenger callback
      */
     typedef enum
     {
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_NONE = 0x00000000,
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL =
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_NONE = 0x00000000,
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_GENERAL =
             0x00000001, /**< Some event has happened that is unrelated to the specification or performance */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION = 0x00000010,  /**< Something has happened that indicates a possible mistake */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE = 0x00000100, /**< Potential non-optimal use */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL = 0x0FFFFFFF,         /**< Used in case filtering out by message type */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT = INT32_MAX
-    } nvimgcdcsDebugMessageType_t;
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_VALIDATION = 0x00000010,  /**< Something has happened that indicates a possible mistake */
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_PERFORMANCE = 0x00000100, /**< Potential non-optimal use */
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL = 0x0FFFFFFF,         /**< Used in case filtering out by message category */
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ENUM_FORCE_INT = INT32_MAX
+    } nvimgcdcsDebugMessageCategory_t;
 
     /**
      * @brief Describing debug message passed to debug callback function
@@ -764,13 +764,13 @@ extern "C"
      * @brief Debug callback function type.
      * 
      * @param message_severity [in] Message severity
-     * @param message_type [in] Message type
+     * @param message_category [in] Message category
      * @param callback_data [in] Debug message data 
      * @param user_data [in] Pointer that was specified during the setup of the callback 
      * @returns true if message should not be passed further to other callbacks and false otherwise 
      */
     typedef bool (*nvimgcdcsDebugCallback_t)(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* callback_data, void* user_data);
+        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data, void* user_data);
 
     /**
      * @brief Debug messenger description.
@@ -781,7 +781,7 @@ extern "C"
         void* next;                             /**< Is NULL or a pointer to an extension structure type. */
 
         uint32_t message_severity;              /**< Bitmask of message severity to listen for e.g. error or warning.  */
-        uint32_t message_type;                  /**< Bitmask of message type to listen for e.g. general or performance related. */
+        uint32_t message_category;              /**< Bitmask of message category to listen for e.g. general or performance related. */
         nvimgcdcsDebugCallback_t user_callback; /**< Debug callback function */
         void* user_data;                        /**< Pointer to user data which will be passed back to debug callback function. */
     } nvimgcdcsDebugMessengerDesc_t;
@@ -1177,11 +1177,11 @@ extern "C"
      * 
      * @param instance [in] Plugin framework instance pointer
      * @param message_severity [in] Message severity e.g. error or warning.
-     * @param message_type [in]  Message type e.g. general or performance related.
+     * @param message_category [in]  Message category e.g. general or performance related.
      * @param data [in] Debug message data i.e. message string, status, codec etc.
      */
     typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
+        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data);
 
     /**
      * @brief Plugin Framework
@@ -1341,7 +1341,7 @@ extern "C"
         const char* extension_modules_path;           /**< There may be several paths separated by ':' on Linux or ';' on Windows */
         bool default_debug_messenger;                 /**< Create default debug messenger */
         uint32_t message_severity;                    /**< Severity for default debug messenger */
-        uint32_t message_type;                        /**< Message type for default debug messenger */
+        uint32_t message_category;                    /**< Message category for default debug messenger */
         int num_cpu_threads; /**< Number of CPU threads in default executor (0 means default value = to number of cpu_cores) */
         nvimgcdcsExecutorDesc_t* executor; /**< Custom executor */
     } nvimgcdcsInstanceCreateInfo_t;

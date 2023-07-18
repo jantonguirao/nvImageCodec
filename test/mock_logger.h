@@ -19,11 +19,11 @@ class MockLogger : public ILogger
 {
   public:
     MOCK_METHOD(void, log,
-        (const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
+        (const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_type,
             const std::string& message),
         (override));
     MOCK_METHOD(void, log,
-        (const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
+        (const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_type,
             const nvimgcdcsDebugMessageData_t* data),
         (override));
     MOCK_METHOD(void, registerDebugMessenger, (IDebugMessenger * messenger), (override));

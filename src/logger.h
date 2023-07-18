@@ -25,9 +25,9 @@ class Logger : public ILogger
     Logger(IDebugMessenger* messenger);
     static ILogger* get();
     void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const std::string& message) override ;
+        const nvimgcdcsDebugMessageCategory_t message_category, const std::string& message) override ;
     void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data) override;
+        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data) override;
     void registerDebugMessenger(IDebugMessenger* messenger) override;
     void unregisterDebugMessenger(IDebugMessenger* messenger) override;
 

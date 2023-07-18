@@ -21,9 +21,9 @@ class ILogger
   public:
     virtual ~ILogger() = default;
     virtual void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const std::string& message) = 0;
+        const nvimgcdcsDebugMessageCategory_t message_category, const std::string& message) = 0;
     virtual void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data) = 0;
+        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data) = 0;
     virtual void registerDebugMessenger(IDebugMessenger* messenger) = 0;
     virtual void unregisterDebugMessenger(IDebugMessenger* messenger) = 0;
 };
