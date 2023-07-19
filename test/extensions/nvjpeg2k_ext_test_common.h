@@ -251,6 +251,7 @@ class NvJpeg2kTestBase
         std::vector<unsigned char*> input_buffers_u8;
 
         nvjpeg2kImage_t img_desc;
+        memset(&img_desc, 0, sizeof(nvjpeg2kImage_t));
         img_desc.num_components = input_image_info.num_planes;
         img_desc.pitch_in_bytes = strides.data();
 

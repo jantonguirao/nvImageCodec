@@ -221,6 +221,7 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
 {
     Module module;
     module.lib_handle_ = nullptr;
+    module.extension_entry_ = nullptr;
 
     return registerExtension(extension, extension_desc, module);
 }

@@ -51,6 +51,7 @@ class WebpParserPluginTest : public ::testing::Test
     nvimgcdcsImageInfo_t expected_cat_2184682_640()
     {
         nvimgcdcsImageInfo_t info;
+        memset(&info, 0, sizeof(nvimgcdcsImageInfo_t));
         info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
         info.next = nullptr;
         info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
@@ -71,6 +72,7 @@ class WebpParserPluginTest : public ::testing::Test
     nvimgcdcsImageInfo_t expected_cat_3113513_640()
     {
         nvimgcdcsImageInfo_t info;
+        memset(&info, 0, sizeof(nvimgcdcsImageInfo_t));
         info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
         info.next = nullptr;
         info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
@@ -91,6 +93,7 @@ class WebpParserPluginTest : public ::testing::Test
     nvimgcdcsImageInfo_t expected_camel_1987672_640()
     {
         nvimgcdcsImageInfo_t info;
+        memset(&info, 0, sizeof(nvimgcdcsImageInfo_t));
         info.type = NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO;
         info.next = nullptr;
         info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
