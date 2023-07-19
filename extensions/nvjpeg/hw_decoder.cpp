@@ -389,7 +389,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
         std::vector<size_t> batched_bitstreams_size;
         std::vector<nvjpegImage_t> batched_output;
         std::vector<nvimgcdcsImageInfo_t> batched_image_info;
-        nvjpegOutputFormat_t nvjpeg_format;
+        nvjpegOutputFormat_t nvjpeg_format = NVJPEG_OUTPUT_UNCHANGED;
         bool need_params = false;
 
         using nvjpeg_params_ptr = std::unique_ptr<std::remove_pointer<nvjpegDecodeParams_t>::type, decltype(&nvjpegDecodeParamsDestroy)>;

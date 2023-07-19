@@ -161,6 +161,7 @@ NvJpegLosslessDecoderPlugin::Decoder::Decoder(const char* plugin_id, const nvimg
     const nvimgcdcsBackendParams_t* backend_params, const char* options)
     : device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
+    , plugin_id_(plugin_id)
     , framework_(framework)
     , device_id_(device_id)
     , backend_params_(backend_params)

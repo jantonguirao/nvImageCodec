@@ -633,6 +633,10 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
         nvimgcdcsDecoderDestroy(decoder);
     }
 
+    if (encoder) {
+        nvimgcdcsEncoderDestroy(encoder);
+    }
+
     CHECK_CUDA(cudaEventDestroy(startEvent));
     CHECK_CUDA(cudaEventDestroy(stopEvent));
     total_time += wtime() - time;
