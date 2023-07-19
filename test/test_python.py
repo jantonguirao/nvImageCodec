@@ -78,7 +78,10 @@ def decode_single_image_test(tmp_path, input_img_file, input_format, backends):
 
     decoder_input = load_single_image(input_img_path, input_format)
 
-    test_img = decoder.decode(decoder_input)
+    if input_format == "path":
+        test_img = decoder.read(decoder_input)
+    else:
+        test_img = decoder.decode(decoder_input)
 
     ref_img = cv2.imread(
         input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
@@ -196,8 +199,10 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
 
     encoded_images = load_batch(input_images, input_format)
 
-    test_images = decoder.decode(encoded_images, cuda_stream=0 if cuda_stream is None else cuda_stream.ptr)
-
+    if input_format == "path":
+        test_images = decoder.read(encoded_images, cuda_stream=0 if cuda_stream is None else cuda_stream.ptr)
+    else:
+        test_images = decoder.decode(encoded_images, cuda_stream=0 if cuda_stream is None else cuda_stream.ptr)
     compare_images(test_images, ref_images)
 
 
@@ -263,10 +268,10 @@ def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stre
         pre, ext = os.path.splitext(base)
         output_img_path = os.path.join(tmp_path, pre + ".jp2")
         if cuda_stream:
-            encoder.encode(output_img_path, nv_ref_img,
+            encoder.write(output_img_path, nv_ref_img,
                            params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True), cuda_stream=cuda_stream.ptr)
         else:
-            encoder.encode(output_img_path, nv_ref_img,
+            encoder.write(output_img_path, nv_ref_img,
                            params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True))
         with open(output_img_path, 'rb') as in_file:
             test_encoded_img = in_file.read()
@@ -337,10 +342,10 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
         output_img_paths = [os.path.join(tmp_path, os.path.splitext(
             os.path.basename(img))[0] + ".jp2") for img in input_images]
         if cuda_stream:
-            encoder.encode(output_img_paths, nv_ref_images,
+            encoder.write(output_img_paths, nv_ref_images,
                            params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True), cuda_stream=cuda_stream.ptr)
         else:
-            encoder.encode(output_img_paths, nv_ref_images,
+            encoder.write(output_img_paths, nv_ref_images,
                            params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True))
         test_encoded_images = []
         for out_img_path in output_img_paths:
