@@ -390,7 +390,7 @@ nvimgcdcsStatus_t DecoderImpl::decode(const char* plugin_id, const nvimgcdcsFram
     int flags = num_channels > 1 ? cv::IMREAD_COLOR : cv::IMREAD_GRAYSCALE;
     if (num_channels > 3)
         flags |= cv::IMREAD_UNCHANGED;
-    if (!params->enable_orientation)
+    if (!params->apply_exif_orientation)
         flags |= cv::IMREAD_IGNORE_ORIENTATION;
     if (info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8)
         flags |= cv::IMREAD_ANYDEPTH;

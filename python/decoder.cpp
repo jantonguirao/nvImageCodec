@@ -162,7 +162,7 @@ std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_stre
 
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
 
-        bool swap_wh = params.decode_params_.enable_orientation && ((image_info.orientation.rotated / 90) % 2);
+        bool swap_wh = params.decode_params_.apply_exif_orientation && ((image_info.orientation.rotated / 90) % 2);
         if (swap_wh) {
             std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
         }

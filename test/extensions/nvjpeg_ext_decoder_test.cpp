@@ -46,7 +46,7 @@ class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
         std::string dec_options{":fancy_upsampling=0 nvjpeg_cuda_decoder:hybrid_huffman_threshold=0"};
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, dec_options.c_str()));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
-        params_.enable_orientation= 1;
+        params_.apply_exif_orientation= 1;
         params_.enable_color_conversion= 1;
     }
 

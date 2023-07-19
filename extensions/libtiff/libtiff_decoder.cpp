@@ -330,66 +330,66 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images);
         XM_CHECK_NULL(params);
-        auto result = status;
-        auto code_stream = code_streams;
-        auto image = images;
-        for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
+    auto result = status;
+    auto code_stream = code_streams;
+    auto image = images;
+    for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
+        *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
-            if (strcmp(cs_image_info.codec_name, "tiff") != 0) {
-                *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
-                continue;
-            }
-
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*image)->getImageInfo((*image)->instance, &image_info);
-
-            switch (image_info.sample_format) {
-            case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
-                break;
-            case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
-            case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
-            case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
-            case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
-            case NVIMGCDCS_SAMPLEFORMAT_P_Y:
-            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
-            case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
-            default:
-                break; // supported
-            }
-
-            if (image_info.num_planes == 1) {
-                if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB)
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
-            } else if (image_info.num_planes > 1) {
-                if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
-                    image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED)
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
-            }
-            if (image_info.num_planes != 1 && image_info.num_planes != 3 && image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED)
-                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
-
-            if (image_info.plane_info[0].num_channels == 1) {
-                if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB)
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
-            } else if (image_info.plane_info[0].num_channels > 1) {
-                if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB ||
-                    image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED)
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
-            }
-            if (image_info.plane_info[0].num_channels != 1 && image_info.plane_info[0].num_channels != 3 &&
-                image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED)
-                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
-
-            // This codec doesn't apply EXIF orientation
-            if (params->enable_orientation &&
-                (image_info.orientation.flip_x || image_info.orientation.flip_y || image_info.orientation.rotated != 0)) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
-            }
+        if (strcmp(cs_image_info.codec_name, "tiff") != 0) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            continue;
         }
+
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*image)->getImageInfo((*image)->instance, &image_info);
+
+        switch (image_info.sample_format) {
+        case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+            break;
+        case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+        case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+        case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+        case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+        case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+        case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
+        case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
+        default:
+            break; // supported
+        }
+
+        if (image_info.num_planes == 1) {
+            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB)
+                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+        } else if (image_info.num_planes > 1) {
+            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
+                image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED)
+                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+        }
+        if (image_info.num_planes != 1 && image_info.num_planes != 3 && image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED)
+            *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+
+        if (image_info.plane_info[0].num_channels == 1) {
+            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB)
+                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
+        } else if (image_info.plane_info[0].num_channels > 1) {
+            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB ||
+                image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED)
+                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
+        }
+        if (image_info.plane_info[0].num_channels != 1 && image_info.plane_info[0].num_channels != 3 &&
+            image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED)
+            *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
+
+        // This codec doesn't apply EXIF orientation
+        if (params->apply_exif_orientation &&
+            (image_info.orientation.flip_x || image_info.orientation.flip_y || image_info.orientation.rotated != 0)) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
+        }
+    }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if libtiff can decode - " << e.what());
         return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
@@ -722,37 +722,37 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
     std::vector<uint8_t>& buffer)
 {
     try {
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        auto ret = image->getImageInfo(image->instance, &image_info);
-        if (ret != NVIMGCDCS_STATUS_SUCCESS)
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    auto ret = image->getImageInfo(image->instance, &image_info);
+    if (ret != NVIMGCDCS_STATUS_SUCCESS)
             return NVIMGCDCS_PROCESSING_STATUS_FAIL;
 
-        if (image_info.region.ndim != 0 && image_info.region.ndim != 2) {
+    if (image_info.region.ndim != 0 && image_info.region.ndim != 2) {
             NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Invalid region of interest");
             return NVIMGCDCS_PROCESSING_STATUS_FAIL;
-        }
+    }
 
-        if (image_info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+    if (image_info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
             NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected buffer kind");
             return NVIMGCDCS_PROCESSING_STATUS_FAIL;
-        }
+    }
 
-        auto io_stream = code_stream->io_stream;
-        io_stream->seek(io_stream->instance, 0, SEEK_SET);
-        auto tiff = OpenTiff(io_stream);
-        auto info = GetTiffInfo(tiff.get());
-        switch (image_info.plane_info[0].sample_type) {
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
+    auto io_stream = code_stream->io_stream;
+    io_stream->seek(io_stream->instance, 0, SEEK_SET);
+    auto tiff = OpenTiff(io_stream);
+    auto info = GetTiffInfo(tiff.get());
+    switch (image_info.plane_info[0].sample_type) {
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
             return decodeImplTyped<uint8_t>(plugin_id, framework, image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
             return decodeImplTyped<uint8_t>(plugin_id, framework, image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
             return decodeImplTyped<uint8_t>(plugin_id, framework, image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
             return decodeImplTyped<uint8_t>(plugin_id, framework, image_info, tiff.get(), info);
-        case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
+    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
             return decodeImplTyped<uint8_t>(plugin_id, framework, image_info, tiff.get(), info);
-        default:
+    default:
             NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Invalid data type: " << image_info.plane_info[0].sample_type);
             return NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
         }
@@ -776,16 +776,16 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         }
 
-        decode_state_batch_->samples_.resize(batch_size);
-        for (int i = 0; i < batch_size; i++) {
-            decode_state_batch_->samples_[i].code_stream = code_streams[i];
-            decode_state_batch_->samples_[i].image = images[i];
-            decode_state_batch_->samples_[i].params = params;
-        }
+    decode_state_batch_->samples_.resize(batch_size);
+    for (int i = 0; i < batch_size; i++) {
+        decode_state_batch_->samples_[i].code_stream = code_streams[i];
+        decode_state_batch_->samples_[i].image = images[i];
+        decode_state_batch_->samples_[i].params = params;
+    }
 
-        nvimgcdcsExecutorDesc_t* executor;
-        framework_->getExecutor(framework_->instance, &executor);
-        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
+    nvimgcdcsExecutorDesc_t* executor;
+    framework_->getExecutor(framework_->instance, &executor);
+    for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
             auto task = [](int tid, int sample_idx, void* context) -> void {
                 nvtx3::scoped_range marker{"libtiff decode " + std::to_string(sample_idx)};
                 auto* decode_state = reinterpret_cast<DecodeState*>(context);
@@ -799,9 +799,9 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
             };
             if (batch_size == 1) {
                 task(0, sample_idx, decode_state_batch_.get());
-            } else {
+                } else {
                 executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(), std::move(task));
-            }
+                }
         }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not decode tiff batch - " << e.what());

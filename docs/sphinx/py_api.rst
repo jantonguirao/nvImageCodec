@@ -132,15 +132,15 @@ DecodeParams
                 
                 Default constructor
 
-            2. __init__(self: nvidia.nvimgcodecs.DecodeParams, enable_orientation: bool = True, enable_color_conversion: bool = True) -> None
+            2. __init__(self: nvidia.nvimgcodecs.DecodeParams, apply_exif_orientation: bool = True, enable_color_conversion: bool = True) -> None
                 
-                Constructor with enable_orientation and enable_color_conversion parameters 
+                Constructor with apply_exif_orientation and enable_color_conversion parameters 
 
         .. py:attribute:: enable_color_conversion
 
             Enable color conversion to RGB
 
-        .. py:attribute:: enable_orientation
+        .. py:attribute:: apply_exif_orientation
 
             Apply EXIF orientation if available
 

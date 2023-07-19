@@ -151,7 +151,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     // Prepare decode parameters
     nvimgcdcsDecodeParams_t decode_params{};
     decode_params.enable_color_conversion= 1;
-    decode_params.enable_orientation= 1;
+    decode_params.apply_exif_orientation= 1;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
     // Preparing output image_info

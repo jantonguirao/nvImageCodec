@@ -167,7 +167,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     // Prepare decode parameters
     nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
     decode_params.enable_color_conversion = params.dec_color_trans;
-    decode_params.enable_orientation = !params.ignore_orientation;
+    decode_params.apply_exif_orientation = !params.ignore_orientation;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
     // Preparing output image_info
     if (jpeg_image_info.encoding == NVIMGCDCS_JPEG_ENCODING_LOSSLESS_HUFFMAN) {
@@ -179,7 +179,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
     }
         
-    bool swap_wh = decode_params.enable_orientation && ((image_info.orientation.rotated / 90) % 2);
+    bool swap_wh = decode_params.apply_exif_orientation && ((image_info.orientation.rotated / 90) % 2);
     if (swap_wh) {
         std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
     }
@@ -404,7 +404,7 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
         image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
 
-        bool swap_wh = decode_params.enable_orientation && ((image_info.orientation.rotated / 90) % 2);
+        bool swap_wh = decode_params.apply_exif_orientation && ((image_info.orientation.rotated / 90) % 2);
         if (swap_wh) {
             std::swap(image_info.plane_info[0].height, image_info.plane_info[0].width);
         }
@@ -508,7 +508,7 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     std::vector<nvimgcdcsImage_t> images(params.batch_size);
     nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
     decode_params.enable_color_conversion = params.dec_color_trans;
-    decode_params.enable_orientation = !params.ignore_orientation;
+    decode_params.apply_exif_orientation = !params.ignore_orientation;
 
     nvimgcdcsJpegImageInfo_t jpeg_image_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     nvimgcdcsEncodeParams_t encode_params{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};

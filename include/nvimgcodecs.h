@@ -616,7 +616,7 @@ extern "C"
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
-        int enable_orientation;        /**<  Enable orientation if available. Valid values 0 or 1. */
+        int apply_exif_orientation;        /**<  Apply exif orientation if available. Valid values 0 or 1. */
         int enable_roi;                /**<  Enables region of interest. Valid values 0 or 1. */
 
         /**

@@ -25,15 +25,15 @@ void DecodeParams::exportToPython(py::module& m)
 {
     py::class_<DecodeParams>(m, "DecodeParams")
         .def(py::init([]() { return DecodeParams{}; }), "Default constructor")
-        .def(py::init([](bool enable_orientation, bool enable_color_conversion) {
+        .def(py::init([](bool apply_exif_orientation, bool enable_color_conversion) {
             DecodeParams p;
-            p.decode_params_.enable_orientation = enable_orientation;
+            p.decode_params_.apply_exif_orientation = apply_exif_orientation;
             p.decode_params_.enable_color_conversion = enable_color_conversion;
             return p;
         }),
-            "enable_orientation"_a = true, "enable_color_conversion"_a = true,
-            "Constructor with enable_orientation and enable_color_conversion parameters")
-        .def_property("enable_orientation", &DecodeParams::getEnableOrientation, &DecodeParams::setEnableOrientation,
+            "apply_exif_orientation"_a = true, "enable_color_conversion"_a = true,
+            "Constructor with apply_exif_orientation and enable_color_conversion parameters")
+        .def_property("apply_exif_orientation", &DecodeParams::getEnableOrientation, &DecodeParams::setEnableOrientation,
             "Apply EXIF orientation if available")
         .def_property("enable_color_conversion", &DecodeParams::getEnableColorConversion, &DecodeParams::setEnableColorConversion,
             "Enable color conversion to RGB");
