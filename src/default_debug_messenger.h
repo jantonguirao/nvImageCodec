@@ -24,11 +24,11 @@ class DefaultDebugMessenger : public IDebugMessenger
     const nvimgcdcsDebugMessengerDesc_t* getDesc() override { return &desc_; }
 
   private:
-    bool debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,
+    int debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageCategory_t message_category,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
-    static bool static_debug_callback(nvimgcdcsDebugMessageSeverity_t message_severity,
+    static int static_debug_callback(const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageCategory_t message_category,
         const nvimgcdcsDebugMessageData_t* callback_data,
         void* user_data

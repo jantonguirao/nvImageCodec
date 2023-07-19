@@ -61,9 +61,9 @@ Module::Module()
     }
 
     nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-    instance_create_info.load_builtin_modules = true;
-    instance_create_info.load_extension_modules = true;
-    instance_create_info.default_debug_messenger = verbosity;
+    instance_create_info.load_builtin_modules= 1;
+    instance_create_info.load_extension_modules= 1;
+    instance_create_info.default_debug_messenger = verbosity > 0 ? 1 : 0;
     instance_create_info.message_severity = verbosity2severity(verbosity);
     instance_create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
     instance_create_info.num_cpu_threads = num_cpu_threads;

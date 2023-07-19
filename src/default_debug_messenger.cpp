@@ -16,7 +16,7 @@ DefaultDebugMessenger::DefaultDebugMessenger(uint32_t message_severity, uint32_t
 {
 }
 
-bool DefaultDebugMessenger::debugCallback(nvimgcdcsDebugMessageSeverity_t message_severity,
+int DefaultDebugMessenger::debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,
     const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data)
 {
     switch (message_severity) {
@@ -67,11 +67,11 @@ bool DefaultDebugMessenger::debugCallback(nvimgcdcsDebugMessageSeverity_t messag
     std::cerr << "[" << callback_data->codec_id << "] ";
     std::cerr << callback_data->message << std::endl;
 
-    return false;
+    return 0;
 }
 
-bool DefaultDebugMessenger::static_debug_callback(
-    nvimgcdcsDebugMessageSeverity_t message_severity,
+int DefaultDebugMessenger::static_debug_callback(
+    const nvimgcdcsDebugMessageSeverity_t message_severity,
     const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data,
     void* user_data)
 {

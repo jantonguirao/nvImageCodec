@@ -197,7 +197,7 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         params->enc_color_trans = strcmp(argv[pidx + 1], "true") == 0;
     }
 
-    params->optimized_huffman = false;
+    params->optimized_huffman = 0;
     if ((pidx = find_param_index(argv, argc, "--optimized_huffman")) != -1) {
         params->optimized_huffman = strcmp(argv[pidx + 1], "true") == 0;
     }

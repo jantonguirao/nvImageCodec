@@ -408,8 +408,8 @@ extern "C"
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
         int rotated;                   /**< Rotation angle in degrees (clockwise). Only multiples of 90 are allowed. */
-        bool flip_x;                   /**< Flip horizontal */
-        bool flip_y;                   /**< Flip vertical */
+        int flip_x;                    /**< Flip horizontal 0 or 1*/
+        int flip_y;                    /**< Flip vertical 0 or 1*/
     } nvimgcdcsOrientation_t;
 
     /**
@@ -616,16 +616,17 @@ extern "C"
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
-        bool enable_orientation;       /**<  Enable orientation if available. */
-        bool enable_roi;               /**<  Enables region of interest */
+        int enable_orientation;        /**<  Enable orientation if available. Valid values 0 or 1. */
+        int enable_roi;                /**<  Enables region of interest. Valid values 0 or 1. */
 
         /**
          * @brief Enables color conversion
          *  
          * For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
          * For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.
+         * Valid values 0 or 1.
          */
-        bool enable_color_conversion;
+        int enable_color_conversion;
     } nvimgcdcsDecodeParams_t;
 
     /**
@@ -690,7 +691,7 @@ extern "C"
         uint32_t num_resolutions;                   /**< Number of resolutions. */
         uint32_t code_block_w;                      /**< Code block width. Allowed values 32, 64 */
         uint32_t code_block_h;                      /**< Code block height. Allowed values 32, 64 */
-        bool irreversible;                          /**< Sets whether or not to use irreversible encoding. */
+        int irreversible;                           /**< Sets whether or not to use irreversible encoding. Valid values 0 or 1. */
     } nvimgcdcsJpeg2kEncodeParams_t;
 
     /**
@@ -702,11 +703,11 @@ extern "C"
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
         /**
-         * Sets whether or not to use optimized Huffman.
+         * Sets whether or not to use optimized Huffman. Valid values 0 or 1.
          * 
          * @note  Using optimized Huffman produces smaller JPEG bitstream sizes with the same quality, but with slower performance.
          */
-        bool optimized_huffman;
+        int optimized_huffman;
     } nvimgcdcsJpegEncodeParams_t;
 
     /**
@@ -767,9 +768,9 @@ extern "C"
      * @param message_category [in] Message category
      * @param callback_data [in] Debug message data 
      * @param user_data [in] Pointer that was specified during the setup of the callback 
-     * @returns true if message should not be passed further to other callbacks and false otherwise 
+     * @returns 1 if message should not be passed further to other callbacks and 0 otherwise 
      */
-    typedef bool (*nvimgcdcsDebugCallback_t)(const nvimgcdcsDebugMessageSeverity_t message_severity,
+    typedef int (*nvimgcdcsDebugCallback_t)(const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data, void* user_data);
 
     /**
@@ -991,11 +992,11 @@ extern "C"
          * @brief Checks whether parser can parse given code stream.
          * 
          * @param instance [in] Pointer to nvimgcdcsParserDesc_t instance.
-         * @param result [in/out] Points where to return result of parsing check.
+         * @param result [in/out] Points where to return result of parsing check. Valid values 0 or 1.
          * @param code_stream [in] Code stream to parse check.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
         */
-        nvimgcdcsStatus_t (*canParse)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
+        nvimgcdcsStatus_t (*canParse)(void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream);
 
         /**
          * Creates parser.
@@ -1336,10 +1337,10 @@ extern "C"
 
         nvimgcdcsDeviceAllocator_t* device_allocator; /**< Custom allocator for device memory */
         nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Custom allocator for pinned memory */
-        bool load_builtin_modules;                    /**< Load default modules */
-        bool load_extension_modules;                  /**< Discover and load extension modules on start */
+        int load_builtin_modules;                     /**< Load default modules. Valid values 0 or 1. */
+        int load_extension_modules;                   /**< Discover and load extension modules on start. Valid values 0 or 1. */
         const char* extension_modules_path;           /**< There may be several paths separated by ':' on Linux or ';' on Windows */
-        bool default_debug_messenger;                 /**< Create default debug messenger */
+        int default_debug_messenger;                  /**< Create default debug messenger. Valid values 0 or 1. */
         uint32_t message_severity;                    /**< Severity for default debug messenger */
         uint32_t message_category;                    /**< Message category for default debug messenger */
         int num_cpu_threads; /**< Number of CPU threads in default executor (0 means default value = to number of cpu_cores) */
@@ -1578,16 +1579,16 @@ extern "C"
      * @param batch_size [in] Batch size of provided code streams and images.
      * @param params [in] Pointer to nvimgcdcsDecodeParams_t struct to check decoding with.
      * @param processing_status [in/out] Points a nvimgcdcsProcessingStatus_t handle in which the processing statuses is returned.
-     * @param force_format [in] If true, and high priority codec does not support provided format it will fallback to lower priority
-     *                          codec for further checks. For false value, when high priority codec does not support provided format
-     *                          or parameters but it can process input in general, it will stop check and return processing status
-     *                          with flags which shows what format or parameters need to be changed to avoid fallback to lower
-     *                          priority codec.
+     * @param force_format [in] Valid values 0 or 1. If 1 value, and high priority codec does not support provided format it will
+     *                          fallback to lower priority codec for further checks. For 0 value, when high priority codec does not
+     *                          support provided format or parameters but it can process input in general, it will stop check and
+     *                          return processing status with flags which shows what format or parameters need to be changed to 
+     *                          avoid fallback to lower priority codec. 
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes} 
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, const nvimgcdcsCodeStream_t* streams,
         const nvimgcdcsImage_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params,
-        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
+        nvimgcdcsProcessingStatus_t* processing_status, int force_format);
 
     /**
      * @brief Decode batch of provided code streams to given output images with specified parameters.
@@ -1639,16 +1640,16 @@ extern "C"
      * @param batch_size [in] Batch size of provided code streams and images.
      * @param params [in] Pointer to nvimgcdcsEncodeParams_t struct to check decoding with.
      * @param processing_status [in/out] Points a nvimgcdcsProcessingStatus_t handle in which the processing statuses is returned.
-     * @param force_format [in] If true, and high priority codec does not support provided format it will fallback to lower priority
-     *                          codec for further checks. For false value, when high priority codec does not support provided format
-     *                          or parameters but it can process input in general, it will stop check and return processing status
-     *                          with flags which shows what format or parameters need to be changed to avoid fallback to lower
-     *                          priority codec.
+     * @param force_format [in] Valid values 0 or 1. If 1 value, and high priority codec does not support provided format it will 
+     *                          fallback to lower priority codec for further checks. For 0 value, when high priority codec does not
+     *                          support provided format or parameters but it can process input in general, it will stop check and
+     *                          return processing status with flags which shows what format or parameters need to be changed to 
+     *                          avoid fallback to lower priority codec.
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes} 
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
         const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params,
-        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
+        nvimgcdcsProcessingStatus_t* processing_status, int force_format);
 
     /**
      * @brief Encode batch of provided images to given output code streams with specified parameters.

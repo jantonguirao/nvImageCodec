@@ -126,8 +126,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_Horizontal)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 0;
-    expected_info.orientation.flip_x = false;
-    expected_info.orientation.flip_y = false;
+    expected_info.orientation.flip_x =0;
+    expected_info.orientation.flip_y =0;
     expect_eq(expected_info, info);
 }
 
@@ -140,8 +140,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontal)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 0;
-    expected_info.orientation.flip_x = true;
-    expected_info.orientation.flip_y = false;
+    expected_info.orientation.flip_x= 1;
+    expected_info.orientation.flip_y =0;
     expect_eq(expected_info, info);
 }
 
@@ -154,8 +154,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_Rotate180)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 180;
-    expected_info.orientation.flip_x = false;
-    expected_info.orientation.flip_y = false;
+    expected_info.orientation.flip_x =0;
+    expected_info.orientation.flip_y =0;
     expect_eq(expected_info, info);
 }
 
@@ -168,8 +168,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorVertical)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 0;
-    expected_info.orientation.flip_x = false;
-    expected_info.orientation.flip_y = true;
+    expected_info.orientation.flip_x =0;
+    expected_info.orientation.flip_y= 1;
     expect_eq(expected_info, info);
 }
 
@@ -183,8 +183,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate270)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 360 - 270;
-    expected_info.orientation.flip_x = false;
-    expected_info.orientation.flip_y = true;
+    expected_info.orientation.flip_x =0;
+    expected_info.orientation.flip_y= 1;
     expect_eq(expected_info, info);
 }
 
@@ -197,8 +197,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_Rotate90)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 360 - 90;
-    expected_info.orientation.flip_x = false;
-    expected_info.orientation.flip_y = false;
+    expected_info.orientation.flip_x =0;
+    expected_info.orientation.flip_y =0;
     expect_eq(expected_info, info);
 }
 
@@ -212,8 +212,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate90)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 360 - 90;
-    expected_info.orientation.flip_x = false;
-    expected_info.orientation.flip_y = true;
+    expected_info.orientation.flip_x =0;
+    expected_info.orientation.flip_y= 1;
     expect_eq(expected_info, info);
 }
 
@@ -226,8 +226,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_Rotate270)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 360 - 270;
-    expected_info.orientation.flip_x = false;
-    expected_info.orientation.flip_y = false;
+    expected_info.orientation.flip_x =0;
+    expected_info.orientation.flip_y =0;
     expect_eq(expected_info, info);
 }
 
@@ -240,8 +240,8 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_NoOrientation)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 0;
-    expected_info.orientation.flip_x = false;
-    expected_info.orientation.flip_y = false;
+    expected_info.orientation.flip_x =0;
+    expected_info.orientation.flip_y =0;
     expect_eq(expected_info, info);
 }
 

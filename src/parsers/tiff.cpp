@@ -152,22 +152,22 @@ nvimgcdcsParserDesc_t* TIFFParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t TIFFParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "tiff_parser_can_parse");
         CHECK_NULL(result);
         CHECK_NULL(code_stream);
-        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-        size_t length;
-        io_stream->size(io_stream->instance, &length);
-        io_stream->seek(io_stream->instance, 0, SEEK_SET);
-        if (length < 4) {
-            *result = false;
-            return NVIMGCDCS_STATUS_SUCCESS;
-        }
-        tiff_magic_t header = ReadValue<tiff_magic_t>(io_stream);
-        *result = header == le_header || header == be_header;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+    size_t length;
+    io_stream->size(io_stream->instance, &length);
+    io_stream->seek(io_stream->instance, 0, SEEK_SET);
+    if (length < 4) {
+        *result = 0;
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+    tiff_magic_t header = ReadValue<tiff_magic_t>(io_stream);
+    *result = header == le_header || header == be_header;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
         return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
@@ -175,7 +175,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t TIFFParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t TIFFParserPlugin::static_can_parse(void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         CHECK_NULL(instance);
@@ -286,30 +286,30 @@ class TiffParserExtension
 
     static nvimgcdcsStatus_t tiff_parser_extension_create(
         void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-    {
-        try {
-            CHECK_NULL(framework)
+{
+    try {
+        CHECK_NULL(framework)
             NVIMGCDCS_LOG_TRACE(framework, "tiff_parser_ext", "tiff_parser_extension_create");
-            CHECK_NULL(extension)
-            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new TiffParserExtension(framework));
-        } catch (const std::runtime_error& e) {
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-        }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        CHECK_NULL(extension)
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new TiffParserExtension(framework));
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
 
     static nvimgcdcsStatus_t tiff_parser_extension_destroy(nvimgcdcsExtension_t extension)
-    {
-        try {
-            CHECK_NULL(extension)
-            auto ext_handle = reinterpret_cast<nvimgcdcs::TiffParserExtension*>(extension);
+{
+    try {
+        CHECK_NULL(extension)
+        auto ext_handle = reinterpret_cast<nvimgcdcs::TiffParserExtension*>(extension);
             NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "tiff_parser_ext", "tiff_parser_extension_destroy");
-            delete ext_handle;
-        } catch (const std::runtime_error& e) {
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-        }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        delete ext_handle;
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
 
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;

@@ -45,7 +45,7 @@ class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, options));
 
         jpeg_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
-        jpeg_enc_params_.optimized_huffman = false;
+        jpeg_enc_params_.optimized_huffman = 0;
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         params_.next = &jpeg_enc_params_;
         params_.quality = 95;

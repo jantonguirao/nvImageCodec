@@ -36,7 +36,7 @@ std::unique_ptr<IImageParser> ImageParserFactory::createParser() const
 bool ImageParserFactory::canParse(nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     assert(code_stream);
-    bool result = false;
+    int result = 0;
     parser_desc_->canParse(parser_desc_->instance, &result, code_stream);
     return result;
 }

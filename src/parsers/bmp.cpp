@@ -99,31 +99,31 @@ nvimgcdcsParserDesc_t* BMPParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t BMPParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "bmp_parser_can_parse");
         CHECK_NULL(result);
         CHECK_NULL(code_stream);
-        constexpr size_t min_bmp_stream_size = 18u;
-        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-        size_t length;
-        io_stream->size(io_stream->instance, &length);
-        if (length < min_bmp_stream_size) {
-            *result = false;
-            return NVIMGCDCS_STATUS_SUCCESS;
-        }
+    constexpr size_t min_bmp_stream_size = 18u;
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+    size_t length;
+    io_stream->size(io_stream->instance, &length);
+    if (length < min_bmp_stream_size) {
+        *result = 0;
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
 
-        std::array<uint8_t, 2> signature;
-        size_t output_size = 0;
-        io_stream->seek(io_stream->instance, 0, SEEK_SET);
-        io_stream->read(io_stream->instance, &output_size, signature.data(), signature.size());
-        if (output_size != signature.size()) {
-            *result = false;
-            return NVIMGCDCS_STATUS_SUCCESS;
-        }
+    std::array<uint8_t, 2> signature;
+    size_t output_size = 0;
+    io_stream->seek(io_stream->instance, 0, SEEK_SET);
+    io_stream->read(io_stream->instance, &output_size, signature.data(), signature.size());
+    if (output_size != signature.size()) {
+        *result = 0;
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
 
-        *result = signature[0] == 'B' && signature[1] == 'M';
+    *result = signature[0] == 'B' && signature[1] == 'M';
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
         return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
@@ -132,7 +132,7 @@ nvimgcdcsStatus_t BMPParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDes
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t BMPParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t BMPParserPlugin::static_can_parse(void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         CHECK_NULL(instance);
@@ -302,30 +302,30 @@ class BmpParserExtension
 
     static nvimgcdcsStatus_t bmp_parser_extension_create(
         void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-    {
-        try {
-            CHECK_NULL(framework)
+{
+    try {
+        CHECK_NULL(framework)
             NVIMGCDCS_LOG_TRACE(framework, "bmp_parser_ext", "bmp_parser_extension_create");
-            CHECK_NULL(extension)
-            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new BmpParserExtension(framework));
-        } catch (const std::runtime_error& e) {
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-        }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        CHECK_NULL(extension)
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new BmpParserExtension(framework));
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
 
     static nvimgcdcsStatus_t bmp_parser_extension_destroy(nvimgcdcsExtension_t extension)
-    {
-        try {
-            CHECK_NULL(extension)
-            auto ext_handle = reinterpret_cast<nvimgcdcs::BmpParserExtension*>(extension);
+{
+    try {
+        CHECK_NULL(extension)
+        auto ext_handle = reinterpret_cast<nvimgcdcs::BmpParserExtension*>(extension);
             NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "bmp_parser_ext", "bmp_parser_extension_destroy");
-            delete ext_handle;
-        } catch (const std::runtime_error& e) {
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-        }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        delete ext_handle;
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
 
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;

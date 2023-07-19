@@ -120,7 +120,7 @@ nvimgcdcsParserDesc_t* JPEGParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg_parser_can_parse");
@@ -137,7 +137,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDe
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t JPEGParserPlugin::static_can_parse(void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         CHECK_NULL(instance);

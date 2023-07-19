@@ -45,7 +45,7 @@ ImageGenericEncoder::~ImageGenericEncoder()
 }
 
 void ImageGenericEncoder::canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
-    const nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status, bool force_format)
+    const nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status, int force_format)
 {
     std::map<const ICodec*, std::vector<int>> codec2indices;
     for (size_t i = 0; i < code_streams.size(); i++) {
