@@ -25,7 +25,7 @@ set(PY_NVIMGCDCS_SRCS
     encoder.cpp
     decode_params.cpp
     encode_params.cpp
-    mct_mode.cpp
+    color_spec.cpp
     chroma_subsampling.cpp
     jpeg2k_prog_order.cpp
     jpeg2k_bitstream_type.cpp

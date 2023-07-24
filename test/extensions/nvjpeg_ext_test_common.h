@@ -148,7 +148,7 @@ class NvJpegTestBase
     };
 
     virtual void DecodeReference(const std::string& resources_dir, const std::string& file_name, nvimgcdcsSampleFormat_t output_format,
-        bool enable_color_convert, nvimgcdcsImageInfo_t* cs_image_info = nullptr)
+        bool allow_cmyk, nvimgcdcsImageInfo_t* cs_image_info = nullptr)
     {
         std::string file_path(resources_dir + '/' + file_name);
         auto nvimgcdcs_to_nvjpeg_format = [](nvimgcdcsSampleFormat_t nvimgcdcs_format) -> nvjpegOutputFormat_t {
@@ -202,7 +202,7 @@ class NvJpegTestBase
 
         ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetExifOrientation(nvjpeg_decode_params_, orientation_flag));
         ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetOutputFormat(nvjpeg_decode_params_, jpeg_output_format));
-        ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetAllowCMYK(nvjpeg_decode_params_, enable_color_convert));
+        ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegDecodeParamsSetAllowCMYK(nvjpeg_decode_params_, allow_cmyk));
 
         if (orientation_flag >= NVJPEG_ORIENTATION_TRANSPOSE) {
             std::swap(frame_width, frame_height);

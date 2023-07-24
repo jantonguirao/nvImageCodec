@@ -390,6 +390,7 @@ extern "C"
     typedef enum
     {
         NVIMGCDCS_COLORSPEC_UNKNOWN = 0,
+        NVIMGCDCS_COLORSPEC_UNCHANGED = NVIMGCDCS_COLORSPEC_UNKNOWN,
         NVIMGCDCS_COLORSPEC_SRGB = 1,
         NVIMGCDCS_COLORSPEC_GRAY = 2,
         NVIMGCDCS_COLORSPEC_SYCC = 3,
@@ -588,7 +589,6 @@ extern "C"
         NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 0x81, /**< Selected unsupported sample format. */
         NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED = 0x101,   /**< Unsupported number of planes to decode/encode. */
         NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED = 0x201, /**< Unsupported number of channels to decode/encode. */
-        NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED = 0x401,          /** Selected multi-color transform which is unsupported. */
 
         NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsProcessingStatus;
@@ -599,16 +599,6 @@ extern "C"
     typedef uint32_t nvimgcdcsProcessingStatus_t;
 
     /**
-     * @brief Multi-color transform mode
-    */
-    typedef enum
-    {
-        NVIMGCDCS_MCT_MODE_YCC = 0, /**< During encoding transform RGB color images to YUV */
-        NVIMGCDCS_MCT_MODE_RGB = 1, /**< Encode RGB color images without transform */
-        NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = INT32_MAX
-    } nvimgcdcsMctMode_t;
-
-    /**
      * @brief Decode parameters
      */
     typedef struct
@@ -617,16 +607,8 @@ extern "C"
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
         int apply_exif_orientation;        /**<  Apply exif orientation if available. Valid values 0 or 1. */
-        int enable_roi;                /**<  Enables region of interest. Valid values 0 or 1. */
+        int enable_roi;                    /**<  Enables region of interest. Valid values 0 or 1. */
 
-        /**
-         * @brief Enables color conversion
-         *  
-         * For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
-         * For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.
-         * Valid values 0 or 1.
-         */
-        int enable_color_conversion;
     } nvimgcdcsDecodeParams_t;
 
     /**
@@ -652,7 +634,6 @@ extern "C"
          * @warning It not supported by all codecs.
         */
         float target_psnr;
-        nvimgcdcsMctMode_t mct_mode; /**< Multi-color transform to apply during encoding. */
     } nvimgcdcsEncodeParams_t;
 
     /**

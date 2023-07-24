@@ -22,7 +22,7 @@
 #include "encoder.h"
 #include "decode_params.h"
 #include "encode_params.h"
-#include "mct_mode.h"
+#include "color_spec.h"
 #include "chroma_subsampling.h"
 #include "jpeg2k_bitstream_type.h"
 #include "jpeg2k_prog_order.h"
@@ -60,7 +60,7 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
     BackendKind::exportToPython(m);
     BackendParams::exportToPython(m);
     Backend::exportToPython(m);
-    MctMode::exportToPython(m);
+    ColorSpec::exportToPython(m);
     ChromaSubsampling::exportToPython(m);
     Jpeg2kBitstreamType::exportToPython(m);
     Jpeg2kProgOrder::exportToPython(m);

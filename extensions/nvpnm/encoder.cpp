@@ -185,9 +185,6 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStat
             if (*result != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
                 continue;
             }
-            if (params->mct_mode != NVIMGCDCS_MCT_MODE_RGB) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED;
-            }
 
             nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             (*image)->getImageInfo((*image)->instance, &image_info);
@@ -249,22 +246,22 @@ nvimgcdcsProcessingStatus_t NvPnmEncoderPlugin::Encoder::encode(const char* plug
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework, plugin_id, "pnm_encode");
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        image->getImageInfo(image->instance, &image_info);
-        unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    image->getImageInfo(image->instance, &image_info);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-        if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
-            write_pnm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
-                NULL, 0, NULL, 0, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
-                image_info.plane_info[0].num_channels, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
-        } else if (NVIMGCDCS_SAMPLEFORMAT_P_RGB == image_info.sample_format) {
-            write_pnm<unsigned char>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
-                host_buffer + image_info.plane_info[0].row_stride * image_info.plane_info[0].height, image_info.plane_info[1].row_stride,
-                host_buffer + +image_info.plane_info[0].row_stride * image_info.plane_info[0].height +
-                    image_info.plane_info[1].row_stride * image_info.plane_info[0].height,
-                image_info.plane_info[2].row_stride, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
-                image_info.num_planes, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
-        } else {
+    if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
+        write_pnm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
+            NULL, 0, NULL, 0, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
+            image_info.plane_info[0].num_channels, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
+    } else if (NVIMGCDCS_SAMPLEFORMAT_P_RGB == image_info.sample_format) {
+        write_pnm<unsigned char>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
+            host_buffer + image_info.plane_info[0].row_stride * image_info.plane_info[0].height, image_info.plane_info[1].row_stride,
+            host_buffer + +image_info.plane_info[0].row_stride * image_info.plane_info[0].height +
+                image_info.plane_info[1].row_stride * image_info.plane_info[0].height,
+            image_info.plane_info[2].row_stride, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
+            image_info.num_planes, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
+    } else {
             return NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED | NVIMGCDCS_PROCESSING_STATUS_FAIL;
         }
         return NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
@@ -295,7 +292,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::encodeBatch(
             encode_state_batch_->samples_[sample_idx].code_stream = code_streams[sample_idx];
             encode_state_batch_->samples_[sample_idx].image = images[sample_idx];
             encode_state_batch_->samples_[sample_idx].params = params;
-        }
+            }
 
         nvimgcdcsExecutorDesc_t* executor;
         framework_->getExecutor(framework_->instance, &executor);

@@ -28,12 +28,13 @@ class DecodeParams
     DecodeParams();    
     bool getEnableOrientation() {return decode_params_.apply_exif_orientation;}
     void setEnableOrientation(bool enable){decode_params_.apply_exif_orientation = enable;};
-    bool getEnableColorConversion() {return decode_params_.enable_color_conversion;}
-    void setEnableColorConversion(bool enable){decode_params_.enable_color_conversion = enable;};
+    nvimgcdcsColorSpec_t getColorSpec() {return color_spec_;}
+    void setColorSpec(nvimgcdcsColorSpec_t color_spec){color_spec_ = color_spec;};
 
     static void exportToPython(py::module& m);
 
     nvimgcdcsDecodeParams_t decode_params_;
+    nvimgcdcsColorSpec_t color_spec_;
 };
 
 } // namespace nvimgcdcs

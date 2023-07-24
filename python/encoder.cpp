@@ -100,6 +100,7 @@ void Encoder::encode(const std::vector<Image>& images, std::optional<EncodeParam
 
         nvimgcdcsImageInfo_t out_image_info(image_info);
         out_image_info.chroma_subsampling = params.chroma_subsampling_;
+        out_image_info.color_spec = params.color_spec_;
         out_image_info.next = (void*)(&params.jpeg_image_info_);
 
         create_code_stream(i, out_image_info, &code_streams[i]);

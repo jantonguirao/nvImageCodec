@@ -50,7 +50,6 @@ class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
         params_.next = &jpeg_enc_params_;
         params_.quality = 95;
         params_.target_psnr = 0;
-        params_.mct_mode = NVIMGCDCS_MCT_MODE_YCC;
         out_jpeg_image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     }
 

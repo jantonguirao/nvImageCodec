@@ -110,7 +110,6 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
     encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS;
     encode_params->quality = params.quality;
     encode_params->target_psnr = params.target_psnr;
-    encode_params->mct_mode = params.enc_color_trans ? NVIMGCDCS_MCT_MODE_YCC : NVIMGCDCS_MCT_MODE_RGB;
 
     //codec sepcific encode params
     if (params.output_codec == "jpeg2k") {
@@ -166,7 +165,6 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     // Prepare decode parameters
     nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
-    decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.apply_exif_orientation = !params.ignore_orientation;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
     // Preparing output image_info
@@ -250,6 +248,9 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     out_image_info.next = &out_jpeg_image_info;
     out_jpeg_image_info.next = image_info.next;
     strcpy(out_image_info.codec_name, params.output_codec.c_str());
+    if (params.enc_color_trans) {
+        out_image_info.color_spec = NVIMGCDCS_COLORSPEC_SYCC;
+    }
 
     nvimgcdcsCodeStream_t output_code_stream;
     nvimgcdcsCodeStreamCreateToFile(
@@ -468,6 +469,9 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
         out_image_info.next = reinterpret_cast<void*>(&jpeg_image_info);
         jpeg_image_info.next = image_info.next;
         strcpy(out_image_info.codec_name, params.output_codec.c_str());
+        if (params.enc_color_trans) {
+            out_image_info.color_spec = NVIMGCDCS_COLORSPEC_SYCC;
+        }
 
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(
             instance, &out_code_streams[i], output_filename.string().c_str(), &out_image_info));
@@ -507,7 +511,6 @@ int process_images(nvimgcdcsInstance_t instance, fs::path input_path, fs::path o
     std::vector<nvimgcdcsCodeStream_t> out_code_streams(params.batch_size);
     std::vector<nvimgcdcsImage_t> images(params.batch_size);
     nvimgcdcsDecodeParams_t decode_params{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
-    decode_params.enable_color_conversion = params.dec_color_trans;
     decode_params.apply_exif_orientation = !params.ignore_orientation;
 
     nvimgcdcsJpegImageInfo_t jpeg_image_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};

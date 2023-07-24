@@ -80,8 +80,8 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
 
         nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         (*image)->getImageInfo((*image)->instance, &image_info);
-        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY,
-            NVIMGCDCS_COLORSPEC_SYCC, NVIMGCDCS_COLORSPEC_CMYK, NVIMGCDCS_COLORSPEC_YCCK};
+        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{NVIMGCDCS_COLORSPEC_UNCHANGED, NVIMGCDCS_COLORSPEC_SRGB,
+            NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC, NVIMGCDCS_COLORSPEC_CMYK, NVIMGCDCS_COLORSPEC_YCCK};
         if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
             *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
         }
@@ -360,7 +360,10 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool 
                     nvjpeg_params_, &nvjpegDecodeParamsDestroy);
                 nvjpegOutputFormat_t nvjpeg_format = nvimgcdcs_to_nvjpeg_format(image_info.sample_format);
                 XM_CHECK_NVJPEG(nvjpegDecodeParamsSetOutputFormat(nvjpeg_params.get(), nvjpeg_format));
-                XM_CHECK_NVJPEG(nvjpegDecodeParamsSetAllowCMYK(nvjpeg_params.get(), params->enable_color_conversion));
+                int allow_cmyk = (image_info.color_spec != NVIMGCDCS_COLORSPEC_UNCHANGED) &&
+                                 (image_info.color_spec != NVIMGCDCS_COLORSPEC_CMYK) &&
+                                 ((image_info.color_spec != NVIMGCDCS_COLORSPEC_YCCK));
+                XM_CHECK_NVJPEG(nvjpegDecodeParamsSetAllowCMYK(nvjpeg_params.get(), allow_cmyk));
 
                 if (params->apply_exif_orientation) {
                     nvjpegExifOrientation_t orientation = nvimgcdcs_to_nvjpeg_orientation(image_info.orientation);

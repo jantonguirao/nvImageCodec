@@ -158,14 +158,13 @@ std::vector<Image> Decoder::decode(std::vector<nvimgcdcsCodeStream_t>& code_stre
 
         //Decode to format
         bool decode_to_interleaved = true;
-        if (params.decode_params_.enable_color_conversion) {
+        if (params.color_spec_ == NVIMGCDCS_COLORSPEC_SRGB) {
             image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
             image_info.plane_info[0].num_channels = decode_to_interleaved ? 3 /*I_RGB*/ : 1 /*P_RGB*/;
             image_info.num_planes = decode_to_interleaved ? 1 : image_info.num_planes;
-        }
-
-        image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+            image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+        } 
 
         bool swap_wh = params.decode_params_.apply_exif_orientation && ((image_info.orientation.rotated / 90) % 2);
         if (swap_wh) {

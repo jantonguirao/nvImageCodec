@@ -8,16 +8,17 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
-#include "mct_mode.h"
+#include "color_spec.h"
 
 namespace nvimgcdcs {
 
-void MctMode::exportToPython(py::module& m)
+void ColorSpec::exportToPython(py::module& m)
 {
     // clang-format off
-    py::enum_<nvimgcdcsMctMode_t>(m, "MctMode")
-        .value("YCC", NVIMGCDCS_MCT_MODE_YCC)
-        .value("RGB", NVIMGCDCS_MCT_MODE_RGB )
+    py::enum_<nvimgcdcsColorSpec_t>(m, "ColorSpec")
+        .value("UNCHANGED", NVIMGCDCS_COLORSPEC_UNCHANGED)
+        .value("YCC", NVIMGCDCS_COLORSPEC_SYCC)
+        .value("RGB", NVIMGCDCS_COLORSPEC_SRGB)
         .export_values();
     // clang-format on
 }

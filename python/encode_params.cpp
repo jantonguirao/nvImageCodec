@@ -20,9 +20,10 @@ EncodeParams::EncodeParams()
     : jpeg2k_encode_params_{NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0, NVIMGCDCS_JPEG2K_STREAM_JP2, NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL,
           5, 64, 64, true}
     , jpeg_encode_params_{NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, &jpeg2k_encode_params_, false}
-    , encode_params_{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg_encode_params_, 95, 50, NVIMGCDCS_MCT_MODE_RGB}
+    , encode_params_{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg_encode_params_, 95, 50}
     , jpeg_image_info_{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0, NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT}
     , chroma_subsampling_{NVIMGCDCS_SAMPLING_444}
+    , color_spec_{NVIMGCDCS_COLORSPEC_UNCHANGED}
 {
     jpeg_encode_params_.next = &jpeg2k_encode_params_;
     encode_params_.next = &jpeg_encode_params_;
@@ -33,14 +34,14 @@ void EncodeParams::exportToPython(py::module& m)
 {
     py::class_<EncodeParams>(m, "EncodeParams")
         .def(py::init([]() { return EncodeParams{}; }), "Default constructor")
-        .def(py::init([](float quality, float target_psnr, nvimgcdcsMctMode_t mct_mode, nvimgcdcsChromaSubsampling_t chroma_subsampling,
+        .def(py::init([](float quality, float target_psnr, nvimgcdcsColorSpec_t color_spec, nvimgcdcsChromaSubsampling_t chroma_subsampling,
                           bool jpeg_progressive, bool jpeg_optimized_huffman, bool jpeg2k_reversible,
                           std::tuple<int, int> jpeg2k_code_block_size, int jpeg2k_num_resolutions,
                           nvimgcdcsJpeg2kBitstreamType_t jpeg2k_bitstream_type, nvimgcdcsJpeg2kProgOrder_t jpeg2k_prog_order) {
             EncodeParams p;
             p.encode_params_.quality = quality;
             p.encode_params_.target_psnr = target_psnr;
-            p.encode_params_.mct_mode = mct_mode;
+            p.color_spec_ = color_spec;
             p.chroma_subsampling_ = chroma_subsampling;
             p.jpeg_encode_params_.optimized_huffman = jpeg_optimized_huffman;
             p.jpeg_image_info_.encoding =
@@ -57,7 +58,7 @@ void EncodeParams::exportToPython(py::module& m)
             // clang-format off
             "quality"_a = 95, 
             "target_psnr"_a = 50, 
-            "mct_mode"_a = NVIMGCDCS_MCT_MODE_RGB, 
+            "color_spec"_a = NVIMGCDCS_COLORSPEC_UNCHANGED, 
             "chroma_subsampling"_a = NVIMGCDCS_SAMPLING_444,
             "jpeg_progressive"_a = false,
             "jpeg_optimized_huffman"_a = false,
@@ -66,12 +67,12 @@ void EncodeParams::exportToPython(py::module& m)
             "jpeg2k_num_resolutions"_a = 5,
             "jpeg2k_bitstream_type"_a = NVIMGCDCS_JPEG2K_STREAM_JP2, 
             "jpeg2k_prog_order"_a = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL,
-            "Constructor with quality, target_psnr, mct_mode, chroma_subsampling etc. parameters")
+            "Constructor with quality, target_psnr, color_spec, chroma_subsampling etc. parameters")
         // clang-format on
         .def_property("quality", &EncodeParams::getQuality, &EncodeParams::setQuality, "Quality value 0-100 (default 95)")
         .def_property("target_psnr", &EncodeParams::getTargetPsnr, &EncodeParams::setTargetPsnr, "Target psnr (default 50)")
         .def_property(
-            "mct_mode", &EncodeParams::getMctMode, &EncodeParams::setMctMode, "Multi-Color Transform mode value (default MctMode.RGB)")
+            "color_spec", &EncodeParams::getColorSpec, &EncodeParams::setColorSpec, "Output color specification (default ColorSpec.UNCHANGED)")
         .def_property("chroma_subsampling", &EncodeParams::getChromaSubsampling, &EncodeParams::setChromaSubsampling,
             "Chroma subsampling (default ChromaSubsampling.CSS_444)")
         .def_property("jpeg_progressive", &EncodeParams::getJpegProgressive, &EncodeParams::setJpegProgressive,

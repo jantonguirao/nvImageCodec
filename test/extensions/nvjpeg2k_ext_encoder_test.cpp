@@ -50,7 +50,6 @@ class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg2k_enc_params_, 0};
         params_.quality = 0;
         params_.target_psnr = 30;
-        params_.mct_mode = NVIMGCDCS_MCT_MODE_YCC;
     }
 
     void TearDown() override
@@ -98,7 +97,7 @@ class NvJpeg2kExtEncoderTestSingleImage : public NvJpeg2kExtEncoderTestBase,
 TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
 {
     nvimgcdcsImageInfo_t ref_cs_image_info;
-    bool enable_color_conversion = !(sample_format_ == NVIMGCDCS_SAMPLEFORMAT_P_YUV || sample_format_ == NVIMGCDCS_SAMPLEFORMAT_P_Y);
+    bool enable_color_conversion = color_spec_ == NVIMGCDCS_COLORSPEC_SRGB;
     DecodeReference(resources_dir, image_file_, sample_format_, enable_color_conversion, &ref_cs_image_info);
     image_info_.plane_info[0] = ref_cs_image_info.plane_info[0];
     PrepareImageForFormat();

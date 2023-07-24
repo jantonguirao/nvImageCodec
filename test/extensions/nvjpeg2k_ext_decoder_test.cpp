@@ -45,7 +45,6 @@ class NvJpeg2kExtDecoderTestBase : public NvJpeg2kExtTestBase
         NvJpeg2kExtTestBase::SetUp();
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
-        params_.enable_color_conversion= 1;
     }
 
     void TearDown()
@@ -63,7 +62,7 @@ class NvJpeg2kExtDecoderTestBase : public NvJpeg2kExtTestBase
 class NvJpeg2kExtDecoderTestSingleImage : public NvJpeg2kExtDecoderTestBase,
                                           public NvJpeg2kTestBase,
                                           public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
-                                              nvimgcdcsChromaSubsampling_t, nvimgcdcsSampleFormat_t, bool>>
+                                              nvimgcdcsChromaSubsampling_t, nvimgcdcsSampleFormat_t>>
 {
   public:
     virtual ~NvJpeg2kExtDecoderTestSingleImage() = default;
@@ -78,7 +77,6 @@ class NvJpeg2kExtDecoderTestSingleImage : public NvJpeg2kExtDecoderTestBase,
         reference_output_format_ = std::get<4>(GetParam());
         NvJpeg2kExtDecoderTestBase::SetUp();
         NvJpeg2kTestBase::SetUp();
-        params_.enable_color_conversion = std::get<5>(GetParam());
     }
 
     void TearDown() override
@@ -105,7 +103,7 @@ TEST_P(NvJpeg2kExtDecoderTestSingleImage, ValidFormatAndParameters)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, status);
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
-    DecodeReference(resources_dir, image_file_, reference_output_format_, params_.enable_color_conversion);
+    DecodeReference(resources_dir, image_file_, reference_output_format_, image_info_.color_spec == NVIMGCDCS_COLORSPEC_SRGB);
     ConvertToPlanar();
     if (NV_DEVELOPER_DUMP_OUTPUT_IMAGE_TO_BMP) {
         write_bmp("./out.bmp", image_buffer_.data(), image_info_.plane_info[0].width,
@@ -138,8 +136,7 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG2K_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_F
         //Various output chroma subsampling are ignored for SRGB 
          Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
                 NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
-        Values(true)));
+        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG2K_DECODE_VARIOUS_CHROMA_WITH_VALID_SYCC_OUTPUT_FORMATS, NvJpeg2kExtDecoderTestSingleImage,
      Combine(::testing::ValuesIn(css_filenames),
@@ -147,15 +144,12 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG2K_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_F
          Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
          //Chroma subsampling should be the same as file chroma (there is not chroma convert) but nvjpeg2k accepts only 444, 422, 420 
          Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420), 
-         Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-         Values(true)));
-
-
+         Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV)));
 
 class NvJpeg2kExtDecoderTestSingleImageWithStatus
     : public NvJpeg2kExtDecoderTestBase,
       public TestWithParam<
-          std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t, nvimgcdcsChromaSubsampling_t, bool, nvimgcdcsProcessingStatus_t >>
+          std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t, nvimgcdcsChromaSubsampling_t, nvimgcdcsProcessingStatus_t >>
 {
   public:
     virtual ~NvJpeg2kExtDecoderTestSingleImageWithStatus() = default;
@@ -168,8 +162,7 @@ class NvJpeg2kExtDecoderTestSingleImageWithStatus
         sample_format_ = std::get<2>(GetParam());
         chroma_subsampling_ = std::get<3>(GetParam());
         NvJpeg2kExtDecoderTestBase::SetUp();
-        params_.enable_color_conversion = std::get<4>(GetParam());
-        expected_status_ =  std::get<5>(GetParam());
+        expected_status_ =  std::get<4>(GetParam());
     }
 
     virtual void TearDown()
@@ -204,7 +197,6 @@ TEST_P(NvJpeg2kExtDecoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
          Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
          Values(NVIMGCDCS_SAMPLING_440, 
                 NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
-         Values(true),
          Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG2K_DECODE_INVALID_OUTPUT_FORMAT, NvJpeg2kExtDecoderTestSingleImageWithStatus,
@@ -212,7 +204,6 @@ TEST_P(NvJpeg2kExtDecoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
          Values(NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_SYCC),
          Values(NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
          Values(NVIMGCDCS_SAMPLING_444), 
-         Values(true),
          Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG2K_DECODE_INVALID_COLORSPEC, NvJpeg2kExtDecoderTestSingleImageWithStatus,
@@ -220,7 +211,6 @@ TEST_P(NvJpeg2kExtDecoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
          Values(NVIMGCDCS_COLORSPEC_CMYK, NVIMGCDCS_COLORSPEC_YCCK),
          Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
          Values(NVIMGCDCS_SAMPLING_444), 
-         Values(true),
          Values(NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED)));
 
 

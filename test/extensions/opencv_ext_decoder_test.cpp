@@ -95,7 +95,6 @@ class OpenCVExtDecoderTest : public ::testing::Test, public CommonExtDecoderTest
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         params_.apply_exif_orientation= 1;
-        params_.enable_color_conversion= 1;
     }
 
     void TearDown() override

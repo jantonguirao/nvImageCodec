@@ -54,8 +54,8 @@ class EncodeParams
     float getTargetPsnr() { return encode_params_.target_psnr; }
     void setTargetPsnr(float target_psnr) { encode_params_.target_psnr = target_psnr; };
 
-    nvimgcdcsMctMode_t getMctMode() { return encode_params_.mct_mode; }
-    void setMctMode(nvimgcdcsMctMode_t mct_mode) { encode_params_.mct_mode = mct_mode; };
+    nvimgcdcsColorSpec_t getColorSpec() { return color_spec_; }
+    void setColorSpec(nvimgcdcsColorSpec_t color_spec) { color_spec_ = color_spec; };
 
     nvimgcdcsChromaSubsampling_t getChromaSubsampling() { return chroma_subsampling_; }
     void setChromaSubsampling(nvimgcdcsChromaSubsampling_t chroma_subsampling) { chroma_subsampling_ = chroma_subsampling; }
@@ -99,6 +99,7 @@ class EncodeParams
     nvimgcdcsEncodeParams_t encode_params_;
     nvimgcdcsJpegImageInfo_t jpeg_image_info_;
     nvimgcdcsChromaSubsampling_t chroma_subsampling_;
+    nvimgcdcsColorSpec_t color_spec_;
 };
 
 } // namespace nvimgcdcs
