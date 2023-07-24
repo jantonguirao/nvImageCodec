@@ -21,6 +21,8 @@
 #include "decoder.h"
 #include "encoder.h"
 #include "decode_params.h"
+#include "jpeg_encode_params.h"
+#include "jpeg2k_encode_params.h"
 #include "encode_params.h"
 #include "color_spec.h"
 #include "chroma_subsampling.h"
@@ -65,6 +67,8 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
     Jpeg2kBitstreamType::exportToPython(m);
     Jpeg2kProgOrder::exportToPython(m);
     DecodeParams::exportToPython(m);
+    JpegEncodeParams::exportToPython(m);
+    Jpeg2kEncodeParams::exportToPython(m);
     EncodeParams::exportToPython(m);
     Image::exportToPython(m);
     Decoder::exportToPython(m, module.instance_);

@@ -92,6 +92,11 @@ void Encoder::encode(const std::vector<Image>& images, std::optional<EncodeParam
     std::vector<nvimgcdcsCodeStream_t> code_streams(images.size());
     std::vector<nvimgcdcsImage_t> int_images(images.size());
     EncodeParams params = params_opt.has_value() ? params_opt.value() : EncodeParams();
+
+    params.jpeg2k_encode_params_.nvimgcdcs_jpeg2k_encode_params_.next = nullptr;
+    params.jpeg_encode_params_.nvimgcdcs_jpeg_encode_params_.next = &params.jpeg2k_encode_params_.nvimgcdcs_jpeg2k_encode_params_;
+    params.encode_params_.next = &params.jpeg_encode_params_.nvimgcdcs_jpeg_encode_params_;
+
     for (size_t i = 0; i < images.size(); i++) {
         int_images[i] = images[i].getNvImgCdcsImage();
 
@@ -101,7 +106,7 @@ void Encoder::encode(const std::vector<Image>& images, std::optional<EncodeParam
         nvimgcdcsImageInfo_t out_image_info(image_info);
         out_image_info.chroma_subsampling = params.chroma_subsampling_;
         out_image_info.color_spec = params.color_spec_;
-        out_image_info.next = (void*)(&params.jpeg_image_info_);
+        out_image_info.next = (void*)(&params.jpeg_encode_params_.nvimgcdcs_jpeg_image_info_);
 
         create_code_stream(i, out_image_info, &code_streams[i]);
     }

@@ -24,6 +24,8 @@ set(PY_NVIMGCDCS_SRCS
     decoder.cpp
     encoder.cpp
     decode_params.cpp
+    jpeg_encode_params.cpp
+    jpeg2k_encode_params.cpp
     encode_params.cpp
     color_spec.cpp
     chroma_subsampling.cpp

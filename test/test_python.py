@@ -255,24 +255,25 @@ def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stre
     cp_ref_img = cp.asarray(ref_img)
 
     nv_ref_img = nvimgcodecs.as_image(cp_ref_img)
-
+    encode_params = nvimgcodecs.EncodeParams(jpeg2k_encode_params=nvimgcodecs.Jpeg2kEncodeParams(reversible=True))
+    
     if encode_to_data:
         if cuda_stream:
             test_encoded_img = encoder.encode(
-                nv_ref_img, codec="jpeg2k", params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True), cuda_stream=cuda_stream.ptr)
+                nv_ref_img, codec="jpeg2k", params = encode_params, cuda_stream=cuda_stream.ptr)
         else:
             test_encoded_img = encoder.encode(
-                nv_ref_img, codec="jpeg2k", params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True))
+                nv_ref_img, codec="jpeg2k", params = encode_params)
     else:
         base = os.path.basename(input_img_file)
         pre, ext = os.path.splitext(base)
         output_img_path = os.path.join(tmp_path, pre + ".jp2")
         if cuda_stream:
             encoder.write(output_img_path, nv_ref_img,
-                           params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True), cuda_stream=cuda_stream.ptr)
+                          params=encode_params, cuda_stream=cuda_stream.ptr)
         else:
             encoder.write(output_img_path, nv_ref_img,
-                           params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True))
+                          params=encode_params)
         with open(output_img_path, 'rb') as in_file:
             test_encoded_img = in_file.read()
 
@@ -331,22 +332,24 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
     cp_ref_images = [cp.asarray(ref_img) for ref_img in ref_images]
     nv_ref_images = [nvimgcodecs.as_image(cp_ref_img) for cp_ref_img in cp_ref_images]
 
+    encode_params = nvimgcodecs.EncodeParams(jpeg2k_encode_params=nvimgcodecs.Jpeg2kEncodeParams(reversible=True))
+
     if encode_to_data:
         if cuda_stream:
             test_encoded_images = encoder.encode(
-                nv_ref_images, codec="jpeg2k", params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True), cuda_stream=cuda_stream.ptr)
+                nv_ref_images, codec="jpeg2k", params=encode_params, cuda_stream=cuda_stream.ptr)
         else:
             test_encoded_images = encoder.encode(
-                nv_ref_images, codec="jpeg2k", params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True))
+                nv_ref_images, codec="jpeg2k", params=encode_params)
     else:
         output_img_paths = [os.path.join(tmp_path, os.path.splitext(
             os.path.basename(img))[0] + ".jp2") for img in input_images]
         if cuda_stream:
             encoder.write(output_img_paths, nv_ref_images,
-                           params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True), cuda_stream=cuda_stream.ptr)
+                          params=encode_params, cuda_stream=cuda_stream.ptr)
         else:
             encoder.write(output_img_paths, nv_ref_images,
-                           params=nvimgcodecs.EncodeParams(jpeg2k_reversible=True))
+                          params=encode_params)
         test_encoded_images = []
         for out_img_path in output_img_paths:
             with open(out_img_path, 'rb') as in_file:

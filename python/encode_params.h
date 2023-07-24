@@ -17,6 +17,10 @@
 #include <nvimgcodecs.h>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
+#include "jpeg2k_encode_params.h"
+#include "jpeg_encode_params.h"
 
 namespace nvimgcdcs {
 
@@ -27,26 +31,6 @@ class EncodeParams
 {
   public:
     EncodeParams();
-    EncodeParams(const EncodeParams& that) { operator=(that); }
-
-    EncodeParams& operator=(const EncodeParams& that)
-    {
-        if (this == &that) {
-            return *this;
-        }
-
-        jpeg2k_encode_params_ = that.jpeg2k_encode_params_;
-        jpeg_encode_params_ = that.jpeg_encode_params_;
-        encode_params_ = that.encode_params_;
-        jpeg_image_info_ = that.jpeg_image_info_;
-        chroma_subsampling_ = that.chroma_subsampling_;
-
-        jpeg2k_encode_params_.next = nullptr;
-        jpeg_encode_params_.next = &jpeg2k_encode_params_;
-        encode_params_.next = &jpeg_encode_params_;
-        jpeg_image_info_.next = nullptr;
-        return *this;
-    }
 
     float getQuality() { return encode_params_.quality; }
     void setQuality(float quality) { encode_params_.quality = quality; };
@@ -60,44 +44,16 @@ class EncodeParams
     nvimgcdcsChromaSubsampling_t getChromaSubsampling() { return chroma_subsampling_; }
     void setChromaSubsampling(nvimgcdcsChromaSubsampling_t chroma_subsampling) { chroma_subsampling_ = chroma_subsampling; }
 
-    bool getJpegProgressive(){
-        return jpeg_image_info_.encoding == NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;}
-    void setJpegProgressive(bool progressive) {
-        jpeg_image_info_.encoding =
-            progressive ? NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN : NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT; }
+    Jpeg2kEncodeParams& getJpeg2kEncodeParams() { return jpeg2k_encode_params_; }
+    void setJpeg2kEncodeParams(Jpeg2kEncodeParams jpeg2k_encode_params) { jpeg2k_encode_params_ = jpeg2k_encode_params; }
 
-    bool getJpegOptimizedHuffman(){
-        return jpeg_encode_params_.optimized_huffman;}
-    void setJpegOptimizedHuffman(bool optimized_huffman) {
-       jpeg_encode_params_.optimized_huffman = optimized_huffman; }
-
-    bool getJpeg2kReversible(){
-        return !jpeg2k_encode_params_.irreversible;}
-    void setJpeg2kReversible(bool reversible) {
-        jpeg2k_encode_params_.irreversible = !reversible; }
-
-    std::tuple<int, int> getJpeg2kCodeBlockSize(){
-        return std::make_tuple<int, int>(jpeg2k_encode_params_.code_block_w, jpeg2k_encode_params_.code_block_h);
-    }
-    void setJpeg2kCodeBlockSize(std::tuple<int, int> size) {
-        jpeg2k_encode_params_.code_block_w = std::get<0>(size);
-        jpeg2k_encode_params_.code_block_h = std::get<1>(size);
-    }
-    int getJpeg2kNumResoulutions() { return jpeg2k_encode_params_.num_resolutions; }
-    void setJpeg2kNumResoulutions(int num_resolutions) { jpeg2k_encode_params_.num_resolutions = num_resolutions; };
-
-    nvimgcdcsJpeg2kBitstreamType_t getJpeg2kBitstreamType() { return jpeg2k_encode_params_.stream_type; }
-    void setJpeg2kBitstreamType(nvimgcdcsJpeg2kBitstreamType_t bistream_type) { jpeg2k_encode_params_.stream_type = bistream_type; };
-
-    nvimgcdcsJpeg2kProgOrder_t getJpeg2kProgOrder() { return jpeg2k_encode_params_.prog_order; }
-    void setJpeg2kProgOrder(nvimgcdcsJpeg2kProgOrder_t prog_order) { jpeg2k_encode_params_.prog_order = prog_order; };
-
+    JpegEncodeParams& getJpegEncodeParams() { return jpeg_encode_params_; }
+    void setJpegEncodeParams(JpegEncodeParams jpeg_encode_params) { jpeg_encode_params_ = jpeg_encode_params; }
     static void exportToPython(py::module& m);
 
-    nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params_;
-    nvimgcdcsJpegEncodeParams_t jpeg_encode_params_;
+    Jpeg2kEncodeParams jpeg2k_encode_params_;
+    JpegEncodeParams jpeg_encode_params_;
     nvimgcdcsEncodeParams_t encode_params_;
-    nvimgcdcsJpegImageInfo_t jpeg_image_info_;
     nvimgcdcsChromaSubsampling_t chroma_subsampling_;
     nvimgcdcsColorSpec_t color_spec_;
 };
