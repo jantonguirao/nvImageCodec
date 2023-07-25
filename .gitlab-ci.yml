@@ -60,6 +60,15 @@ build:nvimagecodec-cuda12:
         - python3 -m pip install artifacts/nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-*.whl
         - pytest-3 -v test/test_python.py
 
+.test:nvimagecodec-transcode:
+    extends: .test
+    script:
+        - nvidia-smi
+        - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
+        - dpkg -i artifacts/nvimgcodecs-*-cuda${CUDA_VERSION_MAJOR}*lib.deb
+        - dpkg -i artifacts/nvimgcodecs-*-cuda${CUDA_VERSION_MAJOR}*tests.deb
+        - pytest-3 -v /opt/nvidia/nvimgcodecs/test/test_transcode.py
+
 test:nvimagecodec-cuda11:
     extends: .test:nvimagecodec
     image: nvidia/cuda:11.8.0-runtime-ubuntu20.04
@@ -80,6 +89,18 @@ test:nvimagecodec-python-cuda11:
 
 test:nvimagecodec-python-cuda12:
     extends: .test:nvimagecodec-python
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v1
+    dependencies:
+        - build:nvimagecodec-cuda12
+
+test:nvimagecodec-transcode-cuda11:
+    extends: .test:nvimagecodec-transcode
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.8.0-v1
+    dependencies:
+        - build:nvimagecodec-cuda11
+
+test:nvimagecodec-transcode-cuda12:
+    extends: .test:nvimagecodec-transcode
     image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v1
     dependencies:
         - build:nvimagecodec-cuda12
