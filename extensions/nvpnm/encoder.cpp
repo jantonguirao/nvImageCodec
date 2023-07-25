@@ -16,7 +16,10 @@ static int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t 
     size_t pitchB, const D* chanA, size_t pitchA, int width, int height, int num_components, uint8_t precision)
 {
     size_t written_size;
-    int red, green, blue, alpha;
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+    int alpha = 0;
     std::stringstream ss{};
     if (num_components == 4) {
         ss << "P7\n";
