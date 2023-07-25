@@ -146,19 +146,16 @@ std::vector<py::bytes> Encoder::encode(
 
     struct PyObjectWrap
     {
-        unsigned char* getBuffer(size_t bytes, size_t used)
+        unsigned char* getBuffer(size_t bytes)
         {
-            if (bytes != used) {
-                assert(!"TODO");
-            }
             ptr_ = PyBytes_FromStringAndSize(nullptr, bytes);
             return (unsigned char*)PyBytes_AsString(ptr_);
         }
 
-        static unsigned char* get_buffer_static(void* ctx, size_t bytes, size_t used)
+        static unsigned char* resize_buffer_static(void* ctx, size_t bytes)
         {
             auto handle = reinterpret_cast<PyObjectWrap*>(ctx);
-            return handle->getBuffer(bytes, used);
+            return handle->getBuffer(bytes);
         }
 
         PyObject* ptr_;
@@ -169,7 +166,7 @@ std::vector<py::bytes> Encoder::encode(
     auto create_code_stream = [&](size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
         strcpy(out_image_info.codec_name, codec_name.c_str());
         CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToHostMem(
-            instance_, code_stream, (void*)&py_objects[i], &PyObjectWrap::get_buffer_static, &out_image_info));
+            instance_, code_stream, (void*)&py_objects[i], &PyObjectWrap::resize_buffer_static, &out_image_info));
     };
 
     data_list.reserve(images.size());

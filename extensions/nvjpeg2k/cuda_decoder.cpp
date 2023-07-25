@@ -297,9 +297,10 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                 nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 size_t encoded_stream_data_size = 0;
                 io_stream->size(io_stream->instance, &encoded_stream_data_size);
-                const void* encoded_stream_data = nullptr;
-                io_stream->raw_data(io_stream->instance, &encoded_stream_data);
-                if (!encoded_stream_data) {
+                void* encoded_stream_data = nullptr;
+                void* mapped_encoded_stream_data = nullptr;
+                io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
+                if (!mapped_encoded_stream_data) {
                     if (parse_state->buffer_.size() != encoded_stream_data_size) {
                         parse_state->buffer_.resize(encoded_stream_data_size);
                         io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -310,6 +311,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
                             return;
                         }
+                    } else {
+                        encoded_stream_data = mapped_encoded_stream_data;
                     }
                     encoded_stream_data = &parse_state->buffer_[0];
                 }
@@ -319,6 +322,9 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                 XM_CHECK_NVJPEG2K(nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data),
                     encoded_stream_data_size, false, false, parse_state->nvjpeg2k_stream_));
             }
+                if (mapped_encoded_stream_data) {
+                    io_stream->unmap(io_stream->instance, &mapped_encoded_stream_data, encoded_stream_data_size);
+                }
 
                 nvjpeg2kImageInfo_t jpeg2k_info;
                 XM_CHECK_NVJPEG2K(nvjpeg2kStreamGetImageInfo(parse_state->nvjpeg2k_stream_, &jpeg2k_info));
@@ -498,23 +504,23 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
             }
 
                 if (gray || interleaved) {
-                    // TODO(janton): This is a workaround to transpose to interleaved layout. Ideally nvjpeg2k should be able to output interleaved
-                    // layout directly. To be removed when this is the case.
-                    #define NPP_CONVERT_PLANAR_TO_INTERLEAVED(NPP_FUNC, DTYPE, NUM_COMPONENTS) \
-                        DTYPE* interleaved_buffer = reinterpret_cast<DTYPE*>(device_buffer); \
-                        if (gray) { \
-    interleaved_buffer = reinterpret_cast<DTYPE*>(reinterpret_cast<uint8_t*>(decode_tmp_buffer) + NUM_COMPONENTS * component_nbytes); \
-                        } \
-                        const DTYPE* decoded_planes[NUM_COMPONENTS]; \
-                        for (uint32_t p = 0; p < NUM_COMPONENTS; ++p) { \
-                            decoded_planes[p] = reinterpret_cast<const DTYPE*>(decode_tmp_buffer) + p * component_nbytes / sizeof(DTYPE); \
-                        } \
-                        NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)}; \
-                        auto status = NPP_FUNC(decoded_planes, row_nbytes, interleaved_buffer, row_nbytes * NUM_COMPONENTS, dims, t.npp_ctx_); \
-                        if (NPP_SUCCESS != status) { \
-    FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED,                                                                                      \
-        "Failed to transpose the image from planar to interleaved layout " + std::to_string(status));                                 \
-                        }
+// TODO(janton): This is a workaround to transpose to interleaved layout. Ideally nvjpeg2k should be able to output interleaved
+// layout directly. To be removed when this is the case.
+#define NPP_CONVERT_PLANAR_TO_INTERLEAVED(NPP_FUNC, DTYPE, NUM_COMPONENTS)                                                                \
+    DTYPE* interleaved_buffer = reinterpret_cast<DTYPE*>(device_buffer);                                                                  \
+    if (gray) {                                                                                                                           \
+        interleaved_buffer = reinterpret_cast<DTYPE*>(reinterpret_cast<uint8_t*>(decode_tmp_buffer) + NUM_COMPONENTS * component_nbytes); \
+    }                                                                                                                                     \
+    const DTYPE* decoded_planes[NUM_COMPONENTS];                                                                                          \
+    for (uint32_t p = 0; p < NUM_COMPONENTS; ++p) {                                                                                       \
+        decoded_planes[p] = reinterpret_cast<const DTYPE*>(decode_tmp_buffer) + p * component_nbytes / sizeof(DTYPE);                     \
+    }                                                                                                                                     \
+    NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)};                \
+    auto status = NPP_FUNC(decoded_planes, row_nbytes, interleaved_buffer, row_nbytes * NUM_COMPONENTS, dims, t.npp_ctx_);                \
+    if (NPP_SUCCESS != status) {                                                                                                          \
+        FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED,                                                                                      \
+            "Failed to transpose the image from planar to interleaved layout " + std::to_string(status));                                 \
+    }
 
                     bool is_rgb = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB ||
                                   (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED && num_components == 3);
@@ -541,20 +547,20 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                     nvtx3::scoped_range marker{"nppiCopy_16s_P4C4R_Ctx"};
                         NPP_CONVERT_PLANAR_TO_INTERLEAVED(nppiCopy_16s_P4C4R_Ctx, int16_t, 4);
                     } else {
-                    FatalError(NVJPEG2K_STATUS_IMPLEMENTATION_NOT_SUPPORTED,
-                        "Transposition not implemented for this combination of sample format and data type");
+                        FatalError(NVJPEG2K_STATUS_IMPLEMENTATION_NOT_SUPPORTED,
+                            "Transposition not implemented for this combination of sample format and data type");
                     }
 
-                    #undef NPP_CONVERT_PLANAR_TO_INTERLEAVED
+#undef NPP_CONVERT_PLANAR_TO_INTERLEAVED
 
                     if (gray) {
-                        #define NPP_CONVERT_RGB_TO_Y(NPP_FUNC, DTYPE) \
-DTYPE* interleaved_buffer = reinterpret_cast<DTYPE*>(reinterpret_cast<uint8_t*>(decode_tmp_buffer) + 3 * component_nbytes);        \
-                            NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)}; \
-                            auto status = NPP_FUNC(interleaved_buffer, row_nbytes * 3, reinterpret_cast<DTYPE*>(device_buffer), row_nbytes, dims, t.npp_ctx_); \
-                            if (NPP_SUCCESS != status) { \
-                                throw std::runtime_error("Failed to convert from RGB to Grayscale: " + std::to_string(status)); \
-                            }
+#define NPP_CONVERT_RGB_TO_Y(NPP_FUNC, DTYPE)                                                                                          \
+    DTYPE* interleaved_buffer = reinterpret_cast<DTYPE*>(reinterpret_cast<uint8_t*>(decode_tmp_buffer) + 3 * component_nbytes);        \
+    NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)};             \
+    auto status = NPP_FUNC(interleaved_buffer, row_nbytes * 3, reinterpret_cast<DTYPE*>(device_buffer), row_nbytes, dims, t.npp_ctx_); \
+    if (NPP_SUCCESS != status) {                                                                                                       \
+        throw std::runtime_error("Failed to convert from RGB to Grayscale: " + std::to_string(status));                                \
+    }
 
                         if (is_u8) {
                         nvtx3::scoped_range marker{"nppiRGBToGray_8u_C3C1R_Ctx"};
@@ -569,7 +575,7 @@ DTYPE* interleaved_buffer = reinterpret_cast<DTYPE*>(reinterpret_cast<uint8_t*>(
                             throw std::runtime_error("Failed to convert from RGB to Grayscale");
                         }
 
-                        #undef NPP_CONVERT_RGB_TO_Y
+#undef NPP_CONVERT_RGB_TO_Y
                     }
                 }
 

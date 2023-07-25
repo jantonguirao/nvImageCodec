@@ -40,7 +40,7 @@ static int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t 
     }
     std::string header = ss.str();
     size_t length = header.size() + (precision / 8) * num_components * height * width;
-    io_stream->reserve(io_stream->instance, length, length);
+    io_stream->reserve(io_stream->instance, length);
     io_stream->write(io_stream->instance, &written_size, static_cast<void*>(header.data()), header.size());
 
     for (int y = 0; y < height; y++) {
@@ -89,6 +89,7 @@ static int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t 
             }
         }
     }
+    io_stream->flush(io_stream->instance);
     return 0;
 }
 

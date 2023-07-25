@@ -24,7 +24,7 @@ CodeStream::CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStream
     , io_stream_factory_(std::move(io_stream_factory))
     , io_stream_(nullptr)
     , io_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static, write_static, putc_static, skip_static,
-          seek_static, tell_static, size_static, reserve_static, raw_data_static}
+          seek_static, tell_static, size_static, reserve_static, flush_static, map_static, unmap_static}
     , code_stream_desc_{NVIMGCDCS_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, &io_stream_desc_, static_get_image_info}
     , image_info_(nullptr)
 {
@@ -60,9 +60,9 @@ void CodeStream::setOutputToFile(const char* file_name)
     io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, false, true);
 }
 
-void CodeStream::setOutputToHostMem(void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func)
+void CodeStream::setOutputToHostMem(void* ctx, nvimgcdcsResizeBufferFunc_t resize_buffer_func)
 {
-    io_stream_ = io_stream_factory_->createMemIoStream(ctx, get_buffer_func);
+    io_stream_ = io_stream_factory_->createMemIoStream(ctx, resize_buffer_func);
 }
 
 nvimgcdcsStatus_t CodeStream::getImageInfo(nvimgcdcsImageInfo_t* image_info)
@@ -161,17 +161,31 @@ nvimgcdcsStatus_t CodeStream::size(size_t* size)
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t CodeStream::reserve(size_t bytes, size_t used)
+nvimgcdcsStatus_t CodeStream::reserve(size_t bytes)
 {
     assert(io_stream_);
-    io_stream_->reserve(bytes, used);
+    io_stream_->reserve(bytes);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t CodeStream::raw_data(const void** raw_data)
+nvimgcdcsStatus_t CodeStream::flush()
 {
     assert(io_stream_);
-    *raw_data = io_stream_->raw_data();
+    io_stream_->flush();
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t CodeStream::map(void** addr, size_t offset, size_t size)
+{
+    assert(io_stream_);
+    *addr = io_stream_->map(offset, size);
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t CodeStream::unmap(void* addr, size_t size)
+{
+    assert(io_stream_);
+    io_stream_->unmap(addr, size);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -224,18 +238,32 @@ nvimgcdcsStatus_t CodeStream::size_static(void* instance, size_t* size)
     return handle->size(size);
 }
 
-nvimgcdcsStatus_t CodeStream::reserve_static(void* instance, size_t bytes, size_t used)
+nvimgcdcsStatus_t CodeStream::reserve_static(void* instance, size_t bytes)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
-    return handle->reserve(bytes, used);
+    return handle->reserve(bytes);
 }
 
-nvimgcdcsStatus_t CodeStream::raw_data_static(void* instance, const void** raw_data)
+nvimgcdcsStatus_t CodeStream::flush_static(void* instance)
 {
     assert(instance);
     CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
-    return handle->raw_data(raw_data);
+    return handle->flush();
+}
+
+nvimgcdcsStatus_t CodeStream::map_static(void* instance, void** addr, size_t offset, size_t size)
+{
+    assert(instance);
+    CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
+    return handle->map(addr, offset, size);
+}
+
+nvimgcdcsStatus_t CodeStream::unmap_static(void* instance, void* addr, size_t size)
+{
+    assert(instance);
+    CodeStream* handle = reinterpret_cast<CodeStream*>(instance);
+    return handle->unmap(addr, size);
 }
 
 nvimgcdcsStatus_t CodeStream::static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result)

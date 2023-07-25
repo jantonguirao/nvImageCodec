@@ -367,11 +367,13 @@ nvimgcdcsStatus_t DecoderImpl::decode(const char* plugin_id, const nvimgcdcsFram
         return ret;
     }
 
-    const void* ptr;
-    ret = io_stream->raw_data(io_stream->instance, &ptr);
+    void* ptr = nullptr;
+    ret = io_stream->map(io_stream->instance, &ptr, 0, encoded_length);
     if (ret != NVIMGCDCS_STATUS_SUCCESS) {
         return ret;
     }
+    auto auto_unmap = std::shared_ptr<void>(
+        ptr, [io_stream, encoded_length](void* addr) { io_stream->unmap(io_stream->instance, addr, encoded_length); });
     const uint8_t* encoded_data = static_cast<const uint8_t*>(ptr);
     if (!ptr && encoded_length > 0) {
         buffer.resize(encoded_length);

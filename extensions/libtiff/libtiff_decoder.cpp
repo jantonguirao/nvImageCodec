@@ -51,17 +51,24 @@ class DecoderHelper
     {
         // This function will be used by LibTIFF only if input is InputKind::HostMemory.
         DecoderHelper* helper = reinterpret_cast<DecoderHelper*>(handle);
-        const void* raw_data = nullptr;
         size_t data_size = 0;
-        if (helper->io_stream_->raw_data(helper->io_stream_->instance, &raw_data) != NVIMGCDCS_STATUS_SUCCESS)
-            return -1;
-        if (raw_data == nullptr)
-            return -1;
         if (helper->io_stream_->size(helper->io_stream_->instance, &data_size) != NVIMGCDCS_STATUS_SUCCESS)
             return -1;
-        *base = const_cast<void*>(raw_data);
+        void* addr = nullptr;
+        if (helper->io_stream_->map(helper->io_stream_->instance, &addr, 0, data_size) != NVIMGCDCS_STATUS_SUCCESS)
+            return -1;
+        if (addr == nullptr)
+            return -1;
+
+        *base = const_cast<void*>(addr);
         *size = data_size;
         return 0;
+    }
+
+    static void unmap(thandle_t handle, void* base, toff_t size) 
+    { 
+        DecoderHelper* helper = reinterpret_cast<DecoderHelper*>(handle);
+        helper->io_stream_->unmap(helper->io_stream_->instance, base, size);
     }
 
     static toff_t size(thandle_t handle)
@@ -88,14 +95,18 @@ std::unique_ptr<TIFF, void (*)(TIFF*)> OpenTiff(nvimgcdcsIoStreamDesc_t* io_stre
 {
     TIFF* tiffptr;
     TIFFMapFileProc mapproc = nullptr;
-    const void* raw_data = nullptr;
-    if (io_stream->raw_data(io_stream->instance, &raw_data) == NVIMGCDCS_STATUS_SUCCESS && raw_data != nullptr)
+    TIFFUnmapFileProc unmapproc = nullptr;
+
+    void* addr = nullptr;
+    if (io_stream->map(io_stream->instance, &addr, 0, 1) == NVIMGCDCS_STATUS_SUCCESS && addr != nullptr) {
         mapproc = &DecoderHelper::map;
+        unmapproc = &DecoderHelper::unmap;
+        io_stream->unmap(io_stream->instance, &addr, 1);
+    }
 
     DecoderHelper* helper = new DecoderHelper(io_stream);
     tiffptr = TIFFClientOpen("", "r", reinterpret_cast<thandle_t>(helper), &DecoderHelper::read, &DecoderHelper::write,
-        &DecoderHelper::seek, &DecoderHelper::close, &DecoderHelper::size, mapproc,
-        /* unmap */ 0);
+        &DecoderHelper::seek, &DecoderHelper::close, &DecoderHelper::size, mapproc, unmapproc);
     if (!tiffptr)
         delete helper;
     if (tiffptr == nullptr)

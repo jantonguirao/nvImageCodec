@@ -320,7 +320,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(
 }
 
 nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, void* ctx,
-    nvimgcdcsGetBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info)
+    nvimgcdcsResizeBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
     NVIMGCDCSAPI_TRY

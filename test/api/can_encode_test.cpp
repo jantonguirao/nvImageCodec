@@ -172,7 +172,7 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
             strcpy(out_image_info.codec_name,"bmp");
             nvimgcdcsCodeStream_t code_stream = nullptr;
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &code_stream, (void*)this,
-                                                    &NvImageCodecsCanEncodeApiTest::GetOutputBufferStatic, &out_image_info));
+                                                    &NvImageCodecsCanEncodeApiTest::ResizeOutputBufferStatic, &out_image_info));
             streams_.push_back(code_stream);
             nvimgcdcsImage_t image;
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &image, &image_info_));
@@ -196,14 +196,14 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         mock_extension_.reset();
     }
 
-    unsigned char* GetOutputBuffer(size_t bytes, size_t used) {
+    unsigned char* ResizeOutputBuffer(size_t bytes) {
         out_buffer_.resize(bytes);
         return out_buffer_.data();
     }
 
-    static unsigned char* GetOutputBufferStatic(void* ctx, size_t bytes, size_t used) {
+    static unsigned char* ResizeOutputBufferStatic(void* ctx, size_t bytes) {
         auto handle = reinterpret_cast<NvImageCodecsCanEncodeApiTest*>(ctx);
-        return handle->GetOutputBuffer(bytes, used);
+        return handle->ResizeOutputBuffer(bytes);
     }
 
     nvimgcdcsInstance_t instance_;

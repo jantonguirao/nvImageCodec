@@ -373,10 +373,10 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
 
                 nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 size_t output_size;
-                io_stream->reserve(io_stream->instance, length, length);
+                io_stream->reserve(io_stream->instance, length);
                 io_stream->seek(io_stream->instance, 0, SEEK_SET);
                 io_stream->write(io_stream->instance, &output_size, static_cast<void*>(&t.compressed_data_[0]), t.compressed_data_.size());
-
+                io_stream->flush(io_stream->instance);
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             } catch (const NvJpegException& e) {
                 NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not encode jpeg code stream - " << e.info());

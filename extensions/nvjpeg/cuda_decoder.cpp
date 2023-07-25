@@ -404,9 +404,10 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool 
 
                 size_t encoded_stream_data_size = 0;
                 io_stream->size(io_stream->instance, &encoded_stream_data_size);
-                const void* encoded_stream_data = nullptr;
-                io_stream->raw_data(io_stream->instance, &encoded_stream_data);
-                if (!encoded_stream_data) {
+                void* encoded_stream_data = nullptr;
+                void* mapped_encoded_stream_data = nullptr;
+                io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
+                if (!mapped_encoded_stream_data) {
                     if (p.parse_state_.buffer_.size() != encoded_stream_data_size) {
                         p.parse_state_.buffer_.resize(encoded_stream_data_size);
                         io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -419,13 +420,17 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool 
                         }
                     }
                     encoded_stream_data = &p.parse_state_.buffer_[0];
+                } else {
+                    encoded_stream_data = mapped_encoded_stream_data;
                 }
-            {
+                {
                 nvtx3::scoped_range marker{"nvjpegJpegStreamParse"};
                 XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle, static_cast<const unsigned char*>(encoded_stream_data),
                     encoded_stream_data_size, false, false, p.parse_state_.nvjpeg_stream_));
-            }
-
+                }
+                if (!mapped_encoded_stream_data) {
+                    io_stream->unmap(io_stream->instance, encoded_stream_data, encoded_stream_data_size);
+                }
                 nvjpegJpegEncoding_t jpeg_encoding;
                 nvjpegJpegStreamGetJpegEncoding(p.parse_state_.nvjpeg_stream_, &jpeg_encoding);
 

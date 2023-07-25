@@ -606,8 +606,8 @@ extern "C"
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
-        int apply_exif_orientation;        /**<  Apply exif orientation if available. Valid values 0 or 1. */
-        int enable_roi;                    /**<  Enables region of interest. Valid values 0 or 1. */
+        int apply_exif_orientation;    /**<  Apply exif orientation if available. Valid values 0 or 1. */
+        int enable_roi;                /**<  Enables region of interest. Valid values 0 or 1. */
 
     } nvimgcdcsDecodeParams_t;
 
@@ -885,25 +885,44 @@ extern "C"
         nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
 
         /**
-         * @brief Provides expected bytes which are going to be written and used so far.  
+         * @brief Provides expected bytes which are going to be written.  
          * 
-         *  This function gives possibility to pre/re-allocate raw_data buffer
+         *  This function gives possibility to pre/re-allocate map function.
          * 
          * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
-         * @param bytes [in] Number of expected bytes which are going to be written  .
-         * @param used  [in] Number of bytes used so far.
+         * @param bytes [in] Number of expected bytes which are going to be written.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes, size_t used);
+        nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes);
 
         /**
-         * @brief Retrieves the raw pointer to the data in memory, if available, otherwise returns nullptr  
+         * @brief Requests all data to be written to the output.
          * 
          * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
-         * @param buffer  [in] Pointer were to return pointer to raw data.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*raw_data)(void* instance, const void** buffer);
+        nvimgcdcsStatus_t (*flush)(void* instance);
+
+        /**
+         * @brief Maps data into host memory  
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param buffer [in/out] Points where to return pointer to mapped data. If data cannot be mapped, NULL will be returned.
+         * @param offset [in] Offset in the stream to begin mapping.
+         * @param size [in] Length of the mapping
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*map)(void* instance, void** buffer, size_t offset, size_t size);
+
+        /**
+         * @brief Unmaps previously mapped data
+         *  
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.         * 
+         * @param buffer [in] Pointer to mapped data
+         * @param size [in] Length of data to unmap 
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*unmap)(void* instance, void* buffer, size_t size);
     } nvimgcdcsIoStreamDesc_t;
 
     /**
@@ -1479,24 +1498,15 @@ extern "C"
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name, const nvimgcdcsImageInfo_t* image_info);
 
     /**
-     * @brief Function type to provide host buffer with requested size.
-     * 
-     * There can be few cases when it is called:
-     *      1) init  - when called with used_size == 0 - for initial allocation before any data is actually written
-     *      2) update - when called with used_size < req_size - for update with used_size and possibility of reallocation if needed
-     *      3) terminate - when called with used_size == req_size - for init/update with end size of used data
-     *
-     * Note 1: When returned pointer for the same context changed, new buffer will be used from the beginning and used_size will be reset
-     *         There is no internal copy of previous content
-     * Note 2: Currently only case 3) is supported (we know end used size from the beginning) and cases 1) and 2) are reserved for future use
+     * @brief Function type to resize and provide host buffer.
      * 
      * @param ctx [in] Pointer to context provided together with function.
-     * @param req_size [in] Required size.
-     * @param used_size [in] Used size so far of previously provided buffer for given context.
+     * @param req_size [in] Requested size of buffer.
      * @return Pointer to requested buffer.
      * 
+     * @note This function can be called multiple times and requested size can be lower at the end so buffer can be shrinked.
      */
-    typedef unsigned char* (*nvimgcdcsGetBufferFunc_t)(void* ctx, size_t req_size, size_t used_size);
+    typedef unsigned char* (*nvimgcdcsResizeBufferFunc_t)(void* ctx, size_t req_size);
 
     /**
      * @brief Creates code stream which wraps host memory sink for compressed data with given format.
@@ -1504,12 +1514,12 @@ extern "C"
      * @param instance  [in] The library instance handle the code stream will be used with.
      * @param code_stream [in/out] Points a nvimgcdcsCodeStream_t handle in which the resulting code stream is returned.
      * @param ctx [in] Pointer to user defined context with which get buffer function will be called back.
-     * @param get_buffer_func [in] Points a nvimgcdcsGetBufferFunc_t function handle which will be used for providing host output buffer.
+     * @param resize_buffer_func [in] Points a nvimgcdcsResizeBufferFunc_t function handle which will be used to resize and providing host output buffer.
      * @param image_info [in] Points a nvimgcdcsImageInfo_t struct which describes output image format.
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
-        void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info);
+        void* ctx, nvimgcdcsResizeBufferFunc_t resize_buffer_func, const nvimgcdcsImageInfo_t* image_info);
 
     /**
      * @brief Destroys code stream.

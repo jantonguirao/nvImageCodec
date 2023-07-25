@@ -50,7 +50,7 @@ int writeBMP(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, n
     size_t written_size;
     std::string bm("BM");
     size_t length = 2 /*BM*/ + sizeof(headers) + paddedsize;
-    io_stream->reserve(io_stream->instance, length, length);
+    io_stream->reserve(io_stream->instance, length);
 
     io_stream->write(io_stream->instance, &written_size, static_cast<void*>(bm.data()), 2);
 
@@ -126,6 +126,7 @@ int writeBMP(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, n
             }
         }
     }
+    io_stream->flush(io_stream->instance);
     return 0;
 }
 
