@@ -170,7 +170,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDes
     *result = header == le_header || header == be_header;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -182,7 +182,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::static_can_parse(void* instance, int* result
         auto handle = reinterpret_cast<TIFFParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -201,7 +201,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::create(nvimgcdcsParser_t* parser)
         *parser = reinterpret_cast<nvimgcdcsParser_t>(new TIFFParserPlugin::Parser(plugin_id_, framework_));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create tiff parser - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -213,7 +213,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::static_create(void* instance, nvimgcdcsParse
         auto handle = reinterpret_cast<TIFFParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -225,7 +225,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
         auto handle = reinterpret_cast<TIFFParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -255,7 +255,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
         return ret;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from tiff stream - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -269,7 +269,7 @@ nvimgcdcsStatus_t TIFFParserPlugin::Parser::static_get_image_info(
         auto handle = reinterpret_cast<TIFFParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

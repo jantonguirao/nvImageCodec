@@ -403,7 +403,7 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
     }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if libtiff can decode - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -416,7 +416,7 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         return handle->canDecode(status, code_streams, images, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -442,7 +442,7 @@ nvimgcdcsStatus_t LibtiffDecoderPlugin::create(
         *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(plugin_id_, framework_, device_id, backend_params));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create libtiff decoder - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -455,7 +455,7 @@ nvimgcdcsStatus_t LibtiffDecoderPlugin::static_create(
         auto handle = reinterpret_cast<LibtiffDecoderPlugin*>(instance);
         handle->create(decoder, device_id, backend_params, options);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -471,7 +471,7 @@ nvimgcdcsStatus_t DecoderImpl::static_destroy(nvimgcdcsDecoder_t decoder)
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -832,7 +832,7 @@ nvimgcdcsStatus_t DecoderImpl::static_decode_batch(nvimgcdcsDecoder_t decoder, n
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         return handle->decodeBatch(code_streams, images, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

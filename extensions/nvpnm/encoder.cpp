@@ -115,7 +115,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::create(
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create pnm encoder - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 }
 
@@ -127,7 +127,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::static_create(
         auto handle = reinterpret_cast<NvPnmEncoderPlugin*>(instance);
         return handle->create(encoder, device_id, backend_params, options);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -138,7 +138,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::static_destroy(nvimgcdcsEncoder_t
         auto handle = reinterpret_cast<NvPnmEncoderPlugin::Encoder*>(encoder);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -225,7 +225,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStat
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if pnm can encode - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -238,7 +238,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEncode
         auto handle = reinterpret_cast<NvPnmEncoderPlugin::Encoder*>(encoder);
         return handle->canEncode(status, images, code_streams, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -314,7 +314,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::encodeBatch(
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 }
 
@@ -326,7 +326,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEnco
         auto handle = reinterpret_cast<NvPnmEncoderPlugin::Encoder*>(encoder);
         return handle->encodeBatch(images, code_streams, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

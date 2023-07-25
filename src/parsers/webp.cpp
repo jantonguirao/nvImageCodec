@@ -211,7 +211,7 @@ nvimgcdcsStatus_t WebpParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDes
         *result = 1;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -223,7 +223,7 @@ nvimgcdcsStatus_t WebpParserPlugin::static_can_parse(void* instance, int* result
         auto handle = reinterpret_cast<WebpParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -242,7 +242,7 @@ nvimgcdcsStatus_t WebpParserPlugin::create(nvimgcdcsParser_t* parser)
         *parser = reinterpret_cast<nvimgcdcsParser_t>(new WebpParserPlugin::Parser(plugin_id_, framework_));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create webp parser - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -254,7 +254,7 @@ nvimgcdcsStatus_t WebpParserPlugin::static_create(void* instance, nvimgcdcsParse
         auto handle = reinterpret_cast<WebpParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -266,7 +266,7 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::static_destroy(nvimgcdcsParser_t par
         auto handle = reinterpret_cast<WebpParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -280,7 +280,7 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
         return GetImageInfoImpl(plugin_id_, framework_, image_info, code_stream);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from png stream - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 }
 
@@ -292,7 +292,7 @@ nvimgcdcsStatus_t WebpParserPlugin::Parser::static_get_image_info(
         auto handle = reinterpret_cast<WebpParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

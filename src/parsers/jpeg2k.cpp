@@ -146,7 +146,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::canParse(int* result, nvimgcdcsCodeStreamD
         *result = 1;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -158,7 +158,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::static_can_parse(void* instance, int* resu
         auto handle = reinterpret_cast<JPEG2KParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -177,7 +177,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::create(nvimgcdcsParser_t* parser)
         *parser = reinterpret_cast<nvimgcdcsParser_t>(new JPEG2KParserPlugin::Parser(plugin_id_, framework_));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create jpeg2k parser - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -189,7 +189,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::static_create(void* instance, nvimgcdcsPar
         auto handle = reinterpret_cast<JPEG2KParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -201,7 +201,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_destroy(nvimgcdcsParser_t p
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -385,7 +385,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t*
         }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from jpeg2k stream - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -399,7 +399,7 @@ nvimgcdcsStatus_t JPEG2KParserPlugin::Parser::static_get_image_info(
         auto handle = reinterpret_cast<JPEG2KParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

@@ -245,7 +245,7 @@ nvimgcdcsStatus_t EncoderImpl::canEncode(nvimgcdcsProcessingStatus_t* status, nv
     }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if nvbmp can encode - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -258,7 +258,7 @@ nvimgcdcsStatus_t EncoderImpl::static_can_encode(nvimgcdcsEncoder_t encoder, nvi
         auto handle = reinterpret_cast<EncoderImpl*>(encoder);
         return handle->canEncode(status, images, code_streams, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -281,7 +281,7 @@ nvimgcdcsStatus_t NvBmpEncoderPlugin::create(
         *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new EncoderImpl(plugin_id_, framework_, device_id, backend_params));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvbmp encoder - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -294,7 +294,7 @@ nvimgcdcsStatus_t NvBmpEncoderPlugin::static_create(
         auto handle = reinterpret_cast<NvBmpEncoderPlugin*>(instance);
         handle->create(encoder, device_id, backend_params, options);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -310,7 +310,7 @@ nvimgcdcsStatus_t EncoderImpl::static_destroy(nvimgcdcsEncoder_t encoder)
         auto handle = reinterpret_cast<EncoderImpl*>(encoder);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -399,7 +399,7 @@ nvimgcdcsStatus_t EncoderImpl::static_encode_batch(nvimgcdcsEncoder_t encoder, n
         auto handle = reinterpret_cast<EncoderImpl*>(encoder);
         return handle->encodeBatch(images, code_streams, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
