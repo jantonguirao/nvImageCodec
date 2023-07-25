@@ -18,17 +18,21 @@ namespace nvimgcdcs {
 class DefaultDebugMessenger : public IDebugMessenger
 {
   public:
-    DefaultDebugMessenger(
-        uint32_t message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT, uint32_t message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL);
+    DefaultDebugMessenger(uint32_t message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT, 
+        uint32_t message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL);
 
     const nvimgcdcsDebugMessengerDesc_t* getDesc() override { return &desc_; }
 
   private:
-    bool debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
+    int debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageCategory_t message_category,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
-    static bool static_debug_callback(nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
-        const nvimgcdcsDebugMessageData_t* callback_data, void* user_data);
+    static int static_debug_callback(const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageCategory_t message_category,
+        const nvimgcdcsDebugMessageData_t* callback_data,
+        void* user_data
+    );
 
     const nvimgcdcsDebugMessengerDesc_t desc_;
 };

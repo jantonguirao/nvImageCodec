@@ -17,7 +17,8 @@
 namespace nvimgcdcs {
 
 DecodeParams::DecodeParams()
-    : decode_params_{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, nullptr, true, false, true}
+    : decode_params_{NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, nullptr, true, false}
+    , color_spec_{NVIMGCDCS_COLORSPEC_SRGB}
 {
 }
 
@@ -25,18 +26,18 @@ void DecodeParams::exportToPython(py::module& m)
 {
     py::class_<DecodeParams>(m, "DecodeParams")
         .def(py::init([]() { return DecodeParams{}; }), "Default constructor")
-        .def(py::init([](bool enable_orientation, bool enable_color_conversion) {
+        .def(py::init([](bool apply_exif_orientation, nvimgcdcsColorSpec_t color_spec) {
             DecodeParams p;
-            p.decode_params_.enable_orientation = enable_orientation;
-            p.decode_params_.enable_color_conversion = enable_color_conversion;
+            p.decode_params_.apply_exif_orientation = apply_exif_orientation;
+            p.color_spec_ = color_spec;
             return p;
         }),
-            "enable_orientation"_a = true, "enable_color_conversion"_a = true,
-            "Constructor with enable_orientation and enable_color_conversion parameters")
-        .def_property("enable_orientation", &DecodeParams::getEnableOrientation, &DecodeParams::setEnableOrientation,
+            "apply_exif_orientation"_a = true, "color_spec"_a = NVIMGCDCS_COLORSPEC_SRGB,
+            "Constructor with apply_exif_orientation and color_spec parameters")
+        .def_property("apply_exif_orientation", &DecodeParams::getEnableOrientation, &DecodeParams::setEnableOrientation,
             "Apply EXIF orientation if available")
-        .def_property("enable_color_conversion", &DecodeParams::getEnableColorConversion, &DecodeParams::setEnableColorConversion,
-            "Enable color conversion to RGB");
+        .def_property("color_spec", &DecodeParams::getColorSpec, &DecodeParams::setColorSpec,
+            "Color specification");
 }
 
 } // namespace nvimgcdcs

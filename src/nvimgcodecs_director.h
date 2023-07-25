@@ -33,11 +33,11 @@ class NvImgCodecsDirector
   public:
     struct DefaultDebugMessengerManager
     {
-        DefaultDebugMessengerManager(ILogger* logger, uint32_t message_severity, uint32_t message_type, bool register_messenger)
+        DefaultDebugMessengerManager(ILogger* logger, uint32_t message_severity, uint32_t message_category, bool register_messenger)
             : logger_(logger)
         {
             if (register_messenger) {
-                dbg_messenger_ = std::make_unique<DefaultDebugMessenger>(message_severity, message_type);
+                dbg_messenger_ = std::make_unique<DefaultDebugMessenger>(message_severity, message_category);
                 logger_->registerDebugMessenger(dbg_messenger_.get());
             }
         };

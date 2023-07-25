@@ -38,7 +38,7 @@ class CommonExtDecoderTest
         nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
         create_info.num_cpu_threads = 3;
         create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
-        create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
+        create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
 
@@ -48,8 +48,7 @@ class CommonExtDecoderTest
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
-        params_.enable_orientation = true;
-        params_.enable_color_conversion = true;
+        params_.apply_exif_orientation= 1;
     }
 
     void TearDown()
@@ -101,7 +100,7 @@ class CommonExtDecoderTest
         image_info_.num_planes = 1;
         uint32_t& width = image_info_.plane_info[0].width;
         uint32_t& height = image_info_.plane_info[0].height;
-        bool swap_xy = params_.enable_orientation && image_info_.orientation.rotated % 180 == 90;
+        bool swap_xy = params_.apply_exif_orientation && image_info_.orientation.rotated % 180 == 90;
         if (swap_xy) {
             std::swap(width, height);
         }

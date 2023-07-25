@@ -236,7 +236,10 @@ class NvJpeg2kTestBase
         enc_config.code_block_w = jpeg2k_enc_params.code_block_w;
         enc_config.code_block_h = jpeg2k_enc_params.code_block_h;
         enc_config.irreversible = jpeg2k_enc_params.irreversible;
-        enc_config.mct_mode = params.mct_mode == NVIMGCDCS_MCT_MODE_RGB ? 1 : 0;
+        enc_config.mct_mode =
+            ((output_image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC) || (output_image_info.color_spec == NVIMGCDCS_COLORSPEC_GRAY)) &&
+            (input_image_info.color_spec != NVIMGCDCS_COLORSPEC_SYCC) && (input_image_info.color_spec != NVIMGCDCS_COLORSPEC_GRAY);
+
         enc_config.prog_order = nvimgcdcs2nvjpeg2k_prog_order(jpeg2k_enc_params.prog_order);
         enc_config.num_resolutions = jpeg2k_enc_params.num_resolutions;
         enc_config.image_comp_info = image_comp_info.data();

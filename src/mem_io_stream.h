@@ -24,18 +24,16 @@ class MemIoStream : public IoStream
     MemIoStream() = default;
     ~MemIoStream() = default;
     MemIoStream(T* mem, size_t bytes)
+        : start_{mem}
+        , size_{bytes}
     {
-        start_ = mem;
-        size_ = bytes;
     }
 
-    MemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t, size_t)> get_buffer_func)
-        : get_buffer_ctx_(ctx)
-        , get_buffer_func_(get_buffer_func)
+    MemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t)> resize_buffer_func)
+        : resize_buffer_ctx_(ctx)
+        , resize_buffer_func_(resize_buffer_func)
     {
-
     }
-
 
     std::size_t read(void* buf, size_t bytes) override
     {
@@ -91,34 +89,40 @@ class MemIoStream : public IoStream
         } else {
             assert(whence == SEEK_SET);
         }
-        if (offset < 0 || offset > size_)
+        if (offset < 0 || offset > int64_t(size_))
             throw std::out_of_range("The requested position in the stream is out of range");
         pos_ = offset;
     }
 
     std::size_t size() const override { return size_; }
 
-    const void* raw_data() const override { 
-        return static_cast<const void*>(start_); 
-    }
-
-    void reserve(size_t bytes, size_t used) override
+    void reserve(size_t bytes) override
     {
-        if (get_buffer_func_) {
-            T* new_start = get_buffer_func_(get_buffer_ctx_, bytes, used);
+        if (resize_buffer_func_ && (bytes > size_)) {
+            start_ = resize_buffer_func_(resize_buffer_ctx_, bytes);
             size_ = bytes;
-            if (new_start != start_) {
-                start_ = new_start;
-                pos_ = 0;
-            }
         }
     }
+
+    void flush() override
+    {
+        if (resize_buffer_func_&& (size_ != pos_)) {
+            start_ = resize_buffer_func_(resize_buffer_ctx_, pos_);
+            size_ = pos_;
+        }
+    }
+
+    void* map(size_t offset, size_t size) const override {
+        assert(offset + size < size_);
+        return (void*)(start_ + offset);
+    }
+
   private:
     T* start_ = nullptr;
-    ptrdiff_t size_ = 0;
-    ptrdiff_t pos_ = 0;
-    void* get_buffer_ctx_ = nullptr;
-    std::function<unsigned char*(void*, size_t, size_t)> get_buffer_func_ = nullptr;
+    size_t size_ = 0;
+    size_t pos_ = 0;
+    void* resize_buffer_ctx_ = nullptr;
+    std::function<unsigned char*(void*, size_t)> resize_buffer_func_ = nullptr;
 };
 
 } // namespace nvimgcdcs

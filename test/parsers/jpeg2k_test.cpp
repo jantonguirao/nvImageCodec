@@ -34,7 +34,7 @@ class JPEG2KParserPluginTest : public ::testing::Test
         nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
         create_info.num_cpu_threads = 1;
         create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
-        create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
+        create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
 
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
@@ -62,8 +62,8 @@ class JPEG2KParserPluginTest : public ::testing::Test
         info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
         info.orientation.rotated = 0;
-        info.orientation.flip_x = false;
-        info.orientation.flip_y = false;
+        info.orientation.flip_x =0;
+        info.orientation.flip_y =0;
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 475;
             info.plane_info[p].width = 640;
@@ -85,8 +85,8 @@ class JPEG2KParserPluginTest : public ::testing::Test
         info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
         info.orientation.rotated = 0;
-        info.orientation.flip_x = false;
-        info.orientation.flip_y = false;
+        info.orientation.flip_x =0;
+        info.orientation.flip_y =0;
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 423;
             info.plane_info[p].width = 640;
@@ -107,8 +107,8 @@ class JPEG2KParserPluginTest : public ::testing::Test
         info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
         info.orientation.rotated = 0;
-        info.orientation.flip_x = false;
-        info.orientation.flip_y = false;
+        info.orientation.flip_x =0;
+        info.orientation.flip_y =0;
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 423;
             info.plane_info[p].width = 640;

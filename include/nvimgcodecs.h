@@ -193,7 +193,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS,
-        NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsStructureType_t;
 
     /**
@@ -307,18 +307,18 @@ extern "C"
         NVIMGCDCS_STATUS_INTERNAL_ERROR = 8,
         NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED = 9,
         NVIMGCDCS_STATUS_MISSED_DEPENDENCIES = 10,
-        NVIMGCDCS_EXTENSION_STATUS_NOT_INITIALIZED = 11,
-        NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER = 12,
-        NVIMGCDCS_EXTENSION_STATUS_BAD_CODE_STREAM = 13,
-        NVIMGCDCS_EXTENSION_STATUS_CODESTREAM_UNSUPPORTED = 14,
-        NVIMGCDCS_EXTENSION_STATUS_ALLOCATOR_FAILURE = 15,
-        NVIMGCDCS_EXTENSION_STATUS_ARCH_MISMATCH = 16,
-        NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR = 17,
-        NVIMGCDCS_EXTENSION_STATUS_IMPLEMENTATION_NOT_SUPPORTED = 18,
-        NVIMGCDCS_EXTENSION_STATUS_INCOMPLETE_BITSTREAM = 19,
-        NVIMGCDCS_EXTENSION_STATUS_EXECUTION_FAILED = 20,
-        NVIMGCDCS_EXTENSION_STATUS_CUDA_CALL_ERROR = 21,
-        NVIMGCDCS_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_STATUS_EXTENSION_NOT_INITIALIZED = 11,
+        NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER = 12,
+        NVIMGCDCS_STATUS_EXTENSION_BAD_CODE_STREAM = 13,
+        NVIMGCDCS_STATUS_EXTENSION_CODESTREAM_UNSUPPORTED = 14,
+        NVIMGCDCS_STATUS_EXTENSION_ALLOCATOR_FAILURE = 15,
+        NVIMGCDCS_STATUS_EXTENSION_ARCH_MISMATCH = 16,
+        NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR = 17,
+        NVIMGCDCS_STATUS_EXTENSION_IMPLEMENTATION_NOT_SUPPORTED = 18,
+        NVIMGCDCS_STATUS_EXTENSION_INCOMPLETE_BITSTREAM = 19,
+        NVIMGCDCS_STATUS_EXTENSION_EXECUTION_FAILED = 20,
+        NVIMGCDCS_STATUS_EXTENSION_CUDA_CALL_ERROR = 21,
+        NVIMGCDCS_STATUS_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsStatus_t;
 
     /**
@@ -345,7 +345,7 @@ extern "C"
         NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32 = 0x200B,
         NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64 = 0x400D,
         NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED = -1,
-        NVIMGCDCS_SAMPLE_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_SAMPLE_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsSampleDataType_t;
 
     /** 
@@ -363,7 +363,7 @@ extern "C"
         NVIMGCDCS_SAMPLING_GRAY = 7,
         NVIMGCDCS_SAMPLING_410V = 8,
         NVIMGCDCS_SAMPLING_UNSUPPORTED = -1,
-        NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_SAMPLING_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsChromaSubsampling_t;
 
     /**
@@ -381,7 +381,7 @@ extern "C"
         NVIMGCDCS_SAMPLEFORMAT_P_Y = 7,         //**< Y component only */
         NVIMGCDCS_SAMPLEFORMAT_P_YUV = 9,       //**< YUV planar format */
         NVIMGCDCS_SAMPLEFORMAT_UNSUPPORTED = -1,
-        NVIMGCDCS_SAMPLEFORMAT_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_SAMPLEFORMAT_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsSampleFormat_t;
 
     /** 
@@ -390,13 +390,14 @@ extern "C"
     typedef enum
     {
         NVIMGCDCS_COLORSPEC_UNKNOWN = 0,
+        NVIMGCDCS_COLORSPEC_UNCHANGED = NVIMGCDCS_COLORSPEC_UNKNOWN,
         NVIMGCDCS_COLORSPEC_SRGB = 1,
         NVIMGCDCS_COLORSPEC_GRAY = 2,
         NVIMGCDCS_COLORSPEC_SYCC = 3,
         NVIMGCDCS_COLORSPEC_CMYK = 4,
         NVIMGCDCS_COLORSPEC_YCCK = 5,
         NVIMGCDCS_COLORSPEC_UNSUPPORTED = -1,
-        NVIMGCDCS_COLORSPEC_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_COLORSPEC_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsColorSpec_t;
 
     /** 
@@ -408,8 +409,8 @@ extern "C"
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
         int rotated;                   /**< Rotation angle in degrees (clockwise). Only multiples of 90 are allowed. */
-        bool flip_x;                   /**< Flip horizontal */
-        bool flip_y;                   /**< Flip vertical */
+        int flip_x;                    /**< Flip horizontal 0 or 1*/
+        int flip_y;                    /**< Flip vertical 0 or 1*/
     } nvimgcdcsOrientation_t;
 
     /**
@@ -451,7 +452,7 @@ extern "C"
         NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE = 1, /**< GPU-accessible with planes in pitch-linear layout. */
         NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST = 2,   /**< Host-accessible with planes in pitch-linear layout. */
         NVIMGCDCS_IMAGE_BUFFER_KIND_UNSUPPORTED = -1,
-        NVIMGCDCS_IMAGE_BUFFER_KIND_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_IMAGE_BUFFER_KIND_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsImageBufferKind_t;
 
     /**
@@ -505,7 +506,7 @@ extern "C"
         NVIMGCDCS_JPEG_ENCODING_DIFFERENTIAL_SEQUENTIAL_DCT_ARITHMETIC = 0xcd,
         NVIMGCDCS_JPEG_ENCODING_DIFFERENTIAL_PROGRESSIVE_DCT_ARITHMETIC = 0xce,
         NVIMGCDCS_JPEG_ENCODING_DIFFERENTIAL_LOSSLESS_ARITHMETIC = 0xcf,
-        NVIMGCDCS_JPEG_ENCODING_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_JPEG_ENCODING_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsJpegEncoding_t;
 
     /** 
@@ -526,10 +527,10 @@ extern "C"
      */
     typedef enum
     {
-        NVIMGCDCS_BACKEND_KIND_CPU_ONLY = 0b1,        /**< Decoding/encoding is executed only on CPU. */
-        NVIMGCDCS_BACKEND_KIND_GPU_ONLY = 0b10,       /**< Decoding/encoding is executed only on GPU. */
-        NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU = 0b11, /**< Decoding/encoding is executed on both CPU and GPU.*/
-        NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY = 0b100,   /**< Decoding/encoding is executed on GPU dedicated hardware engine. */
+        NVIMGCDCS_BACKEND_KIND_CPU_ONLY = 1,       /**< Decoding/encoding is executed only on CPU. */
+        NVIMGCDCS_BACKEND_KIND_GPU_ONLY = 2,       /**< Decoding/encoding is executed only on GPU. */
+        NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU = 3, /**< Decoding/encoding is executed on both CPU and GPU.*/
+        NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY = 4,    /**< Decoding/encoding is executed on GPU dedicated hardware engine. */
     } nvimgcdcsBackendKind_t;
 
     /** 
@@ -564,51 +565,38 @@ extern "C"
      */
     typedef enum
     {
-        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = 0,
-        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0b01,                  /**< Processing finished with success. */
-        NVIMGCDCS_PROCESSING_STATUS_SATURATED = 0b10,                /**< Decoder/encoder could potentially process 
+        NVIMGCDCS_PROCESSING_STATUS_UNKNOWN = 0x0,
+        NVIMGCDCS_PROCESSING_STATUS_SUCCESS = 0x1,                 /**< Processing finished with success. */
+        NVIMGCDCS_PROCESSING_STATUS_SATURATED = 0x2,               /**< Decoder/encoder could potentially process 
                                                                           image but is saturated. 
                                                                           @see nvimgcdcsBackendParams_t load_hint. */
 
-        NVIMGCDCS_PROCESSING_STATUS_FAIL = 0b11,                     /**< Processing failed because unknown reason. */
-        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 0b111,         /**< Processing failed because compressed image stream is corrupted. */
-        NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED = 0b1011,      /**< Processing failed because codec is unsupported */
-        NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED = 0b10011,   /**< Processing failed because no one from allowed
+        NVIMGCDCS_PROCESSING_STATUS_FAIL = 0x3,                    /**< Processing failed because unknown reason. */
+        NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED = 0x7,         /**< Processing failed because compressed image stream is corrupted. */
+        NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED = 0xb,       /**< Processing failed because codec is unsupported */
+        NVIMGCDCS_PROCESSING_STATUS_BACKEND_UNSUPPORTED = 0x13,    /**< Processing failed because no one from allowed
                                                                           backends is supported. */
-        NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED = 0b100011, /**< Processing failed because codec encoding is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_RESOLUTION_UNSUPPORTED = 0b1000011, /**< Processing failed because image resolution is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_CODESTREAM_UNSUPPORTED =
-            0b10000011, /**< Processing failed because some feature of compressed stream is unsupported */
+        NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED = 0x23,   /**< Processing failed because codec encoding is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_RESOLUTION_UNSUPPORTED = 0x43, /**< Processing failed because image resolution is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_CODESTREAM_UNSUPPORTED = 0x83, /**< Processing failed because some feature of compressed stream is unsupported */
 
         //These values below describe cases when processing could be possible but with different image format or parameters
+        NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED = 0x5,     /**< Color specification unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED = 0x9,    /**< Apply orientation was enabled but it is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED = 0x11,           /**< Decoding region of interest is unsupported. */
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED = 0x21,      /**< Selected unsupported chroma subsampling . */
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED = 0x41,   /**< Selected unsupported sample type. */
+        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 0x81, /**< Selected unsupported sample format. */
+        NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED = 0x101,   /**< Unsupported number of planes to decode/encode. */
+        NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED = 0x201, /**< Unsupported number of channels to decode/encode. */
 
-        NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED = 0b101,          /**< Color specification unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED = 0b1001,        /**< Apply orientation was enabled but it is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED = 0b10001,               /**< Decoding region of interest is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED = 0b100001,         /**< Selected unsupported chroma subsampling . */
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED = 0b1000001,     /**< Selected unsupported sample type. */
-        NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED = 0b10000001,  /**< Selected unsupported sample format. */
-        NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED = 0b100000001,    /**< Unsupported number of planes to decode/encode. */
-        NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED = 0b1000000001, /**< Unsupported number of channels to decode/encode. */
-        NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED = 0b10000000001,         /** Selected multi-color transform which is unsupported. */
-
-        NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_PROCESSING_STATUS_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsProcessingStatus;
 
     /**
      * @brief Processing status type which combine processing status bitmasks
     */
     typedef uint32_t nvimgcdcsProcessingStatus_t;
-
-    /**
-     * @brief Multi-color transform mode
-    */
-    typedef enum
-    {
-        NVIMGCDCS_MCT_MODE_YCC = 0, /**< During encoding transform RGB color images to YUV */
-        NVIMGCDCS_MCT_MODE_RGB = 1, /**< Encode RGB color images without transform */
-        NVIMGCDCS_MCT_MODE_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsMctMode_t;
 
     /**
      * @brief Decode parameters
@@ -618,16 +606,9 @@ extern "C"
         nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
-        bool enable_orientation;       /**<  Enable orientation if available. */
-        bool enable_roi;               /**<  Enables region of interest */
+        int apply_exif_orientation;    /**<  Apply exif orientation if available. Valid values 0 or 1. */
+        int enable_roi;                /**<  Enables region of interest. Valid values 0 or 1. */
 
-        /**
-         * @brief Enables color conversion
-         *  
-         * For Jpeg with 4 color components assumes CMYK colorspace and converts to RGB/YUV.
-         * For Jpeg2k and 422/420 chroma subsampling enable conversion to RGB.
-         */
-        bool enable_color_conversion;
     } nvimgcdcsDecodeParams_t;
 
     /**
@@ -653,7 +634,6 @@ extern "C"
          * @warning It not supported by all codecs.
         */
         float target_psnr;
-        nvimgcdcsMctMode_t mct_mode; /**< Multi-color transform to apply during encoding. */
     } nvimgcdcsEncodeParams_t;
 
     /**
@@ -666,7 +646,7 @@ extern "C"
         NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL = 2, //**< Resolution-Position-Component-Layer progression order. */
         NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL = 3, //**< Position-Component-Resolution-Layer progression order. */
         NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL = 4, //**< Component-Position-Resolution-Layer progression order. */
-        NVIMGCDCS_JPEG2K_PROG_ORDER_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_JPEG2K_PROG_ORDER_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsJpeg2kProgOrder_t;
 
     /**
@@ -676,7 +656,7 @@ extern "C"
     {
         NVIMGCDCS_JPEG2K_STREAM_J2K = 0, /**< Corresponds to the JPEG2000 code stream.*/
         NVIMGCDCS_JPEG2K_STREAM_JP2 = 1, /**< Corresponds to the .jp2 container.*/
-        NVIMGCDCS_JPEG2K_STREAM_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_JPEG2K_STREAM_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsJpeg2kBitstreamType_t;
 
     /** 
@@ -692,7 +672,7 @@ extern "C"
         uint32_t num_resolutions;                   /**< Number of resolutions. */
         uint32_t code_block_w;                      /**< Code block width. Allowed values 32, 64 */
         uint32_t code_block_h;                      /**< Code block height. Allowed values 32, 64 */
-        bool irreversible;                          /**< Sets whether or not to use irreversible encoding. */
+        int irreversible;                           /**< Sets whether or not to use irreversible encoding. Valid values 0 or 1. */
     } nvimgcdcsJpeg2kEncodeParams_t;
 
     /**
@@ -704,11 +684,11 @@ extern "C"
         void* next;                    /**< Is NULL or a pointer to an extension structure type. */
 
         /**
-         * Sets whether or not to use optimized Huffman.
+         * Sets whether or not to use optimized Huffman. Valid values 0 or 1.
          * 
          * @note  Using optimized Huffman produces smaller JPEG bitstream sizes with the same quality, but with slower performance.
          */
-        bool optimized_huffman;
+        int optimized_huffman;
     } nvimgcdcsJpegEncodeParams_t;
 
     /**
@@ -716,35 +696,36 @@ extern "C"
      */
     typedef enum
     {
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_NONE = 0,
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE = 1,        /**< Diagnostic message useful for developers */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG = 2,        /**< Diagnostic message useful for developers */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO = 4,         /**< Informational message like the creation of a resource */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING = 8,      /**< Message about behavior that is not necessarily an error,
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_NONE = 0x00000000,
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE = 0x00000001,   /**< Diagnostic message useful for developers */
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG = 0x00000010,   /**< Diagnostic message useful for developers */
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO = 0x00000100,    /**< Informational message like the creation of a resource */
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING = 0x00001000, /**< Message about behavior that is not necessarily an error,
                                                                 but very likely a bug in your application */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR = 16,       /**< Message about behavior that is invalid and may cause
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR = 0x00010000,   /**< Message about behavior that is invalid and may cause
                                                                 improper execution or result of operation (e.g. can't open file)
                                                                 but not application */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL = 24,       /**< Message about behavior that is invalid and may cause crashes
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL = 0x00100000,   /**< Message about behavior that is invalid and may cause crashes
                                                                 and forcing to shutdown application */
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL = 0x0FFFFFFF, /**< Used in case filtering out by message severity */
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ALL = 0x0FFFFFFF,     /**< Used in case filtering out by message severity */
         NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT =
             NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL,
-        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsDebugMessageSeverity_t;
 
     /**
-     * @brief Bitmask specifying which types of events cause a debug messenger callback
+     * @brief Bitmask specifying which category of events cause a debug messenger callback
      */
     typedef enum
     {
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_NONE = 0,
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_GENERAL = 1,      /**< Some event has happened that is unrelated to the specification or performance */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_VALIDATION = 2,   /**< Something has happened that indicates a possible mistake */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_PERFORMANCE = 4,  /**< Potential non-optimal use */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL = 0x0FFFFFFF, /**< Used in case filtering out by message type */
-        NVIMGCDCS_DEBUG_MESSAGE_TYPE_ENUM_FORCE_INT = 0xFFFFFFFF
-    } nvimgcdcsDebugMessageType_t;
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_NONE = 0x00000000,
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_GENERAL =
+            0x00000001, /**< Some event has happened that is unrelated to the specification or performance */
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_VALIDATION = 0x00000010,  /**< Something has happened that indicates a possible mistake */
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_PERFORMANCE = 0x00000100, /**< Potential non-optimal use */
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL = 0x0FFFFFFF,         /**< Used in case filtering out by message category */
+        NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ENUM_FORCE_INT = INT32_MAX
+    } nvimgcdcsDebugMessageCategory_t;
 
     /**
      * @brief Describing debug message passed to debug callback function
@@ -765,13 +746,13 @@ extern "C"
      * @brief Debug callback function type.
      * 
      * @param message_severity [in] Message severity
-     * @param message_type [in] Message type
+     * @param message_category [in] Message category
      * @param callback_data [in] Debug message data 
      * @param user_data [in] Pointer that was specified during the setup of the callback 
-     * @returns true if message should not be passed further to other callbacks and false otherwise 
+     * @returns 1 if message should not be passed further to other callbacks and 0 otherwise 
      */
-    typedef bool (*nvimgcdcsDebugCallback_t)(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* callback_data, void* user_data);
+    typedef int (*nvimgcdcsDebugCallback_t)(const nvimgcdcsDebugMessageSeverity_t message_severity,
+        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data, void* user_data);
 
     /**
      * @brief Debug messenger description.
@@ -782,7 +763,7 @@ extern "C"
         void* next;                             /**< Is NULL or a pointer to an extension structure type. */
 
         uint32_t message_severity;              /**< Bitmask of message severity to listen for e.g. error or warning.  */
-        uint32_t message_type;                  /**< Bitmask of message type to listen for e.g. general or performance related. */
+        uint32_t message_category;              /**< Bitmask of message category to listen for e.g. general or performance related. */
         nvimgcdcsDebugCallback_t user_callback; /**< Debug callback function */
         void* user_data;                        /**< Pointer to user data which will be passed back to debug callback function. */
     } nvimgcdcsDebugMessengerDesc_t;
@@ -883,7 +864,7 @@ extern "C"
          * @param whence  [in] Beginning - SEEK_SET, SEEK_CUR or SEEK_END.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*seek)(void* instance, size_t offset, int whence);
+        nvimgcdcsStatus_t (*seek)(void* instance, ptrdiff_t offset, int whence);
 
         /**
          * @brief Retrieves current position, in bytes from the beginning, in the stream.
@@ -892,7 +873,7 @@ extern "C"
          * @param offset  [in/out] Pointer where to return current position.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*tell)(void* instance, size_t* offset);
+        nvimgcdcsStatus_t (*tell)(void* instance, ptrdiff_t* offset);
 
         /**
          * @brief Retrieves the length, in bytes, of the stream.
@@ -904,25 +885,44 @@ extern "C"
         nvimgcdcsStatus_t (*size)(void* instance, size_t* size);
 
         /**
-         * @brief Provides expected bytes which are going to be written and used so far.  
+         * @brief Provides expected bytes which are going to be written.  
          * 
-         *  This function gives possibility to pre/re-allocate raw_data buffer
+         *  This function gives possibility to pre/re-allocate map function.
          * 
          * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
-         * @param bytes [in] Number of expected bytes which are going to be written  .
-         * @param used  [in] Number of bytes used so far.
+         * @param bytes [in] Number of expected bytes which are going to be written.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes, size_t used);
+        nvimgcdcsStatus_t (*reserve)(void* instance, size_t bytes);
 
         /**
-         * @brief Retrieves the raw pointer to the data in memory, if available, otherwise returns nullptr  
+         * @brief Requests all data to be written to the output.
          * 
          * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
-         * @param buffer  [in] Pointer were to return pointer to raw data.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*raw_data)(void* instance, const void** buffer);
+        nvimgcdcsStatus_t (*flush)(void* instance);
+
+        /**
+         * @brief Maps data into host memory  
+         * 
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.
+         * @param buffer [in/out] Points where to return pointer to mapped data. If data cannot be mapped, NULL will be returned.
+         * @param offset [in] Offset in the stream to begin mapping.
+         * @param size [in] Length of the mapping
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*map)(void* instance, void** buffer, size_t offset, size_t size);
+
+        /**
+         * @brief Unmaps previously mapped data
+         *  
+         * @param instance [in] Pointer to nvimgcdcsIoStreamDesc_t instance.         * 
+         * @param buffer [in] Pointer to mapped data
+         * @param size [in] Length of data to unmap 
+         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
+         */
+        nvimgcdcsStatus_t (*unmap)(void* instance, void* buffer, size_t size);
     } nvimgcdcsIoStreamDesc_t;
 
     /**
@@ -938,7 +938,7 @@ extern "C"
         nvimgcdcsIoStreamDesc_t* io_stream; /**< I/O stream which works as a source or sink of code stream bytes */
 
         /**
-         * @brief Retrieves image info information.
+         * @brief Retrieves image information.
          * 
          * @param instance [in] Pointer to nvimgcdcsCodeStreamDesc_t instance.
          * @param image_info [in/out] Points where to return image information.
@@ -992,11 +992,11 @@ extern "C"
          * @brief Checks whether parser can parse given code stream.
          * 
          * @param instance [in] Pointer to nvimgcdcsParserDesc_t instance.
-         * @param result [in/out] Points where to return result of parsing check.
+         * @param result [in/out] Points where to return result of parsing check. Valid values 0 or 1.
          * @param code_stream [in] Code stream to parse check.
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
         */
-        nvimgcdcsStatus_t (*canParse)(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
+        nvimgcdcsStatus_t (*canParse)(void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream);
 
         /**
          * Creates parser.
@@ -1170,7 +1170,7 @@ extern "C"
         NVIMGCDCS_PRIORITY_LOW = 400,
         NVIMGCDCS_PRIORITY_VERY_LOW = 500,
         NVIMGCDCS_PRIORITY_LOWEST = 1000,
-        NVIMGCDCS_PRIORITY_ENUM_FORCE_INT = 0xFFFFFFFF
+        NVIMGCDCS_PRIORITY_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsPriority_t;
 
     /**
@@ -1178,11 +1178,11 @@ extern "C"
      * 
      * @param instance [in] Plugin framework instance pointer
      * @param message_severity [in] Message severity e.g. error or warning.
-     * @param message_type [in]  Message type e.g. general or performance related.
+     * @param message_category [in]  Message category e.g. general or performance related.
      * @param data [in] Debug message data i.e. message string, status, codec etc.
      */
     typedef nvimgcdcsStatus_t (*nvimgcdcsLogFunc_t)(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data);
+        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data);
 
     /**
      * @brief Plugin Framework
@@ -1337,12 +1337,12 @@ extern "C"
 
         nvimgcdcsDeviceAllocator_t* device_allocator; /**< Custom allocator for device memory */
         nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Custom allocator for pinned memory */
-        bool load_builtin_modules;                    /**< Load default modules */
-        bool load_extension_modules;                  /**< Discover and load extension modules on start */
+        int load_builtin_modules;                     /**< Load default modules. Valid values 0 or 1. */
+        int load_extension_modules;                   /**< Discover and load extension modules on start. Valid values 0 or 1. */
         const char* extension_modules_path;           /**< There may be several paths separated by ':' on Linux or ';' on Windows */
-        bool default_debug_messenger;                 /**< Create default debug messenger */
+        int default_debug_messenger;                  /**< Create default debug messenger. Valid values 0 or 1. */
         uint32_t message_severity;                    /**< Severity for default debug messenger */
-        uint32_t message_type;                        /**< Message type for default debug messenger */
+        uint32_t message_category;                    /**< Message category for default debug messenger */
         int num_cpu_threads; /**< Number of CPU threads in default executor (0 means default value = to number of cpu_cores) */
         nvimgcdcsExecutorDesc_t* executor; /**< Custom executor */
     } nvimgcdcsInstanceCreateInfo_t;
@@ -1498,24 +1498,15 @@ extern "C"
         nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, const char* file_name, const nvimgcdcsImageInfo_t* image_info);
 
     /**
-     * @brief Function type to provide host buffer with requested size.
-     * 
-     * There can be few cases when it is called:
-     *      1) init  - when called with used_size == 0 - for initial allocation before any data is actually written
-     *      2) update - when called with used_size < req_size - for update with used_size and possibility of reallocation if needed
-     *      3) terminate - when called with used_size == req_size - for init/update with end size of used data
-     *
-     * Note 1: When returned pointer for the same context changed, new buffer will be used from the beginning and used_size will be reset
-     *         There is no internal copy of previous content
-     * Note 2: Currently only case 3) is supported (we know end used size from the beginning) and cases 1) and 2) are reserved for future use
+     * @brief Function type to resize and provide host buffer.
      * 
      * @param ctx [in] Pointer to context provided together with function.
-     * @param req_size [in] Required size.
-     * @param used_size [in] Used size so far of previously provided buffer for given context.
+     * @param req_size [in] Requested size of buffer.
      * @return Pointer to requested buffer.
      * 
+     * @note This function can be called multiple times and requested size can be lower at the end so buffer can be shrinked.
      */
-    typedef unsigned char* (*nvimgcdcsGetBufferFunc_t)(void* ctx, size_t req_size, size_t used_size);
+    typedef unsigned char* (*nvimgcdcsResizeBufferFunc_t)(void* ctx, size_t req_size);
 
     /**
      * @brief Creates code stream which wraps host memory sink for compressed data with given format.
@@ -1523,12 +1514,12 @@ extern "C"
      * @param instance  [in] The library instance handle the code stream will be used with.
      * @param code_stream [in/out] Points a nvimgcdcsCodeStream_t handle in which the resulting code stream is returned.
      * @param ctx [in] Pointer to user defined context with which get buffer function will be called back.
-     * @param get_buffer_func [in] Points a nvimgcdcsGetBufferFunc_t function handle which will be used for providing host output buffer.
+     * @param resize_buffer_func [in] Points a nvimgcdcsResizeBufferFunc_t function handle which will be used to resize and providing host output buffer.
      * @param image_info [in] Points a nvimgcdcsImageInfo_t struct which describes output image format.
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream,
-        void* ctx, nvimgcdcsGetBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info);
+        void* ctx, nvimgcdcsResizeBufferFunc_t resize_buffer_func, const nvimgcdcsImageInfo_t* image_info);
 
     /**
      * @brief Destroys code stream.
@@ -1579,16 +1570,16 @@ extern "C"
      * @param batch_size [in] Batch size of provided code streams and images.
      * @param params [in] Pointer to nvimgcdcsDecodeParams_t struct to check decoding with.
      * @param processing_status [in/out] Points a nvimgcdcsProcessingStatus_t handle in which the processing statuses is returned.
-     * @param force_format [in] If true, and high priority codec does not support provided format it will fallback to lower priority
-     *                          codec for further checks. For false value, when high priority codec does not support provided format
-     *                          or parameters but it can process input in general, it will stop check and return processing status
-     *                          with flags which shows what format or parameters need to be changed to avoid fallback to lower
-     *                          priority codec.
+     * @param force_format [in] Valid values 0 or 1. If 1 value, and high priority codec does not support provided format it will
+     *                          fallback to lower priority codec for further checks. For 0 value, when high priority codec does not
+     *                          support provided format or parameters but it can process input in general, it will stop check and
+     *                          return processing status with flags which shows what format or parameters need to be changed to 
+     *                          avoid fallback to lower priority codec. 
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes} 
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, const nvimgcdcsCodeStream_t* streams,
         const nvimgcdcsImage_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params,
-        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
+        nvimgcdcsProcessingStatus_t* processing_status, int force_format);
 
     /**
      * @brief Decode batch of provided code streams to given output images with specified parameters.
@@ -1640,16 +1631,16 @@ extern "C"
      * @param batch_size [in] Batch size of provided code streams and images.
      * @param params [in] Pointer to nvimgcdcsEncodeParams_t struct to check decoding with.
      * @param processing_status [in/out] Points a nvimgcdcsProcessingStatus_t handle in which the processing statuses is returned.
-     * @param force_format [in] If true, and high priority codec does not support provided format it will fallback to lower priority
-     *                          codec for further checks. For false value, when high priority codec does not support provided format
-     *                          or parameters but it can process input in general, it will stop check and return processing status
-     *                          with flags which shows what format or parameters need to be changed to avoid fallback to lower
-     *                          priority codec.
+     * @param force_format [in] Valid values 0 or 1. If 1 value, and high priority codec does not support provided format it will 
+     *                          fallback to lower priority codec for further checks. For 0 value, when high priority codec does not
+     *                          support provided format or parameters but it can process input in general, it will stop check and
+     *                          return processing status with flags which shows what format or parameters need to be changed to 
+     *                          avoid fallback to lower priority codec.
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes} 
      */
     NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
         const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params,
-        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
+        nvimgcdcsProcessingStatus_t* processing_status, int force_format);
 
     /**
      * @brief Encode batch of provided images to given output code streams with specified parameters.

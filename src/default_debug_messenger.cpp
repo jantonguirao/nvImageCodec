@@ -10,14 +10,14 @@
 #define TERM_MAGENTA "\033[1;35m"
 
 namespace nvimgcdcs {
-DefaultDebugMessenger::DefaultDebugMessenger(uint32_t message_severity, uint32_t message_type)
-    : desc_{NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC, nullptr, message_severity, message_type,
+DefaultDebugMessenger::DefaultDebugMessenger(uint32_t message_severity, uint32_t message_category)
+    : desc_{NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC, nullptr, message_severity, message_category,
           DefaultDebugMessenger::static_debug_callback, this}
 {
 }
 
-bool DefaultDebugMessenger::debugCallback(nvimgcdcsDebugMessageSeverity_t message_severity,
-    const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* callback_data)
+int DefaultDebugMessenger::debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,
+    const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data)
 {
     switch (message_severity) {
     case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL:
@@ -67,17 +67,17 @@ bool DefaultDebugMessenger::debugCallback(nvimgcdcsDebugMessageSeverity_t messag
     std::cerr << "[" << callback_data->codec_id << "] ";
     std::cerr << callback_data->message << std::endl;
 
-    return false;
+    return 0;
 }
 
-bool DefaultDebugMessenger::static_debug_callback(
-    nvimgcdcsDebugMessageSeverity_t message_severity,
-    const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* callback_data,
+int DefaultDebugMessenger::static_debug_callback(
+    const nvimgcdcsDebugMessageSeverity_t message_severity,
+    const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data,
     void* user_data)
 {
     assert(user_data);
     DefaultDebugMessenger* handle = reinterpret_cast<DefaultDebugMessenger*>(user_data);
-    return handle->debugCallback(message_severity, message_type, callback_data);
+    return handle->debugCallback(message_severity, message_category, callback_data);
 }
 
 } //namespace nvimgcdcs

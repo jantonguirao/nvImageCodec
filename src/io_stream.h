@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include <cassert>
 #include <cstdio>
 #include <memory>
-#include <string>
 #include <stdexcept>
-#include <cassert>
+#include <string>
 
 namespace nvimgcdcs {
 
@@ -143,18 +143,32 @@ class IoStream
 
     /**
      * @brief Provides expected bytes of data which are going to be written.
-     *        and used so far.  
-     *        Gives possibility to pre/re-allocate raw_data buffer
+     *        Gives possibility to pre/re-allocate buffer for map function
      */
-    virtual void reserve(size_t bytes, size_t used){};
+    virtual void reserve(size_t bytes){};
 
     /**
-     * @brief Returns the raw pointer to the data in memory, if available,
-     *        otherwise returns nullptr
-     * 
-     * @return const void* 
+     * @brief Requests all data to be written to the output.
      */
-    virtual const void* raw_data() const { return nullptr; };
+    virtual void flush(){};
+
+    /**
+     * @brief  Maps stream data into memory
+     * 
+     * @param offset Offset in the stream to begin mapping.
+     * @param size Length of the mapping
+     *  
+     * @return const void* pointer to mapped data or nullptr, if it cannot be mapped
+     */
+    virtual void* map(size_t offset, size_t size) const { return nullptr; };
+
+    /**
+     * @brief Unmaps previously mapped data
+     * 
+     * @param addr Pointer to mapped data
+     * @param size Length of data to unmap 
+     */
+    virtual void unmap(void* ptr, size_t size){};
 };
 
 } // namespace nvimgcdcs

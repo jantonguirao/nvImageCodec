@@ -33,7 +33,6 @@ struct CommandLineParams
     int num_decomps;
     int code_block_w;
     int code_block_h;
-    bool dec_color_trans;
     bool enc_color_trans;
     bool optimized_huffman;
     bool ignore_orientation;
@@ -86,14 +85,6 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         std::cout << "  -b --batch_size\t: Batch size (default 1)" << std::endl;
         std::cout << "  -d --device\t: Cuda device (default 0)" << std::endl;
         std::cout << std::endl;
-        std::cout << "Decoding options: " << std::endl;
-        std::cout << "  --dec_color_trans\t: Decoding color transfrom. (default false)" << std::endl
-                  << "  \t\t\t - When true, for jpeg with 4 color components assumes CMYK colorspace "
-                     "and converts to RGB/YUV."
-                  << std::endl
-                  << "  \t\t\t - When true, for Jpeg2k and 422/420 chroma subsampling enable "
-                     "conversion to RGB."
-                  << std::endl;
         std::cout << "  --ignore_orientation\t: Ignore EXFIF orientation (default false)" << std::endl;
         std::cout << "  -i  --input\t\t: Path to single image or directory" << std::endl;
         std::cout << std::endl;
@@ -188,16 +179,12 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         params->code_block_h = atoi(argv[pidx + 1]);
         params->code_block_w = atoi(argv[pidx + 2]);
     }
-    params->dec_color_trans = false;
-    if ((pidx = find_param_index(argv, argc, "--dec_color_trans")) != -1) {
-        params->dec_color_trans = strcmp(argv[pidx + 1], "true") == 0;
-    }
     params->enc_color_trans = false;
     if ((pidx = find_param_index(argv, argc, "--enc_color_trans")) != -1) {
         params->enc_color_trans = strcmp(argv[pidx + 1], "true") == 0;
     }
 
-    params->optimized_huffman = false;
+    params->optimized_huffman = 0;
     if ((pidx = find_param_index(argv, argc, "--optimized_huffman")) != -1) {
         params->optimized_huffman = strcmp(argv[pidx + 1], "true") == 0;
     }

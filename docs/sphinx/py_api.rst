@@ -132,15 +132,15 @@ DecodeParams
                 
                 Default constructor
 
-            2. __init__(self: nvidia.nvimgcodecs.DecodeParams, enable_orientation: bool = True, enable_color_conversion: bool = True) -> None
+            2. __init__(self: nvidia.nvimgcodecs.DecodeParams, apply_exif_orientation: bool = True, enable_color_conversion: bool = True) -> None
                 
-                Constructor with enable_orientation and enable_color_conversion parameters 
+                Constructor with apply_exif_orientation and enable_color_conversion parameters 
 
         .. py:attribute:: enable_color_conversion
 
             Enable color conversion to RGB
 
-        .. py:attribute:: enable_orientation
+        .. py:attribute:: apply_exif_orientation
 
             Apply EXIF orientation if available
 
@@ -175,7 +175,7 @@ Decoder
 
                             ``device_id``: Device id to execute decoding on.  As default, it is current device. (device_id = -1)
 
-                            ``backend_kinds``: List of allowed backend kinds. If empty, all backends are allowed with default parameters.
+                            ``backend_kinds``: List of allowed backend kinds. If empty or None, all backends are allowed with default parameters.
 
                             ``options``: Decoder specific options e.g.: “nvjpeg:fancy_upsampling=1”  
 
@@ -190,22 +190,6 @@ Decoder
                     **Args:**
 
                         ``data``: Buffer with bytes to decode.
-
-                        ``params``: Decode parameters.
-
-                        ``cuda_stream``: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-
-                    **Returns:**
-
-                        ``nvidia.nvimgcodecs.Image``: Decoded image.
-
-            2. **decode(self: nvidia.nvimgcodecs.Decoder, file_name: str, params: nvidia.nvimgcodecs.DecodeParams = nvidia.nvimgcodecs.DecodeParams(), cuda_stream: int = 0) -> nvidia.nvimgcodecs.Image**
-                    
-                    Executes decoding of file.
-
-                    **Args:**
-
-                        ``file_name``: File name to decode.
 
                         ``params``: Decode parameters.
 
@@ -231,9 +215,29 @@ Decoder
 
                         ``List[nvidia.nvimgcodecs.Image]``:  List of decoded images.
 
-            4. **decode(self: nvidia.nvimgcodecs.Decoder, data_list: List[str], params: nvidia.nvimgcodecs.DecodeParams = nvidia.nvimgcodecs.DecodeParams(), cuda_stream: int = 0) -> List[nvidia.nvimgcodecs.Image]**
+        .. py:method:: read(*args, **kwargs)
+
+            Overloaded function.
+
+            1. **read(self: nvidia.nvimgcodecs.Decoder, file_name: str, params: nvidia.nvimgcodecs.DecodeParams = nvidia.nvimgcodecs.DecodeParams(), cuda_stream: int = 0) -> nvidia.nvimgcodecs.Image**
                     
-                    Executes file batch decoding.
+                    Read file and decode it.
+
+                    **Args:**
+
+                        ``file_name``: File name to decode.
+
+                        ``params``: Decode parameters.
+
+                        ``cuda_stream``: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
+
+                    **Returns:**
+
+                        ``nvidia.nvimgcodecs.Image``: Decoded image.
+
+            2. **read(self: nvidia.nvimgcodecs.Decoder, data_list: List[str], params: nvidia.nvimgcodecs.DecodeParams = nvidia.nvimgcodecs.DecodeParams(), cuda_stream: int = 0) -> List[nvidia.nvimgcodecs.Image]**
+                    
+                    Read batch of files and decode them.
 
                     **Args:**
 
@@ -341,7 +345,7 @@ Encoder
 
                         ``device_id``: Device id to execute encoding on. As default, it is current device. (device_id = -1)
 
-                        ``backend_kinds``: List of allowed backend kinds. If empty, all backends are allowed with default parameters.
+                        ``backend_kinds``: List of allowed backend kinds. If empty or None, all backends are allowed with default parameters.
                         
                         ``options``: Encoder specific options.       
 
@@ -367,27 +371,8 @@ Encoder
 
                         ``bytes``: Buffer with compressed code stream.
 
-            2. **encode(self: nvidia.nvimgcodecs.Encoder, file_name: str, image: nvidia.nvimgcodecs.Image, codec: str = ‘’, params: nvidia.nvimgcodecs.EncodeParams = nvidia.nvimgcodecs.EncodeParams(), cuda_stream: int = 0) -> None**
-                    
-                    Encode image to file.
 
-                    **Args:**
-
-                        ``file_name``: File name to save encoded code stream. 
-
-                        ``image``: Image to encode
-                        
-                        ``codec`` (optional): String that defines the output format e.g.’jpeg2k’. When it is file extension it must include a leading period e.g. ‘.jp2’. If codec is not specified, it is deducted based on file extension. If there is no extension by default ‘jpeg’ is chosen.
-
-                        ``params``: Encode parameters.
-
-                        ``cuda_stream``: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-
-                    **Returns:**
-
-                        ``None``
-
-            3. **encode(self: nvidia.nvimgcodecs.Encoder, images: List[nvidia.nvimgcodecs.Image], codec: str, params: nvidia.nvimgcodecs.EncodeParams = nvidia.nvimgcodecs.EncodeParams(), cuda_stream: int = 0) -> List[bytes]**
+            2. **encode(self: nvidia.nvimgcodecs.Encoder, images: List[nvidia.nvimgcodecs.Image], codec: str, params: nvidia.nvimgcodecs.EncodeParams = nvidia.nvimgcodecs.EncodeParams(), cuda_stream: int = 0) -> List[bytes]**
                     
                     Encode batch of images to buffers.
 
@@ -405,9 +390,33 @@ Encoder
 
                         ``List[bytes]``: List of buffers with compressed code streams.
 
-            4. **encode(self: nvidia.nvimgcodecs.Encoder, file_names: List[str], images: List[nvidia.nvimgcodecs.Image], codec: str = ‘’, params: nvidia.nvimgcodecs.EncodeParams = nvidia.nvimgcodecs.EncodeParams(), cuda_stream: int = 0) -> None**
+        .. py:method:: write(*args, **kwargs)
+
+            Overloaded function.
+
+            1. **write(self: nvidia.nvimgcodecs.Encoder, file_name: str, image: nvidia.nvimgcodecs.Image, codec: str = ‘’, params: nvidia.nvimgcodecs.EncodeParams = nvidia.nvimgcodecs.EncodeParams(), cuda_stream: int = 0) -> None**
                     
-                    Encode batch of images to files.
+                    Encode image and write to file.
+
+                    **Args:**
+
+                        ``file_name``: File name to save encoded code stream. 
+
+                        ``image``: Image to encode
+                        
+                        ``codec`` (optional): String that defines the output format e.g.’jpeg2k’. When it is file extension it must include a leading period e.g. ‘.jp2’. If codec is not specified, it is deducted based on file extension. If there is no extension by default ‘jpeg’ is chosen.
+
+                        ``params``: Encode parameters.
+
+                        ``cuda_stream``: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
+
+                    **Returns:**
+
+                        ``None``
+
+            2. **write(self: nvidia.nvimgcodecs.Encoder, file_names: List[str], images: List[nvidia.nvimgcodecs.Image], codec: str = ‘’, params: nvidia.nvimgcodecs.EncodeParams = nvidia.nvimgcodecs.EncodeParams(), cuda_stream: int = 0) -> None**
+                    
+                    Encode batch of images and write to files.
 
                     **Args:**
 

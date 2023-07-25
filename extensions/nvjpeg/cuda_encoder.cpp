@@ -49,82 +49,82 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessin
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(params);
 
-        auto result = status;
-        auto code_stream = code_streams;
-        auto image = images;
-        for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
+    auto result = status;
+    auto code_stream = code_streams;
+    auto image = images;
+    for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
+        *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
-            if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
-                *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+        if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            continue;
+        }
+
+        nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(cs_image_info.next);
+        while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+            jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
+        if (jpeg_image_info) {
+
+            static const std::set<nvimgcdcsJpegEncoding_t> supported_encoding{
+                NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN};
+            if (supported_encoding.find(jpeg_image_info->encoding) == supported_encoding.end()) {
+                *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
                 continue;
             }
+        }
 
-            nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(cs_image_info.next);
-            while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
-                jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
-            if (jpeg_image_info) {
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*image)->getImageInfo((*image)->instance, &image_info);
+        nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
 
-                static const std::set<nvimgcdcsJpegEncoding_t> supported_encoding{
-                    NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN};
-                if (supported_encoding.find(jpeg_image_info->encoding) == supported_encoding.end()) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
-                    continue;
-                }
+        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
+            NVIMGCDCS_COLORSPEC_UNCHANGED, NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
+        if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+        }
+        static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422,
+            NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY};
+        if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if (supported_css.find(out_image_info.chroma_subsampling) == supported_css.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+
+        static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
+            NVIMGCDCS_SAMPLEFORMAT_P_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_I_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_P_BGR,
+            NVIMGCDCS_SAMPLEFORMAT_I_BGR,
+            NVIMGCDCS_SAMPLEFORMAT_P_YUV,
+            NVIMGCDCS_SAMPLEFORMAT_P_Y,
+        };
+        if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+
+        if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y) {
+            if ((image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_GRAY) ||
+                (out_image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_GRAY)) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
             }
-
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*image)->getImageInfo((*image)->instance, &image_info);
-            nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
-
-            static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
-                NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
-            if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
+            if ((image_info.color_spec != NVIMGCDCS_COLORSPEC_GRAY) && (image_info.color_spec != NVIMGCDCS_COLORSPEC_SYCC)) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
                 *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
             }
-            static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422,
-                NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY};
-            if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
-            }
-            if (supported_css.find(out_image_info.chroma_subsampling) == supported_css.end()) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
-            }
+        }
 
-            static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
-                NVIMGCDCS_SAMPLEFORMAT_P_RGB,
-                NVIMGCDCS_SAMPLEFORMAT_I_RGB,
-                NVIMGCDCS_SAMPLEFORMAT_P_BGR,
-                NVIMGCDCS_SAMPLEFORMAT_I_BGR,
-                NVIMGCDCS_SAMPLEFORMAT_P_YUV,
-                NVIMGCDCS_SAMPLEFORMAT_P_Y,
-            };
-            if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
-            }
-
-            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y) {
-                if ((image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_GRAY) ||
-                    (out_image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_GRAY)) {
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
-                }
-                if ((image_info.color_spec != NVIMGCDCS_COLORSPEC_GRAY) && (image_info.color_spec != NVIMGCDCS_COLORSPEC_SYCC)) {
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
-                }
-            }
-
-            for (uint32_t p = 0; p < image_info.num_planes; ++p) {
-                auto sample_type = image_info.plane_info[p].sample_type;
-                if (sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
-                }
+        for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+            auto sample_type = image_info.plane_info[p].sample_type;
+            if (sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
             }
         }
+    }
     } catch (const NvJpegException& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if nvjpge can encode - " << e.info());
         return e.nvimgcdcsStatus();
@@ -221,9 +221,9 @@ NvJpegCudaEncoderPlugin::Encoder::~Encoder()
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg_destroy_encoder");
-        encode_state_batch_.reset();
-        if (handle_)
-            XM_NVJPEG_E_LOG_DESTROY(nvjpegDestroy(handle_));
+    encode_state_batch_.reset();
+    if (handle_)
+        XM_NVJPEG_E_LOG_DESTROY(nvjpegDestroy(handle_));
     } catch (const NvJpegException& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not properly destroy nvjpeg encoder - " << e.info());
     }
@@ -373,10 +373,10 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
 
                 nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 size_t output_size;
-                io_stream->reserve(io_stream->instance, length, length);
+                io_stream->reserve(io_stream->instance, length);
                 io_stream->seek(io_stream->instance, 0, SEEK_SET);
                 io_stream->write(io_stream->instance, &output_size, static_cast<void*>(&t.compressed_data_[0]), t.compressed_data_.size());
-
+                io_stream->flush(io_stream->instance);
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             } catch (const NvJpegException& e) {
                 NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not encode jpeg code stream - " << e.info());
@@ -404,10 +404,10 @@ nvimgcdcsStatus_t NvJpegCudaEncoderPlugin::Encoder::encodeBatch(
                 NvJpegCudaEncoderPlugin::EncodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
         }
 
-        int batch_size = encode_state_batch_->samples_.size();
-        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            this->encode(sample_idx);
-        }
+    int batch_size = encode_state_batch_->samples_.size();
+    for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
+        this->encode(sample_idx);
+    }
     } catch (const NvJpegException& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not encode jpeg batch - " << e.info());
         for (int i = 0; i < batch_size; ++i) {

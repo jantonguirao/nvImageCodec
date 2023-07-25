@@ -19,7 +19,7 @@ namespace nvimgcdcs {
 namespace py = pybind11;
 using namespace py::literals;
 
-struct MctMode {
+struct ColorSpec {
     static void exportToPython(py::module& m);
 };
 

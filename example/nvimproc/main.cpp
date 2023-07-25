@@ -150,8 +150,7 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
 
     // Prepare decode parameters
     nvimgcdcsDecodeParams_t decode_params{};
-    decode_params.enable_color_conversion = true;
-    decode_params.enable_orientation = true;
+    decode_params.apply_exif_orientation= 1;
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
     // Preparing output image_info
@@ -217,7 +216,6 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
     encode_params->type = NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS;
     encode_params->quality = params.quality;
     encode_params->target_psnr = params.target_psnr;
-    encode_params->mct_mode = params.enc_color_trans ? NVIMGCDCS_MCT_MODE_YCC : NVIMGCDCS_MCT_MODE_RGB;
 
     //codec sepcific encode params
     if (params.output_codec == "jpeg2k") {
@@ -256,10 +254,6 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
         std::cout << "\t - codec:" << params.output_codec.data() << std::endl;
     }
 
-    nvimgcdcsCodeStream_t code_stream;
-    strcpy(image_info.codec_name, params.output_codec.c_str());
-    nvimgcdcsCodeStreamCreateToFile(instance, &code_stream, output_path.string().c_str(), &image_info);
-
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
@@ -268,6 +262,16 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsJpeg2kEncodeParams_t jpeg2k_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
     nvimgcdcsJpegEncodeParams_t jpeg_encode_params{NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
     fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params, &out_jpeg_image_info);
+
+    nvimgcdcsImageInfo_t out_image_info(image_info);
+    strcpy(out_image_info.codec_name, params.output_codec.c_str());
+    out_image_info.next = &out_jpeg_image_info;
+    if (params.enc_color_trans) {
+        out_image_info.color_spec = NVIMGCDCS_COLORSPEC_SYCC;
+    }
+    nvimgcdcsCodeStream_t code_stream;
+    nvimgcdcsCodeStreamCreateToFile(instance, &code_stream, output_path.string().c_str(), &out_image_info);
+
 
     nvimgcdcsEncoder_t encoder;
     nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr);
@@ -435,11 +439,11 @@ int main(int argc, const char* argv[])
 
     nvimgcdcsInstance_t instance;
     nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-    instance_create_info.load_builtin_modules = true;
-    instance_create_info.load_extension_modules = true;
-    instance_create_info.default_debug_messenger = true;
+    instance_create_info.load_builtin_modules = 1;
+    instance_create_info.load_extension_modules = 1;
+    instance_create_info.default_debug_messenger = 1;
     instance_create_info.message_severity = verbosity2severity(params.verbose);
-    instance_create_info.message_type = NVIMGCDCS_DEBUG_MESSAGE_TYPE_ALL;
+    instance_create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
 

@@ -50,7 +50,7 @@ int writeBMP(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, n
     size_t written_size;
     std::string bm("BM");
     size_t length = 2 /*BM*/ + sizeof(headers) + paddedsize;
-    io_stream->reserve(io_stream->instance, length, length);
+    io_stream->reserve(io_stream->instance, length);
 
     io_stream->write(io_stream->instance, &written_size, static_cast<void*>(bm.data()), 2);
 
@@ -126,6 +126,7 @@ int writeBMP(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, n
             }
         }
     }
+    io_stream->flush(io_stream->instance);
     return 0;
 }
 
@@ -196,58 +197,55 @@ nvimgcdcsStatus_t EncoderImpl::canEncode(nvimgcdcsProcessingStatus_t* status, nv
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images);
         XM_CHECK_NULL(params);
-        auto result = status;
-        auto code_stream = code_streams;
-        auto image = images;
-        for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
+    auto result = status;
+    auto code_stream = code_streams;
+    auto image = images;
+    for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
+        *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
-            if (strcmp(cs_image_info.codec_name, "bmp") != 0) {
-                *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
-                continue;
-            }
-            if (params->mct_mode != NVIMGCDCS_MCT_MODE_RGB) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED;
+        if (strcmp(cs_image_info.codec_name, "bmp") != 0) {
+            *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            continue;
+        }
+
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*image)->getImageInfo((*image)->instance, &image_info);
+        nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
+
+        if (image_info.color_spec != NVIMGCDCS_COLORSPEC_SRGB) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+        }
+        if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_NONE) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if (out_image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_NONE) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if ((image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_RGB)) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+        if (((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.num_planes != 3)) ||
+            ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) && (image_info.num_planes != 1))) {
+            *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+        }
+
+        for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+            if (image_info.plane_info[p].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
             }
 
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*image)->getImageInfo((*image)->instance, &image_info);
-            nvimgcdcsImageInfo_t out_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
-
-            if (image_info.color_spec != NVIMGCDCS_COLORSPEC_SRGB) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
-            }
-            if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_NONE) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
-            }
-            if (out_image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_NONE) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
-            }
-            if ((image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_RGB)) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
-            }
-            if (((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.num_planes != 3)) ||
-                ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) && (image_info.num_planes != 1))) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
-            }
-
-            for (uint32_t p = 0; p < image_info.num_planes; ++p) {
-                if (image_info.plane_info[p].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
-                }
-
-                if (((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.plane_info[p].num_channels != 1)) ||
-                    ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) && (image_info.plane_info[p].num_channels != 3))) {
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
-                }
+            if (((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.plane_info[p].num_channels != 1)) ||
+                ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) && (image_info.plane_info[p].num_channels != 3))) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
             }
         }
+    }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if nvbmp can encode - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -260,7 +258,7 @@ nvimgcdcsStatus_t EncoderImpl::static_can_encode(nvimgcdcsEncoder_t encoder, nvi
         auto handle = reinterpret_cast<EncoderImpl*>(encoder);
         return handle->canEncode(status, images, code_streams, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -283,7 +281,7 @@ nvimgcdcsStatus_t NvBmpEncoderPlugin::create(
         *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new EncoderImpl(plugin_id_, framework_, device_id, backend_params));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvbmp encoder - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -296,7 +294,7 @@ nvimgcdcsStatus_t NvBmpEncoderPlugin::static_create(
         auto handle = reinterpret_cast<NvBmpEncoderPlugin*>(instance);
         handle->create(encoder, device_id, backend_params, options);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -312,7 +310,7 @@ nvimgcdcsStatus_t EncoderImpl::static_destroy(nvimgcdcsEncoder_t encoder)
         auto handle = reinterpret_cast<EncoderImpl*>(encoder);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -324,24 +322,24 @@ nvimgcdcsProcessingStatus_t EncoderImpl::encode(const char* plugin_id, const nvi
     try {
         NVIMGCDCS_LOG_TRACE(framework, plugin_id, "nvbmp_encoder_encode");
 
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         auto ret = image->getImageInfo(image->instance, &image_info);
         if (ret != NVIMGCDCS_STATUS_SUCCESS)
             return NVIMGCDCS_PROCESSING_STATUS_FAIL;
 
-        unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-        if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
+    if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
             writeBMP<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(plugin_id, framework, code_stream->io_stream, host_buffer,
                 image_info.plane_info[0].row_stride, NULL, 0, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height, 8,
                 true);
-        } else {
+    } else {
             writeBMP<unsigned char>(plugin_id, framework, code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
-                host_buffer + image_info.plane_info[0].row_stride * image_info.plane_info[0].height, image_info.plane_info[1].row_stride,
-                host_buffer + +image_info.plane_info[0].row_stride * image_info.plane_info[0].height +
-                    image_info.plane_info[1].row_stride * image_info.plane_info[0].height,
-                image_info.plane_info[2].row_stride, image_info.plane_info[0].width, image_info.plane_info[0].height, 8, true);
-        }
+            host_buffer + image_info.plane_info[0].row_stride * image_info.plane_info[0].height, image_info.plane_info[1].row_stride,
+            host_buffer + +image_info.plane_info[0].row_stride * image_info.plane_info[0].height +
+                image_info.plane_info[1].row_stride * image_info.plane_info[0].height,
+            image_info.plane_info[2].row_stride, image_info.plane_info[0].width, image_info.plane_info[0].height, 8, true);
+    }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Could not encode bmp code stream - " << e.what());
         return NVIMGCDCS_PROCESSING_STATUS_FAIL;
@@ -382,13 +380,13 @@ nvimgcdcsStatus_t EncoderImpl::encodeBatch(
                     auto result = encode(plugin_id, framework, sample.image, sample.code_stream, sample.params);
                     sample.image->imageReady(sample.image->instance, result);
                 });
-        }
+            }
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not encode bmp batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_INTERNAL_ERROR; 
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -401,7 +399,7 @@ nvimgcdcsStatus_t EncoderImpl::static_encode_batch(nvimgcdcsEncoder_t encoder, n
         auto handle = reinterpret_cast<EncoderImpl*>(encoder);
         return handle->encodeBatch(images, code_streams, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

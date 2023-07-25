@@ -29,19 +29,19 @@ ILogger* Logger::get()
 }
 
 void Logger::log(
-    const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type, const std::string& message)
+    const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_category, const std::string& message)
 {
     nvimgcdcsDebugMessageData_t data{NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr, message.c_str(), 0, nullptr, "nvimgcodecs", 0};
 
-    log(message_severity, message_type, &data);
+    log(message_severity, message_category, &data);
 }
 
-void Logger::log(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
+void Logger::log(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_category,
     const nvimgcdcsDebugMessageData_t* data)
 {
     for (auto dbgmsg : messengers_) {
-        if ((dbgmsg->getDesc()->message_severity & message_severity) && (dbgmsg->getDesc()->message_type & message_type)) {
-            dbgmsg->getDesc()->user_callback(message_severity, message_type, data, dbgmsg->getDesc()->user_data);
+        if ((dbgmsg->getDesc()->message_severity & message_severity) && (dbgmsg->getDesc()->message_category & message_category)) {
+            dbgmsg->getDesc()->user_callback(message_severity, message_category, data, dbgmsg->getDesc()->user_data);
         }
     }
 }

@@ -147,10 +147,10 @@ nvimgcdcsStatus_t PluginFramework::static_get_executor(void* instance, nvimgcdcs
 }
 
 nvimgcdcsStatus_t PluginFramework::static_log(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
-    const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data)
+    const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data)
 {
     PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
-    return handle->log(message_severity, message_type, data);
+    return handle->log(message_severity, message_category, data);
 }
 
 nvimgcdcsStatus_t PluginFramework::registerExtension(
@@ -412,9 +412,9 @@ nvimgcdcsStatus_t PluginFramework::getExecutor(nvimgcdcsExecutorDesc_t** result)
 }
 
 nvimgcdcsStatus_t PluginFramework::log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-    const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* data)
+    const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data)
 {
-    logger_->log(message_severity, message_type, data);
+    logger_->log(message_severity, message_category, data);
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 } // namespace nvimgcdcs

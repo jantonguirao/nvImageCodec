@@ -38,7 +38,7 @@ class ImageGenericEncoder: public IWorkManager<nvimgcdcsEncodeParams_t>
     explicit ImageGenericEncoder(ILogger* logger, int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char *options = nullptr);
     ~ImageGenericEncoder() override;
     void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params,
-        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
+        nvimgcdcsProcessingStatus_t* processing_status, int force_format);
     std::unique_ptr<ProcessingResultsFuture> encode(const std::vector<IImage*>& images,
         const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params);
 

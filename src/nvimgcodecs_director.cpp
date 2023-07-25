@@ -37,7 +37,7 @@ NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_in
     , device_allocator_(create_info.device_allocator)
     , pinned_allocator_(create_info.pinned_allocator)
     , default_debug_messenger_manager_(
-          &logger_, create_info.message_severity, create_info.message_type, create_info.default_debug_messenger)
+          &logger_, create_info.message_severity, create_info.message_category, create_info.default_debug_messenger)
     , codec_registry_(&logger_)
     , plugin_framework_(&logger_, &codec_registry_, std::move(std::make_unique<Environment>()),
           std::move(std::make_unique<DirectoryScaner>()), std::move(std::make_unique<LibraryLoader>()),

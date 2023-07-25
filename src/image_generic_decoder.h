@@ -38,7 +38,7 @@ class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
     explicit ImageGenericDecoder(ILogger* logger, int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char *options = nullptr);
     ~ImageGenericDecoder();
     void canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
-        nvimgcdcsProcessingStatus_t* processing_status, bool force_format);
+        nvimgcdcsProcessingStatus_t* processing_status, int force_format);
     std::unique_ptr<ProcessingResultsFuture> decode(
         const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params);
 

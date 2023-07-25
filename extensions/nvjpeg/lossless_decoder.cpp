@@ -98,12 +98,14 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
                 *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
 
             nvimgcdcsIoStreamDesc_t* io_stream = (*code_stream)->io_stream;
-            const void* encoded_stream_data = nullptr;
             size_t encoded_stream_data_size = 0;
-            io_stream->raw_data(io_stream->instance, &encoded_stream_data);
             io_stream->size(io_stream->instance, &encoded_stream_data_size);
 
-            if (!encoded_stream_data) {
+            void* encoded_stream_data = nullptr;
+            void* mapped_encoded_stream_data = nullptr;
+            io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
+
+            if (!mapped_encoded_stream_data) {
                 io_stream->seek(io_stream->instance, 0, SEEK_SET);
                 size_t read_nbytes = 0;
                 io_stream->read(io_stream->instance, &read_nbytes, &parse_state_->buffer_[0], encoded_stream_data_size);
@@ -112,6 +114,8 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
                     return NVIMGCDCS_STATUS_BAD_CODESTREAM;
                 }
                 encoded_stream_data = &parse_state_->buffer_[0];
+            } else {
+                encoded_stream_data = mapped_encoded_stream_data;
             }
 
             XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size,
@@ -124,6 +128,9 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
             } else {
                 *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
                 NVIMGCDCS_LOG_INFO(framework_, plugin_id_, "decoding this lossless jpeg image is NOT supported");
+            }
+            if (mapped_encoded_stream_data) {
+                io_stream->unmap(io_stream->instance, &mapped_encoded_stream_data, encoded_stream_data_size);
             }
         }
     } catch (const NvJpegException& e) {
@@ -159,9 +166,9 @@ NvJpegLosslessDecoderPlugin::ParseState::~ParseState()
 
 NvJpegLosslessDecoderPlugin::Decoder::Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id,
     const nvimgcdcsBackendParams_t* backend_params, const char* options)
-    : device_allocator_{nullptr, nullptr, nullptr}
+    : plugin_id_(plugin_id)
+    , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
-    , plugin_id_(plugin_id)
     , framework_(framework)
     , device_id_(device_id)
     , backend_params_(backend_params)
@@ -339,11 +346,10 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
             }
 
             if (eligible_image) {
-                const void* encoded_stream_data = nullptr;
                 size_t encoded_stream_data_size = 0;
-                io_stream->raw_data(io_stream->instance, &encoded_stream_data);
                 io_stream->size(io_stream->instance, &encoded_stream_data_size);
-
+                void* encoded_stream_data = nullptr;
+                io_stream->map(io_stream->instance, &encoded_stream_data, 0, encoded_stream_data_size);
                 batched_bitstreams.push_back(static_cast<const unsigned char*>(encoded_stream_data));
                 batched_bitstreams_size.push_back(encoded_stream_data_size);
                 batched_output.push_back(nvjpeg_image);
@@ -370,7 +376,10 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 nvimgcdcsImageDesc_t* image = decode_state_batch_->samples_[sample_idx].image;
                 nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 image->getImageInfo(image->instance, &image_info);
+                nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
+                nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, decode_state_batch_->event_));
+                io_stream->unmap(io_stream->instance, &batched_bitstreams[sample_idx], batched_bitstreams_size[sample_idx]);
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             }
         } catch (const NvJpegException& e) {

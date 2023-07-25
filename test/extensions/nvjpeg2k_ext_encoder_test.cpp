@@ -50,7 +50,6 @@ class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg2k_enc_params_, 0};
         params_.quality = 0;
         params_.target_psnr = 30;
-        params_.mct_mode = NVIMGCDCS_MCT_MODE_YCC;
     }
 
     void TearDown() override
@@ -98,7 +97,7 @@ class NvJpeg2kExtEncoderTestSingleImage : public NvJpeg2kExtEncoderTestBase,
 TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
 {
     nvimgcdcsImageInfo_t ref_cs_image_info;
-    bool enable_color_conversion = !(sample_format_ == NVIMGCDCS_SAMPLEFORMAT_P_YUV || sample_format_ == NVIMGCDCS_SAMPLEFORMAT_P_Y);
+    bool enable_color_conversion = color_spec_ == NVIMGCDCS_COLORSPEC_SRGB;
     DecodeReference(resources_dir, image_file_, sample_format_, enable_color_conversion, &ref_cs_image_info);
     image_info_.plane_info[0] = ref_cs_image_info.plane_info[0];
     PrepareImageForFormat();
@@ -130,7 +129,7 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
     strcpy(cs_image_info.codec_name, "jpeg2k");
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
-                                            &NvJpeg2kExtEncoderTestSingleImage::GetBufferStatic, &cs_image_info));
+                                            &NvJpeg2kExtEncoderTestSingleImage::ResizeBufferStatic, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
@@ -248,7 +247,7 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
     strcpy(cs_image_info.codec_name, "jpeg2k");
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
-                                            &NvJpeg2kExtEncoderTestSingleImageWithStatus::GetBufferStatic, &cs_image_info));
+                                            &NvJpeg2kExtEncoderTestSingleImageWithStatus::ResizeBufferStatic, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));

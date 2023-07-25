@@ -71,7 +71,7 @@ class PluginFramework
     nvimgcdcsStatus_t unregisterParser(const nvimgcdcsParserDesc_t* desc);
 
     nvimgcdcsStatus_t getExecutor(nvimgcdcsExecutorDesc_t** result);
-    nvimgcdcsStatus_t log(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageType_t message_type,
+    nvimgcdcsStatus_t log(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_category,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
     static nvimgcdcsStatus_t static_register_encoder(void* instance, const nvimgcdcsEncoderDesc_t* desc, float priority);
@@ -83,7 +83,7 @@ class PluginFramework
 
     static nvimgcdcsStatus_t static_get_executor(void* instance, nvimgcdcsExecutorDesc_t** result);
     static nvimgcdcsStatus_t static_log(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageType_t message_type, const nvimgcdcsDebugMessageData_t* callback_data);
+        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data);
 
     ILogger* logger_;
     std::unique_ptr<IEnvironment> env_;

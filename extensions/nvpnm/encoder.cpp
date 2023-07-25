@@ -16,7 +16,10 @@ static int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t 
     size_t pitchB, const D* chanA, size_t pitchA, int width, int height, int num_components, uint8_t precision)
 {
     size_t written_size;
-    int red, green, blue, alpha;
+    int red = 0;
+    int green = 0;
+    int blue = 0;
+    int alpha = 0;
     std::stringstream ss{};
     if (num_components == 4) {
         ss << "P7\n";
@@ -40,7 +43,7 @@ static int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t 
     }
     std::string header = ss.str();
     size_t length = header.size() + (precision / 8) * num_components * height * width;
-    io_stream->reserve(io_stream->instance, length, length);
+    io_stream->reserve(io_stream->instance, length);
     io_stream->write(io_stream->instance, &written_size, static_cast<void*>(header.data()), header.size());
 
     for (int y = 0; y < height; y++) {
@@ -89,6 +92,7 @@ static int write_pnm(nvimgcdcsIoStreamDesc_t* io_stream, const D* chanR, size_t 
             }
         }
     }
+    io_stream->flush(io_stream->instance);
     return 0;
 }
 
@@ -114,7 +118,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::create(
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create pnm encoder - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 }
 
@@ -126,7 +130,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::static_create(
         auto handle = reinterpret_cast<NvPnmEncoderPlugin*>(instance);
         return handle->create(encoder, device_id, backend_params, options);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -137,7 +141,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::static_destroy(nvimgcdcsEncoder_t
         auto handle = reinterpret_cast<NvPnmEncoderPlugin::Encoder*>(encoder);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -185,9 +189,6 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStat
             if (*result != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
                 continue;
             }
-            if (params->mct_mode != NVIMGCDCS_MCT_MODE_RGB) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_MCT_UNSUPPORTED;
-            }
 
             nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
             (*image)->getImageInfo((*image)->instance, &image_info);
@@ -227,7 +228,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::canEncode(nvimgcdcsProcessingStat
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if pnm can encode - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -240,7 +241,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEncode
         auto handle = reinterpret_cast<NvPnmEncoderPlugin::Encoder*>(encoder);
         return handle->canEncode(status, images, code_streams, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -249,22 +250,22 @@ nvimgcdcsProcessingStatus_t NvPnmEncoderPlugin::Encoder::encode(const char* plug
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework, plugin_id, "pnm_encode");
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        image->getImageInfo(image->instance, &image_info);
-        unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    image->getImageInfo(image->instance, &image_info);
+    unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-        if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
-            write_pnm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
-                NULL, 0, NULL, 0, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
-                image_info.plane_info[0].num_channels, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
-        } else if (NVIMGCDCS_SAMPLEFORMAT_P_RGB == image_info.sample_format) {
-            write_pnm<unsigned char>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
-                host_buffer + image_info.plane_info[0].row_stride * image_info.plane_info[0].height, image_info.plane_info[1].row_stride,
-                host_buffer + +image_info.plane_info[0].row_stride * image_info.plane_info[0].height +
-                    image_info.plane_info[1].row_stride * image_info.plane_info[0].height,
-                image_info.plane_info[2].row_stride, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
-                image_info.num_planes, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
-        } else {
+    if (NVIMGCDCS_SAMPLEFORMAT_I_RGB == image_info.sample_format) {
+        write_pnm<unsigned char, NVIMGCDCS_SAMPLEFORMAT_I_RGB>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
+            NULL, 0, NULL, 0, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
+            image_info.plane_info[0].num_channels, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
+    } else if (NVIMGCDCS_SAMPLEFORMAT_P_RGB == image_info.sample_format) {
+        write_pnm<unsigned char>(code_stream->io_stream, host_buffer, image_info.plane_info[0].row_stride,
+            host_buffer + image_info.plane_info[0].row_stride * image_info.plane_info[0].height, image_info.plane_info[1].row_stride,
+            host_buffer + +image_info.plane_info[0].row_stride * image_info.plane_info[0].height +
+                image_info.plane_info[1].row_stride * image_info.plane_info[0].height,
+            image_info.plane_info[2].row_stride, NULL, 0, image_info.plane_info[0].width, image_info.plane_info[0].height,
+            image_info.num_planes, image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8 ? 8 : 16);
+    } else {
             return NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED | NVIMGCDCS_PROCESSING_STATUS_FAIL;
         }
         return NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
@@ -295,7 +296,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::encodeBatch(
             encode_state_batch_->samples_[sample_idx].code_stream = code_streams[sample_idx];
             encode_state_batch_->samples_[sample_idx].image = images[sample_idx];
             encode_state_batch_->samples_[sample_idx].params = params;
-        }
+            }
 
         nvimgcdcsExecutorDesc_t* executor;
         framework_->getExecutor(framework_->instance, &executor);
@@ -316,7 +317,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::encodeBatch(
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 }
 
@@ -328,7 +329,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::static_encode_batch(nvimgcdcsEnco
         auto handle = reinterpret_cast<NvPnmEncoderPlugin::Encoder*>(encoder);
         return handle->encodeBatch(images, code_streams, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

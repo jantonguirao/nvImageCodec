@@ -26,14 +26,15 @@ class DecodeParams
 {
   public:
     DecodeParams();    
-    bool getEnableOrientation() {return decode_params_.enable_orientation;}
-    void setEnableOrientation(bool enable){decode_params_.enable_orientation = enable;};
-    bool getEnableColorConversion() {return decode_params_.enable_color_conversion;}
-    void setEnableColorConversion(bool enable){decode_params_.enable_color_conversion = enable;};
+    bool getEnableOrientation() {return decode_params_.apply_exif_orientation;}
+    void setEnableOrientation(bool enable){decode_params_.apply_exif_orientation = enable;};
+    nvimgcdcsColorSpec_t getColorSpec() {return color_spec_;}
+    void setColorSpec(nvimgcdcsColorSpec_t color_spec){color_spec_ = color_spec;};
 
     static void exportToPython(py::module& m);
 
     nvimgcdcsDecodeParams_t decode_params_;
+    nvimgcdcsColorSpec_t color_spec_;
 };
 
 } // namespace nvimgcdcs

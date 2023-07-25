@@ -34,11 +34,11 @@ class JPEGParserPlugin
         const nvimgcdcsFrameworkDesc_t *framework_;
     };
 
-    nvimgcdcsStatus_t canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
+    nvimgcdcsStatus_t canParse(int* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     nvimgcdcsStatus_t create(nvimgcdcsParser_t* parser);
 
     static nvimgcdcsStatus_t static_can_parse(
-        void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream);
+        void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream);
     static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsParser_t* parser);
 
     static constexpr const char* plugin_id_ = "jpeg_parser";

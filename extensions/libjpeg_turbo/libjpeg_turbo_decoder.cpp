@@ -135,14 +135,14 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             }
 
             // This codec doesn't apply EXIF orientation
-            if (params->enable_orientation && (info.orientation.flip_x || info.orientation.flip_y || info.orientation.rotated != 0)) {
+            if (params->apply_exif_orientation && (info.orientation.flip_x || info.orientation.flip_y || info.orientation.rotated != 0)) {
                 *result |= NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
             }
         }
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if libjpeg_turbo can decode - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 }
 
@@ -154,7 +154,7 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         return handle->canDecode(status, code_streams, images, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -210,7 +210,7 @@ nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::create(
         *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(plugin_id_, framework_, device_id, backend_params, options));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create libjpeg_turbo decoder - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -223,7 +223,7 @@ nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::static_create(
         auto handle = reinterpret_cast<LibjpegTurboDecoderPlugin*>(instance);
         handle->create(decoder, device_id, backend_params, options);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -240,7 +240,7 @@ nvimgcdcsStatus_t DecoderImpl::static_destroy(nvimgcdcsDecoder_t decoder)
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
@@ -302,11 +302,14 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
             return NVIMGCDCS_PROCESSING_STATUS_FAIL;
         }
 
-        const void* ptr;
-        ret = io_stream->raw_data(io_stream->instance, &ptr);
+        void* ptr;
+        ret = io_stream->map(io_stream->instance, &ptr, 0, data_size);
         if (ret != NVIMGCDCS_STATUS_SUCCESS) {
             return NVIMGCDCS_PROCESSING_STATUS_FAIL;
         }
+        auto auto_unmap =
+            std::shared_ptr<void>(ptr, [io_stream, data_size](void* addr) { io_stream->unmap(io_stream->instance, addr, data_size); });
+
         const uint8_t* encoded_data = static_cast<const uint8_t*>(ptr);
         if (!ptr && data_size > 0) {
             buffer.resize(data_size);
@@ -407,9 +410,8 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
         for (int i = 0; i < batch_size; ++i) {
             images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
-
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
@@ -421,7 +423,7 @@ nvimgcdcsStatus_t DecoderImpl::static_decode_batch(nvimgcdcsDecoder_t decoder, n
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         return handle->decodeBatch(code_streams, images, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

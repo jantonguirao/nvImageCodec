@@ -45,12 +45,11 @@ class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, options));
 
         jpeg_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
-        jpeg_enc_params_.optimized_huffman = false;
+        jpeg_enc_params_.optimized_huffman = 0;
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         params_.next = &jpeg_enc_params_;
         params_.quality = 95;
         params_.target_psnr = 0;
-        params_.mct_mode = NVIMGCDCS_MCT_MODE_YCC;
         out_jpeg_image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     }
 
@@ -111,7 +110,7 @@ TEST_P(NvJpegExtEncoderTestSingleImage, ValidFormatAndParameters)
     strcpy(cs_image_info.codec_name,"jpeg");
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
-                                            &NvJpegExtEncoderTestSingleImage::GetBufferStatic, &cs_image_info));
+                                            &NvJpegExtEncoderTestSingleImage::ResizeBufferStatic, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
@@ -276,7 +275,7 @@ TEST_P(NvJpegExtEncoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
     strcpy(cs_image_info.codec_name, "jpeg");
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
-     &NvJpegExtEncoderTestSingleImageWithStatus::GetBufferStatic, &cs_image_info));
+     &NvJpegExtEncoderTestSingleImageWithStatus::ResizeBufferStatic, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));

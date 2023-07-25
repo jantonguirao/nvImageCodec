@@ -40,7 +40,7 @@ size_t SkipComment(nvimgcdcsIoStreamDesc_t* io_stream)
 
 void SkipSpaces(nvimgcdcsIoStreamDesc_t* io_stream)
 {
-    size_t pos;
+    ptrdiff_t pos;
     io_stream->tell(io_stream->instance, &pos);
     while (true) {
         char c = ReadValue<char>(io_stream);
@@ -56,7 +56,7 @@ void SkipSpaces(nvimgcdcsIoStreamDesc_t* io_stream)
 
 int ParseInt(nvimgcdcsIoStreamDesc_t* io_stream)
 {
-    size_t pos;
+    ptrdiff_t pos;
     io_stream->tell(io_stream->instance, &pos);
     int int_value = 0;
     while (true) {
@@ -135,38 +135,38 @@ nvimgcdcsParserDesc_t* PNMParserPlugin::getParserDesc()
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t PNMParserPlugin::canParse(bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t PNMParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "pnm_parser_can_parse");
         CHECK_NULL(result);
         CHECK_NULL(code_stream);
-        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-        size_t length;
-        io_stream->size(io_stream->instance, &length);
-        io_stream->seek(io_stream->instance, 0, SEEK_SET);
-        if (length < 3) {
-            *result = false;
-            return NVIMGCDCS_STATUS_SUCCESS;
-        }
-        std::array<uint8_t, 3> header = ReadValue<std::array<uint8_t, 3>>(io_stream);
-        *result = header[0] == 'P' && header[1] >= '1' && header[1] <= '6' && isspace(header[2]);
+    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+    size_t length;
+    io_stream->size(io_stream->instance, &length);
+    io_stream->seek(io_stream->instance, 0, SEEK_SET);
+    if (length < 3) {
+        *result = 0;
+        return NVIMGCDCS_STATUS_SUCCESS;
+    }
+    std::array<uint8_t, 3> header = ReadValue<std::array<uint8_t, 3>>(io_stream);
+    *result = header[0] == 'P' && header[1] >= '1' && header[1] <= '6' && isspace(header[2]);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNMParserPlugin::static_can_parse(void* instance, bool* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcdcsStatus_t PNMParserPlugin::static_can_parse(void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
 {
     try {
         CHECK_NULL(instance);
         auto handle = reinterpret_cast<PNMParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -185,7 +185,7 @@ nvimgcdcsStatus_t PNMParserPlugin::create(nvimgcdcsParser_t* parser)
         *parser = reinterpret_cast<nvimgcdcsParser_t>(new PNMParserPlugin::Parser(plugin_id_, framework_));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create pnm parser - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -197,7 +197,7 @@ nvimgcdcsStatus_t PNMParserPlugin::static_create(void* instance, nvimgcdcsParser
         auto handle = reinterpret_cast<PNMParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -209,7 +209,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_destroy(nvimgcdcsParser_t pars
         auto handle = reinterpret_cast<PNMParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }
@@ -223,7 +223,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* im
         return GetImageInfoImpl(plugin_id_, framework_, image_info, code_stream);
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from png stream - " << e.what());
-        return NVIMGCDCS_EXTENSION_STATUS_INTERNAL_ERROR;
+        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 }
 
@@ -235,7 +235,7 @@ nvimgcdcsStatus_t PNMParserPlugin::Parser::static_get_image_info(
         auto handle = reinterpret_cast<PNMParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_EXTENSION_STATUS_INVALID_PARAMETER;
+        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
@@ -252,30 +252,30 @@ class PnmParserExtension
 
     static nvimgcdcsStatus_t pnm_parser_extension_create(
         void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-    {
-        try {
-            CHECK_NULL(framework)
+{
+    try {
+        CHECK_NULL(framework)
             NVIMGCDCS_LOG_TRACE(framework, "pnm_parser_ext", "pnm_parser_extension_create");
-            CHECK_NULL(extension)
-            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new PnmParserExtension(framework));
-        } catch (const std::runtime_error& e) {
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-        }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        CHECK_NULL(extension)
+        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new PnmParserExtension(framework));
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
 
     static nvimgcdcsStatus_t pnm_parser_extension_destroy(nvimgcdcsExtension_t extension)
-    {
-        try {
-            CHECK_NULL(extension)
-            auto ext_handle = reinterpret_cast<nvimgcdcs::PnmParserExtension*>(extension);
+{
+    try {
+        CHECK_NULL(extension)
+        auto ext_handle = reinterpret_cast<nvimgcdcs::PnmParserExtension*>(extension);
             NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "pnm_parser_ext", "pnm_parser_extension_destroy");
-            delete ext_handle;
-        } catch (const std::runtime_error& e) {
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
-        }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        delete ext_handle;
+    } catch (const std::runtime_error& e) {
+        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
 
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;

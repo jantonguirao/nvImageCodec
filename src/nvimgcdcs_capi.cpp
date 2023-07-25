@@ -320,7 +320,7 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToFile(
 }
 
 nvimgcdcsStatus_t nvimgcdcsCodeStreamCreateToHostMem(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t* code_stream, void* ctx,
-    nvimgcdcsGetBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info)
+    nvimgcdcsResizeBufferFunc_t get_buffer_func, const nvimgcdcsImageInfo_t* image_info)
 {
     nvimgcdcsStatus_t ret = nvimgcdcsStreamCreate(instance, code_stream);
     NVIMGCDCSAPI_TRY
@@ -397,7 +397,7 @@ nvimgcdcsStatus_t nvimgcdcsDecoderDestroy(nvimgcdcsDecoder_t decoder)
 
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCanDecode(nvimgcdcsDecoder_t decoder, const nvimgcdcsCodeStream_t* streams,
     const nvimgcdcsImage_t* images, int batch_size, const nvimgcdcsDecodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status,
-    bool force_format)
+    int force_format)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     NVIMGCDCSAPI_TRY
@@ -530,7 +530,7 @@ nvimgcdcsStatus_t nvimgcdcsEncoderDestroy(nvimgcdcsEncoder_t encoder)
 
 NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCanEncode(nvimgcdcsEncoder_t encoder, const nvimgcdcsImage_t* images,
     const nvimgcdcsCodeStream_t* streams, int batch_size, const nvimgcdcsEncodeParams_t* params,
-    nvimgcdcsProcessingStatus_t* processing_status, bool force_format)
+    nvimgcdcsProcessingStatus_t* processing_status, int force_format)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 

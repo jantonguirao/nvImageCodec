@@ -46,8 +46,7 @@ class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
         std::string dec_options{":fancy_upsampling=0 nvjpeg_cuda_decoder:hybrid_huffman_threshold=0"};
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, dec_options.c_str()));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
-        params_.enable_orientation = true;
-        params_.enable_color_conversion = true;
+        params_.apply_exif_orientation= 1;
     }
 
     void TearDown()
@@ -65,7 +64,7 @@ class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
 class NvJpegExtDecoderTestSingleImage : public NvJpegExtDecoderTestBase,
                                         public NvJpegTestBase,
                                         public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
-                                            nvimgcdcsChromaSubsampling_t, nvimgcdcsSampleFormat_t, bool>>
+                                            nvimgcdcsChromaSubsampling_t, nvimgcdcsSampleFormat_t, nvimgcdcsColorSpec_t>>
 {
   public:
     virtual ~NvJpegExtDecoderTestSingleImage() = default;
@@ -80,7 +79,7 @@ class NvJpegExtDecoderTestSingleImage : public NvJpegExtDecoderTestBase,
         reference_output_format_ = std::get<4>(GetParam());
         NvJpegExtDecoderTestBase::SetUp();
         NvJpegTestBase::SetUp();
-        params_.enable_color_conversion = std::get<5>(GetParam());
+        output_color_spec_ = std::get<5>(GetParam());
     }
 
     virtual void TearDown()
@@ -88,6 +87,8 @@ class NvJpegExtDecoderTestSingleImage : public NvJpegExtDecoderTestBase,
         NvJpegTestBase::TearDown();
         NvJpegExtDecoderTestBase::TearDown();
     }
+
+    nvimgcdcsColorSpec_t output_color_spec_ = NVIMGCDCS_COLORSPEC_UNCHANGED;
 };
 
 TEST_P(NvJpegExtDecoderTestSingleImage, ValidFormatAndParameters)
@@ -96,7 +97,9 @@ TEST_P(NvJpegExtDecoderTestSingleImage, ValidFormatAndParameters)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &image_info_));
     PrepareImageForFormat();
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &out_image_, &image_info_));
+    nvimgcdcsImageInfo_t out_image_info(image_info_);
+    out_image_info.color_spec = output_color_spec_;
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &out_image_, &out_image_info));
     streams_.push_back(in_code_stream_);
     images_.push_back(out_image_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDecode(decoder_, streams_.data(), images_.data(), 1, &params_, &future_));
@@ -107,7 +110,9 @@ TEST_P(NvJpegExtDecoderTestSingleImage, ValidFormatAndParameters)
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, status);
     ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
-    DecodeReference(resources_dir, image_file_, reference_output_format_, params_.enable_color_conversion);
+    bool allow_cmyk = (output_color_spec_ != NVIMGCDCS_COLORSPEC_UNCHANGED) && (output_color_spec_ != NVIMGCDCS_COLORSPEC_CMYK) &&
+                      ((output_color_spec_ != NVIMGCDCS_COLORSPEC_YCCK));
+    DecodeReference(resources_dir, image_file_, reference_output_format_, allow_cmyk);
     ConvertToPlanar();
     if (NV_DEVELOPER_DUMP_OUTPUT_IMAGE_TO_BMP) {
         write_bmp("./out.bmp", image_buffer_.data(), image_info_.plane_info[0].width,
@@ -138,7 +143,7 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_FOR
          Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
                 NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
         Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
-        Values(true)));
+        Values(NVIMGCDCS_COLORSPEC_SRGB)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_VARIOUS_CHROMA_WITH_VALID_SYCC_OUTPUT_FORMATS, NvJpegExtDecoderTestSingleImage,
      Combine(::testing::ValuesIn(css_filenames),
@@ -148,7 +153,7 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_FOR
          Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
                 NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
          Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-         Values(true)));
+         Values(NVIMGCDCS_COLORSPEC_SYCC)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_VARIOUS_CHROMA_WITH_VALID_GRAY_OUTPUT_FORMATS, NvJpegExtDecoderTestSingleImage,
      Combine(::testing::ValuesIn(css_filenames),
@@ -158,7 +163,7 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_FOR
          Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
                 NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
          Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
-         Values(true)));
+         Values(NVIMGCDCS_COLORSPEC_GRAY)));
 
 static const char* cmyk_and_ycck_filenames[] = {"/jpeg/cmyk.jpg", "/jpeg/cmyk-dali.jpg",
     "/jpeg/ycck_colorspace.jpg"};
@@ -169,7 +174,7 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_CYMK_AND_YCCK_WITH_VALID_SRGB_OUTPUT_FORM
         Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB, NVIMGCDCS_SAMPLEFORMAT_I_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
         Values(NVIMGCDCS_SAMPLING_NONE), 
         Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
-        Values(true)));
+        Values(NVIMGCDCS_COLORSPEC_SRGB)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_CYMK_AND_YCCK_WITH_VALID_CMYK_OUTPUT_FORMATS, NvJpegExtDecoderTestSingleImage,
      Combine(::testing::ValuesIn(css_filenames),
@@ -179,8 +184,7 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_CYMK_AND_YCCK_WITH_VALID_SRGB_OUTPUT_FORM
          Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
                 NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
          Values(NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED),
-         Values(false)));
-
+         Values(NVIMGCDCS_COLORSPEC_UNCHANGED)));
 
 // clang-format on
 }} // namespace nvimgcdcs::test
