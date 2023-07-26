@@ -222,7 +222,9 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
             Args:
                 device_id: Device id to execute encoding on.
+                
                 backends: List of allowed backends. If empty, all backends are allowed with default parameters.
+                
                 options: Encoder specific options.  
 
             )pbdoc",
@@ -235,7 +237,9 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
             Args:
                 device_id: Device id to execute encoding on.
+                
                 backend_kinds: List of allowed backend kinds. If empty or None, all backends are allowed with default parameters.
+                
                 options: Encoder specific options.
 
             )pbdoc",
@@ -246,12 +250,16 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
             Args:
                 image: Image to encode
+                
                 codec: String that defines the output format e.g.'jpeg2k'. When it is file extension it must include a leading period e.g. '.jp2'.
+                
                 params: Encode parameters.
+                
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
+
             Returns:
-                Buffer with compressed code stream
-        )pbdoc",
+                Buffer with compressed code stream.
+            )pbdoc",
             "image"_a, "codec"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
         .def("write",
             py::overload_cast<const std::string&, Image, const std::string&, std::optional<EncodeParams>, intptr_t>(&Encoder::encode),
@@ -259,16 +267,21 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             Encode image to file.
 
             Args:
-                file_name: File name to save encoded code stream. 
+                file_name: File name to save encoded code stream.
+
                 image: Image to encode
-                codec (optional): String that defines the output format e.g.'jpeg2k'. When it is file extension it must include a 
-                                  leading period e.g. '.jp2'. If codec is not specified, it is deducted based on file extension. 
-                                  If there is no extension by default 'jpeg' is choosen. 
+
+                codec: String that defines the output format e.g.'jpeg2k'. When it is file extension it must include a 
+                leading period e.g. '.jp2'. If codec is not specified, it is deducted based on file extension. 
+                If there is no extension by default 'jpeg' is choosen. 
+
                 params: Encode parameters.
+
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-            Returns:
-                void
-        )pbdoc",
+
+            Returns: 
+                None
+            )pbdoc",
             "file_name"_a, "image"_a, "codec"_a = "", "params"_a = py::none(), "cuda_stream"_a = 0)
         .def("encode",
             py::overload_cast<const std::vector<Image>&, const std::string&, std::optional<EncodeParams>, intptr_t>(&Encoder::encode),
@@ -277,12 +290,16 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
             Args:
                 images: List of images to encode
+
                 codec: String that defines the output format e.g.'jpeg2k'. When it is file extension it must include a leading period e.g. '.jp2'.
+                
                 params: Encode parameters.
+                
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
+
             Returns:
-                List of buffers with compressed code streams
-        )pbdoc",
+                List of buffers with compressed code streams.
+            )pbdoc",
             "images"_a, "codec"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
         .def("write",
             py::overload_cast<const std::vector<std::string>&, const std::vector<Image>&, const std::string&, std::optional<EncodeParams>,
@@ -291,16 +308,21 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             Encode batch of images to files.
 
             Args:
-                images: List of images to encode
+                images: List of images to encode.
+               
                 file_names: List of file names to save encoded code streams.
-                codec (optional): String that defines the output format e.g.'jpeg2k'. When it is file extension it must include a 
-                    leading period e.g. '.jp2'. If codec is not specified, it is deducted based on file extension. 
-                    If there is no extension by default 'jpeg' is choosen. 
+                
+                codec: String that defines the output format e.g.'jpeg2k'. When it is file extension it must include a 
+                leading period e.g. '.jp2'. If codec is not specified, it is deducted based on file extension. 
+                If there is no extension by default 'jpeg' is choosen. (optional)
+                
                 params: Encode parameters.
+                
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
+
             Returns:
-                List of buffers with compressed code streams
-        )pbdoc",
+                List of buffers with compressed code streams.
+            )pbdoc",
             "file_names"_a, "images"_a, "codec"_a = "", "params"_a = py::none(), "cuda_stream"_a = 0);
 }
 

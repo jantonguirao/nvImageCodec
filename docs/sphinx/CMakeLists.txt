@@ -12,6 +12,7 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/_build/html/index.html
 
     conf.py
     index.rst
+    py_api.rst
 
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )

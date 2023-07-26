@@ -298,7 +298,8 @@ nvimgcdcsImage_t Image::getNvImgCdcsImage() const
 
 void Image::exportToPython(py::module& m)
 {
-    py::class_<Image>(m, "Image")
+    py::class_<Image>(m, "Image",
+        "Class which wraps buffer with pixels. It can be decoded pixels or pixels to encode.")
         .def_property_readonly("__cuda_array_interface__", &Image::cuda_interface)
         .def_property_readonly("shape", &Image::shape)
         .def_property_readonly("width", &Image::getWidth)
