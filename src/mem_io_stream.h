@@ -113,7 +113,7 @@ class MemIoStream : public IoStream
     }
 
     void* map(size_t offset, size_t size) const override {
-        assert(offset + size < size_);
+        assert(offset + size <= size_);
         return (void*)(start_ + offset);
     }
 
