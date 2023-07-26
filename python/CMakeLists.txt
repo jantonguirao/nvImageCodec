@@ -44,7 +44,6 @@ build_per_python_lib(nvimgcodecs_python
     SRC ${PY_NVIMGCDCS_SRCS})
 
 # TODO(janton)
-
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/nvidia" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
 make_directory("${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions")
 configure_file("__init__.py.in" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/__init__.py")
@@ -53,17 +52,26 @@ file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" DESTINATION "${CMAKE_CURRENT
 file(COPY "${PROJECT_SOURCE_DIR}/LICENSE.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_custom_target(copy_libs_to_python_dir ALL DEPENDS nvimgcodecs_python)
-add_dependencies(copy_libs_to_python_dir 
+add_dependencies(copy_libs_to_python_dir
     nvimgcodecs
-    libjpeg_turbo_ext
-    libtiff_ext
     nvbmp_ext
     nvjpeg_ext
     nvjpeg2k_ext
-    nvpnm_ext
-    opencv_ext)
+    nvpnm_ext)
 
-if (UNIX)
+if(BUILD_LIBJPEG_TURBO_EXT)
+    add_dependencies(copy_libs_to_python_dir libjpeg_turbo_ext)
+endif()
+
+if(BUILD_LIBTIFF_EXT)
+    add_dependencies(copy_libs_to_python_dir libtiff_ext)
+endif()
+
+if(BUILD_OPENCV_EXT)
+    add_dependencies(copy_libs_to_python_dir opencv_ext)
+endif()
+
+if(UNIX)
     add_custom_command(
         TARGET copy_libs_to_python_dir
         COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodecs.so.0" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs" &&
@@ -71,27 +79,29 @@ if (UNIX)
         cp -r "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs"
     )
 else()
-    add_custom_command(  
+    add_custom_command(
         TARGET copy_libs_to_python_dir
         COMMAND echo "TODO copy_libs_to_python_dir")
 endif()
 
-if (BUILD_WHEEL)
+if(BUILD_WHEEL)
     set(WHEEL_FILENAME "nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-${NVIMGCODECS_VERSION}-py3-none-${NVIMGCODECS_WHL_PLATFORM_NAME}.whl")
     set(WHEEL_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     set(WHEEL_FILEPATH "${WHEEL_DIR}/${WHEEL_FILENAME}")
+
     # Note: not adding this target to ALL
     add_custom_target(wheel DEPENDS copy_libs_to_python_dir)
-    if (UNIX)
+
+    if(UNIX)
         add_custom_command(
-        TARGET wheel
-        COMMAND ${PYTHON_EXECUTABLE} -m pip wheel --build-option --verbose --build-option --compression=stored --build-option --python-tag=py3 --build-option --plat-name=${NVIMGCODECS_WHL_PLATFORM_NAME} ${CMAKE_CURRENT_BINARY_DIR} &&
-                ${CMAKE_CURRENT_SOURCE_DIR}/bundle-wheel.sh ${WHEEL_FILEPATH} NO NO ${WHEEL_FILENAME} /usr/local ${WHEEL_DIR} YES)
+            TARGET wheel
+            COMMAND ${PYTHON_EXECUTABLE} -m pip wheel --build-option --verbose --build-option --compression=stored --build-option --python-tag=py3 --build-option --plat-name=${NVIMGCODECS_WHL_PLATFORM_NAME} ${CMAKE_CURRENT_BINARY_DIR} &&
+            ${CMAKE_CURRENT_SOURCE_DIR}/bundle-wheel.sh ${WHEEL_FILEPATH} NO NO ${WHEEL_FILENAME} /usr/local ${WHEEL_DIR} YES)
 
     else()
         add_custom_command(
-        TARGET wheel
-        COMMAND ${PYTHON_EXECUTABLE} -m pip wheel --build-option --verbose --build-option --compression=stored --build-option --python-tag=py3 ${CMAKE_CURRENT_BINARY_DIR}
+            TARGET wheel
+            COMMAND ${PYTHON_EXECUTABLE} -m pip wheel --build-option --verbose --build-option --compression=stored --build-option --python-tag=py3 ${CMAKE_CURRENT_BINARY_DIR}
         )
-    endif()                
+    endif()
 endif()
