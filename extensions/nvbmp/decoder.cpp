@@ -113,10 +113,14 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
             if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_NONE) {
                 *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
             }
-            if (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
+            if ((image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_RGB)) {
                 *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
             }
-            if (image_info.num_planes != 3) {
+            if ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.num_planes != 3)) {
+                *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+            }
+
+            if ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) && (image_info.num_planes != 1)) {
                 *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
             }
 
@@ -124,7 +128,12 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
                 if (image_info.plane_info[p].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
                     *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
                 }
-                if (image_info.plane_info[p].num_channels != 1) {
+
+                if ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) && (image_info.plane_info[p].num_channels != 1)) {
+                    *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
+                }
+
+                if ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) && (image_info.plane_info[p].num_channels != 3)) {
                     *result |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
                 }
             }
@@ -233,16 +242,33 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
         }
 
         unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
-        for (size_t p = 0; p < image_info.num_planes; p++) {
-            for (size_t y = 0; y < image_info.plane_info[p].height; y++) {
-                for (size_t x = 0; x < image_info.plane_info[p].width; x++) {
-                    host_buffer[(image_info.num_planes - p - 1) * image_info.plane_info[p].height * image_info.plane_info[p].width +
-                                (image_info.plane_info[p].height - y - 1) * image_info.plane_info[p].width + x] =
-                        buffer[kHeaderStart + header_size + image_info.num_planes * (y * image_info.plane_info[p].width + x) + p];
+
+        if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
+            for (size_t p = 0; p < image_info.num_planes; p++) {
+                for (size_t y = 0; y < image_info.plane_info[p].height; y++) {
+                    for (size_t x = 0; x < image_info.plane_info[p].width; x++) {
+                        host_buffer[(image_info.num_planes - p - 1) * image_info.plane_info[p].height * image_info.plane_info[p].width +
+                                    (image_info.plane_info[p].height - y - 1) * image_info.plane_info[p].width + x] =
+                            buffer[kHeaderStart + header_size + image_info.num_planes * (y * image_info.plane_info[p].width + x) + p];
+                    }
                 }
             }
+        } else if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB) {
+            for (size_t c = 0; c < image_info.plane_info[0].num_channels; c++) {
+                for (size_t y = 0; y < image_info.plane_info[0].height; y++) {
+                    for (size_t x = 0; x < image_info.plane_info[0].width; x++) {
+                        auto src_idx = kHeaderStart + header_size +
+                                       image_info.plane_info[0].num_channels * (y * image_info.plane_info[0].width + x) + c;
+                        auto dst_idx = (image_info.plane_info[0].height - y - 1) * image_info.plane_info[0].width *
+                                           image_info.plane_info[0].num_channels +
+                                       x * image_info.plane_info[0].num_channels + (image_info.plane_info[0].num_channels - c - 1);
+                        host_buffer[dst_idx] = buffer[src_idx];
+                    }
+                }
+            }
+        } else {
+            return NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
         }
-
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Could not decode bmp code stream - " << e.what());
         return NVIMGCDCS_PROCESSING_STATUS_FAIL;
