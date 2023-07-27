@@ -13,7 +13,12 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import sys
+import os
+sys.path.insert(0, os.path.abspath("../../build/python"))
+
 import sphinx_rtd_theme
+
 
 # -- Project information -----------------------------------------------------
 
@@ -40,8 +45,13 @@ author = 'NVIDIA Corporation'
 # ones.
 extensions = [
     'sphinx.ext.ifconfig',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'breathe'
 ]
+# Napoleon settings
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
