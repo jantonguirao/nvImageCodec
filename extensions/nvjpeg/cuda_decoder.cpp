@@ -496,10 +496,11 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool 
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decodeBatch(nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decodeBatch(
+    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
-        nvtx3::scoped_range marker{"nvjpeg cuda decodeBatch)"};
+        nvtx3::scoped_range marker{"nvjpeg cuda decodeBatch"};
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg_decode_batch, " << batch_size << " samples");
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images)
@@ -514,14 +515,14 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decodeBatch(nvimgcdcsCodeStr
                 NvJpegCudaDecoderPlugin::DecodeState::Sample{code_streams[sample_idx], images[sample_idx], params});
         }
 
-    nvjpegDecodeParams_t nvjpeg_params;
-    XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle_, &nvjpeg_params));
-    std::unique_ptr<std::remove_pointer<nvjpegDecodeParams_t>::type, decltype(&nvjpegDecodeParamsDestroy)> nvjpeg_params_raii(
-        nvjpeg_params, &nvjpegDecodeParamsDestroy);
+        nvjpegDecodeParams_t nvjpeg_params;
+        XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle_, &nvjpeg_params));
+        std::unique_ptr<std::remove_pointer<nvjpegDecodeParams_t>::type, decltype(&nvjpegDecodeParamsDestroy)> nvjpeg_params_raii(
+            nvjpeg_params, &nvjpegDecodeParamsDestroy);
 
-    int nsamples = decode_state_batch_->samples_.size();
-        bool immediate = nsamples == 1;  //  if single image, do not use executor
-    for (int i = 0; i < nsamples; i++)
+        int nsamples = decode_state_batch_->samples_.size();
+        bool immediate = nsamples == 1; //  if single image, do not use executor
+        for (int i = 0; i < nsamples; i++)
             this->decode(i, immediate);
     } catch (const NvJpegException& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not decode jpeg batch - " << e.info());
