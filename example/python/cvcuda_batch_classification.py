@@ -261,7 +261,7 @@ def main():
     parser.add_argument(
         "-i",
         "--input_path",
-        default="tabby_tiger_cat.jpg",
+        default="../assets/images/",
         type=str,
         help="Either a path to a JPEG image or a directory containing JPEG "
         "images to use as input.",
@@ -270,7 +270,7 @@ def main():
     parser.add_argument(
         "-l",
         "--labels_file",
-        default="imagenet-classes.txt",
+        default="../assets/imagenet-classes.txt",
         type=str,
         help="The labels file to read and parse.",
     )

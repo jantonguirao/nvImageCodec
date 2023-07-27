@@ -129,7 +129,7 @@ set(NVIMGCODECS_VERSION_BUILD "${tmp}-${NVIMGCODECS_BUILD_SUFFIX}")
 set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${NVIMGCODECS_VERSION_BUILD}")
 set(CPACK_STRIP_FILES TRUE)
 set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmake/Package.cmake)
-set(CPACK_COMPONENTS_ALL lib tests)
+set(CPACK_COMPONENTS_ALL lib tests samples)
 
 if(UNIX)
     configure_file(cpack/ld.so.conf.in cpack/ld.so.conf @ONLY)

@@ -71,7 +71,7 @@ make
 To build CV-CUDA samples, additionally CV-CUDA has to be installed and CVCUDA_DIR and NVCV_TYPES_DIR
 need to point folders with *-config.cmake files. Apart of that, BUILD_CVCUDA_SAMPLES variable must be set to ON.
 
-### Instalation from sources
+### Installation from sources
 
 ##### Linux
 ```
