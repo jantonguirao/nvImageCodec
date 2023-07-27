@@ -4,7 +4,8 @@
     # Build
     mkdir -p build
     cd build
-    cmake -DCMAKE_BUILD_TYPE=$NVIMAGECODECS_BUILD_TYPE -DBUILD_DOCS=ON -DBUILD_TEST=OFF ..
+    export Python_EXECUTABLE=$(which python)
+    cmake -DCMAKE_BUILD_TYPE=$NVIMAGECODECS_BUILD_TYPE -DBUILD_DOCS=ON -DBUILD_TEST=OFF -DPython_EXECUTABLE=${Python_EXECUTABLE} ..
     nice -n 19 make docs
     cd ..
 
