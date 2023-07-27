@@ -323,6 +323,9 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 
                 unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
+                XM_CHECK_CUDA(cudaEventRecord(t.event_, image_info.cuda_stream));
+                XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
+                
                 nvjpeg2kEncodeParams_t encode_params_;
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsCreate(&encode_params_));
                 std::unique_ptr<std::remove_pointer<nvjpeg2kEncodeParams_t>::type, decltype(&nvjpeg2kEncodeParamsDestroy)> encode_params(
