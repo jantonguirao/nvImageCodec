@@ -10,7 +10,6 @@
 
 
 #include <cuda_runtime_api.h>
-#include <extensions/nvpnm/nvpnm_ext.h>
 #include <nvimgcodecs.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,6 +23,11 @@
 #include <string>
 #include <vector>
 #include "command_line_params.h"
+
+
+#ifdef NVIMGCDCS_REGISTER_EXT_API
+    #include <extensions/nvpnm/nvpnm_ext.h>
+#endif
 
 namespace fs = std::filesystem;
 
@@ -733,10 +737,13 @@ int main(int argc, const char* argv[])
     instance_create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
 
     nvimgcdcsInstanceCreate(&instance, instance_create_info);
+
+#ifdef NVIMGCDCS_REGISTER_EXT_API
     nvimgcdcsExtension_t pnm_extension{nullptr};
     nvimgcdcsExtensionDesc_t pnm_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
     get_nvpnm_extension_desc(&pnm_extension_desc);
     nvimgcdcsExtensionCreate(instance, &pnm_extension, &pnm_extension_desc);
+#endif
 
     fs::path exe_path(argv[0]);
     fs::path input_path = fs::absolute(exe_path).parent_path() / fs::path(params.input);
@@ -747,9 +754,13 @@ int main(int argc, const char* argv[])
     } else {
         exit_code = process_one_image(instance, input_path, output_path, params);
     }
+
+#ifdef NVIMGCDCS_REGISTER_EXT_API
     if (pnm_extension) {
         nvimgcdcsExtensionDestroy(pnm_extension);
     }
+#endif
+    
     nvimgcdcsInstanceDestroy(instance);
 
     return exit_code;

@@ -9,7 +9,7 @@ if (NVIMGCODECS_FLAVOR)
 endif()
 
 # Used when creating special builds
-set(PROJECT_VERSION_SUFFIX "-alpha.1")
+set(PROJECT_VERSION_SUFFIX "-alpha.2")
 
 if (NOT ARCH)
     set(ARCH "x86_64")

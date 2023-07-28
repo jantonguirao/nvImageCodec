@@ -4,16 +4,12 @@ set(NVIMGCDCS_EXAMPLE_SRC
       main.cpp
 )
 
-find_library(CUDART_SHARED 
-    NAMES cudart
-    PATHS ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}
-    )
-
-
 add_executable(${NVIMGCDCS_EXAMPLE_NAME} ${NVIMGCDCS_EXAMPLE_SRC})
 
 set_property(TARGET ${NVIMGCDCS_EXAMPLE_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-target_link_libraries(${NVIMGCDCS_EXAMPLE_NAME} PUBLIC nvimgcodecs nvpnm_ext_static CUDA::cudart)
+target_link_libraries(${NVIMGCDCS_EXAMPLE_NAME} PUBLIC nvimgcodecs CUDA::cudart)
+
+#target_link_libraries(${NVIMGCDCS_EXAMPLE_NAME} PUBLIC nvpnm_ext_static)
 
 install(TARGETS ${NVIMGCDCS_EXAMPLE_NAME}
     DESTINATION bin COMPONENT lib
