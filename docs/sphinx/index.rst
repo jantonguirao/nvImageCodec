@@ -119,6 +119,7 @@ Copyright
    :maxdepth: 1
    :hidden:
 
+   0.1.0-alpha.2 <release_notes_v0.1.0-alpha.2>
    0.1.0-alpha.1 <release_notes_v0.1.0-alpha.1>  
 
 .. toctree::
