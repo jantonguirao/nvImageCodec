@@ -52,7 +52,7 @@ This section highlights the compute stack nvImageCodecs has been tested on
 * Ubuntu x86_x64 >= 20.04
 * CUDA Toolkit >= 11.8
 * GCC >= 9.4
-* Python: 3.7, 3.8, 3.10
+* Python: 3.7, 3.8, 3.9, 3.10, 3.11
 
 Refer to documentation of the sample applications for dependencies.
 
