@@ -100,7 +100,7 @@ Copyright
 
 .. toctree::
    :caption: Beginner's Guide
-   :maxdepth: 1
+   :maxdepth: 4
    :hidden:
    
    Installation <installation>

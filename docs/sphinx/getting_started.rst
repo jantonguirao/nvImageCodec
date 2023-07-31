@@ -57,7 +57,7 @@ Samples
 The next section documents the samples showing various use cases across two different types APIs available to consume nvImageCodecs functionality:
 
 .. toctree::
-    :maxdepth: 1
+   :maxdepth: 2
 
     C <samples/c_samples>
     Python <samples/python_samples>
@@ -65,6 +65,4 @@ The next section documents the samples showing various use cases across two diff
 Refer to the :ref:`Installation` docs for the sample installation guide using ``*.deb`` or ``*.tar`` installers.
 Refer to the sample README for instructions to compile samples from the source.
 
-.. toctree::
-    :hidden:
-    :maxdepth: 1
+

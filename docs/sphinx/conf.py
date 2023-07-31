@@ -16,7 +16,7 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath("../../build/python"))
-
+os.environ["PYNVIMGCODECS_EXAMPLES_RESOURCES_DIR"] = "../../../example/assets/images/"
 import sphinx_rtd_theme
 
 
@@ -47,7 +47,9 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'breathe'
+    'breathe',
+    'nbsphinx',
+    'nbsphinx_link'
 ]
 # Napoleon settings
 napoleon_google_docstring = True
