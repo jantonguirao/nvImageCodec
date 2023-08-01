@@ -333,6 +333,7 @@ nvimgcdcsStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* i
             image_info->plane_info[p].height = height;
             image_info->plane_info[p].num_channels = 1;
             image_info->plane_info[p].sample_type = sample_type;
+            image_info->plane_info[p].precision = precision;
         }
 
         nvimgcdcsJpegImageInfo_t* jpeg_image_info = reinterpret_cast<nvimgcdcsJpegImageInfo_t*>(image_info->next);

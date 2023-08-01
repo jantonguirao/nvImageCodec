@@ -57,7 +57,8 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
     auto image = images;
     for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
         *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcdcsJpegImageInfo_t jpeg_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, nullptr};
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, static_cast<void*>(&jpeg_info)};
         (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
         if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
@@ -70,8 +71,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
             jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
         if (jpeg_image_info) {
             static const std::set<nvimgcdcsJpegEncoding_t> supported_encoding{NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT,
-                NVIMGCDCS_JPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN,
-                NVIMGCDCS_JPEG_ENCODING_LOSSLESS_HUFFMAN};
+                NVIMGCDCS_JPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN};
             if (supported_encoding.find(jpeg_image_info->encoding) == supported_encoding.end()) {
                 *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
                 continue;
