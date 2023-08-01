@@ -418,7 +418,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
         nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
         nvimgcdcsImageDesc_t* image = decode_state_batch_->samples_[i].image;
 
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
         image->getImageInfo(image->instance, &image_info);
         unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
         const auto* params = decode_state_batch_->samples_[i].params;

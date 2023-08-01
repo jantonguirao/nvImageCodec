@@ -63,7 +63,8 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
         auto image = images;
         for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
             *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcdcsImageInfo_t jpeg_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, nullptr};
+            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, static_cast<void*>(&jpeg_info)};
             (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
             if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
@@ -84,7 +85,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProce
                 continue;
             }
 
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
             (*image)->getImageInfo((*image)->instance, &image_info);
 
             if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_444) {
@@ -318,10 +319,15 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
         std::vector<nvimgcdcsImageInfo_t> batched_image_info;
 
         nvjpegOutputFormat_t nvjpeg_format;
-        bool eligible_image = true;
+
+        std::vector<int> sample_idxs;
+        sample_idxs.reserve(nsamples);
 
         for (int sample_idx = 0; sample_idx < nsamples; sample_idx++) {
             nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
+            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
+            code_stream->getImageInfo(code_stream->instance, &cs_image_info);
+
             nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
             nvimgcdcsImageDesc_t* image = decode_state_batch_->samples_[sample_idx].image;
 
@@ -337,15 +343,11 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 ptr += nvjpeg_image.pitch[c] * image_info.plane_info[c].height;
             }
 
-            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED &&
-                image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16)
+            if ((image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED ||
+                    (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y && image_info.num_planes == 1)) &&
+                image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16) {
                 nvjpeg_format = NVJPEG_OUTPUT_UNCHANGEDI_U16;
-            else {
-                eligible_image = false;
-                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
-            }
 
-            if (eligible_image) {
                 size_t encoded_stream_data_size = 0;
                 io_stream->size(io_stream->instance, &encoded_stream_data_size);
                 void* encoded_stream_data = nullptr;
@@ -354,6 +356,9 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 batched_bitstreams_size.push_back(encoded_stream_data_size);
                 batched_output.push_back(nvjpeg_image);
                 batched_image_info.push_back(image_info);
+                sample_idxs.push_back(sample_idx);
+            } else {
+                image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
         }
 
@@ -372,14 +377,15 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, decode_state_batch_->stream_));
             }
 
-            for (int sample_idx = 0; sample_idx < nsamples; sample_idx++) {
+            for (size_t i = 0; i < sample_idxs.size(); i++) {
+                auto sample_idx = sample_idxs[i];
                 nvimgcdcsImageDesc_t* image = decode_state_batch_->samples_[sample_idx].image;
                 nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 image->getImageInfo(image->instance, &image_info);
                 nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
                 nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
                 XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, decode_state_batch_->event_));
-                io_stream->unmap(io_stream->instance, &batched_bitstreams[sample_idx], batched_bitstreams_size[sample_idx]);
+                io_stream->unmap(io_stream->instance, &batched_bitstreams[i], batched_bitstreams_size[i]);
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             }
         } catch (const NvJpegException& e) {
