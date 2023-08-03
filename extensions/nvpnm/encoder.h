@@ -39,7 +39,7 @@ class NvPnmEncoderPlugin
     struct Encoder
     {
         Encoder(
-            const char* id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+            const char* id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
         ~Encoder();
 
         nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
@@ -58,14 +58,13 @@ class NvPnmEncoderPlugin
         const char* plugin_id_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
-        const nvimgcdcsBackendParams_t* backend_params_;
+        const nvimgcdcsExecutionParams_t* exec_params_;
         std::string options_;
     };
 
-    nvimgcdcsStatus_t create(
-        nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    nvimgcdcsStatus_t create(nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
     static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "nvpnm_encoder";
     nvimgcdcsEncoderDesc_t encoder_desc_;

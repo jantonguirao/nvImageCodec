@@ -48,25 +48,12 @@ Module::Module()
         std::cerr << "[Warning] PYNVIMGCODECS_VERBOSITY has out of range value " << std::endl;
     }
 
-    int num_cpu_threads = 0;
-    char* nt = std::getenv("PYNVIMGCODECS_NUM_CPU_THREADS");
-    try {
-        if (nt) {
-            num_cpu_threads = std::stoi(nt);
-        }
-    } catch (std::invalid_argument const& ex) {
-        std::cerr << "[Warning] PYNVIMGCODECS_NUM_CPU_THREADS has wrong value" << std::endl;
-    } catch (std::out_of_range const& ex) {
-        std::cerr << "[Warning] PYNVIMGCODECS_NUM_CPU_THREADS has out of range value" << std::endl;
-    }
-
     nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-    instance_create_info.load_builtin_modules= 1;
-    instance_create_info.load_extension_modules= 1;
+    instance_create_info.load_builtin_modules = 1;
+    instance_create_info.load_extension_modules = 1;
     instance_create_info.default_debug_messenger = verbosity > 0 ? 1 : 0;
     instance_create_info.message_severity = verbosity2severity(verbosity);
     instance_create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
-    instance_create_info.num_cpu_threads = num_cpu_threads;
     nvimgcdcsInstanceCreate(&instance_, instance_create_info);
 }
 

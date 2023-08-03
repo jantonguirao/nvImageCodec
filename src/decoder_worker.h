@@ -48,7 +48,7 @@ class DecoderWorker
    * @param work_manager   - creates and recycles work
    * @param codec   - the factory that constructs the decoder for this worker
    */
-    DecoderWorker(ILogger* logger, IWorkManager<nvimgcdcsDecodeParams_t>* work_manager, int device_id, const std::vector<nvimgcdcsBackend_t>& backends,
+    DecoderWorker(ILogger* logger, IWorkManager<nvimgcdcsDecodeParams_t>* work_manager, const nvimgcdcsExecutionParams_t* exec_params,
         const std::string& options, const ICodec* codec, int index);
     ~DecoderWorker();
 
@@ -100,8 +100,7 @@ class DecoderWorker
     IWorkManager<nvimgcdcsDecodeParams_t>* work_manager_ = nullptr;
     const ICodec* codec_ = nullptr;
     int index_ = 0;
-    int device_id_ = 0;
-    const std::vector<nvimgcdcsBackend_t>& backends_;
+    const nvimgcdcsExecutionParams_t* exec_params_;
     const std::string& options_;
 
     std::mutex mtx_;

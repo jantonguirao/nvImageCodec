@@ -52,11 +52,14 @@ class EncoderWorkerTest : public TestWithParam<test_case_tuple_t>
             image_dec_factories_[i] = new MockImageEncoderFactory();
             MockImageEncoderFactory* image_dec_factory(image_dec_factories_[i]);
             EXPECT_CALL(*image_dec_factory, getBackendKind()).WillRepeatedly(Return(backend_kind));
-            EXPECT_CALL(*image_dec_factory, createEncoder(_, _, _)).WillRepeatedly(Return(ByMove(std::move(image_dec))));
+            EXPECT_CALL(*image_dec_factory, createEncoder(_, _)).WillRepeatedly(Return(ByMove(std::move(image_dec))));
             EXPECT_CALL(*codec_.get(), getEncoderFactory(i)).WillRepeatedly(Return(image_dec_factory));
         }
-
-        encoder_worker_ = std::make_unique<EncoderWorker>(&logger_, nullptr, 0, allowed_backends_, "", codec_.get(), start_index);
+        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        exec_params.num_backends = allowed_backends_.size();
+        exec_params.backends = allowed_backends_.data();
+        encoder_worker_ = std::make_unique<EncoderWorker>(&logger_, nullptr,  &exec_params, "", codec_.get(), start_index);
     }
 
     void TearDown() override

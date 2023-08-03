@@ -10,12 +10,12 @@
 
 #include "plugin_framework.h"
 
+#include <nvimgcdcs_version.h>
 #include <algorithm>
 #include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
-#include <nvimgcdcs_version.h>
 #include "codec.h"
 #include "codec_registry.h"
 #include "ienvironment.h"
@@ -26,7 +26,7 @@
 #include "log.h"
 
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-#include <dlfcn.h>
+    #include <dlfcn.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -35,11 +35,12 @@ namespace nvimgcdcs {
 
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
 
-std::string GetDefaultExtensionsPath() {
+std::string GetDefaultExtensionsPath()
+{
     Dl_info info;
     if (dladdr((const void*)GetDefaultExtensionsPath, &info)) {
         std::string path(info.dli_fname);
-        // If this comes from a shared_object in the installation dir, 
+        // If this comes from a shared_object in the installation dir,
         // we trim the nvimgcodecs dir and add "extensions" to the path
         // Examples:
         // /opt/nvidia/nvimgcodecs/lib64/libnvimgcodecs.so -> /opt/nvidia/nvimgcodecs/extensions
@@ -47,41 +48,40 @@ std::string GetDefaultExtensionsPath() {
         //      ~/.local/lib/python3.8/site-packages/nvidia/nvimgcodecs/extensions
         auto pos = path.find("nvimgcodecs/");
         if (pos != std::string::npos) {
-           return path.substr(0, pos + strlen("nvimgcodecs/")) + "extensions";
+            return path.substr(0, pos + strlen("nvimgcodecs/")) + "extensions";
         }
     }
     return "/opt/nvidia/nvimgcodecs/extensions";
 }
 
-char GetPathSeparator() {
+char GetPathSeparator()
+{
     return ':';
 }
 
 #elif defined(_WIN32) || defined(_WIN64)
 
-std::string GetDefaultExtensionsPath() {
+std::string GetDefaultExtensionsPath()
+{
     return "C:/Program Files/nvimgcodecs/extensions";
 }
 
-char GetPathSeparator() {
+char GetPathSeparator()
+{
     return ';';
 }
 
 #endif
 
-
 PluginFramework::PluginFramework(ILogger* logger, ICodecRegistry* codec_registry, std::unique_ptr<IEnvironment> env,
-    std::unique_ptr<IDirectoryScaner> directory_scaner, std::unique_ptr<ILibraryLoader> library_loader, std::unique_ptr<IExecutor> executor,
-    nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator, const std::string& extensions_path)
+    std::unique_ptr<IDirectoryScaner> directory_scaner, std::unique_ptr<ILibraryLoader> library_loader, const std::string& extensions_path)
     : logger_(logger)
     , env_(std::move(env))
     , directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
-    , executor_(std::move(executor))
     , framework_desc_{NVIMGCDCS_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, this, "nvImageCodecs", NVIMGCDCS_VER, NVIMGCDCS_EXT_API_VER,
-          CUDART_VERSION, device_allocator, pinned_allocator, &static_log, &static_register_encoder, &static_unregister_encoder,
-          &static_register_decoder, &static_unregister_decoder, &static_register_parser, &static_unregister_parser, &static_get_executor
-         }
+          CUDART_VERSION, &static_log, &static_register_encoder, &static_unregister_encoder,
+          &static_register_decoder, &static_unregister_decoder, &static_register_parser, &static_unregister_parser}
     , codec_registry_(codec_registry)
     , extension_paths_{}
 {
@@ -140,12 +140,6 @@ nvimgcdcsStatus_t PluginFramework::static_unregister_parser(void* instance, cons
     return handle->unregisterParser(desc);
 }
 
-nvimgcdcsStatus_t PluginFramework::static_get_executor(void* instance, nvimgcdcsExecutorDesc_t** result)
-{
-    PluginFramework* handle = reinterpret_cast<PluginFramework*>(instance);
-    return handle->getExecutor(result);
-}
-
 nvimgcdcsStatus_t PluginFramework::static_log(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
     const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data)
 {
@@ -177,30 +171,35 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(
     }
 
     if (extension_desc->ext_api_version > NVIMGCDCS_EXT_API_VER) {
-        NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
-                                                              << " Extension API version: " << NVIMGCDCS_STREAM_VER(extension_desc->ext_api_version)
-                                                              << " newer than framework API version: " << NVIMGCDCS_EXT_API_VER);
+        NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension "
+                                           << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+                                           << " Extension API version: " << NVIMGCDCS_STREAM_VER(extension_desc->ext_api_version)
+                                           << " newer than framework API version: " << NVIMGCDCS_EXT_API_VER);
         return NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED;
     }
     auto it = extensions_.find(extension_desc->id);
     if (it != extensions_.end()) {
         if (it->second.desc_.version == extension_desc->version) {
-            NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
-                                                                  << " Extension with the same id and version already registered");
+            NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension " << extension_desc->id
+                                                                           << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+                                                                           << " Extension with the same id and version already registered");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         } else if (it->second.desc_.version > extension_desc->version) {
-            NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
-                                                                  << " Extension with the same id and newer version: "
-                                                                  << NVIMGCDCS_STREAM_VER(it->second.desc_.version) << " already registered");
+            NVIMGCDCS_LOG_WARNING(logger_, "Could not register extension "
+                                               << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version)
+                                               << " Extension with the same id and newer version: "
+                                               << NVIMGCDCS_STREAM_VER(it->second.desc_.version) << " already registered");
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         } else if (it->second.desc_.version < extension_desc->version) {
-            NVIMGCDCS_LOG_WARNING(logger_, "Extension with the same id:" << extension_desc->id << " and older version: " << NVIMGCDCS_STREAM_VER(it->second.desc_.version)
-                                                                << " already registered and will be unregistered");
+            NVIMGCDCS_LOG_WARNING(logger_, "Extension with the same id:" << extension_desc->id << " and older version: "
+                                                                         << NVIMGCDCS_STREAM_VER(it->second.desc_.version)
+                                                                         << " already registered and will be unregistered");
             unregisterExtension(it);
         }
     }
 
-    NVIMGCDCS_LOG_INFO(logger_, "Registering extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version));
+    NVIMGCDCS_LOG_INFO(
+        logger_, "Registering extension " << extension_desc->id << " version:" << NVIMGCDCS_STREAM_VER(extension_desc->version));
     PluginFramework::Extension internal_extension;
     internal_extension.desc_ = *extension_desc;
     internal_extension.module_ = module;
@@ -228,7 +227,8 @@ nvimgcdcsStatus_t PluginFramework::registerExtension(nvimgcdcsExtension_t* exten
 
 nvimgcdcsStatus_t PluginFramework::unregisterExtension(std::map<std::string, Extension>::const_iterator it)
 {
-    NVIMGCDCS_LOG_INFO(logger_, "Unregistering extension " << it->second.desc_.id << " version:" << NVIMGCDCS_STREAM_VER(it->second.desc_.version));
+    NVIMGCDCS_LOG_INFO(
+        logger_, "Unregistering extension " << it->second.desc_.id << " version:" << NVIMGCDCS_STREAM_VER(it->second.desc_.version));
     it->second.desc_.destroy(it->second.handle_);
 
     if (it->second.module_.lib_handle_ != nullptr) {
@@ -292,8 +292,7 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
     module.path_ = modulePath;
     try {
         module.lib_handle_ = library_loader_->loadLibrary(modulePath);
-    } catch (const std::runtime_error& e)
-    {
+    } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(logger_, "Could not load extension module library. Error: " << e.what());
         return;
     } catch (...) {
@@ -402,12 +401,6 @@ nvimgcdcsStatus_t PluginFramework::unregisterParser(const nvimgcdcsParserDesc_t*
         return NVIMGCDCS_STATUS_INVALID_PARAMETER;
     }
     codec->unregisterParserFactory(desc->id);
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
-
-nvimgcdcsStatus_t PluginFramework::getExecutor(nvimgcdcsExecutorDesc_t** result)
-{
-    *result = executor_->getExecutorDesc();
     return NVIMGCDCS_STATUS_SUCCESS;
 }
 

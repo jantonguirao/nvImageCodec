@@ -42,7 +42,9 @@ class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
     {
         NvJpegExtTestBase::SetUp();
         const char* options = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, options));
+        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, &exec_params, options));
 
         jpeg_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
         jpeg_enc_params_.optimized_huffman = 0;

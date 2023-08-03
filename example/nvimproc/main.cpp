@@ -182,8 +182,10 @@ int decode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
+    nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
     nvimgcdcsDecoder_t decoder;
-    nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr);
+    nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, nullptr);
 
     nvimgcdcsFuture_t future;
     nvimgcdcsDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &future);
@@ -274,7 +276,9 @@ int encode_one_image(nvimgcdcsInstance_t instance, const CommandLineParams& para
 
 
     nvimgcdcsEncoder_t encoder;
-    nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr);
+    nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+    nvimgcdcsEncoderCreate(instance, &encoder, &exec_params, nullptr);
 
     nvimgcdcsFuture_t future;
     nvimgcdcsEncoderEncode(encoder, &image, &code_stream, 1, &encode_params, &future);

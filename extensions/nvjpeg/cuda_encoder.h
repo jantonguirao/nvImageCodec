@@ -54,7 +54,7 @@ class NvJpegCudaEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        Encoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
         ~Encoder();
 
         
@@ -76,14 +76,14 @@ class NvJpegCudaEncoderPlugin
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
-        int device_id_;
-        const nvimgcdcsBackendParams_t* backend_params_; std::string options_;
+        const nvimgcdcsExecutionParams_t* exec_params_;
+        std::string options_;
     };
 
     nvimgcdcsStatus_t create(
-        nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
     static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "nvjpeg_cuda_encoder";
     nvimgcdcsEncoderDesc_t encoder_desc_;

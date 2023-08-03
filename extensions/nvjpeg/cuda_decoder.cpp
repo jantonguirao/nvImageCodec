@@ -153,27 +153,26 @@ void NvJpegCudaDecoderPlugin::Decoder::parseOptions(const char* options) {
     }
 }
 
-NvJpegCudaDecoderPlugin::Decoder::Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id,
-    const nvimgcdcsBackendParams_t* backend_params, const char* options)
+NvJpegCudaDecoderPlugin::Decoder::Decoder(
+    const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
     : plugin_id_(plugin_id)
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
-    , device_id_(device_id)
-    , backend_params_(backend_params)
+    , exec_params_(exec_params)
 {
     bool use_nvjpeg_create_ex_v2 = false;
     if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
-        if (framework->device_allocator && framework->device_allocator->device_malloc && framework->device_allocator->device_free) {
-            device_allocator_.dev_ctx = framework->device_allocator->device_ctx;
-            device_allocator_.dev_malloc = framework->device_allocator->device_malloc;
-            device_allocator_.dev_free = framework->device_allocator->device_free;
+        if (exec_params->device_allocator && exec_params->device_allocator->device_malloc && exec_params->device_allocator->device_free) {
+            device_allocator_.dev_ctx = exec_params->device_allocator->device_ctx;
+            device_allocator_.dev_malloc = exec_params->device_allocator->device_malloc;
+            device_allocator_.dev_free = exec_params->device_allocator->device_free;
         }
 
-        if (framework->pinned_allocator && framework->pinned_allocator->pinned_malloc && framework->pinned_allocator->pinned_free) {
-            pinned_allocator_.pinned_ctx = framework->pinned_allocator->pinned_ctx;
-            pinned_allocator_.pinned_malloc = framework->pinned_allocator->pinned_malloc;
-            pinned_allocator_.pinned_free = framework->pinned_allocator->pinned_free;
+        if (exec_params->pinned_allocator && exec_params->pinned_allocator->pinned_malloc && exec_params->pinned_allocator->pinned_free) {
+            pinned_allocator_.pinned_ctx = exec_params->pinned_allocator->pinned_ctx;
+            pinned_allocator_.pinned_malloc = exec_params->pinned_allocator->pinned_malloc;
+            pinned_allocator_.pinned_free = exec_params->pinned_allocator->pinned_free;
         }
         use_nvjpeg_create_ex_v2 =
             device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free;
@@ -188,15 +187,14 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(const char* plugin_id, const nvimgcdcs
         XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_DEFAULT, nullptr, nullptr, nvjpeg_flags, &handle_));
     }
 
-    if (framework->device_allocator && (framework->device_allocator->device_mem_padding != 0)) {
-        XM_CHECK_NVJPEG(nvjpegSetDeviceMemoryPadding(framework->device_allocator->device_mem_padding, handle_));
+    if (exec_params->device_allocator && (exec_params->device_allocator->device_mem_padding != 0)) {
+        XM_CHECK_NVJPEG(nvjpegSetDeviceMemoryPadding(exec_params->device_allocator->device_mem_padding, handle_));
     }
-    if (framework->pinned_allocator && (framework->pinned_allocator->pinned_mem_padding != 0)) {
-        XM_CHECK_NVJPEG(nvjpegSetPinnedMemoryPadding(framework->pinned_allocator->pinned_mem_padding, handle_));
+    if (exec_params->pinned_allocator && (exec_params->pinned_allocator->pinned_mem_padding != 0)) {
+        XM_CHECK_NVJPEG(nvjpegSetPinnedMemoryPadding(exec_params->pinned_allocator->pinned_mem_padding, handle_));
     }
 
-    nvimgcdcsExecutorDesc_t* executor;
-    framework_->getExecutor(framework_->instance, &executor);
+    auto executor = exec_params_->executor;
     int num_threads = executor->get_num_threads(executor->instance);
 
     decode_state_batch_ = std::make_unique<NvJpegCudaDecoderPlugin::DecodeState>(
@@ -204,16 +202,16 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(const char* plugin_id, const nvimgcdcs
 }
 
 nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(
-    nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg_create");
         XM_CHECK_NULL(decoder);
-        if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
+        if (exec_params->device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
         *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(
-            new NvJpegCudaDecoderPlugin::Decoder(plugin_id_, framework_, device_id, backend_params, options));
+            new NvJpegCudaDecoderPlugin::Decoder(plugin_id_, framework_, exec_params, options));
     } catch (const NvJpegException& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg decoder - " << e.info());
         return e.nvimgcdcsStatus();
@@ -222,12 +220,12 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(
 }
 
 nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::static_create(
-    void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);
         NvJpegCudaDecoderPlugin* handle = reinterpret_cast<NvJpegCudaDecoderPlugin*>(instance);
-        handle->create(decoder, device_id, backend_params, options);
+        handle->create(decoder, exec_params, options);
     } catch (const NvJpegException& e) {
         return e.nvimgcdcsStatus();
     }
@@ -489,9 +487,8 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool 
     if (immediate) {
         task(0, sample_idx, decode_state_batch_.get());
     } else {
-        nvimgcdcsExecutorDesc_t* executor;
-        framework_->getExecutor(framework_->instance, &executor);
-        executor->launch(executor->instance, device_id_, sample_idx, decode_state_batch_.get(), std::move(task));
+        auto executor = exec_params_->executor;
+        executor->launch(executor->instance, exec_params_->device_id, sample_idx, decode_state_batch_.get(), std::move(task));
     }
     return NVIMGCDCS_STATUS_SUCCESS;
 }

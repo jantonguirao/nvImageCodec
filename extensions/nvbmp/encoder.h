@@ -23,10 +23,9 @@ class NvBmpEncoderPlugin
     nvimgcdcsEncoderDesc_t* getEncoderDesc();
 
   private:
-    nvimgcdcsStatus_t create(
-        nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    nvimgcdcsStatus_t create(nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
     static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "nvbmp_encoder";
     nvimgcdcsEncoderDesc_t encoder_desc_;

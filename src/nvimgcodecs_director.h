@@ -13,16 +13,15 @@
 
 #include <nvimgcodecs.h>
 
+#include "code_stream.h"
 #include "codec_registry.h"
 #include "debug_messenger.h"
 #include "default_debug_messenger.h"
-#include "default_executor.h"
 #include "image_generic_decoder.h"
 #include "image_generic_encoder.h"
 #include "log.h"
 #include "logger.h"
 #include "plugin_framework.h"
-#include "code_stream.h"
 
 namespace nvimgcdcs {
 
@@ -55,20 +54,16 @@ class NvImgCodecsDirector
     ~NvImgCodecsDirector();
 
     std::unique_ptr<CodeStream> createCodeStream();
-    std::unique_ptr<ImageGenericDecoder> createGenericDecoder(
-        int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
-    std::unique_ptr<ImageGenericEncoder> createGenericEncoder(int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
+    std::unique_ptr<ImageGenericDecoder> createGenericDecoder(const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    std::unique_ptr<ImageGenericEncoder> createGenericEncoder(const nvimgcdcsExecutionParams_t* exec_params, const char* options);
     void registerDebugMessenger(IDebugMessenger* messenger);
     void unregisterDebugMessenger(IDebugMessenger* messenger);
 
 
     Logger logger_;
-    nvimgcdcsDeviceAllocator_t* device_allocator_;
-    nvimgcdcsPinnedAllocator_t* pinned_allocator_;
     DefaultDebugMessengerManager default_debug_messenger_manager_;
     CodecRegistry codec_registry_;
     PluginFramework plugin_framework_;
-
 };
 
 } // namespace nvimgcdcs

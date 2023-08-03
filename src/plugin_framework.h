@@ -15,7 +15,6 @@
 #include <string>
 #include <vector>
 #include "idirectory_scaner.h"
-#include "iexecutor.h"
 #include "ilibrary_loader.h"
 
 namespace nvimgcdcs {
@@ -32,7 +31,6 @@ class PluginFramework
   public:
     explicit PluginFramework(ILogger* logger, ICodecRegistry* codec_registry, std::unique_ptr<IEnvironment> env,
         std::unique_ptr<IDirectoryScaner> directory_scaner, std::unique_ptr<ILibraryLoader> library_loader,
-        std::unique_ptr<IExecutor> executor, nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator,
         const std::string& extensions_path);
     ~PluginFramework();
     nvimgcdcsStatus_t registerExtension(nvimgcdcsExtension_t* extension, const nvimgcdcsExtensionDesc_t* extension_desc);
@@ -70,7 +68,6 @@ class PluginFramework
     nvimgcdcsStatus_t registerParser(const nvimgcdcsParserDesc_t* desc, float priority);
     nvimgcdcsStatus_t unregisterParser(const nvimgcdcsParserDesc_t* desc);
 
-    nvimgcdcsStatus_t getExecutor(nvimgcdcsExecutorDesc_t** result);
     nvimgcdcsStatus_t log(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_category,
         const nvimgcdcsDebugMessageData_t* callback_data);
 
@@ -81,7 +78,6 @@ class PluginFramework
     static nvimgcdcsStatus_t static_register_parser(void* instance, const nvimgcdcsParserDesc_t* desc, float priority);
     static nvimgcdcsStatus_t static_unregister_parser(void* instance, const nvimgcdcsParserDesc_t* desc);
 
-    static nvimgcdcsStatus_t static_get_executor(void* instance, nvimgcdcsExecutorDesc_t** result);
     static nvimgcdcsStatus_t static_log(void* instance, const nvimgcdcsDebugMessageSeverity_t message_severity,
         const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data);
 
@@ -90,7 +86,6 @@ class PluginFramework
     std::unique_ptr<IDirectoryScaner> directory_scaner_;
     std::unique_ptr<ILibraryLoader> library_loader_;
     std::map<std::string, Extension> extensions_;
-    std::unique_ptr<IExecutor> executor_;
     nvimgcdcsFrameworkDesc_t framework_desc_;
     ICodecRegistry* codec_registry_;
     std::vector<std::string> extension_paths_;

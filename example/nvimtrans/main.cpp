@@ -201,9 +201,11 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
     nvimgcdcsImage_t image;
     nvimgcdcsImageCreate(instance, &image, &image_info);
 
+    nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
     nvimgcdcsDecoder_t decoder;
     std::string dec_options{":fancy_upsampling=0"};
-    nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, dec_options.c_str());
+    nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, dec_options.c_str());
 
     // warm up
     for (int warmup_iter = 0; warmup_iter < params.warmup; warmup_iter++) {
@@ -262,7 +264,7 @@ int process_one_image(nvimgcdcsInstance_t instance, fs::path input_path, fs::pat
 
     nvimgcdcsEncoder_t encoder = nullptr;
     const char* options = nullptr;
-    nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr);
+    nvimgcdcsEncoderCreate(instance, &encoder, &exec_params, nullptr);
 
     nvimgcdcsFuture_t encode_future;
     double encode_time = wtime();
@@ -440,7 +442,9 @@ int prepare_decode_resources(nvimgcdcsInstance_t instance, FileData& file_data, 
 
         if (decoder == nullptr) {
             std::string dec_options{":fancy_upsampling=0"};
-            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, dec_options.c_str()));
+            nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+            exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+            CHECK_NVIMGCDCS(nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, dec_options.c_str()));
         }
     }
     return EXIT_SUCCESS;
@@ -482,7 +486,9 @@ int prepare_encode_resources(nvimgcdcsInstance_t instance, FileNames& current_na
 
         if (encoder == nullptr) {
             const char* options = nullptr;
-            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, options));
+            nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+            exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+            CHECK_NVIMGCDCS(nvimgcdcsEncoderCreate(instance, &encoder, &exec_params, options));
         }
     }
     return EXIT_SUCCESS;

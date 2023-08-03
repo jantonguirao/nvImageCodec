@@ -109,12 +109,12 @@ nvimgcdcsEncoderDesc_t* NvPnmEncoderPlugin::getEncoderDesc()
 }
 
 nvimgcdcsStatus_t NvPnmEncoderPlugin::create(
-    nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "pnm_create_encoder");
         XM_CHECK_NULL(encoder);
-        *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvPnmEncoderPlugin::Encoder(plugin_id_, framework_, backend_params, options));
+        *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvPnmEncoderPlugin::Encoder(plugin_id_, framework_, exec_params, options));
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create pnm encoder - " << e.what());
@@ -123,12 +123,13 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::create(
 }
 
 nvimgcdcsStatus_t NvPnmEncoderPlugin::static_create(
-    void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);
+        XM_CHECK_NULL(exec_params);
         auto handle = reinterpret_cast<NvPnmEncoderPlugin*>(instance);
-        return handle->create(encoder, device_id, backend_params, options);
+        return handle->create(encoder, exec_params, options);
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
@@ -147,10 +148,10 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::static_destroy(nvimgcdcsEncoder_t
 }
 
 NvPnmEncoderPlugin::Encoder::Encoder(
-    const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
     : plugin_id_(plugin_id)
     , framework_(framework)
-    , backend_params_(backend_params)
+    , exec_params_(exec_params)
     , options_(options)
 {
     encode_state_batch_ = std::make_unique<NvPnmEncoderPlugin::EncodeState>();
@@ -298,10 +299,8 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::Encoder::encodeBatch(
             encode_state_batch_->samples_[sample_idx].params = params;
             }
 
-        nvimgcdcsExecutorDesc_t* executor;
-        framework_->getExecutor(framework_->instance, &executor);
-
-        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
+            auto executor = exec_params_->executor;
+            for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
             executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, encode_state_batch_.get(),
                 [](int tid, int sample_idx, void* context) -> void {
                     auto* encode_state = reinterpret_cast<EncodeState*>(context);

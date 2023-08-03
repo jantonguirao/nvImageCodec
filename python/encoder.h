@@ -31,8 +31,8 @@ using namespace py::literals;
 class Encoder
 {
   public:
-    Encoder(nvimgcdcsInstance_t instance, int device_id, std::optional<std::vector<Backend>> backends, const std::string& options);
-    Encoder(nvimgcdcsInstance_t instance, int device_id, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options);
+    Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_threads, std::optional<std::vector<Backend>> backends, const std::string& options);
+    Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options);
     ~Encoder();
 
     py::bytes encode(Image image, const std::string& codec, std::optional<EncodeParams> params, intptr_t cuda_stream);

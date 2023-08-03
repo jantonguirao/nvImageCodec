@@ -62,8 +62,8 @@ class NvJpegLosslessDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id,
-            const nvimgcdcsBackendParams_t* backend_params, const char* options = nullptr);
+        Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params,
+            const char* options = nullptr);
         ~Decoder();
 
         nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvjpegHandle_t handle, nvimgcdcsCodeStreamDesc_t** code_streams,
@@ -84,15 +84,14 @@ class NvJpegLosslessDecoderPlugin
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
         std::unique_ptr<ParseState> parse_state_;
-        int device_id_;
-        const nvimgcdcsBackendParams_t* backend_params_;
+        const nvimgcdcsExecutionParams_t* exec_params_;
     };
 
     nvimgcdcsStatus_t create(
-        nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
     static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "nvjpeg_lossless_decoder";
     nvimgcdcsDecoderDesc_t decoder_desc_;

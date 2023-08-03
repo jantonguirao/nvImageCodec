@@ -48,7 +48,7 @@ class MockEncoderPlugin
 
   private:
     static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+        void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
     {
         *encoder = static_cast<nvimgcdcsEncoder_t>(instance);
         return NVIMGCDCS_STATUS_SUCCESS;
@@ -149,14 +149,17 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         register_extension_ = std::get<1>(GetParam());
 
         nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-        create_info.num_cpu_threads = 1;
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
         if (register_extension_) {
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &extension_, mock_extension_->getExtensionDesc()));
         }
         const char* options = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, options));
+        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        exec_params.num_cpu_threads = 1;
+        
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, &exec_params, options));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;

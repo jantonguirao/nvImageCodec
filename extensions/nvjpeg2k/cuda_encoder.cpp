@@ -143,34 +143,33 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::static_can_encode(nvimgcdcsEnc
     }
 }
 
-NvJpeg2kEncoderPlugin::Encoder::Encoder(const char* id, const nvimgcdcsFrameworkDesc_t* framework, int device_id,
-    const nvimgcdcsBackendParams_t* backend_params, const char* options)
+NvJpeg2kEncoderPlugin::Encoder::Encoder(
+    const char* id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
     : plugin_id_(id)
     , framework_(framework)
-    , device_id_(device_id)
-    , backend_params_(backend_params)
+    , exec_params_(exec_params)
     , options_(options)
 {
     XM_CHECK_NVJPEG2K(nvjpeg2kEncoderCreateSimple(&handle_));
 
-    nvimgcdcsExecutorDesc_t* executor;
-    framework_->getExecutor(framework_->instance, &executor);
+    auto executor = exec_params->executor;
     int num_threads = executor->get_num_threads(executor->instance);
 
     encode_state_batch_ = std::make_unique<NvJpeg2kEncoderPlugin::EncodeState>(plugin_id_, framework_,
-        handle_, framework->device_allocator, framework->pinned_allocator, device_id_, num_threads);
+        handle_, exec_params->device_allocator, exec_params->pinned_allocator, exec_params->device_id, num_threads);
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(
-    nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg2k_create_encoder");
         XM_CHECK_NULL(encoder);
-        if (device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
+        XM_CHECK_NULL(exec_params);
+        if (exec_params->device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
 
-        *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(plugin_id_, framework_, device_id, backend_params, options));
+        *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvJpeg2kEncoderPlugin::Encoder(plugin_id_, framework_, exec_params, options));
     return NVIMGCDCS_STATUS_SUCCESS;
     } catch (const NvJpeg2kException& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg2k encoder - " << e.info());
@@ -179,12 +178,13 @@ nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::create(
 }
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::static_create(
-    void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);
+        XM_CHECK_NULL(exec_params);
         auto handle = reinterpret_cast<NvJpeg2kEncoderPlugin*>(instance);
-        return handle->create(encoder, device_id, backend_params, options);
+        return handle->create(encoder, exec_params, options);
     } catch (const NvJpeg2kException& e) {
         return e.nvimgcdcsStatus();
     }
@@ -300,11 +300,10 @@ static nvjpeg2kColorSpace_t nvimgcdcs_to_nvjpeg2k_color_spec(nvimgcdcsColorSpec_
 
 nvimgcdcsStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 {
-    nvimgcdcsExecutorDesc_t* executor;
-    framework_->getExecutor(framework_->instance, &executor);
+    auto executor = exec_params_->executor;
 
-    executor->launch(
-        executor->instance, device_id_, sample_idx, encode_state_batch_.get(), [](int tid, int sample_idx, void* task_context) -> void {
+    executor->launch(executor->instance, exec_params_->device_id, sample_idx, encode_state_batch_.get(),
+        [](int tid, int sample_idx, void* task_context) -> void {
             nvtx3::scoped_range marker{"encode " + std::to_string(sample_idx)};
             auto encode_state = reinterpret_cast<NvJpeg2kEncoderPlugin::EncodeState*>(task_context);
             auto& t = encode_state->per_thread_[tid];

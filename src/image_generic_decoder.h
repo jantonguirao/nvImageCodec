@@ -18,9 +18,10 @@
 #include <vector>
 #include <mutex>
 
+#include "iexecutor.h"
 #include "iimage_decoder.h"
-#include "processing_results.h"
 #include "iwork_manager.h"
+#include "processing_results.h"
 
 namespace nvimgcdcs {
 
@@ -35,7 +36,7 @@ class ILogger;
 class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
 {
   public:
-    explicit ImageGenericDecoder(ILogger* logger, int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char *options = nullptr);
+    explicit ImageGenericDecoder(ILogger* logger, const nvimgcdcsExecutionParams_t* exec_params, const char* options = nullptr);
     ~ImageGenericDecoder();
     void canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params,
         nvimgcdcsProcessingStatus_t* processing_status, int force_format);
@@ -54,9 +55,10 @@ class ImageGenericDecoder : public IWorkManager <nvimgcdcsDecodeParams_t>
     std::mutex work_mutex_;
     std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> free_work_items_;
     std::map<const ICodec*, std::unique_ptr<DecoderWorker>> workers_;
-    int device_id_;
+    nvimgcdcsExecutionParams_t exec_params_;
     std::vector<nvimgcdcsBackend_t> backends_;
     std::string options_;
+    std::unique_ptr<IExecutor> executor_;
 };
 
 } // namespace nvimgcdcs
