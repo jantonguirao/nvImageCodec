@@ -742,7 +742,7 @@ int main(int argc, const char* argv[])
     instance_create_info.message_severity = verbosity2severity(params.verbose);
     instance_create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
 
-    nvimgcdcsInstanceCreate(&instance, instance_create_info);
+    nvimgcdcsInstanceCreate(&instance, &instance_create_info);
 
 #ifdef NVIMGCDCS_REGISTER_EXT_API
     nvimgcdcsExtension_t pnm_extension{nullptr};

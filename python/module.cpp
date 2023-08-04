@@ -54,7 +54,7 @@ Module::Module()
     instance_create_info.default_debug_messenger = verbosity > 0 ? 1 : 0;
     instance_create_info.message_severity = verbosity2severity(verbosity);
     instance_create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
-    nvimgcdcsInstanceCreate(&instance_, instance_create_info);
+    nvimgcdcsInstanceCreate(&instance_, &instance_create_info);
 }
 
 Module ::~Module()

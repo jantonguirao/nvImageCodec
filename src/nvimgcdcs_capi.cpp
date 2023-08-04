@@ -110,7 +110,7 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
 
 struct nvimgcdcsInstance
 {
-    nvimgcdcsInstance(nvimgcdcsInstanceCreateInfo_t create_info)
+    nvimgcdcsInstance(const nvimgcdcsInstanceCreateInfo_t* create_info)
         : director_(create_info)
     {
     }
@@ -179,13 +179,14 @@ nvimgcdcsStatus_t nvimgcdcsGetProperties(nvimgcdcsProperties_t* properties)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info)
+nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, const nvimgcdcsInstanceCreateInfo_t* create_info)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     nvimgcdcsInstance_t nvimgcdcs = nullptr;
     NVIMGCDCSAPI_TRY
         {
             CHECK_NULL(instance);
+            CHECK_NULL(create_info);
             nvimgcdcs = new nvimgcdcsInstance(create_info);
             *instance = nvimgcdcs;
         }

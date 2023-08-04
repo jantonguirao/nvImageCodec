@@ -50,7 +50,7 @@ class NvImgCodecsDirector
         std::unique_ptr<DefaultDebugMessenger> dbg_messenger_;
     };
 
-    explicit NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_info);
+    explicit NvImgCodecsDirector(const nvimgcdcsInstanceCreateInfo_t* create_info);
     ~NvImgCodecsDirector();
 
     std::unique_ptr<CodeStream> createCodeStream();

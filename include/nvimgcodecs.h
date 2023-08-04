@@ -1359,7 +1359,7 @@ extern "C"
      * @param create_info [in] Pointer to a nvimgcdcsInstanceCreateInfo_t structure controlling creation of the instance.
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
      */
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, const nvimgcdcsInstanceCreateInfo_t* create_info);
 
     /**
      * @brief Destroys the nvImageCodecs library instance.

@@ -36,7 +36,7 @@ class BMPParserPluginTest : public ::testing::Test
 
 
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-            nvimgcdcsInstanceCreate(&instance_, create_info));
+            nvimgcdcsInstanceCreate(&instance_, &create_info));
 
         bmp_parser_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
          ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,

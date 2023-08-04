@@ -20,20 +20,20 @@
 
 namespace nvimgcdcs {
 
-NvImgCodecsDirector::NvImgCodecsDirector(nvimgcdcsInstanceCreateInfo_t create_info)
+NvImgCodecsDirector::NvImgCodecsDirector(const nvimgcdcsInstanceCreateInfo_t* create_info)
     : logger_()
     , default_debug_messenger_manager_(
-          &logger_, create_info.message_severity, create_info.message_category, create_info.default_debug_messenger)
+          &logger_, create_info->message_severity, create_info->message_category, create_info->default_debug_messenger)
     , codec_registry_(&logger_)
     , plugin_framework_(&logger_, &codec_registry_, std::move(std::make_unique<Environment>()),
-          std::move(std::make_unique<DirectoryScaner>()), std::move(std::make_unique<LibraryLoader>()), create_info.extension_modules_path ? create_info.extension_modules_path : "")
+          std::move(std::make_unique<DirectoryScaner>()), std::move(std::make_unique<LibraryLoader>()), create_info->extension_modules_path ? create_info->extension_modules_path : "")
 {
-    if (create_info.load_builtin_modules) {
+    if (create_info->load_builtin_modules) {
         for (auto builtin_ext : get_builtin_modules())
             plugin_framework_.registerExtension(nullptr, &builtin_ext);
     }
 
-    if (create_info.load_extension_modules) {
+    if (create_info->load_extension_modules) {
         plugin_framework_.discoverAndLoadExtModules();
     }
 }

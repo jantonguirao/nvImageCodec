@@ -449,7 +449,7 @@ int main(int argc, const char* argv[])
     instance_create_info.message_severity = verbosity2severity(params.verbose);
     instance_create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
 
-    nvimgcdcsInstanceCreate(&instance, instance_create_info);
+    nvimgcdcsInstanceCreate(&instance, &instance_create_info);
 
     fs::path exe_path(argv[0]);
     fs::path input_path = fs::absolute(exe_path).parent_path() / fs::path(params.input);
