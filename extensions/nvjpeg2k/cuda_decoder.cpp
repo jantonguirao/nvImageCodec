@@ -145,7 +145,7 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(
 
     // create resources per thread
     auto executor = exec_params->executor;
-    int num_threads = executor->get_num_threads(executor->instance);
+    int num_threads = executor->getNumThreads(executor->instance);
 
     decode_state_batch_ = std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(
         plugin_id_, framework_, handle_, exec_params->device_allocator, exec_params->pinned_allocator, exec_params->device_id, num_threads);

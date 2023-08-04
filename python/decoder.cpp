@@ -38,7 +38,7 @@ Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
     nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
-    exec_params.num_cpu_threads = num_cpu_threads;
+    exec_params.max_num_cpu_threads = num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
     nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, options.c_str());
@@ -63,7 +63,7 @@ Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
     nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
-    exec_params.num_cpu_threads = num_cpu_threads;
+    exec_params.max_num_cpu_threads = num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
     nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, options.c_str());

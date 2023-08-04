@@ -157,8 +157,8 @@ class NvImageCodecsCanEncodeApiTest : public TestWithParam<std::tuple<test_case_
         const char* options = nullptr;
         nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
         exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
-        exec_params.num_cpu_threads = 1;
-        
+        exec_params.max_num_cpu_threads = 1;
+
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, &exec_params, options));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};

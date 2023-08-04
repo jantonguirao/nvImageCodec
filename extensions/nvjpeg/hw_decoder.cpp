@@ -256,7 +256,7 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
     }
 
     auto executor = exec_params_->executor;
-    int num_threads = executor->get_num_threads(executor->instance);
+    int num_threads = executor->getNumThreads(executor->instance);
 
     nvjpegStatus_t hw_dec_info_status = NVJPEG_STATUS_IMPLEMENTATION_NOT_SUPPORTED;
     hw_load_ = 1.0f;

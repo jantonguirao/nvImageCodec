@@ -205,7 +205,7 @@ NvJpegLosslessDecoderPlugin::Decoder::Decoder(
     }
 
     auto executor = exec_params_->executor;
-    int num_threads = executor->get_num_threads(executor->instance);
+    int num_threads = executor->getNumThreads(executor->instance);
 
     decode_state_batch_ = std::make_unique<NvJpegLosslessDecoderPlugin::DecodeState>(
         plugin_id_, framework_, handle_, &device_allocator_, &pinned_allocator_, num_threads);

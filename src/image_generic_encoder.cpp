@@ -34,7 +34,7 @@ static std::unique_ptr<IExecutor> GetExecutor(const nvimgcdcsExecutionParams_t* 
     if (exec_params->executor)
         exec = std::make_unique<UserExecutor>(exec_params->executor);
     else
-        exec = std::make_unique<DefaultExecutor>(logger, exec_params->num_cpu_threads);
+        exec = std::make_unique<DefaultExecutor>(logger, exec_params->max_num_cpu_threads);
     return exec;
 }
 

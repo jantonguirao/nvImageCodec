@@ -42,7 +42,7 @@ Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     nvimgcdcsEncoder_t encoder;
     nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
-    exec_params.num_cpu_threads = num_cpu_threads;
+    exec_params.max_num_cpu_threads = num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
 
@@ -66,7 +66,7 @@ Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     nvimgcdcsEncoder_t encoder;
     nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
-    exec_params.num_cpu_threads = num_cpu_threads;
+    exec_params.max_num_cpu_threads = num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
     nvimgcdcsEncoderCreate(instance, &encoder, &exec_params, options.c_str());

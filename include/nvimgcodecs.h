@@ -773,7 +773,7 @@ extern "C"
     /** 
      * @brief Executor description.
      *
-     * Codec plugins can use executor available from plugin framework to schedule execution of asynchronous task.  
+     * Codec plugins can use executor available via execution parameters to schedule execution of asynchronous task.  
      */
     typedef struct
     {
@@ -801,7 +801,7 @@ extern "C"
          * @param instance [in] Pointer to nvimgcdcsExecutorDesc_t instance. 
          * @return Number of threads in executor.
         */
-        int (*get_num_threads)(void* instance);
+        int (*getNumThreads)(void* instance);
     } nvimgcdcsExecutorDesc_t;
 
     /** 
@@ -814,14 +814,16 @@ extern "C"
 
         nvimgcdcsDeviceAllocator_t* device_allocator; /**< Custom allocator for device memory */
         nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Custom allocator for pinned memory */
-        int num_cpu_threads; /**< Number of CPU threads in default executor (0 means default value = to number of cpu_cores) */
-        nvimgcdcsExecutorDesc_t* executor; /**< Points an executor. If NULL default executor will be used. 
-                                            @note At plugin level API it always points to executor, either custom or default. */
-        int device_id; /**< Device id to process decoding on. It can be also specified using defines NVIMGCDCS_DEVICE_CURRENT or NVIMGCDCS_DEVICE_CPU_ONLY. */
-        int num_backends; /**< Number of allowed backends passed (if any) in backends parameter. For 0, all backends are allowed.*/
-        const nvimgcdcsBackend_t*
-            backends;     /**<  Points a nvimgcdcsBackend_t array with defined allowed backends. For nullptr, all backends are allowed. */
-
+        int max_num_cpu_threads;                      /**< Max number of CPU threads in default executor 
+                                                           (0 means default value equal to number of cpu cores) */
+        nvimgcdcsExecutorDesc_t* executor;            /**< Points an executor. If NULL default executor will be used. 
+                                                           @note At plugin level API it always points to executor, either custom or default. */
+        int device_id;                                /**< Device id to process decoding on. It can be also specified 
+                                                           using defines NVIMGCDCS_DEVICE_CURRENT or NVIMGCDCS_DEVICE_CPU_ONLY. */
+        int num_backends;                             /**< Number of allowed backends passed (if any) 
+                                                           in backends parameter. For 0, all backends are allowed.*/
+        const nvimgcdcsBackend_t* backends;           /**< Points a nvimgcdcsBackend_t array with defined allowed backends.
+                                                           For nullptr, all backends are allowed. */
     } nvimgcdcsExecutionParams_t;
 
     /**
@@ -1209,15 +1211,15 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcdcsStructureType_t type;                /**< Is the type of this structure. */
-        const void* next;                             /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
+        const void* next;              /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                               /**< Plugin framework instance pointer which will be passed back in functions */
-        const char* id;                               /**< Plugin framework named identifier e.g. nvImageCodecs */
-        uint32_t version;                             /**< Plugin framework version. */
-        uint32_t ext_api_version;                     /**< The nvImageCodecs extension API version. */
-        uint32_t cudart_version;                      /**< The version of CUDA Runtime with which plugin framework was built. */
-        nvimgcdcsLogFunc_t log;                       /**< Pointer to logging function. @see nvimgcdcsLogFunc_t */
+        void* instance;                /**< Plugin framework instance pointer which will be passed back in functions */
+        const char* id;                /**< Plugin framework named identifier e.g. nvImageCodecs */
+        uint32_t version;              /**< Plugin framework version. */
+        uint32_t ext_api_version;      /**< The nvImageCodecs extension API version. */
+        uint32_t cudart_version;       /**< The version of CUDA Runtime with which plugin framework was built. */
+        nvimgcdcsLogFunc_t log;        /**< Pointer to logging function. @see nvimgcdcsLogFunc_t */
 
         /**
          * @brief Registers encoder plugin.
@@ -1339,15 +1341,15 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcdcsStructureType_t type;                /**< Is the type of this structure. */
-        void* next;                                   /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcdcsStructureType_t type;      /**< Is the type of this structure. */
+        void* next;                         /**< Is NULL or a pointer to an extension structure type. */
 
-        int load_builtin_modules;                     /**< Load default modules. Valid values 0 or 1. */
-        int load_extension_modules;                   /**< Discover and load extension modules on start. Valid values 0 or 1. */
-        const char* extension_modules_path;           /**< There may be several paths separated by ':' on Linux or ';' on Windows */
-        int default_debug_messenger;                  /**< Create default debug messenger. Valid values 0 or 1. */
-        uint32_t message_severity;                    /**< Severity for default debug messenger */
-        uint32_t message_category;                    /**< Message category for default debug messenger */
+        int load_builtin_modules;           /**< Load default modules. Valid values 0 or 1. */
+        int load_extension_modules;         /**< Discover and load extension modules on start. Valid values 0 or 1. */
+        const char* extension_modules_path; /**< There may be several paths separated by ':' on Linux or ';' on Windows */
+        int default_debug_messenger;        /**< Create default debug messenger. Valid values 0 or 1. */
+        uint32_t message_severity;          /**< Severity for default debug messenger */
+        uint32_t message_category;          /**< Message category for default debug messenger */
     } nvimgcdcsInstanceCreateInfo_t;
 
     /**

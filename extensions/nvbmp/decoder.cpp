@@ -162,7 +162,7 @@ DecoderImpl::DecoderImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* 
     , exec_params_(exec_params)
 {
     auto  executor = exec_params_->executor;
-    int num_threads = executor->get_num_threads(executor->instance);
+    int num_threads = executor->getNumThreads(executor->instance);
     decode_state_batch_ = std::make_unique<DecodeState>(plugin_id_, framework_, num_threads);
 }
 

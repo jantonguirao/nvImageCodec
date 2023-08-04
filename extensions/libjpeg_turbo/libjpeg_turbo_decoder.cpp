@@ -163,7 +163,7 @@ DecoderImpl::DecoderImpl(
     , framework_(framework)
     , exec_params_(exec_params)
 {
-    int num_threads = exec_params_->executor->get_num_threads(exec_params_->executor->instance);
+    int num_threads = exec_params_->executor->getNumThreads(exec_params_->executor->instance);
     decode_state_batch_ = std::make_unique<DecodeState>(plugin_id_, framework_, num_threads);
 
     parseOptions(std::move(options));
