@@ -31,9 +31,9 @@ using namespace py::literals;
 class Decoder
 {
   public:
-    Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_threads, std::optional<std::vector<Backend>> backends,
+    Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
         const std::string& options);
-    Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_threads,
+    Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads,
         std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options);
     ~Decoder();
 

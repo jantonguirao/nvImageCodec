@@ -26,7 +26,7 @@ struct Encoder::EncoderDeleter
     void operator()(nvimgcdcsEncoder_t encoder) { nvimgcdcsEncoderDestroy(encoder); }
 };
 
-Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_threads, std::optional<std::vector<Backend>> backends,
+Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
     const std::string& options)
     : encoder_(nullptr)
     , instance_(instance)
@@ -42,7 +42,7 @@ Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     nvimgcdcsEncoder_t encoder;
     nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
-    exec_params.max_num_cpu_threads = num_cpu_threads;
+    exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
 
@@ -50,7 +50,7 @@ Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     encoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type>(encoder, EncoderDeleter{});
 }
 
-Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_threads,
+Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads,
     std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options)
     : encoder_(nullptr)
     , instance_(instance)
@@ -66,7 +66,7 @@ Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     nvimgcdcsEncoder_t encoder;
     nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
-    exec_params.max_num_cpu_threads = num_cpu_threads;
+    exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
     nvimgcdcsEncoderCreate(instance, &encoder, &exec_params, options.c_str());
@@ -226,15 +226,15 @@ void Encoder::encode(const std::vector<std::string>& file_names, const std::vect
 void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 {
     py::class_<Encoder>(m, "Encoder")
-        .def(py::init<>([instance](int device_id, int num_cpu_threads, std::optional<std::vector<Backend>> backends,
-                            const std::string& options) { return new Encoder(instance, device_id, num_cpu_threads, backends, options); }),
+        .def(py::init<>([instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+                            const std::string& options) { return new Encoder(instance, device_id, max_num_cpu_threads, backends, options); }),
             R"pbdoc(
             Initialize encoder.
 
             Args:
                 device_id: Device id to execute encoding on.
 
-                num_cpu_threads: Number of CPU threads in default executor (0 means default value equal to number of cpu cores)
+                max_num_cpu_threads: Max number of CPU threads in default executor (0 means default value equal to number of cpu cores)
                 
                 backends: List of allowed backends. If empty, all backends are allowed with default parameters.
                 
@@ -242,24 +242,24 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
             )pbdoc",
 
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "num_cpu_threads"_a = 0, "backends"_a = py::none(), "options"_a = "")
+            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backends"_a = py::none(), "options"_a = "")
         .def(py::init<>(
-                 [instance](int device_id, int num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
-                     const std::string& options) { return new Encoder(instance, device_id, num_cpu_threads, backend_kinds, options); }),
+                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
+                     const std::string& options) { return new Encoder(instance, device_id, max_num_cpu_threads, backend_kinds, options); }),
             R"pbdoc(
             Initialize encoder.
 
             Args:
                 device_id: Device id to execute encoding on.
 
-                num_cpu_threads: Number of CPU threads in default executor (0 means default value equal to number of cpu cores)
+                max_num_cpu_threads: Max number of CPU threads in default executor (0 means default value equal to number of cpu cores)
                 
                 backend_kinds: List of allowed backend kinds. If empty or None, all backends are allowed with default parameters.
                 
                 options: Encoder specific options.
 
             )pbdoc",
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
+            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
         .def("encode", py::overload_cast<Image, const std::string&, std::optional<EncodeParams>, intptr_t>(&Encoder::encode),
             R"pbdoc(

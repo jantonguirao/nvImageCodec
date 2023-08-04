@@ -23,7 +23,7 @@ struct Decoder::DecoderDeleter
     void operator()(nvimgcdcsDecoder_t decoder) { nvimgcdcsDecoderDestroy(decoder); }
 };
 
-Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_threads, std::optional<std::vector<Backend>> backends, const std::string& options)
+Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends, const std::string& options)
     : decoder_(nullptr)
     , instance_(instance)
 {
@@ -38,7 +38,7 @@ Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
     nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
-    exec_params.max_num_cpu_threads = num_cpu_threads;
+    exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
     nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, options.c_str());
@@ -46,7 +46,7 @@ Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     decoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsDecoder_t>::type>(decoder, DecoderDeleter{});
 }
 
-Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
+Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
     const std::string& options)
     : decoder_(nullptr)
     , instance_(instance)
@@ -63,7 +63,7 @@ Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int num_cpu_thread
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
     nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
-    exec_params.max_num_cpu_threads = num_cpu_threads;
+    exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
     nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, options.c_str());
@@ -224,40 +224,40 @@ std::vector<Image> Decoder::decode(
 void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 {
     py::class_<Decoder>(m, "Decoder")
-        .def(py::init<>([instance](int device_id, int num_cpu_threads, std::optional<std::vector<Backend>> backends,
-                            const std::string& options) { return new Decoder(instance, device_id, num_cpu_threads, backends, options); }),
+        .def(py::init<>([instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+                            const std::string& options) { return new Decoder(instance, device_id, max_num_cpu_threads, backends, options); }),
             R"pbdoc(
             Initialize decoder.
 
             Args:
                 device_id: Device id to execute decoding on.
 
-                num_cpu_threads: Number of CPU threads in default executor (0 means default value equal to number of cpu cores) 
+                max_num_cpu_threads: Max number of CPU threads in default executor (0 means default value equal to number of cpu cores) 
 
                 backends: List of allowed backends. If empty, all backends are allowed with default parameters.
                 
                 options: Decoder specific options e.g.: "nvjpeg:fancy_upsampling=1"
 
             )pbdoc",
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "num_cpu_threads"_a = 0, "backends"_a = py::none(),
+            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backends"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
         .def(py::init<>(
-                 [instance](int device_id, int num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
-                     const std::string& options) { return new Decoder(instance, device_id, num_cpu_threads, backend_kinds, options); }),
+                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
+                     const std::string& options) { return new Decoder(instance, device_id, max_num_cpu_threads, backend_kinds, options); }),
             R"pbdoc(
             Initialize decoder.
 
             Args:
                 device_id: Device id to execute decoding on.
 
-                num_cpu_threads: Number of CPU threads in default executor (0 means default value equal to number of cpu cores)
+                max_num_cpu_threads: Max number of CPU threads in default executor (0 means default value equal to number of cpu cores)
 
                 backend_kinds: List of allowed backend kinds. If empty or None, all backends are allowed with default parameters.
 
                 options: Decoder specific options e.g.: "nvjpeg:fancy_upsampling=1"
 
             )pbdoc",
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
+            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
         .def("decode", py::overload_cast<py::bytes, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
             R"pbdoc(
