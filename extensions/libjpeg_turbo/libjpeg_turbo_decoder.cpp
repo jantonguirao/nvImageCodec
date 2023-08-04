@@ -45,8 +45,8 @@ struct DecodeState
 
 struct DecoderImpl
 {
-    DecoderImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id,
-        const nvimgcdcsBackendParams_t* backend_params, std::string options);
+    DecoderImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params,
+        std::string options);
     ~DecoderImpl();
 
     nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
@@ -67,8 +67,7 @@ struct DecoderImpl
 
     const char* plugin_id_;
     const nvimgcdcsFrameworkDesc_t* framework_;
-    int device_id_;
-    const nvimgcdcsBackendParams_t* backend_params_;
+    const nvimgcdcsExecutionParams_t* exec_params_;
     std::unique_ptr<DecodeState> decode_state_batch_;
 };
 
@@ -158,16 +157,13 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
     }
 }
 
-DecoderImpl::DecoderImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id,
-    const nvimgcdcsBackendParams_t* backend_params, std::string options)
+DecoderImpl::DecoderImpl(
+    const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, std::string options)
     : plugin_id_(plugin_id)
     , framework_(framework)
-    , device_id_(device_id)
-    , backend_params_(backend_params)
+    , exec_params_(exec_params)
 {
-    nvimgcdcsExecutorDesc_t* executor;
-    framework_->getExecutor(framework_->instance, &executor);
-    int num_threads = executor->get_num_threads(executor->instance);
+    int num_threads = exec_params_->executor->getNumThreads(exec_params_->executor->instance);
     decode_state_batch_ = std::make_unique<DecodeState>(plugin_id_, framework_, num_threads);
 
     parseOptions(std::move(options));
@@ -202,12 +198,12 @@ void DecoderImpl::parseOptions(std::string options)
 }
 
 nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::create(
-    nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_create");
         XM_CHECK_NULL(decoder);
-        *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(plugin_id_, framework_, device_id, backend_params, options));
+        *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(plugin_id_, framework_, exec_params, options));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create libjpeg_turbo decoder - " << e.what());
         return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
@@ -216,12 +212,12 @@ nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::create(
 }
 
 nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::static_create(
-    void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);
         auto handle = reinterpret_cast<LibjpegTurboDecoderPlugin*>(instance);
-        handle->create(decoder, device_id, backend_params, options);
+        handle->create(decoder, exec_params, options);
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
@@ -385,8 +381,6 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
             decode_state_batch_->samples_[i].params = params;
         }
 
-        nvimgcdcsExecutorDesc_t* executor;
-        framework_->getExecutor(framework_->instance, &executor);
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
             auto task = [](int tid, int sample_idx, void* context) -> void {
                 nvtx3::scoped_range marker{"libjpeg_turbo decode " + std::to_string(sample_idx)};
@@ -399,6 +393,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
                     decode_state->fancy_upsampling_, decode_state->fast_idct_);
                 sample.image->imageReady(sample.image->instance, result);
             };
+            auto executor = exec_params_->executor;
             if (batch_size == 1) {
                 task(0, sample_idx, decode_state_batch_.get());
             } else {

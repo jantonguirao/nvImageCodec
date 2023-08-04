@@ -94,7 +94,7 @@ class NvJpegCudaDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params,
+        Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params,
             const char* options = nullptr);
         ~Decoder();
 
@@ -121,14 +121,13 @@ class NvJpegCudaDecoderPlugin
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
-        int device_id_;
-        const nvimgcdcsBackendParams_t* backend_params_;
+        const nvimgcdcsExecutionParams_t* exec_params_;
         size_t gpu_hybrid_huffman_threshold_ = DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD;
     };
 
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "nvjpeg_cuda_decoder";
     nvimgcdcsDecoderDesc_t decoder_desc_;

@@ -153,7 +153,7 @@ struct EncodeState
 struct EncoderImpl
 {
     EncoderImpl(
-        const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
+        const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params);
     ~EncoderImpl();
 
     nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
@@ -171,8 +171,7 @@ struct EncoderImpl
 
     const char* plugin_id_;
     const nvimgcdcsFrameworkDesc_t* framework_;
-    int device_id_;
-    const nvimgcdcsBackendParams_t* backend_params_;
+    const nvimgcdcsExecutionParams_t* exec_params_;
     std::unique_ptr<EncodeState> encode_state_batch_;
 };
 
@@ -262,23 +261,21 @@ nvimgcdcsStatus_t EncoderImpl::static_can_encode(nvimgcdcsEncoder_t encoder, nvi
     }
 }
 
-EncoderImpl::EncoderImpl(
-    const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
+EncoderImpl::EncoderImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params)
     : plugin_id_(plugin_id)
     , framework_(framework)
-    , device_id_(device_id)
-    , backend_params_(backend_params)
+    , exec_params_(exec_params)
 {
     encode_state_batch_ = std::make_unique<EncodeState>(plugin_id_, framework_);
 }
 
 nvimgcdcsStatus_t NvBmpEncoderPlugin::create(
-    nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvbmp_create");
         XM_CHECK_NULL(encoder);
-        *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new EncoderImpl(plugin_id_, framework_, device_id, backend_params));
+        *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new EncoderImpl(plugin_id_, framework_, exec_params));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvbmp encoder - " << e.what());
         return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
@@ -287,12 +284,13 @@ nvimgcdcsStatus_t NvBmpEncoderPlugin::create(
 }
 
 nvimgcdcsStatus_t NvBmpEncoderPlugin::static_create(
-    void* instance, nvimgcdcsEncoder_t* encoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);
+        XM_CHECK_NULL(exec_params);
         auto handle = reinterpret_cast<NvBmpEncoderPlugin*>(instance);
-        handle->create(encoder, device_id, backend_params, options);
+        handle->create(encoder, exec_params, options);
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
@@ -367,8 +365,7 @@ nvimgcdcsStatus_t EncoderImpl::encodeBatch(
             encode_state_batch_->samples_[i].params = params;
         }
 
-        nvimgcdcsExecutorDesc_t* executor;
-        framework_->getExecutor(framework_->instance, &executor);
+        auto executor = exec_params_->executor;
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
             executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, encode_state_batch_.get(),
                 [](int tid, int sample_idx, void* context) -> void {

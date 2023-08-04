@@ -42,7 +42,7 @@ struct DecodeState
 struct DecoderImpl
 {
     DecoderImpl(
-        const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params);
+        const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params);
     ~DecoderImpl();
 
     nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
@@ -61,8 +61,7 @@ struct DecoderImpl
 
     const char* plugin_id_;
     const nvimgcdcsFrameworkDesc_t* framework_;
-    int device_id_;
-    const nvimgcdcsBackendParams_t* backend_params_;
+    const nvimgcdcsExecutionParams_t* exec_params_;
     std::unique_ptr<DecodeState> decode_state_batch_;
 };
 
@@ -157,26 +156,23 @@ nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvi
     }
 }
 
-DecoderImpl::DecoderImpl(
-    const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int device_id, const nvimgcdcsBackendParams_t* backend_params)
+DecoderImpl::DecoderImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params)
     : plugin_id_(plugin_id)
     , framework_(framework)
-    , device_id_(device_id)
-    , backend_params_(backend_params)
+    , exec_params_(exec_params)
 {
-    nvimgcdcsExecutorDesc_t* executor;
-    framework_->getExecutor(framework_->instance, &executor);
-    int num_threads = executor->get_num_threads(executor->instance);
+    auto  executor = exec_params_->executor;
+    int num_threads = executor->getNumThreads(executor->instance);
     decode_state_batch_ = std::make_unique<DecodeState>(plugin_id_, framework_, num_threads);
 }
 
 nvimgcdcsStatus_t NvBmpDecoderPlugin::create(
-    nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvbmp_create");
         XM_CHECK_NULL(decoder);
-        *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(plugin_id_, framework_, device_id, backend_params));
+        *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(plugin_id_, framework_, exec_params));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvbmp decoder - " << e.what());
         return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
@@ -185,12 +181,12 @@ nvimgcdcsStatus_t NvBmpDecoderPlugin::create(
 }
 
 nvimgcdcsStatus_t NvBmpDecoderPlugin::static_create(
-    void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+    void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);
         auto handle = reinterpret_cast<NvBmpDecoderPlugin*>(instance);
-        handle->create(decoder, device_id, backend_params, options);
+        handle->create(decoder, exec_params, options);
     } catch (const std::runtime_error& e) {
         return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
     }
@@ -296,8 +292,7 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
             decode_state_batch_->samples_[i].params = params;
         }
 
-        nvimgcdcsExecutorDesc_t* executor;
-        framework_->getExecutor(framework_->instance, &executor);
+        auto executor = exec_params_->executor;
         for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
             auto task = [](int tid, int sample_idx, void* context) -> void {
                 nvtx3::scoped_range marker{"nvbmp decode " + std::to_string(sample_idx)};

@@ -27,7 +27,7 @@ class ImageDecoderFactory : public IImageDecoderFactory
     std::string getCodecName() const override;
     nvimgcdcsBackendKind_t getBackendKind() const override;
     std::unique_ptr<IImageDecoder> createDecoder(
-        int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options) const override;
+        const nvimgcdcsExecutionParams_t* exec_params, const char* options) const override;
 
   private:
     const nvimgcdcsDecoderDesc_t* decoder_desc_;

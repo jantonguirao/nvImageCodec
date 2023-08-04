@@ -24,7 +24,7 @@ class ICodeStream;
 class ImageEncoder : public IImageEncoder
 {
   public:
-    ImageEncoder(const nvimgcdcsEncoderDesc_t* desc, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options);
+    ImageEncoder(const nvimgcdcsEncoderDesc_t* desc, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
     ~ImageEncoder() override;
     nvimgcdcsBackendKind_t getBackendKind() const override;
     std::unique_ptr<IEncodeState> createEncodeStateBatch() const override;

@@ -18,14 +18,12 @@
 
 namespace nvimgcdcs {
 
-EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcdcsEncodeParams_t>* work_manager, int device_id,
-    const std::vector<nvimgcdcsBackend_t>& backends, const std::string& options, const ICodec* codec, int index)
+EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcdcsEncodeParams_t>* work_manager, const nvimgcdcsExecutionParams_t* exec_params, const std::string& options, const ICodec* codec, int index)
     : logger_(logger)
     , work_manager_(work_manager)
     , codec_(codec)
     , index_(index)
-    , device_id_(device_id)
-    , backends_(backends)
+    , exec_params_(exec_params)
     , options_(options)
 {
 }
@@ -40,7 +38,7 @@ EncoderWorker* EncoderWorker::getFallback()
     if (!fallback_) {
         int n = codec_->getEncodersNum();
         if (index_ + 1 < n) {
-            fallback_ = std::make_unique<EncoderWorker>(logger_, work_manager_, device_id_, backends_, options_, codec_, index_ + 1);
+            fallback_ = std::make_unique<EncoderWorker>(logger_, work_manager_, exec_params_, options_, codec_, index_ + 1);
         }
     }
     return fallback_.get();
@@ -52,11 +50,18 @@ IImageEncoder* EncoderWorker::getEncoder()
         auto encoder_factory = codec_->getEncoderFactory(index_);
         if (encoder_factory) {
             auto backend_kind = encoder_factory->getBackendKind();
-            auto backend_it =
-                find_if(backends_.begin(), backends_.end(), [backend_kind](const nvimgcdcsBackend_t& b) { return b.kind == backend_kind; });
-            if (backends_.size() == 0 || backend_it != backends_.end()) {
-                auto backend_params = backend_it != backends_.end() ? &backend_it->params : nullptr;
-                encoder_ = encoder_factory->createEncoder(device_id_, backend_params, options_.c_str());
+            bool backend_allowed = exec_params_->num_backends == 0;
+            auto backend = exec_params_->backends;
+            for (auto b = 0; b < exec_params_->num_backends; ++b) {
+                backend_allowed = backend->kind == backend_kind;
+                if (backend_allowed)
+                    break;
+
+                ++backend;
+            }
+
+            if (backend_allowed) {
+                encoder_ = encoder_factory->createEncoder(exec_params_, options_.c_str());
                 if (encoder_) {
                     encode_state_batch_ = encoder_->createEncodeStateBatch();
                     is_input_expected_in_device_ = backend_kind != NVIMGCDCS_BACKEND_KIND_CPU_ONLY;
@@ -92,7 +97,7 @@ void EncoderWorker::stop()
 
 void EncoderWorker::run()
 {
-    DeviceGuard dg(device_id_);
+    DeviceGuard dg(exec_params_->device_id);
     std::unique_lock lock(mtx_, std::defer_lock);
     while (!stop_requested_) {
         lock.lock();

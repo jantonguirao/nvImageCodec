@@ -14,30 +14,46 @@
 #include <thread>
 #include "device_guard.h"
 #include "encode_state_batch.h"
+#include "encoder_worker.h"
 #include "exception.h"
 #include "icode_stream.h"
 #include "icodec.h"
 #include "iimage.h"
 #include "iimage_encoder.h"
+#include "iimage_encoder_factory.h"
 #include "log.h"
 #include "processing_results.h"
-#include "iimage_encoder_factory.h"
-#include "encoder_worker.h"
+#include "user_executor.h"
+#include "default_executor.h"
 
 namespace nvimgcdcs {
 
-
-ImageGenericEncoder::ImageGenericEncoder(ILogger* logger, int device_id, int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
-    : logger_(logger)
-    , device_id_(device_id)
-    , backends_(num_backends)
-    , options_(options ? options : "")
+static std::unique_ptr<IExecutor> GetExecutor(const nvimgcdcsExecutionParams_t* exec_params, ILogger* logger)
 {
-    auto backend = backends;
-    for (int i = 0; i < num_backends; ++i) {
-        backends_.push_back(*backend);
+    std::unique_ptr<IExecutor> exec;
+    if (exec_params->executor)
+        exec = std::make_unique<UserExecutor>(exec_params->executor);
+    else
+        exec = std::make_unique<DefaultExecutor>(logger, exec_params->max_num_cpu_threads);
+    return exec;
+}
+
+ImageGenericEncoder::ImageGenericEncoder(ILogger* logger, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+    : logger_(logger)
+    , exec_params_(*exec_params)
+    , backends_(exec_params->num_backends)
+    , options_(options ? options : "")
+    , executor_(std::move(GetExecutor(exec_params, logger)))
+{
+    if (exec_params_.device_id == NVIMGCDCS_DEVICE_CURRENT)
+        CHECK_CUDA(cudaGetDevice(&exec_params_.device_id));
+    auto backend = exec_params->backends;
+    for (int i = 0; i < exec_params_.num_backends; ++i) {
+        backends_[i] = *backend;
         ++backend;
     }
+    exec_params_.backends = backends_.data();
+    exec_params_.executor = executor_->getExecutorDesc();
 }
 
 ImageGenericEncoder::~ImageGenericEncoder()
@@ -167,7 +183,7 @@ EncoderWorker* ImageGenericEncoder::getWorker(const ICodec* codec)
 {
     auto it = workers_.find(codec);
     if (it == workers_.end()) {
-        it = workers_.emplace(codec, std::make_unique<EncoderWorker>(logger_, this, device_id_, backends_, options_, codec, 0)).first;
+        it = workers_.emplace(codec, std::make_unique<EncoderWorker>(logger_, this, &exec_params_, options_, codec, 0)).first;
     }
 
     return it->second.get();

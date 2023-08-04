@@ -28,12 +28,11 @@ class TIFFParserPluginTest : public ::testing::Test
     void SetUp() override
     {
         nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-        create_info.num_cpu_threads = 1;
         create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
 
 
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, &create_info));
 
         tiff_parser_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
         ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_tiff_parser_extension_desc(&tiff_parser_extension_desc_));

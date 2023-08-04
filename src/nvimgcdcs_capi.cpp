@@ -110,7 +110,7 @@ __inline__ nvimgcdcsStatus_t getCAPICode(Status status)
 
 struct nvimgcdcsInstance
 {
-    nvimgcdcsInstance(nvimgcdcsInstanceCreateInfo_t create_info)
+    nvimgcdcsInstance(const nvimgcdcsInstanceCreateInfo_t* create_info)
         : director_(create_info)
     {
     }
@@ -179,13 +179,14 @@ nvimgcdcsStatus_t nvimgcdcsGetProperties(nvimgcdcsProperties_t* properties)
     return ret;
 }
 
-nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info)
+nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, const nvimgcdcsInstanceCreateInfo_t* create_info)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
     nvimgcdcsInstance_t nvimgcdcs = nullptr;
     NVIMGCDCSAPI_TRY
         {
             CHECK_NULL(instance);
+            CHECK_NULL(create_info);
             nvimgcdcs = new nvimgcdcsInstance(create_info);
             *instance = nvimgcdcs;
         }
@@ -362,8 +363,8 @@ nvimgcdcsStatus_t nvimgcdcsCodeStreamGetImageInfo(nvimgcdcsCodeStream_t code_str
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id,
-    int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
+    nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -371,10 +372,9 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instan
         {
             CHECK_NULL(instance)
             CHECK_NULL(decoder)
-            if (device_id == -1)
-                CHECK_CUDA(cudaGetDevice(&device_id));
+            CHECK_NULL(exec_params)
             std::unique_ptr<ImageGenericDecoder> image_decoder =
-                instance->director_.createGenericDecoder(device_id, num_backends, backends, options);
+                instance->director_.createGenericDecoder(exec_params, options);
             *decoder = new nvimgcdcsDecoder();
             (*decoder)->image_decoder_ = std::move(image_decoder);
             (*decoder)->instance_ = instance;
@@ -495,8 +495,7 @@ nvimgcdcsStatus_t nvimgcdcsImageGetImageInfo(nvimgcdcsImage_t image, nvimgcdcsIm
     return ret;
 }
 
-NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id,
-    int num_backends, const nvimgcdcsBackend_t* backends, const char* options)
+NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     nvimgcdcsStatus_t ret = NVIMGCDCS_STATUS_SUCCESS;
 
@@ -504,10 +503,9 @@ NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instan
         {
             CHECK_NULL(instance)
             CHECK_NULL(encoder)
-            if (device_id == -1)
-                CHECK_CUDA(cudaGetDevice(&device_id));
+            CHECK_NULL(exec_params)
             std::unique_ptr<ImageGenericEncoder> image_encoder =
-                instance->director_.createGenericEncoder(device_id, num_backends, backends, options);
+                instance->director_.createGenericEncoder(exec_params, options);
             *encoder = new nvimgcdcsEncoder();
             (*encoder)->image_encoder_ = std::move(image_encoder);
             (*encoder)->instance_ = instance;

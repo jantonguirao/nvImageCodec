@@ -43,7 +43,9 @@ class NvJpeg2kExtDecoderTestBase : public NvJpeg2kExtTestBase
     void SetUp()
     {
         NvJpeg2kExtTestBase::SetUp();
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr));
+        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, &exec_params, nullptr));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
     }
 

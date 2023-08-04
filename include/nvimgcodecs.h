@@ -193,6 +193,7 @@ extern "C"
         NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC,
         NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS,
+        NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS,
         NVIMGCDCS_STRUCTURE_TYPE_ENUM_FORCE_INT = INT32_MAX
     } nvimgcdcsStructureType_t;
 
@@ -578,7 +579,8 @@ extern "C"
                                                                           backends is supported. */
         NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED = 0x23,   /**< Processing failed because codec encoding is unsupported. */
         NVIMGCDCS_PROCESSING_STATUS_RESOLUTION_UNSUPPORTED = 0x43, /**< Processing failed because image resolution is unsupported. */
-        NVIMGCDCS_PROCESSING_STATUS_CODESTREAM_UNSUPPORTED = 0x83, /**< Processing failed because some feature of compressed stream is unsupported */
+        NVIMGCDCS_PROCESSING_STATUS_CODESTREAM_UNSUPPORTED =
+            0x83, /**< Processing failed because some feature of compressed stream is unsupported */
 
         //These values below describe cases when processing could be possible but with different image format or parameters
         NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED = 0x5,     /**< Color specification unsupported. */
@@ -771,7 +773,7 @@ extern "C"
     /** 
      * @brief Executor description.
      *
-     * Codec plugins can use executor available from plugin framework to schedule execution of asynchronous task.  
+     * Codec plugins can use executor available via execution parameters to schedule execution of asynchronous task.  
      */
     typedef struct
     {
@@ -799,8 +801,30 @@ extern "C"
          * @param instance [in] Pointer to nvimgcdcsExecutorDesc_t instance. 
          * @return Number of threads in executor.
         */
-        int (*get_num_threads)(void* instance);
+        int (*getNumThreads)(void* instance);
     } nvimgcdcsExecutorDesc_t;
+
+    /** 
+     * @brief Execution parameters
+     */
+    typedef struct
+    {
+        nvimgcdcsStructureType_t type;                /**< Is the type of this structure. */
+        void* next;                                   /**< Is NULL or a pointer to an extension structure type. */
+
+        nvimgcdcsDeviceAllocator_t* device_allocator; /**< Custom allocator for device memory */
+        nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Custom allocator for pinned memory */
+        int max_num_cpu_threads;                      /**< Max number of CPU threads in default executor 
+                                                           (0 means default value equal to number of cpu cores) */
+        nvimgcdcsExecutorDesc_t* executor;            /**< Points an executor. If NULL default executor will be used. 
+                                                           @note At plugin level API it always points to executor, either custom or default. */
+        int device_id;                                /**< Device id to process decoding on. It can be also specified 
+                                                           using defines NVIMGCDCS_DEVICE_CURRENT or NVIMGCDCS_DEVICE_CPU_ONLY. */
+        int num_backends;                             /**< Number of allowed backends passed (if any) 
+                                                           in backends parameter. For 0, all backends are allowed.*/
+        const nvimgcdcsBackend_t* backends;           /**< Points a nvimgcdcsBackend_t array with defined allowed backends.
+                                                           For nullptr, all backends are allowed. */
+    } nvimgcdcsExecutionParams_t;
 
     /**
      * @brief Input/Output stream description.
@@ -1045,14 +1069,13 @@ extern "C"
          * 
          * @param instance [in] Pointer to nvimgcdcsEncoderDesc_t instance.
          * @param encoder [in/out] Points where to return handle to created encoder.
-         * @param device_id [in] Device id which will be used for encoding.
-         * @param backend_params [in] Parameters used to configure backend.
+         * @param exec_params [in] Points an execution parameters.
          * @param options [in] String with optional, space separated, list of parameters for encoders, in format 
          *                     "<encoder_id>:<parameter_name>=<parameter_value>".
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsEncoder_t* encoder, int device_id,
-            const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        nvimgcdcsStatus_t (*create)(
+            void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
         /** 
          * Destroys encoder.
@@ -1108,14 +1131,13 @@ extern "C"
          * 
          * @param instance [in] Pointer to nvimgcdcsDecoderDesc_t instance.
          * @param encoder [in/out] Points where to return handle to created decoder.
-         * @param device_id [in] Device id which will be used for decoding.
-         * @param backend_params [in] Parameters used to configure backend.
+         * @param exec_params [in] Points an execution parameters.
          * @param options [in] String with optional, space separated, list of parameters for decoders, in format 
          *                     "<encoder_id>:<parameter_name>=<parameter_value>".
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
-        nvimgcdcsStatus_t (*create)(void* instance, nvimgcdcsDecoder_t* decoder, int device_id,
-            const nvimgcdcsBackendParams_t* backend_params, const char* options);
+        nvimgcdcsStatus_t (*create)(
+            void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
         /** 
          * Destroys decoder.
@@ -1189,19 +1211,15 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcdcsStructureType_t type;                /**< Is the type of this structure. */
-        const void* next;                             /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcdcsStructureType_t type; /**< Is the type of this structure. */
+        const void* next;              /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                               /**< Plugin framework instance pointer which will be passed back in functions */
-        const char* id;                               /**< Plugin framework named identifier e.g. nvImageCodecs */
-        uint32_t version;                             /**< Plugin framework version. */
-        uint32_t ext_api_version;                     /**< The nvImageCodecs extension API version. */
-        uint32_t cudart_version;                      /**< The version of CUDA Runtime with which plugin framework was built. */
-
-        nvimgcdcsDeviceAllocator_t* device_allocator; /**< Pointer to custom device memory allocator */
-        nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Pointer to custom host pinned memory allocator */
-
-        nvimgcdcsLogFunc_t log;                       /**< Pointer to logging function. @see nvimgcdcsLogFunc_t */
+        void* instance;                /**< Plugin framework instance pointer which will be passed back in functions */
+        const char* id;                /**< Plugin framework named identifier e.g. nvImageCodecs */
+        uint32_t version;              /**< Plugin framework version. */
+        uint32_t ext_api_version;      /**< The nvImageCodecs extension API version. */
+        uint32_t cudart_version;       /**< The version of CUDA Runtime with which plugin framework was built. */
+        nvimgcdcsLogFunc_t log;        /**< Pointer to logging function. @see nvimgcdcsLogFunc_t */
 
         /**
          * @brief Registers encoder plugin.
@@ -1259,15 +1277,6 @@ extern "C"
          * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
          */
         nvimgcdcsStatus_t (*unregisterParser)(void* instance, const nvimgcdcsParserDesc_t* desc);
-
-        /**
-         * @brief Retrieves executor.
-         *
-         * @param instance [in] Pointer to nvimgcdcsFrameworkDesc_t instance.
-         * @param executor [in] Points where to return handle to executor description.
-         * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
-         */
-        nvimgcdcsStatus_t (*getExecutor)(void* instance, nvimgcdcsExecutorDesc_t** executor);
 
     } nvimgcdcsFrameworkDesc_t;
 
@@ -1332,19 +1341,15 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcdcsStructureType_t type;                /**< Is the type of this structure. */
-        void* next;                                   /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcdcsStructureType_t type;      /**< Is the type of this structure. */
+        void* next;                         /**< Is NULL or a pointer to an extension structure type. */
 
-        nvimgcdcsDeviceAllocator_t* device_allocator; /**< Custom allocator for device memory */
-        nvimgcdcsPinnedAllocator_t* pinned_allocator; /**< Custom allocator for pinned memory */
-        int load_builtin_modules;                     /**< Load default modules. Valid values 0 or 1. */
-        int load_extension_modules;                   /**< Discover and load extension modules on start. Valid values 0 or 1. */
-        const char* extension_modules_path;           /**< There may be several paths separated by ':' on Linux or ';' on Windows */
-        int default_debug_messenger;                  /**< Create default debug messenger. Valid values 0 or 1. */
-        uint32_t message_severity;                    /**< Severity for default debug messenger */
-        uint32_t message_category;                    /**< Message category for default debug messenger */
-        int num_cpu_threads; /**< Number of CPU threads in default executor (0 means default value = to number of cpu_cores) */
-        nvimgcdcsExecutorDesc_t* executor; /**< Custom executor */
+        int load_builtin_modules;           /**< Load default modules. Valid values 0 or 1. */
+        int load_extension_modules;         /**< Discover and load extension modules on start. Valid values 0 or 1. */
+        const char* extension_modules_path; /**< There may be several paths separated by ':' on Linux or ';' on Windows */
+        int default_debug_messenger;        /**< Create default debug messenger. Valid values 0 or 1. */
+        uint32_t message_severity;          /**< Severity for default debug messenger */
+        uint32_t message_category;          /**< Message category for default debug messenger */
     } nvimgcdcsInstanceCreateInfo_t;
 
     /**
@@ -1354,7 +1359,7 @@ extern "C"
      * @param create_info [in] Pointer to a nvimgcdcsInstanceCreateInfo_t structure controlling creation of the instance.
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes}
      */
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, nvimgcdcsInstanceCreateInfo_t create_info);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsInstanceCreate(nvimgcdcsInstance_t* instance, const nvimgcdcsInstanceCreateInfo_t* create_info);
 
     /**
      * @brief Destroys the nvImageCodecs library instance.
@@ -1543,15 +1548,16 @@ extern "C"
      * 
      * @param instance  [in] The library instance handle the decoder will be used with.
      * @param decoder  [in/out] Points a nvimgcdcsDecoder_t handle in which the decoder is returned.
-     * @param device_id [in] Device id to process decoding on. It can be also specified using defines NVIMGCDCS_DEVICE_CURRENT or NVIMGCDCS_DEVICE_CPU_ONLY. 
-     * @param num_backends [in] Number of allowed backends passed (if any) in backends parameter. For 0, all backends are allowed.
-     * @param backends [in] Points a nvimgcdcsBackend_t array with defined allowed backends. For nullptr, all backends are allowed.
+     * @param exec_params [in] Points an execution parameters.
      * @param options [in] String with optional space separated list of parameters for specific decoders in format 
      *                     "<decoder_id>:<parameter_name>=<parameter_value>". For example  "nvjpeg:fancy_upsampling=1"
-     * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes} 
+     * @return nvimgcdcsStatus_t - An error code as specified in
+     {
+        @link nvimgcdcsStatus_t API Return Status Codes
+     }
      */
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, int device_id,
-        int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsDecoderCreate(
+        nvimgcdcsInstance_t instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
     /**
      * @brief Destroys decoder.
@@ -1604,15 +1610,13 @@ extern "C"
      *  
      * @param instance [in] The library instance handle the encoder will be used with.
      * @param encoder [in/out] Points a nvimgcdcsEncoder_t handle in which the decoder is returned.
-     * @param device_id [in] Device id to process encoding on. It can be also specified using defines NVIMGCDCS_DEVICE_CURRENT or NVIMGCDCS_DEVICE_CPU_ONLY. 
-     * @param num_backends [in] Number of allowed backends passed (if any) in backends parameter. For 0, all backends are allowed.
-     * @param backends [in] Points a nvimgcdcsBackend_t array with defined allowed backends. For nullptr, all backends are allowed.
+     * @param exec_params [in] Points an execution parameters.
      * @param options [in] String with optional, space separated, list of parameters for specific encoders, in format 
      *                     "<encoder_id>:<parameter_name>=<parameter_value>."
      * @return nvimgcdcsStatus_t - An error code as specified in {@link nvimgcdcsStatus_t API Return Status Codes} 
      */
-    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, int device_id,
-        int num_backends, const nvimgcdcsBackend_t* backends, const char* options);
+    NVIMGCDCSAPI nvimgcdcsStatus_t nvimgcdcsEncoderCreate(
+        nvimgcdcsInstance_t instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
 
     /**
      * @brief Destroys encoder.

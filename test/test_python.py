@@ -67,9 +67,9 @@ def load_batch(file_paths: list[str], load_mode: str = None):
     return [load_single_image(f, load_mode) for f in file_paths]
 
 
-def decode_single_image_test(tmp_path, input_img_file, input_format, backends):
+def decode_single_image_test(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads):
     if backends:
-        decoder = nvimgcodecs.Decoder(
+        decoder = nvimgcodecs.Decoder(max_num_cpu_threads=max_num_cpu_threads,
             backends=backends, options=get_default_decoder_options())
     else:
         decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
@@ -88,6 +88,8 @@ def decode_single_image_test(tmp_path, input_img_file, input_format, backends):
 
     compare_images([test_img], [ref_img])
 
+
+@t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
                                  [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
                                      nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
@@ -126,10 +128,11 @@ def decode_single_image_test(tmp_path, input_img_file, input_format, backends):
     "jpeg2k/cat-1245673_640-12bit.jp2",
      ]
 )
-def test_decode_single_image_common(tmp_path, input_img_file, input_format, backends):
-    decode_single_image_test(tmp_path, input_img_file, input_format, backends)
+def test_decode_single_image_common(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads):
+    decode_single_image_test(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads)
 
 
+@t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
                                  [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
                                      nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
@@ -142,9 +145,11 @@ def test_decode_single_image_common(tmp_path, input_img_file, input_format, back
     ]
 )
 @t.mark.skipif(nvimgcodecs.__cuda_version__ < 12010,  reason="requires CUDA >= 12.1")
-def test_decode_single_image_cuda12_only(tmp_path, input_img_file, input_format, backends):
-    decode_single_image_test(tmp_path, input_img_file, input_format, backends)
+def test_decode_single_image_cuda12_only(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads):
+    decode_single_image_test(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads)
 
+
+@t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
                                  [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
                                      nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
@@ -187,15 +192,17 @@ def test_decode_single_image_cuda12_only(tmp_path, input_img_file, input_format,
       "base/4k_lossless.jp2")
      ]
 )
-def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda_stream):
+def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda_stream, max_num_cpu_threads):
     input_images = [os.path.join(img_dir_path, img)
                     for img in input_images_batch]
     ref_images = [cv2.imread(img, cv2.IMREAD_COLOR |
                              cv2.IMREAD_ANYDEPTH) for img in input_images]
     if backends:
-        decoder = nvimgcodecs.Decoder(backends=backends, options=get_default_decoder_options())
+        decoder = nvimgcodecs.Decoder(
+            max_num_cpu_threads=max_num_cpu_threads, backends=backends, options=get_default_decoder_options())
     else:
-        decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+        decoder = nvimgcodecs.Decoder(
+            max_num_cpu_threads=max_num_cpu_threads, options=get_default_decoder_options())
 
     encoded_images = load_batch(input_images, input_format)
 
@@ -206,6 +213,7 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
     compare_images(test_images, ref_images)
 
 
+@t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("cuda_stream", [None, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
 @t.mark.parametrize("encode_to_data", [True, False])
 @t.mark.parametrize(
@@ -244,8 +252,8 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
         "jpeg2k/cat-1245673_640-12bit.jp2",
     ]
 )
-def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stream):
-    encoder = nvimgcodecs.Encoder()
+def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stream, max_num_cpu_threads):
+    encoder = nvimgcodecs.Encoder(max_num_cpu_threads=max_num_cpu_threads)
 
     input_img_path = os.path.join(img_dir_path, input_img_file)
     ref_img = cv2.imread(
@@ -284,6 +292,7 @@ def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stre
     compare_image(np.asarray(test_img), np.asarray(ref_img))
 
 
+@t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("cuda_stream", [None, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
 @t.mark.parametrize("encode_to_data", [True, False])
 @t.mark.parametrize(
@@ -322,8 +331,8 @@ def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stre
          "jpeg2k/cat-1245673_640-12bit.jp2",)
     ]
 )
-def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_stream):
-    encoder = nvimgcodecs.Encoder()
+def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_stream, max_num_cpu_threads):
+    encoder = nvimgcodecs.Encoder(max_num_cpu_threads=max_num_cpu_threads)
 
     input_images = [os.path.join(img_dir_path, img)
                     for img in input_images_batch]

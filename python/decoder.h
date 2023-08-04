@@ -31,8 +31,10 @@ using namespace py::literals;
 class Decoder
 {
   public:
-    Decoder(nvimgcdcsInstance_t instance, int device_id, std::optional<std::vector<Backend>> backends, const std::string& options);
-    Decoder(nvimgcdcsInstance_t instance, int device_id, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options);
+    Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+        const std::string& options);
+    Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads,
+        std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options);
     ~Decoder();
 
     Image decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream);

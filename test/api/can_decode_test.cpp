@@ -52,7 +52,7 @@ class MockDecoderPlugin
 
   private:
     static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsDecoder_t* decoder, int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options)
+        void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
     {
         *decoder = static_cast<nvimgcdcsDecoder_t>(instance);
         return NVIMGCDCS_STATUS_SUCCESS;
@@ -156,15 +156,17 @@ class NvImageCodecsCanDecodeApiTest : public TestWithParam < std::tuple<test_cas
 
         nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
         create_info.load_builtin_modules= 1;
-        create_info.num_cpu_threads = 1;
 
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, create_info));
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, &create_info));
 
         if (register_extension_) {
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &extension_, mock_extension_->getExtensionDesc()));
         }
 
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, NVIMGCDCS_DEVICE_CURRENT, 0, nullptr, nullptr));
+        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        exec_params.max_num_cpu_threads = 1;
+        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, &exec_params, nullptr));
         params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
         image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;

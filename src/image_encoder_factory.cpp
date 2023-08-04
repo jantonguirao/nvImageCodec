@@ -35,8 +35,8 @@ nvimgcdcsBackendKind_t ImageEncoderFactory::getBackendKind() const
 }
 
 std::unique_ptr<IImageEncoder> ImageEncoderFactory::createEncoder(
-    int device_id, const nvimgcdcsBackendParams_t* backend_params, const char* options) const
+    const nvimgcdcsExecutionParams_t* exec_params, const char* options) const
 {
-    return std::make_unique<ImageEncoder>(encoder_desc_, device_id, backend_params, options);
+    return std::make_unique<ImageEncoder>(encoder_desc_, exec_params, options);
 }
 } // namespace nvimgcdcs
