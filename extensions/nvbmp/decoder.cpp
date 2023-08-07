@@ -172,6 +172,7 @@ nvimgcdcsStatus_t NvBmpDecoderPlugin::create(
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvbmp_create");
         XM_CHECK_NULL(decoder);
+        XM_CHECK_NULL(exec_params);
         *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(plugin_id_, framework_, exec_params));
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create nvbmp decoder - " << e.what());

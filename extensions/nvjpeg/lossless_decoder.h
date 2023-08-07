@@ -66,7 +66,9 @@ class NvJpegLosslessDecoderPlugin
             const char* options = nullptr);
         ~Decoder();
 
-        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvjpegHandle_t handle, nvimgcdcsCodeStreamDesc_t** code_streams,
+        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
+            nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params);
+        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decodeBatch(
             nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
@@ -85,6 +87,17 @@ class NvJpegLosslessDecoderPlugin
         std::unique_ptr<DecodeState> decode_state_batch_;
         std::unique_ptr<ParseState> parse_state_;
         const nvimgcdcsExecutionParams_t* exec_params_;
+
+        struct CanDecodeCtx {
+            Decoder *this_ptr;
+            nvimgcdcsProcessingStatus_t* status;
+            nvimgcdcsCodeStreamDesc_t** code_streams;
+            nvimgcdcsImageDesc_t** images;
+            const nvimgcdcsDecodeParams_t* params;
+            int num_samples;
+            int num_threads;
+            std::vector<std::promise<void>> promise;
+        };
     };
 
     nvimgcdcsStatus_t create(

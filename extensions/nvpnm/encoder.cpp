@@ -114,6 +114,7 @@ nvimgcdcsStatus_t NvPnmEncoderPlugin::create(
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "pnm_create_encoder");
         XM_CHECK_NULL(encoder);
+        XM_CHECK_NULL(exec_params);
         *encoder = reinterpret_cast<nvimgcdcsEncoder_t>(new NvPnmEncoderPlugin::Encoder(plugin_id_, framework_, exec_params, options));
         return NVIMGCDCS_STATUS_SUCCESS;
     } catch (std::runtime_error& e) {

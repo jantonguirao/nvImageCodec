@@ -32,64 +32,105 @@ nvimgcdcsDecoderDesc_t* NvJpeg2kDecoderPlugin::getDecoderDesc()
     return &decoder_desc_;
 }
 
+nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
+    nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params)
+{
+    try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg2k_can_decode");
+        XM_CHECK_NULL(status);
+        XM_CHECK_NULL(code_stream);
+        XM_CHECK_NULL(image);
+        XM_CHECK_NULL(params);
+
+        *status = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        code_stream->getImageInfo(code_stream->instance, &cs_image_info);
+
+        if (strcmp(cs_image_info.codec_name, "jpeg2k") != 0) {
+            *status = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
+
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image->getImageInfo(image->instance, &image_info);
+        static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
+            NVIMGCDCS_COLORSPEC_UNCHANGED, NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
+        if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
+            *status |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
+        }
+        if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_YUV) {
+            static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{
+                NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420};
+            if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
+                *status |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+            }
+        }
+
+        static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
+            NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED,
+            NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED,
+            NVIMGCDCS_SAMPLEFORMAT_P_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_I_RGB,
+            NVIMGCDCS_SAMPLEFORMAT_P_Y,
+            NVIMGCDCS_SAMPLEFORMAT_P_YUV,
+        };
+        if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
+            *status |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        }
+
+        static const std::set<nvimgcdcsSampleDataType_t> supported_sample_type{
+            NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, NVIMGCDCS_SAMPLE_DATA_TYPE_INT16};
+        for (uint32_t p = 0; p < image_info.num_planes; ++p) {
+            auto sample_type = image_info.plane_info[p].sample_type;
+            if (supported_sample_type.find(sample_type) == supported_sample_type.end()) {
+                *status |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+            }
+        }
+    } catch (const NvJpeg2kException& e) {
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if nvjpeg2k can decode - " << e.info());
+        return e.nvimgcdcsStatus();
+    }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
     nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
+        nvtx3::scoped_range marker{"jpeg2k_can_decode"};
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg2k_can_decode");
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images);
         XM_CHECK_NULL(params);
 
-        auto result = status;
-        auto code_stream = code_streams;
-        auto image = images;
-        for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
+        auto executor = exec_params_->executor;
+        int num_threads = executor->getNumThreads(executor->instance);
 
-            if (strcmp(cs_image_info.codec_name, "jpeg2k") != 0) {
-                *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
-                continue;
-            }
-
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-            (*image)->getImageInfo((*image)->instance, &image_info);
-            static const std::set<nvimgcdcsColorSpec_t> supported_color_space{
-                NVIMGCDCS_COLORSPEC_UNCHANGED, NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC};
-            if (supported_color_space.find(image_info.color_spec) == supported_color_space.end()) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
-            }
-            if (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_YUV) {
-                static const std::set<nvimgcdcsChromaSubsampling_t> supported_css{
-                    NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420};
-                if (supported_css.find(image_info.chroma_subsampling) == supported_css.end()) {
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        if (batch_size == 1) {
+            canDecode(&status[0], code_streams[0], images[0], params);
+        } else {
+            CanDecodeCtx canDecodeCtx{this, status, code_streams, images, params, batch_size, num_threads};
+            canDecodeCtx.promise.resize(num_threads);
+            std::vector<std::future<void>> fut;
+            fut.reserve(num_threads);
+            for (auto& pr: canDecodeCtx.promise)
+                fut.push_back(pr.get_future());
+            auto task = [](int tid, int block_idx, void* context) -> void {
+                auto *ctx = reinterpret_cast<CanDecodeCtx*>(context);
+                int64_t i_start = ctx->num_samples * block_idx / ctx->num_threads;
+                int64_t i_end = ctx->num_samples * (block_idx + 1) / ctx->num_threads;
+                for (int i = i_start; i < i_end; i++) {
+                    ctx->this_ptr->canDecode(&ctx->status[i], ctx->code_streams[i], ctx->images[i], ctx->params);
                 }
-            }
-
-            static const std::set<nvimgcdcsSampleFormat_t> supported_sample_format{
-                NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED,
-                NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED,
-                NVIMGCDCS_SAMPLEFORMAT_P_RGB,
-                NVIMGCDCS_SAMPLEFORMAT_I_RGB,
-                NVIMGCDCS_SAMPLEFORMAT_P_Y,
-                NVIMGCDCS_SAMPLEFORMAT_P_YUV,
+                ctx->promise[block_idx].set_value();
             };
-            if (supported_sample_format.find(image_info.sample_format) == supported_sample_format.end()) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+            for (int block_idx = 0; block_idx < num_threads; ++block_idx) {
+                executor->launch(executor->instance, exec_params_->device_id, block_idx, &canDecodeCtx, std::move(task));
             }
-
-            static const std::set<nvimgcdcsSampleDataType_t> supported_sample_type{
-                NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8, NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16, NVIMGCDCS_SAMPLE_DATA_TYPE_INT16};
-            for (uint32_t p = 0; p < image_info.num_planes; ++p) {
-                auto sample_type = image_info.plane_info[p].sample_type;
-                if (supported_sample_type.find(sample_type) == supported_sample_type.end()) {
-                    *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
-                }
-            }
+            // wait for it to finish
+            for (auto& f : fut)
+                f.wait();
         }
     } catch (const NvJpeg2kException& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if nvjpeg2k can decode - " << e.info());
@@ -109,24 +150,23 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
     }
 }
 
-NvJpeg2kDecoderPlugin::Decoder::Decoder(
-    const char* id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params)
+NvJpeg2kDecoderPlugin::Decoder::Decoder(const char* id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params)
     : plugin_id_(id)
     , device_allocator_{nullptr, nullptr, nullptr}
     , pinned_allocator_{nullptr, nullptr, nullptr}
     , framework_(framework)
     , exec_params_(exec_params)
 {
-    if (exec_params->device_allocator && exec_params->device_allocator->device_malloc && exec_params->device_allocator->device_free) {
-        device_allocator_.device_ctx = exec_params->device_allocator->device_ctx;
-        device_allocator_.device_malloc = exec_params->device_allocator->device_malloc;
-        device_allocator_.device_free = exec_params->device_allocator->device_free;
+    if (exec_params_->device_allocator && exec_params_->device_allocator->device_malloc && exec_params_->device_allocator->device_free) {
+        device_allocator_.device_ctx = exec_params_->device_allocator->device_ctx;
+        device_allocator_.device_malloc = exec_params_->device_allocator->device_malloc;
+        device_allocator_.device_free = exec_params_->device_allocator->device_free;
     }
 
-    if (exec_params->pinned_allocator && exec_params->pinned_allocator->pinned_malloc && exec_params->pinned_allocator->pinned_free) {
-        pinned_allocator_.pinned_ctx = exec_params->pinned_allocator->pinned_ctx;
-        pinned_allocator_.pinned_malloc = exec_params->pinned_allocator->pinned_malloc;
-        pinned_allocator_.pinned_free = exec_params->pinned_allocator->pinned_free;
+    if (exec_params_->pinned_allocator && exec_params_->pinned_allocator->pinned_malloc && exec_params_->pinned_allocator->pinned_free) {
+        pinned_allocator_.pinned_ctx = exec_params_->pinned_allocator->pinned_ctx;
+        pinned_allocator_.pinned_malloc = exec_params_->pinned_allocator->pinned_malloc;
+        pinned_allocator_.pinned_free = exec_params_->pinned_allocator->pinned_free;
     }
 
     if (device_allocator_.device_malloc && device_allocator_.device_free && pinned_allocator_.pinned_malloc &&
@@ -136,19 +176,19 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(
         XM_CHECK_NVJPEG2K(nvjpeg2kCreateSimple(&handle_));
     }
 
-    if (exec_params->device_allocator && (exec_params->device_allocator->device_mem_padding != 0)) {
-        XM_CHECK_NVJPEG2K(nvjpeg2kSetDeviceMemoryPadding(exec_params->device_allocator->device_mem_padding, handle_));
+    if (exec_params_->device_allocator && (exec_params_->device_allocator->device_mem_padding != 0)) {
+        XM_CHECK_NVJPEG2K(nvjpeg2kSetDeviceMemoryPadding(exec_params_->device_allocator->device_mem_padding, handle_));
     }
-    if (exec_params->pinned_allocator && (exec_params->pinned_allocator->pinned_mem_padding != 0)) {
-        XM_CHECK_NVJPEG2K(nvjpeg2kSetPinnedMemoryPadding(exec_params->pinned_allocator->pinned_mem_padding, handle_));
+    if (exec_params_->pinned_allocator && (exec_params_->pinned_allocator->pinned_mem_padding != 0)) {
+        XM_CHECK_NVJPEG2K(nvjpeg2kSetPinnedMemoryPadding(exec_params_->pinned_allocator->pinned_mem_padding, handle_));
     }
 
     // create resources per thread
-    auto executor = exec_params->executor;
+    auto executor = exec_params_->executor;
     int num_threads = executor->getNumThreads(executor->instance);
 
-    decode_state_batch_ = std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(
-        plugin_id_, framework_, handle_, exec_params->device_allocator, exec_params->pinned_allocator, exec_params->device_id, num_threads);
+    decode_state_batch_ = std::make_unique<NvJpeg2kDecoderPlugin::DecodeState>(plugin_id_, framework_, handle_,
+        exec_params_->device_allocator, exec_params_->pinned_allocator, exec_params_->device_id, num_threads);
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(
@@ -157,6 +197,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "jpeg2k_create");
         XM_CHECK_NULL(decoder);
+        XM_CHECK_NULL(exec_params);
         if (exec_params->device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         *decoder =
@@ -169,7 +210,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::create(
 }
 
 nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::static_create(
-    void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+        void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);

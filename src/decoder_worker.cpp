@@ -15,6 +15,7 @@
 #include "icodec.h"
 #include "iimage_decoder_factory.h"
 #include "log.h"
+#include <nvtx3/nvtx3.hpp>
 
 namespace nvimgcdcs {
 
@@ -231,6 +232,7 @@ static void filter_work(Work<nvimgcdcsDecodeParams_t>* work, const std::vector<b
 
 void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate) noexcept
 {
+    nvtx3::scoped_range marker{"processBatch"};
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
 
