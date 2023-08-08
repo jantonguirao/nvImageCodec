@@ -58,7 +58,7 @@ nvimgcdcsDecoderDesc_t* NvJpegHwDecoderPlugin::getDecoderDesc()
 }
 
 nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
-    nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params)
+    nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params, ParseState& parse_state)
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg_hw_can_decode");
@@ -89,19 +89,20 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         if (!mapped_encoded_stream_data) {
             io_stream->seek(io_stream->instance, 0, SEEK_SET);
             size_t read_nbytes = 0;
-            io_stream->read(io_stream->instance, &read_nbytes, &parse_state_->buffer_[0], encoded_stream_data_size);
+            parse_state.buffer_.resize(encoded_stream_data_size);
+            io_stream->read(io_stream->instance, &read_nbytes, &parse_state.buffer_[0], encoded_stream_data_size);
             if (read_nbytes != encoded_stream_data_size) {
                 NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected end-of-stream");
                 return NVIMGCDCS_STATUS_BAD_CODESTREAM;
             }
-            encoded_stream_data = &parse_state_->buffer_[0];
+            encoded_stream_data = &parse_state.buffer_[0];
 
         } else {
             encoded_stream_data = mapped_encoded_stream_data;
         }
 
         XM_CHECK_NVJPEG(nvjpegJpegStreamParseHeader(
-            handle_, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size, parse_state_->nvjpeg_stream_));
+            handle_, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size, parse_state.nvjpeg_stream_));
 
         if (mapped_encoded_stream_data) {
             io_stream->unmap(io_stream->instance, &mapped_encoded_stream_data, encoded_stream_data_size);
@@ -145,14 +146,14 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
 
         int isSupported = -1;
         if (nvjpegIsSymbolAvailable("nvjpegDecodeBatchedSupportedEx")) {
-            XM_CHECK_NVJPEG(nvjpegDecodeBatchedSupportedEx(handle_, parse_state_->nvjpeg_stream_, nvjpeg_params.get(), &isSupported));
+            XM_CHECK_NVJPEG(nvjpegDecodeBatchedSupportedEx(handle_, parse_state.nvjpeg_stream_, nvjpeg_params.get(), &isSupported));
         } else {
             if (need_params) {
                 NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_, "API is not supported");
                 *status = NVIMGCDCS_PROCESSING_STATUS_FAIL;
                 return NVIMGCDCS_STATUS_SUCCESS;
             }
-            XM_CHECK_NVJPEG(nvjpegDecodeBatchedSupported(handle_, parse_state_->nvjpeg_stream_, &isSupported));
+            XM_CHECK_NVJPEG(nvjpegDecodeBatchedSupported(handle_, parse_state.nvjpeg_stream_, &isSupported));
         }
         if (isSupported == 0) {
             *status = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
@@ -193,7 +194,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         int num_threads = executor->getNumThreads(executor->instance);
 
         if (batch_size == 1) {
-            canDecode(&status[0], code_streams[0], images[0], params);
+            canDecode(&status[0], code_streams[0], images[0], params, *parse_state_[0]);
         } else {
             CanDecodeCtx canDecodeCtx{this, status, code_streams, images, params, max_hw_dec_load, num_threads};
             canDecodeCtx.promise.resize(num_threads);
@@ -206,7 +207,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
                 int64_t i_start = ctx->num_samples * block_idx / ctx->num_threads;
                 int64_t i_end = ctx->num_samples * (block_idx + 1) / ctx->num_threads;
                 for (int i = i_start; i < i_end; i++) {
-                    ctx->this_ptr->canDecode(&ctx->status[i], ctx->code_streams[i], ctx->images[i], ctx->params);
+                    ctx->this_ptr->canDecode(&ctx->status[i], ctx->code_streams[i], ctx->images[i], ctx->params, *ctx->this_ptr->parse_state_[tid]);
                 }
                 ctx->promise[block_idx].set_value();
             };
@@ -336,7 +337,9 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
 
     decode_state_batch_ = std::make_unique<NvJpegHwDecoderPlugin::DecodeState>(
         plugin_id_, framework_, handle_, &device_allocator_, &pinned_allocator_, num_threads);
-    parse_state_ = std::make_unique<NvJpegHwDecoderPlugin::ParseState>(plugin_id_, framework_, handle_);
+    parse_state_.reserve(num_threads);
+    for (int i = 0; i < num_threads; i++)
+        parse_state_.push_back(std::make_unique<NvJpegHwDecoderPlugin::ParseState>(plugin_id_, framework_, handle_));
 }
 
 nvimgcdcsStatus_t NvJpegHwDecoderPlugin::create(
@@ -373,7 +376,7 @@ NvJpegHwDecoderPlugin::Decoder::~Decoder()
 {
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg_destroy");
-        parse_state_.reset();
+        parse_state_.clear();
         decode_state_batch_.reset();
         if (handle_)
             XM_NVJPEG_D_LOG_DESTROY(nvjpegDestroy(handle_));

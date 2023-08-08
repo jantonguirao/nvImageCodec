@@ -67,7 +67,7 @@ class NvJpegHwDecoderPlugin
         ~Decoder();
 
         nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
-            nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params);
+            nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params, ParseState &parse_state);
         nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decodeBatch(
@@ -85,7 +85,7 @@ class NvJpegHwDecoderPlugin
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
-        std::unique_ptr<ParseState> parse_state_;
+        std::vector<std::unique_ptr<ParseState>> parse_state_;
         const nvimgcdcsExecutionParams_t* exec_params_;
         unsigned int num_hw_engines_;
         unsigned int num_cores_per_hw_engine_;

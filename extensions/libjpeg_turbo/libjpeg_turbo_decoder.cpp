@@ -187,7 +187,7 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
                 ctx->promise[block_idx].set_value();
             };
             for (int block_idx = 0; block_idx < num_threads; ++block_idx) {
-                executor->launch(executor->instance, exec_params_->device_id, block_idx, &canDecodeCtx, std::move(task));
+                executor->launch(executor->instance, exec_params_->device_id, block_idx, &canDecodeCtx, task);
             }
             // wait for it to finish
             for (auto& f : fut)
@@ -437,23 +437,23 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
             decode_state_batch_->samples_[i].params = params;
         }
 
-        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            auto task = [](int tid, int sample_idx, void* context) -> void {
-                nvtx3::scoped_range marker{"libjpeg_turbo decode " + std::to_string(sample_idx)};
-                auto* decode_state = reinterpret_cast<DecodeState*>(context);
-                auto& sample = decode_state->samples_[sample_idx];
-                auto& thread_resources = decode_state->per_thread_[tid];
-                auto& plugin_id = decode_state->plugin_id_;
-                auto& framework = decode_state->framework_;
-                auto result = decode(plugin_id, framework, sample.code_stream, sample.image, sample.params, thread_resources.buffer,
-                    decode_state->fancy_upsampling_, decode_state->fast_idct_);
-                sample.image->imageReady(sample.image->instance, result);
-            };
+        auto task = [](int tid, int sample_idx, void* context) -> void {
+            nvtx3::scoped_range marker{"libjpeg_turbo decode " + std::to_string(sample_idx)};
+            auto* decode_state = reinterpret_cast<DecodeState*>(context);
+            auto& sample = decode_state->samples_[sample_idx];
+            auto& thread_resources = decode_state->per_thread_[tid];
+            auto& plugin_id = decode_state->plugin_id_;
+            auto& framework = decode_state->framework_;
+            auto result = decode(plugin_id, framework, sample.code_stream, sample.image, sample.params, thread_resources.buffer,
+                decode_state->fancy_upsampling_, decode_state->fast_idct_);
+            sample.image->imageReady(sample.image->instance, result);
+        };
+        if (batch_size == 1) {
+            task(0, 0, decode_state_batch_.get());
+        } else {
             auto executor = exec_params_->executor;
-            if (batch_size == 1) {
-                task(0, sample_idx, decode_state_batch_.get());
-            } else {
-                executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(), std::move(task));
+            for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
+                executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(), task);
             }
         }
     } catch (const std::runtime_error& e) {

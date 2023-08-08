@@ -126,7 +126,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
                 ctx->promise[block_idx].set_value();
             };
             for (int block_idx = 0; block_idx < num_threads; ++block_idx) {
-                executor->launch(executor->instance, exec_params_->device_id, block_idx, &canDecodeCtx, std::move(task));
+                executor->launch(executor->instance, exec_params_->device_id, block_idx, &canDecodeCtx, task);
             }
             // wait for it to finish
             for (auto& f : fut)

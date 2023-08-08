@@ -293,23 +293,23 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
             decode_state_batch_->samples_[i].params = params;
         }
 
-        auto executor = exec_params_->executor;
-        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            auto task = [](int tid, int sample_idx, void* context) -> void {
-                nvtx3::scoped_range marker{"nvbmp decode " + std::to_string(sample_idx)};
-                auto* decode_state = reinterpret_cast<DecodeState*>(context);
-                auto& sample = decode_state->samples_[sample_idx];
-                auto& thread_resources = decode_state->per_thread_[tid];
-                auto& plugin_id = decode_state->plugin_id_;
-                auto& framework = decode_state->framework_;
+        auto task = [](int tid, int sample_idx, void* context) -> void {
+            nvtx3::scoped_range marker{"nvbmp decode " + std::to_string(sample_idx)};
+            auto* decode_state = reinterpret_cast<DecodeState*>(context);
+            auto& sample = decode_state->samples_[sample_idx];
+            auto& thread_resources = decode_state->per_thread_[tid];
+            auto& plugin_id = decode_state->plugin_id_;
+            auto& framework = decode_state->framework_;
 
-                auto result = decode(plugin_id, framework, sample.code_stream, sample.image, sample.params, thread_resources.buffer);
-                sample.image->imageReady(sample.image->instance, result);
-            };
-            if (batch_size == 1) {
-                task(0, sample_idx, decode_state_batch_.get());
-            } else {
-                executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(), std::move(task));
+            auto result = decode(plugin_id, framework, sample.code_stream, sample.image, sample.params, thread_resources.buffer);
+            sample.image->imageReady(sample.image->instance, result);
+        };
+        if (batch_size == 1) {
+            task(0, 0, decode_state_batch_.get());
+        } else {
+            auto executor = exec_params_->executor;
+            for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
+                executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(), task);
             }
         }
     } catch (const std::runtime_error& e) {
