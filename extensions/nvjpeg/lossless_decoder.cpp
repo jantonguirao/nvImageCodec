@@ -361,6 +361,8 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
         std::vector<int> sample_idxs;
         sample_idxs.reserve(nsamples);
 
+        std::set<cudaStream_t> sync_streams;
+
         for (int sample_idx = 0; sample_idx < nsamples; sample_idx++) {
             nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
             nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
@@ -395,6 +397,13 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 batched_output.push_back(nvjpeg_image);
                 batched_image_info.push_back(image_info);
                 sample_idxs.push_back(sample_idx);
+
+                // Sync with the user streams
+                if (sync_streams.find(image_info.cuda_stream) == sync_streams.end()) {
+                    XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, image_info.cuda_stream));
+                    XM_CHECK_CUDA(cudaStreamWaitEvent(decode_state_batch_->stream_, decode_state_batch_->event_));
+                    sync_streams.insert(image_info.cuda_stream);
+                }
             } else {
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }

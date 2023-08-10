@@ -18,6 +18,7 @@
 #include <numeric>
 #include <sstream>
 #include <vector>
+#include <set>
 #include "nvjpeg_utils.h"
 
 #include <nvtx3/nvtx3.hpp>
@@ -457,8 +458,9 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
         auto& state = decode_state_batch_->state_;
         auto& handle = decode_state_batch_->handle_;
 
+        std::set<cudaStream_t> sync_streams;
+
         for (int i = 0; i < nsamples; i++) {
-            nvtx3::scoped_range marker{"prepare #" + std::to_string(i)};
             XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle, &batched_nvjpeg_params[i]));
             batched_nvjpeg_params_ptrs.emplace_back(batched_nvjpeg_params[i], &nvjpegDecodeParamsDestroy);
             auto& nvjpeg_params_ptr = batched_nvjpeg_params_ptrs.back();
@@ -540,6 +542,13 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
             batched_bitstreams_size.push_back(encoded_stream_data_size);
             batched_output.push_back(nvjpeg_image);
             batched_image_info.push_back(image_info);
+
+            // Sync with the user streams
+            if (sync_streams.find(image_info.cuda_stream) == sync_streams.end()) {
+                XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, image_info.cuda_stream));
+                XM_CHECK_CUDA(cudaStreamWaitEvent(decode_state_batch_->stream_, decode_state_batch_->event_));
+                sync_streams.insert(image_info.cuda_stream);
+            }
         }
 
         try {

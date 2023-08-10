@@ -477,6 +477,10 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                 return;
             }
 
+            // Sync with the user stream
+            XM_CHECK_CUDA(cudaEventRecord(t.event_, image_info.cuda_stream));
+            XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
+
             unsigned char* decode_buffer = device_buffer;
             if (gray) {
                 // we allocate memory for planar-to-interleaved first, then for RGB to gray conversion (therefore the x 2)

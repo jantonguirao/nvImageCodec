@@ -526,6 +526,10 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool 
 
             XM_CHECK_NVJPEG(nvjpegStateAttachDeviceBuffer(state, t.device_buffer_));
 
+            // Sync with the user stream
+            XM_CHECK_CUDA(cudaEventRecord(t.event_, image_info.cuda_stream));
+            XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
+
             XM_CHECK_NVJPEG(nvjpegDecodeJpegTransferToDevice(handle, decoder, state, p.parse_state_.nvjpeg_stream_, t.stream_));
 
             {
