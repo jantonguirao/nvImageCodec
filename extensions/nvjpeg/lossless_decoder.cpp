@@ -424,14 +424,15 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, decode_state_batch_->stream_));
             }
 
+            for (cudaStream_t stream : sync_streams) {
+                XM_CHECK_CUDA(cudaStreamWaitEvent(stream, decode_state_batch_->event_));
+            }
+
             for (size_t i = 0; i < sample_idxs.size(); i++) {
                 auto sample_idx = sample_idxs[i];
                 nvimgcdcsImageDesc_t* image = decode_state_batch_->samples_[sample_idx].image;
-                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-                image->getImageInfo(image->instance, &image_info);
                 nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
                 nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-                XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, decode_state_batch_->event_));
                 io_stream->unmap(io_stream->instance, &batched_bitstreams[i], batched_bitstreams_size[i]);
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             }

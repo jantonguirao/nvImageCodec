@@ -79,6 +79,8 @@ class NvJpegHwDecoderPlugin
         static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
+        void parseOptions(const char* options);
+
         const char* plugin_id_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t device_allocator_;
@@ -90,6 +92,10 @@ class NvJpegHwDecoderPlugin
         unsigned int num_hw_engines_;
         unsigned int num_cores_per_hw_engine_;
         float hw_load_ = 1.0f;
+
+        int preallocate_batch_size_ = 1;
+        int preallocate_width_ = 1;
+        int preallocate_height_ = 1;
 
         struct CanDecodeCtx {
             Decoder *this_ptr;

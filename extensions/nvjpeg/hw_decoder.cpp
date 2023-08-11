@@ -256,6 +256,33 @@ NvJpegHwDecoderPlugin::ParseState::~ParseState()
     }
 }
 
+
+void NvJpegHwDecoderPlugin::Decoder::parseOptions(const char* options)
+{
+    std::istringstream iss(options ? options : "");
+    std::string token;
+    while (std::getline(iss, token, ' ')) {
+        std::string::size_type colon = token.find(':');
+        std::string::size_type equal = token.find('=');
+        if (colon == std::string::npos || equal == std::string::npos || colon > equal)
+            continue;
+        std::string module = token.substr(0, colon);
+        if (module != "" && module != "nvjpeg_hw_decoder")
+            continue;
+        std::string option = token.substr(colon + 1, equal - colon - 1);
+        std::string value_str = token.substr(equal + 1);
+
+        std::istringstream value(value_str);
+        if (option == "preallocate_width_hint") {
+            value >> preallocate_width_;
+        } else if (option == "preallocate_height_hint") {
+            value >> preallocate_height_;
+        } else if (option == "preallocate_batch_size") {
+            value >> preallocate_batch_size_;
+        }
+    }
+}
+
 NvJpegHwDecoderPlugin::Decoder::Decoder(
     const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
     : plugin_id_(plugin_id)
@@ -264,6 +291,7 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
     , framework_(framework)
     , exec_params_(exec_params)
 {
+    parseOptions(options);
     bool use_nvjpeg_create_ex_v2 = false;
     if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
         if (exec_params->device_allocator && exec_params->device_allocator->device_malloc && exec_params->device_allocator->device_free) {
@@ -338,6 +366,25 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
 
     decode_state_batch_ = std::make_unique<NvJpegHwDecoderPlugin::DecodeState>(
         plugin_id_, framework_, handle_, &device_allocator_, &pinned_allocator_, num_threads);
+
+    // call nvjpegDecodeBatchedPreAllocate to use memory pool for HW decoder even if hint is 0
+    // due to considerable performance benefit - >20% for 8GPU training
+    if (nvjpegIsSymbolAvailable("nvjpegDecodeBatchedPreAllocate")) {
+        if (preallocate_batch_size_ < 1)
+            preallocate_batch_size_ = 1;
+        if (preallocate_width_ < 1)
+            preallocate_width_ = 1;
+        if (preallocate_height_ < 1)
+            preallocate_height_ = 1;
+        nvjpegChromaSubsampling_t subsampling = NVJPEG_CSS_444;
+        nvjpegOutputFormat_t format = NVJPEG_OUTPUT_RGBI;
+        NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_,
+            "nvjpegDecodeBatchedPreAllocate batch_size=" << preallocate_batch_size_ << " width=" << preallocate_width_
+                                                         << " height=" << preallocate_height_);
+        XM_CHECK_NVJPEG(nvjpegDecodeBatchedPreAllocate(decode_state_batch_->handle_, decode_state_batch_->state_, preallocate_batch_size_,
+            preallocate_width_, preallocate_height_, subsampling, format));
+    }
+
     parse_state_.reserve(num_threads);
     for (int i = 0; i < num_threads; i++)
         parse_state_.push_back(std::make_unique<NvJpegHwDecoderPlugin::ParseState>(plugin_id_, framework_, handle_));
@@ -571,13 +618,15 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
                 XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, decode_state_batch_->stream_));
             }
 
+            // sync with user stream
+            for (cudaStream_t stream : sync_streams) {
+                XM_CHECK_CUDA(cudaStreamWaitEvent(stream, decode_state_batch_->event_));
+            }
+
             for (size_t sample_idx = 0; sample_idx < batched_bitstreams.size(); sample_idx++) {
                 nvimgcdcsImageDesc_t* image = decode_state_batch_->samples_[sample_idx].image;
-                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-                image->getImageInfo(image->instance, &image_info);
                 nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
                 nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-                XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, decode_state_batch_->event_));
                 io_stream->unmap(io_stream->instance, &batched_bitstreams[sample_idx], batched_bitstreams_size[sample_idx]);
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             }
