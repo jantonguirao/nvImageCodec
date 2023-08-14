@@ -589,13 +589,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
             batched_bitstreams_size.push_back(encoded_stream_data_size);
             batched_output.push_back(nvjpeg_image);
             batched_image_info.push_back(image_info);
-
-            // Sync with the user streams
-            if (sync_streams.find(image_info.cuda_stream) == sync_streams.end()) {
-                XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, image_info.cuda_stream));
-                XM_CHECK_CUDA(cudaStreamWaitEvent(decode_state_batch_->stream_, decode_state_batch_->event_));
-                sync_streams.insert(image_info.cuda_stream);
-            }
+            sync_streams.insert(image_info.cuda_stream);
         }
 
         try {

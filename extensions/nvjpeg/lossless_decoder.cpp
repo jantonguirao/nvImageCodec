@@ -397,13 +397,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 batched_output.push_back(nvjpeg_image);
                 batched_image_info.push_back(image_info);
                 sample_idxs.push_back(sample_idx);
-
-                // Sync with the user streams
-                if (sync_streams.find(image_info.cuda_stream) == sync_streams.end()) {
-                    XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, image_info.cuda_stream));
-                    XM_CHECK_CUDA(cudaStreamWaitEvent(decode_state_batch_->stream_, decode_state_batch_->event_));
-                    sync_streams.insert(image_info.cuda_stream);
-                }
+                sync_streams.insert(image_info.cuda_stream);
             } else {
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
