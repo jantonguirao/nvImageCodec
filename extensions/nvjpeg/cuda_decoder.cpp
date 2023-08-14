@@ -526,10 +526,6 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool 
 
             XM_CHECK_NVJPEG(nvjpegStateAttachDeviceBuffer(state, t.device_buffer_));
 
-            // Sync with the user stream
-            XM_CHECK_CUDA(cudaEventRecord(t.event_, image_info.cuda_stream));
-            XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
-
             XM_CHECK_NVJPEG(nvjpegDecodeJpegTransferToDevice(handle, decoder, state, p.parse_state_.nvjpeg_stream_, t.stream_));
 
             {
@@ -550,6 +546,7 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool 
             image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
         }
     };
+
     if (immediate) {
         task(0, sample_idx, decode_state_batch_.get());
     } else {
@@ -585,6 +582,22 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::decodeBatch(
 
         int nsamples = decode_state_batch_->samples_.size();
         bool immediate = nsamples == 1; //  if single image, do not use executor
+
+        // Internal streams wait for user streams
+        std::set<cudaStream_t> sync_streams;
+        for (int i = 0; i < nsamples; i++) {
+            auto *image = decode_state_batch_->samples_[i].image;
+            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            image->getImageInfo(image->instance, &image_info);
+            sync_streams.insert(image_info.cuda_stream);
+        }
+        for (auto& usr_stream : sync_streams) {
+            for (auto& t : decode_state_batch_->per_thread_) {
+                XM_CHECK_CUDA(cudaEventRecord(t.event_, usr_stream));
+                XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
+            }
+        }
+
         for (int i = 0; i < nsamples; i++)
             this->decode(i, immediate);
     } catch (const NvJpegException& e) {
