@@ -467,6 +467,9 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
 
             nvjpeg2kDecodeParams_t decode_params;
             nvjpeg2kDecodeParamsCreate(&decode_params);
+            std::unique_ptr<std::remove_pointer<nvjpeg2kDecodeParams_t>::type, decltype(&nvjpeg2kDecodeParamsDestroy)> decode_params_raii(
+                decode_params, &nvjpeg2kDecodeParamsDestroy);
+
             int rgb_output = image_info.color_spec == NVIMGCDCS_COLORSPEC_SRGB;
             XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, rgb_output));
             size_t row_nbytes;
@@ -578,15 +581,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
             output_image.pixel_data = (void**)&decode_output[0];
             output_image.pitch_in_bytes = &pitch_in_bytes[0];
 
-            std::unique_ptr<std::remove_pointer<nvjpeg2kDecodeParams_t>::type, decltype(&nvjpeg2kDecodeParamsDestroy)> decode_params_raii(
-                decode_params, &nvjpeg2kDecodeParamsDestroy);
-
             // Waits for GPU stage from previous iteration (on this thread)
             XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 
             bool tiled = (jpeg2k_info.num_tiles_y > 1 || jpeg2k_info.num_tiles_x > 1);
             int num_parallel_tiles = t.per_tile_.size();
-            if (!tiled || num_parallel_tiles <= 1) {
+            if (!tiled || num_parallel_tiles <= 1 || image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC) {
                 nvtx3::scoped_range marker{"nvjpeg2kDecodeImage"};
                 NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_, "nvjpeg2kDecodeImage");
                 XM_CHECK_NVJPEG2K(nvjpeg2kDecodeImage(
@@ -594,11 +594,6 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
             } else {
                 int k = 0;
                 std::vector<uint8_t*> tile_decode_output(jpeg2k_info.num_components, nullptr);
-
-                nvjpeg2kDecodeParams_t tile_dec_params;
-                XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsCreate(&tile_dec_params));
-                std::unique_ptr<std::remove_pointer<nvjpeg2kDecodeParams_t>::type, decltype(&nvjpeg2kDecodeParamsDestroy)>
-                    tile_dec_params_raii(tile_dec_params, &nvjpeg2kDecodeParamsDestroy);
 
                 bool has_roi = params->enable_roi && image_info.region.ndim > 0;
                 for (uint32_t tile_y = 0; tile_y < jpeg2k_info.num_tiles_y; tile_y++) {
@@ -626,7 +621,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                         k = k == (num_parallel_tiles - 1) ? 0 : k + 1;
 
                         XM_CHECK_CUDA(cudaEventSynchronize(tile_res.event_));
-                        XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetDecodeArea(tile_dec_params, tile_x_begin, tile_x_end, tile_y_begin, tile_y_end));
+                        XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetDecodeArea(decode_params, tile_x_begin, tile_x_end, tile_y_begin, tile_y_end));
 
                         nvjpeg2kImage_t output_tile;
                         output_tile.pixel_type = output_image.pixel_type;
@@ -644,15 +639,13 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                             auto tile_idx = tile_y * jpeg2k_info.num_tiles_x + tile_x;
                             nvtx3::scoped_range marker{"nvjpeg2kDecodeTile #" + std::to_string(tile_idx)};
                             XM_CHECK_NVJPEG2K(nvjpeg2kDecodeTile(handle_, tile_res.state_, parse_state->nvjpeg2k_stream_,
-                                tile_dec_params_raii.get(), tile_idx, 0, &output_tile, tile_res.stream_));
+                                decode_params_raii.get(), tile_idx, 0, &output_tile, tile_res.stream_));
                         }
                         XM_CHECK_CUDA(cudaEventRecord(tile_res.event_, tile_res.stream_));
                     }
                 }
                 for (auto &tile_res : t.per_tile_)
                     XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, tile_res.event_));
-
-                tile_dec_params_raii.reset();
             }
 
             if (gray || interleaved) {
