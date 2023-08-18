@@ -128,8 +128,9 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessin
         auto executor = exec_params_->executor;
         int num_threads = executor->getNumThreads(executor->instance);
 
-        if (batch_size == 1) {
-            canDecode(&status[0], code_streams[0], images[0], params);
+        if (batch_size < (num_threads + 1)) {  // not worth parallelizing
+            for (int i = 0; i < num_threads; i++)
+                canDecode(&status[i], code_streams[i], images[i], params);
         } else {
             int num_blocks = num_threads + 1;  // the last block is processed in the current thread
             CanDecodeCtx canDecodeCtx{this, status, code_streams, images, params, batch_size, num_blocks};
