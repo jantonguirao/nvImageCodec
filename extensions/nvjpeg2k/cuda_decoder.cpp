@@ -110,24 +110,29 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         if (batch_size == 1) {
             canDecode(&status[0], code_streams[0], images[0], params);
         } else {
-            CanDecodeCtx canDecodeCtx{this, status, code_streams, images, params, batch_size, num_threads};
+            int num_blocks = num_threads + 1;  // the last block is processed in the current thread
+            CanDecodeCtx canDecodeCtx{this, status, code_streams, images, params, batch_size, num_blocks};
             canDecodeCtx.promise.resize(num_threads);
             std::vector<std::future<void>> fut;
             fut.reserve(num_threads);
-            for (auto& pr: canDecodeCtx.promise)
+            for (auto& pr : canDecodeCtx.promise)
                 fut.push_back(pr.get_future());
             auto task = [](int tid, int block_idx, void* context) -> void {
-                auto *ctx = reinterpret_cast<CanDecodeCtx*>(context);
-                int64_t i_start = ctx->num_samples * block_idx / ctx->num_threads;
-                int64_t i_end = ctx->num_samples * (block_idx + 1) / ctx->num_threads;
+                auto* ctx = reinterpret_cast<CanDecodeCtx*>(context);
+                int64_t i_start = ctx->num_samples * block_idx / ctx->num_blocks;
+                int64_t i_end = ctx->num_samples * (block_idx + 1) / ctx->num_blocks;
                 for (int i = i_start; i < i_end; i++) {
                     ctx->this_ptr->canDecode(&ctx->status[i], ctx->code_streams[i], ctx->images[i], ctx->params);
                 }
-                ctx->promise[block_idx].set_value();
+                if (block_idx < static_cast<int>(ctx->promise.size()))
+                    ctx->promise[block_idx].set_value();
             };
-            for (int block_idx = 0; block_idx < num_threads; ++block_idx) {
+            int block_idx = 0;
+            for (; block_idx < num_threads; ++block_idx) {
                 executor->launch(executor->instance, exec_params_->device_id, block_idx, &canDecodeCtx, task);
             }
+            task(-1, block_idx, &canDecodeCtx);
+
             // wait for it to finish
             for (auto& f : fut)
                 f.wait();

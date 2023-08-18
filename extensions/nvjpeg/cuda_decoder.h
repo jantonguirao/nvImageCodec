@@ -132,7 +132,7 @@ class NvJpegCudaDecoderPlugin
             nvimgcdcsImageDesc_t** images;
             const nvimgcdcsDecodeParams_t* params;
             int num_samples;
-            int num_threads;
+            int num_blocks;
             std::vector<std::promise<void>> promise;
         };
 
