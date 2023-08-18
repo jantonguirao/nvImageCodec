@@ -108,7 +108,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
         int num_threads = executor->getNumThreads(executor->instance);
 
         if (batch_size < (num_threads + 1)) {  // not worth parallelizing
-            for (int i = 0; i < num_threads; i++)
+            for (int i = 0; i < batch_size; i++)
                 canDecode(&status[i], code_streams[i], images[i], params);
         } else {
             int num_blocks = num_threads + 1;  // the last block is processed in the current thread
