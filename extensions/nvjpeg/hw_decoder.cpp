@@ -219,7 +219,7 @@ nvimgcdcsStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingS
             for (; block_idx < num_threads; ++block_idx) {
                 executor->launch(executor->instance, exec_params_->device_id, block_idx, &canDecodeCtx, std::move(task));
             }
-            task(-1, block_idx, &canDecodeCtx);
+            task(num_threads, block_idx, &canDecodeCtx);
 
             // wait for it to finish
             for (auto& f : fut)
@@ -391,8 +391,8 @@ NvJpegHwDecoderPlugin::Decoder::Decoder(
             preallocate_width_, preallocate_height_, subsampling, format));
     }
 
-    parse_state_.reserve(num_threads);
-    for (int i = 0; i < num_threads; i++)
+    parse_state_.reserve(num_threads + 1);
+    for (int i = 0; i < num_threads + 1; i++)
         parse_state_.push_back(std::make_unique<NvJpegHwDecoderPlugin::ParseState>(plugin_id_, framework_, handle_));
 }
 
