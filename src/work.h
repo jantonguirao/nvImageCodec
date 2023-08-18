@@ -10,17 +10,16 @@
 
 #pragma once
 
-#include <vector>
-#include <map>
-
 #include <nvimgcodecs.h>
-#include "processing_results.h"
+#include <cassert>
+#include <map>
+#include <vector>
 #include "exception.h"
-#include "iimage.h"
 #include "icode_stream.h"
+#include "iimage.h"
+#include "processing_results.h"
 
 namespace nvimgcdcs {
-
 
 /**
  * @brief Describes a sub-batch of work to be processed
@@ -60,21 +59,28 @@ struct Work
             images_.resize(num_samples);
     }
 
-    void init(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images)
+    void init(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
+              const std::vector<size_t>& order)
     {
         int N = images.size();
-
+        assert(order.size() == N || order.empty());
         indices_.reserve(N);
-        for (int i = 0; i < N; i++)
-            indices_.push_back(i);
-
         images_.reserve(N);
-        for (auto o : images)
-            images_.push_back(o);
-
         code_streams_.reserve(N);
-        for (auto cs : code_streams)
-            code_streams_.push_back(cs);
+        if (!order.empty()) {
+            for (int i = 0; i < N; i++) {
+                int sample_idx = order[i];
+                indices_.push_back(sample_idx);
+                images_.push_back(images[sample_idx]);
+                code_streams_.push_back(code_streams[sample_idx]);
+            }
+        } else {
+            for (int i = 0; i < N; i++) {
+                indices_.push_back(i);
+                images_.push_back(images[i]);
+                code_streams_.push_back(code_streams[i]);
+            }
+        }
     }
 
     /**

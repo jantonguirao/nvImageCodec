@@ -242,9 +242,11 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
     if (decoder) {
         NVIMGCDCS_LOG_DEBUG(logger_, "code streams: " << work->code_streams_.size());
         decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask, &status);
+#ifndef NDEBUG
         for (size_t i = 0; i < work->code_streams_.size(); i++) {
-            NVIMGCDCS_LOG_INFO(logger_, "[" << decoder->decoderId() << "]" << " canDecode status sample #" << i << " : " << status[i]);
+            NVIMGCDCS_LOG_DEBUG(logger_, "[" << decoder->decoderId() << "]" << " canDecode status sample #" << i << " : " << status[i]);
         }
+#endif
     } else {
         NVIMGCDCS_LOG_ERROR(logger_, "Could not create decoder");
         work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
@@ -270,7 +272,10 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
     }
 
     if (!work->code_streams_.empty()) {
-        work->ensure_expected_buffer_for_decode_each_image(is_device_output_);
+        {
+            nvtx3::scoped_range marker{"ensure_expected_buffer_for_decode_each_image"};
+            work->ensure_expected_buffer_for_decode_each_image(is_device_output_);
+        }
         auto future = decoder_->decode(decode_state_batch_.get(), work->code_streams_, work->images_, work->params_);
         // worker thread will wait for results and schedule fallbacks if needed
         updateCurrentWork(std::move(work), std::move(future));
