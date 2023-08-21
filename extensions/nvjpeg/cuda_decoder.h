@@ -36,8 +36,8 @@ class NvJpegCudaDecoderPlugin
     struct DecodeState
     {
         DecodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvjpegHandle_t handle,
-            nvjpegDevAllocatorV2_t* device_allocator, nvjpegPinnedAllocatorV2_t* pinned_allocator, int num_threads,
-            size_t gpu_hybrid_huffman_threshold);
+            nvjpegDevAllocatorV2_t* device_allocator, size_t device_mem_padding, nvjpegPinnedAllocatorV2_t* pinned_allocator,
+            size_t pinned_mem_padding, int num_threads, size_t gpu_hybrid_huffman_threshold);
         ~DecodeState();
 
         // Set of resources per-thread.
@@ -84,7 +84,9 @@ class NvJpegCudaDecoderPlugin
         const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t* device_allocator_;
+        size_t device_mem_padding_;
         nvjpegPinnedAllocatorV2_t* pinned_allocator_;
+        size_t pinned_mem_padding_;
 
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
@@ -119,7 +121,9 @@ class NvJpegCudaDecoderPlugin
         const char* plugin_id_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t device_allocator_;
+        size_t device_mem_padding_;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
+        size_t pinned_mem_padding_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
         const nvimgcdcsExecutionParams_t* exec_params_;

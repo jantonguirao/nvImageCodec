@@ -216,6 +216,8 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(
             device_allocator_.dev_ctx = exec_params_->device_allocator->device_ctx;
             device_allocator_.dev_malloc = exec_params_->device_allocator->device_malloc;
             device_allocator_.dev_free = exec_params_->device_allocator->device_free;
+            if (exec_params_->device_allocator->device_mem_padding > 0)
+                device_mem_padding_ = exec_params_->device_allocator->device_mem_padding;
         }
 
         if (exec_params_->pinned_allocator && exec_params_->pinned_allocator->pinned_malloc &&
@@ -223,6 +225,8 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(
             pinned_allocator_.pinned_ctx = exec_params_->pinned_allocator->pinned_ctx;
             pinned_allocator_.pinned_malloc = exec_params_->pinned_allocator->pinned_malloc;
             pinned_allocator_.pinned_free = exec_params_->pinned_allocator->pinned_free;
+            if (exec_params_->pinned_allocator->pinned_mem_padding > 0)
+                pinned_mem_padding_ = exec_params_->pinned_allocator->pinned_mem_padding;
         }
         use_nvjpeg_create_ex_v2 =
             device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free;
@@ -247,8 +251,8 @@ NvJpegCudaDecoderPlugin::Decoder::Decoder(
     auto executor = exec_params_->executor;
     int num_threads = executor->getNumThreads(executor->instance);
 
-    decode_state_batch_ = std::make_unique<NvJpegCudaDecoderPlugin::DecodeState>(
-        plugin_id_, framework_, handle_, &device_allocator_, &pinned_allocator_, num_threads, gpu_hybrid_huffman_threshold_);
+    decode_state_batch_ = std::make_unique<NvJpegCudaDecoderPlugin::DecodeState>(plugin_id_, framework_, handle_, &device_allocator_,
+        device_mem_padding_, &pinned_allocator_, pinned_mem_padding_, num_threads, gpu_hybrid_huffman_threshold_);
 }
 
 nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::create(
@@ -307,13 +311,15 @@ nvimgcdcsStatus_t NvJpegCudaDecoderPlugin::Decoder::static_destroy(nvimgcdcsDeco
 }
 
 NvJpegCudaDecoderPlugin::DecodeState::DecodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvjpegHandle_t handle,
-    nvjpegDevAllocatorV2_t* device_allocator, nvjpegPinnedAllocatorV2_t* pinned_allocator, int num_threads,
-    size_t gpu_hybrid_huffman_threshold)
+    nvjpegDevAllocatorV2_t* device_allocator, size_t device_mem_padding, nvjpegPinnedAllocatorV2_t* pinned_allocator,
+    size_t pinned_mem_padding, int num_threads, size_t gpu_hybrid_huffman_threshold)
     : plugin_id_(plugin_id)
     , framework_(framework)
     , handle_(handle)
     , device_allocator_(device_allocator)
+    , device_mem_padding_(device_mem_padding)
     , pinned_allocator_(pinned_allocator)
+    , pinned_mem_padding_(pinned_mem_padding)
     , gpu_hybrid_huffman_threshold_(gpu_hybrid_huffman_threshold)
 {
     per_thread_.reserve(num_threads);
@@ -335,33 +341,29 @@ NvJpegCudaDecoderPlugin::DecodeState::DecodeState(const char* plugin_id, const n
             }
             if (pinned_allocator_ && pinned_allocator_->pinned_malloc && pinned_allocator_->pinned_free) {
                 XM_CHECK_NVJPEG(nvjpegBufferPinnedCreateV2(handle, pinned_allocator_, &p.pinned_buffer_));
+#if NVJPEG_BUFFER_RESIZE_API
+                if (pinned_mem_padding_ > 0 && nvjpegIsSymbolAvailable("nvjpegBufferPinnedResize")) {
+                    NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_,
+                        "Preallocating pinned buffer (thread#" << i << " page#" << page_idx << ") size=" << pinned_mem_padding_);
+                    XM_CHECK_NVJPEG(nvjpegBufferPinnedResize(p.pinned_buffer_, pinned_mem_padding_, res.stream_));
+                }
+#endif
             } else {
                 XM_CHECK_NVJPEG(nvjpegBufferPinnedCreate(handle, nullptr, &p.pinned_buffer_));
             }
-#if NVJPEG_VER_MAJOR >= 12 && NVJPEG_VER_MINOR >= 3
-            if (framework_ && framework_->pinned_allocator && framework_->pinned_allocator->pinned_mem_padding > 0 &&
-                nvjpegIsSymbolAvailable("nvjpegBufferPinnedResize")) {
-                NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_,
-                    "Preallocating pinned buffer (thread#" << i << " page#" << page_idx
-                                                           << ") size=" << framework_->pinned_allocator->pinned_mem_padding);
-                nvjpegBufferPinnedResize(p.pinned_buffer_, framework_->pinned_allocator->pinned_mem_padding, res.stream_);
-            }
-#endif
             XM_CHECK_NVJPEG(nvjpegJpegStreamCreate(handle_, &p.parse_state_.nvjpeg_stream_));
         }
         if (device_allocator_ && device_allocator_->dev_malloc && device_allocator_->dev_free) {
             XM_CHECK_NVJPEG(nvjpegBufferDeviceCreateV2(handle, device_allocator_, &res.device_buffer_));
+#if NVJPEG_BUFFER_RESIZE_API
+        if (pinned_mem_padding_ > 0 && nvjpegIsSymbolAvailable("nvjpegBufferDeviceResize")) {
+            NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_, "Preallocating device buffer (thread#" << i << ") size=" << device_mem_padding_);
+            XM_CHECK_NVJPEG(nvjpegBufferDeviceResize(res.device_buffer_, device_mem_padding_, res.stream_));
+        }
+#endif
         } else {
             XM_CHECK_NVJPEG(nvjpegBufferDeviceCreate(handle, nullptr, &res.device_buffer_));
         }
-#if NVJPEG_VER_MAJOR >= 12 && NVJPEG_VER_MINOR >= 3
-        if (framework_ && framework_->device_allocator && framework_->device_allocator->device_mem_padding > 0 &&
-            nvjpegIsSymbolAvailable("nvjpegBufferDeviceResize")) {
-            NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_,
-                "Preallocating device buffer (thread#" << i << ") size=" << framework_->device_allocator->device_mem_padding);
-            nvjpegBufferDeviceResize(res.device_buffer_, framework_->device_allocator->device_mem_padding, res.stream_);
-        }
-#endif
     }
 }
 
