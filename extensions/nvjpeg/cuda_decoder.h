@@ -84,9 +84,9 @@ class NvJpegCudaDecoderPlugin
         const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t* device_allocator_;
-        size_t device_mem_padding_;
+        size_t device_mem_padding_ = 0;
         nvjpegPinnedAllocatorV2_t* pinned_allocator_;
-        size_t pinned_mem_padding_;
+        size_t pinned_mem_padding_ = 0;
 
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
@@ -121,9 +121,9 @@ class NvJpegCudaDecoderPlugin
         const char* plugin_id_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t device_allocator_;
-        size_t device_mem_padding_;
+        size_t device_mem_padding_ = 0;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
-        size_t pinned_mem_padding_;
+        size_t pinned_mem_padding_ = 0;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
         const nvimgcdcsExecutionParams_t* exec_params_;
