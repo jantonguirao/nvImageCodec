@@ -36,8 +36,8 @@ class NvJpegCudaDecoderPlugin
     struct DecodeState
     {
         DecodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvjpegHandle_t handle,
-            nvjpegDevAllocatorV2_t* device_allocator, nvjpegPinnedAllocatorV2_t* pinned_allocator, int num_threads,
-            size_t gpu_hybrid_huffman_threshold);
+            nvjpegDevAllocatorV2_t* device_allocator, size_t device_mem_padding, nvjpegPinnedAllocatorV2_t* pinned_allocator,
+            size_t pinned_mem_padding, int num_threads, size_t gpu_hybrid_huffman_threshold);
         ~DecodeState();
 
         // Set of resources per-thread.
@@ -84,7 +84,9 @@ class NvJpegCudaDecoderPlugin
         const nvimgcdcsFrameworkDesc_t* framework_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t* device_allocator_;
+        size_t device_mem_padding_ = 0;
         nvjpegPinnedAllocatorV2_t* pinned_allocator_;
+        size_t pinned_mem_padding_ = 0;
 
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
@@ -98,7 +100,8 @@ class NvJpegCudaDecoderPlugin
             const char* options = nullptr);
         ~Decoder();
 
-        
+        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
+            nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decode(int sample_idx, bool immediate);
@@ -118,11 +121,25 @@ class NvJpegCudaDecoderPlugin
         const char* plugin_id_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t device_allocator_;
+        size_t device_mem_padding_ = 0;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
+        size_t pinned_mem_padding_ = 0;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
         const nvimgcdcsExecutionParams_t* exec_params_;
         size_t gpu_hybrid_huffman_threshold_ = DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD;
+
+        struct CanDecodeCtx {
+            Decoder *this_ptr;
+            nvimgcdcsProcessingStatus_t* status;
+            nvimgcdcsCodeStreamDesc_t** code_streams;
+            nvimgcdcsImageDesc_t** images;
+            const nvimgcdcsDecodeParams_t* params;
+            int num_samples;
+            int num_blocks;
+            std::vector<std::promise<void>> promise;
+        };
+
     };
 
     nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);

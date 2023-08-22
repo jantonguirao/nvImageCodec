@@ -9,10 +9,11 @@
  */
 #include "image_generic_decoder.h"
 #include <cassert>
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <mutex>
-
+#include <nvtx3/nvtx3.hpp>
 #include "decode_state_batch.h"
 #include "decoder_worker.h"
 #include "default_executor.h"
@@ -112,6 +113,54 @@ void ImageGenericDecoder::canDecode(const std::vector<ICodeStream*>& code_stream
     }
 }
 
+
+static void sortSamples(std::vector<size_t>& order, ICodeStream *const * streams, int batch_size)
+{
+    nvtx3::scoped_range marker{"sortSamples"};
+    order.clear();
+    auto subsampling_score = [](nvimgcdcsChromaSubsampling_t subsampling) -> uint32_t {
+        switch (subsampling) {
+        case NVIMGCDCS_SAMPLING_444:
+            return 8;
+        case NVIMGCDCS_SAMPLING_422:
+            return 7;
+        case NVIMGCDCS_SAMPLING_420:
+            return 6;
+        case NVIMGCDCS_SAMPLING_440:
+            return 5;
+        case NVIMGCDCS_SAMPLING_411:
+            return 4;
+        case NVIMGCDCS_SAMPLING_410:
+            return 3;
+        case NVIMGCDCS_SAMPLING_GRAY:
+            return 2;
+        case NVIMGCDCS_SAMPLING_410V:
+        default:
+            return 1;
+        }
+    };
+
+    using sort_elem_t = std::tuple<uint32_t, uint64_t, int>;
+    std::vector<sort_elem_t> sample_meta;
+    sample_meta.reserve(batch_size);
+    for (int i = 0; i < batch_size; i++) {
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        streams[i]->getImageInfo(&image_info);
+        uint64_t area = image_info.plane_info[0].height * image_info.plane_info[0].width;
+        // we prefer i to be in ascending order
+        sample_meta.push_back(sort_elem_t{subsampling_score(image_info.chroma_subsampling), area, -i});
+    }
+    auto order_fn = [](const sort_elem_t& lhs, const sort_elem_t& rhs) { return lhs > rhs; };
+    std::sort(sample_meta.begin(), sample_meta.end(), order_fn);
+
+    order.resize(batch_size);
+    for (int i = 0; i < batch_size; ++i) {
+        int sample_idx = -std::get<2>(sample_meta[i]);
+        order[i] = sample_idx;
+    }
+}
+
+
 std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode(
     const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params)
 {
@@ -121,7 +170,10 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericDecoder::decode(
     ProcessingResultsPromise results(N);
     auto future = results.getFuture();
     auto work = createNewWork(std::move(results), params);
-    work->init(code_streams, images);
+
+    std::vector<size_t> order;
+    sortSamples(order, code_streams.data(), code_streams.size());
+    work->init(code_streams, images, order);
 
     distributeWork(std::move(work));
 

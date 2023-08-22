@@ -66,7 +66,9 @@ class NvJpegHwDecoderPlugin
             const char* options = nullptr);
         ~Decoder();
 
-        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvjpegHandle_t handle, nvimgcdcsCodeStreamDesc_t** code_streams,
+        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
+            nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params, ParseState &parse_state);
+        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
         nvimgcdcsStatus_t decodeBatch(
             nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
@@ -77,17 +79,35 @@ class NvJpegHwDecoderPlugin
         static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
             nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
 
+        void parseOptions(const char* options);
+
         const char* plugin_id_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t device_allocator_;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcdcsFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
-        std::unique_ptr<ParseState> parse_state_;
+        std::vector<std::unique_ptr<ParseState>> parse_state_;
         const nvimgcdcsExecutionParams_t* exec_params_;
         unsigned int num_hw_engines_;
         unsigned int num_cores_per_hw_engine_;
         float hw_load_ = 1.0f;
+
+        int preallocate_batch_size_ = 1;
+        int preallocate_width_ = 1;
+        int preallocate_height_ = 1;
+
+        struct CanDecodeCtx {
+            Decoder *this_ptr;
+            nvimgcdcsProcessingStatus_t* status;
+            nvimgcdcsCodeStreamDesc_t** code_streams;
+            nvimgcdcsImageDesc_t** images;
+            const nvimgcdcsDecodeParams_t* params;
+            int num_samples;
+            int num_blocks;
+            std::vector<std::promise<void>> promise;
+        };
+
     };
 
     nvimgcdcsStatus_t create(

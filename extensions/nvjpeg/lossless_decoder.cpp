@@ -48,91 +48,136 @@ nvimgcdcsDecoderDesc_t* NvJpegLosslessDecoderPlugin::getDecoderDesc()
     return &decoder_desc_;
 }
 
-nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status, nvjpegHandle_t handle,
+nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status,
+    nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params)
+{
+    try {
+        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg_lossless_can_decode");
+        XM_CHECK_NULL(status);
+        XM_CHECK_NULL(code_stream);
+        XM_CHECK_NULL(image);
+        XM_CHECK_NULL(params);
+
+        *status = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        nvimgcdcsImageInfo_t jpeg_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, nullptr};
+        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, static_cast<void*>(&jpeg_info)};
+        code_stream->getImageInfo(code_stream->instance, &cs_image_info);
+
+        if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
+            *status = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
+
+        nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(cs_image_info.next);
+        while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+            jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
+        if (jpeg_image_info) {
+            if (jpeg_image_info->encoding != NVIMGCDCS_JPEG_ENCODING_LOSSLESS_HUFFMAN) {
+                *status = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
+                return NVIMGCDCS_STATUS_SUCCESS;
+            }
+        } else {
+            *status = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
+        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
+        image->getImageInfo(image->instance, &image_info);
+
+        if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_444) {
+            *status |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+        if (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED)
+            *status |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+
+        if (!(image_info.num_planes <= 2 && image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16))
+            *status |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+        size_t encoded_stream_data_size = 0;
+        io_stream->size(io_stream->instance, &encoded_stream_data_size);
+
+        void* encoded_stream_data = nullptr;
+        void* mapped_encoded_stream_data = nullptr;
+        io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
+
+        if (!mapped_encoded_stream_data) {
+            io_stream->seek(io_stream->instance, 0, SEEK_SET);
+            size_t read_nbytes = 0;
+            io_stream->read(io_stream->instance, &read_nbytes, &parse_state_->buffer_[0], encoded_stream_data_size);
+            if (read_nbytes != encoded_stream_data_size) {
+                NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected end-of-stream");
+                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+            }
+            encoded_stream_data = &parse_state_->buffer_[0];
+        } else {
+            encoded_stream_data = mapped_encoded_stream_data;
+        }
+
+        XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size,
+            0, 0, parse_state_->nvjpeg_stream_));
+        int isSupported = -1;
+        XM_CHECK_NVJPEG(nvjpegDecodeBatchedSupported(handle_, parse_state_->nvjpeg_stream_, &isSupported));
+        if (isSupported == 0) {
+            *status = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+            NVIMGCDCS_LOG_INFO(framework_, plugin_id_, "decoding this lossless jpeg image is supported");
+        } else {
+            *status = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            NVIMGCDCS_LOG_INFO(framework_, plugin_id_, "decoding this lossless jpeg image is NOT supported");
+        }
+        if (mapped_encoded_stream_data) {
+            io_stream->unmap(io_stream->instance, &mapped_encoded_stream_data, encoded_stream_data_size);
+        }
+    } catch (const NvJpegException& e) {
+        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if lossless nvjpeg can decode - " << e.info());
+        return e.nvimgcdcsStatus();
+    }
+    return NVIMGCDCS_STATUS_SUCCESS;
+}
+
+nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcdcsProcessingStatus_t* status,
     nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
 {
     try {
+        nvtx3::scoped_range marker{"nvjpeg_lossless_can_decode"};
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg_lossless_can_decode");
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images);
         XM_CHECK_NULL(params);
 
-        auto result = status;
-        auto code_stream = code_streams;
-        auto image = images;
-        for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
-            *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-            nvimgcdcsImageInfo_t jpeg_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, nullptr};
-            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, static_cast<void*>(&jpeg_info)};
-            (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
+        auto executor = exec_params_->executor;
+        int num_threads = executor->getNumThreads(executor->instance);
 
-            if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
-                *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
-                continue;
-            }
-
-            nvimgcdcsJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(cs_image_info.next);
-            while (jpeg_image_info && jpeg_image_info->type != NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
-                jpeg_image_info = static_cast<nvimgcdcsJpegImageInfo_t*>(jpeg_image_info->next);
-            if (jpeg_image_info) {
-                if (jpeg_image_info->encoding != NVIMGCDCS_JPEG_ENCODING_LOSSLESS_HUFFMAN) {
-                    *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
-                    continue;
+        if (batch_size < (num_threads + 1)) {  // not worth parallelizing
+            for (int i = 0; i < batch_size; i++)
+                canDecode(&status[i], code_streams[i], images[i], params);
+        } else {
+            int num_blocks = num_threads + 1;  // the last block is processed in the current thread
+            CanDecodeCtx canDecodeCtx{this, status, code_streams, images, params, batch_size, num_blocks};
+            canDecodeCtx.promise.resize(num_threads);
+            std::vector<std::future<void>> fut;
+            fut.reserve(num_threads);
+            for (auto& pr : canDecodeCtx.promise)
+                fut.push_back(pr.get_future());
+            auto task = [](int tid, int block_idx, void* context) -> void {
+                auto* ctx = reinterpret_cast<CanDecodeCtx*>(context);
+                int64_t i_start = ctx->num_samples * block_idx / ctx->num_blocks;
+                int64_t i_end = ctx->num_samples * (block_idx + 1) / ctx->num_blocks;
+                for (int i = i_start; i < i_end; i++) {
+                    ctx->this_ptr->canDecode(&ctx->status[i], ctx->code_streams[i], ctx->images[i], ctx->params);
                 }
-            } else {
-                *result = NVIMGCDCS_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
-                continue;
+                if (block_idx < static_cast<int>(ctx->promise.size()))
+                    ctx->promise[block_idx].set_value();
+            };
+            int block_idx = 0;
+            for (; block_idx < num_threads; ++block_idx) {
+                executor->launch(executor->instance, exec_params_->device_id, block_idx, &canDecodeCtx, task);
             }
+            task(-1, block_idx, &canDecodeCtx);
 
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
-            (*image)->getImageInfo((*image)->instance, &image_info);
-
-            if (image_info.chroma_subsampling != NVIMGCDCS_SAMPLING_444) {
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
-            }
-
-            if (image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED)
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
-
-            if (!(image_info.num_planes <= 2 && image_info.plane_info[0].sample_type == NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16))
-                *result |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
-
-            nvimgcdcsIoStreamDesc_t* io_stream = (*code_stream)->io_stream;
-            size_t encoded_stream_data_size = 0;
-            io_stream->size(io_stream->instance, &encoded_stream_data_size);
-
-            void* encoded_stream_data = nullptr;
-            void* mapped_encoded_stream_data = nullptr;
-            io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
-
-            if (!mapped_encoded_stream_data) {
-                io_stream->seek(io_stream->instance, 0, SEEK_SET);
-                size_t read_nbytes = 0;
-                io_stream->read(io_stream->instance, &read_nbytes, &parse_state_->buffer_[0], encoded_stream_data_size);
-                if (read_nbytes != encoded_stream_data_size) {
-                    NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Unexpected end-of-stream");
-                    return NVIMGCDCS_STATUS_BAD_CODESTREAM;
-                }
-                encoded_stream_data = &parse_state_->buffer_[0];
-            } else {
-                encoded_stream_data = mapped_encoded_stream_data;
-            }
-
-            XM_CHECK_NVJPEG(nvjpegJpegStreamParse(handle, static_cast<const unsigned char*>(encoded_stream_data), encoded_stream_data_size,
-                0, 0, parse_state_->nvjpeg_stream_));
-            int isSupported = -1;
-            XM_CHECK_NVJPEG(nvjpegDecodeBatchedSupported(handle, parse_state_->nvjpeg_stream_, &isSupported));
-            if (isSupported == 0) {
-                *result = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-                NVIMGCDCS_LOG_INFO(framework_, plugin_id_, "decoding this lossless jpeg image is supported");
-            } else {
-                *result = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
-                NVIMGCDCS_LOG_INFO(framework_, plugin_id_, "decoding this lossless jpeg image is NOT supported");
-            }
-            if (mapped_encoded_stream_data) {
-                io_stream->unmap(io_stream->instance, &mapped_encoded_stream_data, encoded_stream_data_size);
-            }
+            // wait for it to finish
+            for (auto& f : fut)
+                f.wait();
         }
     } catch (const NvJpegException& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if lossless nvjpeg can decode - " << e.info());
@@ -147,7 +192,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::static_can_decode(nvimgc
     try {
         XM_CHECK_NULL(decoder);
         auto handle = reinterpret_cast<NvJpegLosslessDecoderPlugin::Decoder*>(decoder);
-        return handle->canDecode(status, handle->handle_, code_streams, images, batch_size, params);
+        return handle->canDecode(status, code_streams, images, batch_size, params);
     } catch (const NvJpegException& e) {
         return e.nvimgcdcsStatus();
     }
@@ -218,6 +263,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::create(
     try {
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "nvjpeg_lossless_create");
         XM_CHECK_NULL(decoder);
+        XM_CHECK_NULL(exec_params);
         if (exec_params->device_id == NVIMGCDCS_DEVICE_CPU_ONLY)
             return NVIMGCDCS_STATUS_INVALID_PARAMETER;
         *decoder =
@@ -321,6 +367,8 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
         std::vector<int> sample_idxs;
         sample_idxs.reserve(nsamples);
 
+        std::set<cudaStream_t> sync_streams;
+
         for (int sample_idx = 0; sample_idx < nsamples; sample_idx++) {
             nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
             nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
@@ -355,6 +403,7 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 batched_output.push_back(nvjpeg_image);
                 batched_image_info.push_back(image_info);
                 sample_idxs.push_back(sample_idx);
+                sync_streams.insert(image_info.cuda_stream);
             } else {
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
             }
@@ -375,14 +424,15 @@ nvimgcdcsStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 XM_CHECK_CUDA(cudaEventRecord(decode_state_batch_->event_, decode_state_batch_->stream_));
             }
 
+            for (cudaStream_t stream : sync_streams) {
+                XM_CHECK_CUDA(cudaStreamWaitEvent(stream, decode_state_batch_->event_));
+            }
+
             for (size_t i = 0; i < sample_idxs.size(); i++) {
                 auto sample_idx = sample_idxs[i];
                 nvimgcdcsImageDesc_t* image = decode_state_batch_->samples_[sample_idx].image;
-                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-                image->getImageInfo(image->instance, &image_info);
                 nvimgcdcsCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
                 nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-                XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, decode_state_batch_->event_));
                 io_stream->unmap(io_stream->instance, &batched_bitstreams[i], batched_bitstreams_size[i]);
                 image->imageReady(image->instance, NVIMGCDCS_PROCESSING_STATUS_SUCCESS);
             }

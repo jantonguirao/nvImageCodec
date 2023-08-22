@@ -118,7 +118,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(
     auto future = results.getFuture();
 
     auto work = createNewWork(std::move(results), params);
-    work->init(code_streams, images);
+    work->init(code_streams, images, std::vector<size_t>{});
 
     distributeWork(std::move(work));
 

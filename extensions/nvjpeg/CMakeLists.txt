@@ -12,12 +12,20 @@ set(NVIMGCDCS_NVJPEG_EXT_SRC
 
 include(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_INCLUDES "${CUDAToolkit_INCLUDE_DIRS}")
+set(CMAKE_REQUIRED_LIBRARIES "CUDA::nvjpeg")
 check_cxx_source_compiles(
   "#include <nvjpeg.h>
-          int main(){
-            return NVJPEG_BACKEND_LOSSLESS_JPEG != 6;
-          }"
+  int main(){
+    return NVJPEG_BACKEND_LOSSLESS_JPEG != 6;
+  }"
   NVJPEG_LOSSLESS_SUPPORTED)
+
+include(CheckCXXSymbolExists)
+check_cxx_symbol_exists(nvjpegBufferDeviceResize "nvjpeg.h" NVJPEG_BUFFER_RESIZE_API)
+if (NVJPEG_BUFFER_RESIZE_API)
+  message("nvJPEG buffer resize API available")
+  add_definitions(-DNVJPEG_BUFFER_RESIZE_API=1)
+endif()
 
 if(NVJPEG_LOSSLESS_SUPPORTED)
   message("nvJPEG lossless supported")
