@@ -18,6 +18,7 @@
 #include "decoder_worker.h"
 #include "default_executor.h"
 #include "exception.h"
+#include "icodec_registry.h"
 #include "icode_stream.h"
 #include "icodec.h"
 #include "iimage.h"
@@ -40,8 +41,10 @@ static std::unique_ptr<IExecutor> GetExecutor(const nvimgcdcsExecutionParams_t* 
     return exec;
 }
 
-ImageGenericDecoder::ImageGenericDecoder(ILogger* logger, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+ImageGenericDecoder::ImageGenericDecoder(
+    ILogger* logger, ICodecRegistry* codec_registry, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
     : logger_(logger)
+    , codec_registry_(codec_registry)
     , exec_params_(*exec_params)
     , backends_(exec_params->num_backends)
     , options_(options ? options : "")
@@ -58,6 +61,13 @@ ImageGenericDecoder::ImageGenericDecoder(ILogger* logger, const nvimgcdcsExecuti
     }
     exec_params_.backends = backends_.data();
     exec_params_.executor = executor_->getExecutorDesc();
+
+    if (exec_params_.pre_init) {
+        for (size_t codec_idx = 0; codec_idx < codec_registry_->getCodecsCount(); codec_idx++) {
+            auto* codec = codec_registry_->getCodecByIndex(codec_idx);
+            workers_.emplace(codec, std::make_unique<DecoderWorker>(logger_, this, &exec_params_, options_, codec, 0));
+        }
+    }
 }
 
 ImageGenericDecoder::~ImageGenericDecoder()

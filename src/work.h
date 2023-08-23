@@ -63,7 +63,7 @@ struct Work
               const std::vector<size_t>& order)
     {
         int N = images.size();
-        assert(order.size() == N || order.empty());
+        assert(static_cast<int>(order.size()) == N || order.empty());
         indices_.reserve(N);
         images_.reserve(N);
         code_streams_.reserve(N);
