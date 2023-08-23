@@ -1,20 +1,19 @@
 .build-nvimagecodecs-docs-script: &build-nvimagecodecs-docs-script |
-    # Get build type
-    source .gitlab/ci/build_type.sh
-    # Build
-    mkdir -p build
-    cd build
-    export Python_EXECUTABLE=$(which python)
-    cmake -DCMAKE_BUILD_TYPE=$NVIMAGECODECS_BUILD_TYPE -DBUILD_DOCS=ON -DBUILD_TEST=OFF -DPython_EXECUTABLE=${Python_EXECUTABLE} ..
-    nice -n 19 make docs
-    cd ..
+    export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
+    python3 -m pip install artifacts/nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-*.whl
+    cd docs/doxygen
+    doxygen
+    cd ../sphinx
+    make html
+    cd ../..
 
 docs:nvimagecodecs:
     stage: build
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8.0-v1
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/docs-linux-x86_64:cuda-12.1.1-v1
     tags:
         - docker
-    dependencies: []
+    dependencies: 
+        - build:nvimagecodec-cuda12
     artifacts:
         paths:
             - html
@@ -29,10 +28,11 @@ docs:nvimagecodecs:
 
 pages:
     stage: deploy
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8.0-v1
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/docs-linux-x86_64:cuda-12.1.1-v1
     tags:
         - docker
-    dependencies: []
+    dependencies:
+        - build:nvimagecodec-cuda12
     artifacts:
         paths:
             - public
