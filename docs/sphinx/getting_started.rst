@@ -52,7 +52,7 @@ Python Samples' Dependencies:
 .. _samples:
 
 Samples
---------
+-------
 
 The next section documents the samples showing various use cases across two different types APIs available to consume nvImageCodecs functionality:
 

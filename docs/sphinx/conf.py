@@ -15,10 +15,16 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import sys
 import os
-sys.path.insert(0, os.path.abspath("../../build/python"))
-os.environ["PYNVIMGCODECS_EXAMPLES_RESOURCES_DIR"] = "../../../example/assets/images/"
 import sphinx_rtd_theme
 
+# For build documentation for nvimgcodec from specif location (default is installed module), 
+# uncomment below line to specify path to nvimgcodecs module
+# sys.path.insert(0, os.path.abspath("../../build/python"))
+
+# Specify path to images used in jupyter notebooks samples
+os.environ["PYNVIMGCODECS_EXAMPLES_RESOURCES_DIR"] = "../../../example/assets/images/"
+
+# nbsphinx_allow_errors = True
 
 # -- Project information -----------------------------------------------------
 
