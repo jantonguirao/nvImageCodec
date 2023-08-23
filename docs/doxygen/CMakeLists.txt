@@ -9,4 +9,4 @@ add_custom_command(OUTPUT ${DOXYGEN_INDEX_FILE}
     MAIN_DEPENDENCY Doxyfile
     COMMENT "Generating nvImageCodecs docs")
 
-add_custom_target(nvimagecodecs_doxygen_docs ALL DEPENDS ${DOXYGEN_INDEX_FILE})
+add_custom_target(nvimagecodecs_doxygen_docs DEPENDS ${DOXYGEN_INDEX_FILE})
