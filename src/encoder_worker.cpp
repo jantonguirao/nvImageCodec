@@ -29,7 +29,7 @@ EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcdcsEncodeParams
     if (exec_params_->pre_init) {
         EncoderWorker* current = this;
         do {
-            current->getEncoder();  // initializes the decoder
+            current->getEncoder();  // initializes the encoder
             current = current->getFallback();
         } while (current);
     }
