@@ -24,7 +24,9 @@ class MockCodecRegistry : public ICodecRegistry
     MOCK_METHOD(void, registerCodec, (std::unique_ptr<ICodec> codec), (override));
     MOCK_METHOD((std::unique_ptr<IImageParser>), getParser,(
         nvimgcdcsCodeStreamDesc_t* code_stream), (const, override));
-    MOCK_METHOD(ICodec*, getCodecByName, (const char* name) ,  (override));
+    MOCK_METHOD(ICodec*, getCodecByName, (const char* name), (override));
+    MOCK_METHOD(size_t, getCodecsCount, (), (const, override));
+    MOCK_METHOD(ICodec*, getCodecByIndex, (size_t i), (override));
 };
 
 }} // namespace nvimgcdcs::test

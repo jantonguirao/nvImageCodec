@@ -28,5 +28,7 @@ class ICodecRegistry
     virtual std::unique_ptr<IImageParser> getParser(
         nvimgcdcsCodeStreamDesc_t* code_stream) const = 0;
     virtual ICodec* getCodecByName(const char* name) = 0;
+    virtual size_t getCodecsCount() const = 0;
+    virtual ICodec* getCodecByIndex(size_t i) = 0;
 };
 } // namespace nvimgcdcs

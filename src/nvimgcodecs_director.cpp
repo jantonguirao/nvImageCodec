@@ -50,13 +50,13 @@ std::unique_ptr<CodeStream> NvImgCodecsDirector::createCodeStream()
 std::unique_ptr<ImageGenericDecoder> NvImgCodecsDirector::createGenericDecoder(
     const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
-    return std::make_unique<ImageGenericDecoder>(&logger_, exec_params, options);
+    return std::make_unique<ImageGenericDecoder>(&logger_, &codec_registry_, exec_params, options);
 }
 
 std::unique_ptr<ImageGenericEncoder> NvImgCodecsDirector::createGenericEncoder(
     const nvimgcdcsExecutionParams_t* exec_params, const char* options)
 {
-    return std::make_unique<ImageGenericEncoder>(&logger_, exec_params, options);
+    return std::make_unique<ImageGenericEncoder>(&logger_, &codec_registry_, exec_params, options);
 }
 
 void NvImgCodecsDirector::registerDebugMessenger(IDebugMessenger* messenger)

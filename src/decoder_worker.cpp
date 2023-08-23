@@ -28,6 +28,13 @@ DecoderWorker::DecoderWorker(ILogger* logger, IWorkManager<nvimgcdcsDecodeParams
     , exec_params_(exec_params)
     , options_(options)
 {
+    if (exec_params_->pre_init) {
+        DecoderWorker* current = this;
+        do {
+            current->getDecoder();  // initializes the decoder
+            current = current->getFallback();
+        } while (current);
+    }
 }
 
 DecoderWorker::~DecoderWorker()
@@ -62,6 +69,7 @@ IImageDecoder* DecoderWorker::getDecoder()
             }
 
             if (backend_allowed) {
+                NVIMGCDCS_LOG_DEBUG(logger_, "createDecoder " << decoder_factory->getDecoderId());
                 decoder_ = decoder_factory->createDecoder(exec_params_, options_.c_str());
                 if (decoder_) {
                     decode_state_batch_ = decoder_->createDecodeStateBatch();

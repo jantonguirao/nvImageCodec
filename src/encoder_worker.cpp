@@ -26,6 +26,13 @@ EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcdcsEncodeParams
     , exec_params_(exec_params)
     , options_(options)
 {
+    if (exec_params_->pre_init) {
+        EncoderWorker* current = this;
+        do {
+            current->getEncoder();  // initializes the encoder
+            current = current->getFallback();
+        } while (current);
+    }
 }
 
 EncoderWorker::~EncoderWorker()
@@ -61,6 +68,7 @@ IImageEncoder* EncoderWorker::getEncoder()
             }
 
             if (backend_allowed) {
+                NVIMGCDCS_LOG_DEBUG(logger_, "createEncoder " << encoder_factory->getEncoderId());
                 encoder_ = encoder_factory->createEncoder(exec_params_, options_.c_str());
                 if (encoder_) {
                     encode_state_batch_ = encoder_->createEncodeStateBatch();

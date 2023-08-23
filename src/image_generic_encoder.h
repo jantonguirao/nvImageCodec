@@ -37,7 +37,8 @@ class ILogger;
 class ImageGenericEncoder: public IWorkManager<nvimgcdcsEncodeParams_t>
 {
   public:
-    explicit ImageGenericEncoder(ILogger* logger, const nvimgcdcsExecutionParams_t* exec_params, const char* options = nullptr);
+    explicit ImageGenericEncoder(
+        ILogger* logger, ICodecRegistry* codec_registry, const nvimgcdcsExecutionParams_t* exec_params, const char* options = nullptr);
     ~ImageGenericEncoder() override;
     void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params,
         nvimgcdcsProcessingStatus_t* processing_status, int force_format);

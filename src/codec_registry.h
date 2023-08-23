@@ -29,7 +29,11 @@ class CodecRegistry : public ICodecRegistry
     void registerCodec(std::unique_ptr<ICodec> codec) override;
     std::unique_ptr<IImageParser> getParser(
         nvimgcdcsCodeStreamDesc_t* code_stream) const override;
-    ICodec* getCodecByName(const char* name)  override;
+    ICodec* getCodecByName(const char* name) override;
+
+    size_t getCodecsCount() const override;
+    ICodec* getCodecByIndex(size_t index) override;
+
   private:
     ILogger* logger_;
     std::deque<ICodec*> codec_ptrs_;

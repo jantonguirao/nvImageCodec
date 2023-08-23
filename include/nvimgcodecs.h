@@ -820,6 +820,7 @@ extern "C"
                                                            @note At plugin level API it always points to executor, either custom or default. */
         int device_id;                                /**< Device id to process decoding on. It can be also specified 
                                                            using defines NVIMGCDCS_DEVICE_CURRENT or NVIMGCDCS_DEVICE_CPU_ONLY. */
+        int pre_init;                                 /**< If true, all relevant resources are initialized at creation of the instance */
         int num_backends;                             /**< Number of allowed backends passed (if any) 
                                                            in backends parameter. For 0, all backends are allowed.*/
         const nvimgcdcsBackend_t* backends;           /**< Points a nvimgcdcsBackend_t array with defined allowed backends.

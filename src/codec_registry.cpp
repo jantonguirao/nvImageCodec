@@ -60,4 +60,14 @@ ICodec* CodecRegistry::getCodecByName(const char* name)
         return nullptr;
 }
 
+size_t CodecRegistry::getCodecsCount() const
+{
+    return codec_ptrs_.size();
+}
+
+ICodec* CodecRegistry::getCodecByIndex(size_t index)
+{
+    return codec_ptrs_[index];
+}
+
 } // namespace nvimgcdcs
