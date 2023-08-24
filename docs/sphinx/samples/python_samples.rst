@@ -22,9 +22,14 @@ Python
 
 The following samples demonstrates the use of nvImageCodecs Python API:
 
-
 .. toctree::
-    :maxdepth: 1
+   :maxdepth: 2
+
+   Basics <nvimgcodecs.nblink>
+   Batch processing <batch_sample.nblink>
+   CuPy interoperability <cupy_sample.ipynb>
+   cuCIM interoperability <cucim_sample.ipynb>
+   CV-CUDA interoperability <cvcuda_sample.ipynb>
 
 .. 
    #Classification <python_samples/classification>

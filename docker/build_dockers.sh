@@ -14,6 +14,7 @@ for IMG_CUDA_VERSION in "${CUDA_VERSIONS[@]}"; do
 
     BUILDER_IMAGE="gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-${IMG_ARCH}:cuda-${IMG_CUDA_VERSION}-v${IMG_VERSION}"
     TEST_IMAGE="gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-${IMG_ARCH}:cuda-${IMG_CUDA_VERSION}-v${IMG_VERSION}"
+    DOCS_IMAGE="gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/docs-linux-${IMG_ARCH}:cuda-${IMG_CUDA_VERSION}-v${IMG_VERSION}"
 
     # Building dependencies
     docker build -t ${CUDA_IMAGE} -f docker/Dockerfile.cuda${IMG_CUDA_SHORT_VER}.${IMG_ARCH}.deps docker
@@ -22,4 +23,6 @@ for IMG_CUDA_VERSION in "${CUDA_VERSIONS[@]}"; do
     docker build -t ${BUILDER_IMAGE} -f docker/Dockerfile.cuda.deps --build-arg "FROM_IMAGE_NAME=${DEPS_IMAGE}" --build-arg "CUDA_IMAGE=${CUDA_IMAGE}" docker
 
     docker build -t ${TEST_IMAGE} -f docker/Dockerfile --build-arg "BASE=${TEST_IMG_BASE}" --build-arg "VER_CUDA=${IMG_CUDA_VERSION}" --build-arg "VER_UBUNTU=${IMG_UBUNTU}" docker
+
+    docker build -t ${DOCS_IMAGE} -f docker/Dockerfile.docs.deps --build-arg "BASE=${TEST_IMAGE}" --build-arg "VER_CUDA=${IMG_CUDA_VERSION}" --build-arg "VER_UBUNTU=${IMG_UBUNTU}" docker
 done

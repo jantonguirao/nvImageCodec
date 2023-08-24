@@ -8,5 +8,4 @@ add_subdirectory(sphinx)
 add_dependencies(docs nvimagecodecs_doxygen_docs)
 add_dependencies(docs nvimagecodecs_sphinx_docs)
 add_dependencies(nvimagecodecs_sphinx_docs nvimagecodecs_doxygen_docs)
-add_dependencies(nvimagecodecs_sphinx_docs nvimgcodecs_python)
 

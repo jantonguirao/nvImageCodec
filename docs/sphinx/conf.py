@@ -15,10 +15,16 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import sys
 import os
-sys.path.insert(0, os.path.abspath("../../build/python"))
-
 import sphinx_rtd_theme
 
+# For build documentation for nvimgcodec from specif location (default is installed module), 
+# uncomment below line to specify path to nvimgcodecs module
+# sys.path.insert(0, os.path.abspath("../../build/python"))
+
+# Specify path to images used in jupyter notebooks samples
+os.environ["PYNVIMGCODECS_EXAMPLES_RESOURCES_DIR"] = "../../../example/assets/images/"
+
+# nbsphinx_allow_errors = True
 
 # -- Project information -----------------------------------------------------
 
@@ -47,7 +53,9 @@ extensions = [
     'sphinx.ext.ifconfig',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',
-    'breathe'
+    'breathe',
+    'nbsphinx',
+    'nbsphinx_link'
 ]
 # Napoleon settings
 napoleon_google_docstring = True
