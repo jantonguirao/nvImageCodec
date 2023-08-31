@@ -16,6 +16,9 @@
 #include <memory>
 #include <vector>
 #include <future>
+#include <mutex>
+#include <queue>
+#include <condition_variable>
 
 namespace nvjpeg2k {
 
@@ -53,13 +56,12 @@ class NvJpeg2kDecoderPlugin
             nvjpeg2kDecodeState_t state_;
             std::unique_ptr<ParseState> parse_state_;
             NppStreamContext npp_ctx_;
+        };
 
-            struct PerTileResources {
-                cudaStream_t stream_;
-                cudaEvent_t event_;
-                nvjpeg2kDecodeState_t state_;
-            };
-            std::vector<PerTileResources> per_tile_;
+        struct PerTileResources {
+            cudaStream_t stream_;
+            cudaEvent_t event_;
+            nvjpeg2kDecodeState_t state_;
         };
 
         struct Sample
@@ -77,6 +79,10 @@ class NvJpeg2kDecoderPlugin
         int device_id_;
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
+        std::vector<PerTileResources> per_tile_res_;
+        std::queue<PerTileResources*> free_per_tile_res_;
+        std::mutex free_per_tile_mtx_;
+        std::condition_variable free_per_tile_cv_;
     };
 
     struct Decoder
