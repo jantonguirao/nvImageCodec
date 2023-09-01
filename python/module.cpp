@@ -65,19 +65,38 @@ Module ::~Module()
 void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 {
     m.def(
-        "as_image",
-        [instance](py::handle source_buffer, intptr_t cuda_stream) -> Image { return Image(instance, source_buffer.ptr(), cuda_stream); },
-        R"pbdoc(
-            Wrap an external buffer as an image and tie the buffer lifetime to the image
+         "as_image", [instance](py::handle source, intptr_t cuda_stream) -> Image { return Image(instance, source.ptr(), cuda_stream); },
+         R"pbdoc(
+            Wraps an external buffer as an image and ties the buffer lifetime to the image
 
             Args:
-                source_buffer: Object with __cuda_array_interface__.
+                source: Input DLPpack tensor which is encapsulated in a PyCapsule object or other object with __cuda_array_interface__ 
+                or __dlpack__ and __dlpack_device__ methods.
+                
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
+
             Returns:
                 nvimgcodecs.Image
 
         )pbdoc",
-        "source_buffer"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>());
+         "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>())
+        .def(
+            "from_dlpack",
+            [instance](py::handle source, intptr_t cuda_stream) -> Image { return Image(instance, source.ptr(), cuda_stream); },
+            R"pbdoc(
+            Zero-copy conversion from a DLPack tensor to a image. 
+
+            Args:
+                source: Input DLPpack tensor which is encapsulated in a PyCapsule object or other (array) object with __dlpack__ 
+                and __dlpack_device__ methods.
+                
+                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
+            
+            Returns:
+                nvimgcodecs.Image
+
+            )pbdoc",
+            "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>());
 }
 
 } // namespace nvimgcdcs

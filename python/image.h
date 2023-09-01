@@ -20,6 +20,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "dlpack_utils.h"
+
 namespace nvimgcdcs {
 
 namespace py = pybind11;
@@ -40,6 +42,9 @@ class Image
     py::object shape() const;
     py::object dtype() const;
 
+    py::capsule dlpack(py::object stream) const;
+    const py::tuple getDlpackDevice() const;
+
     nvimgcdcsImage_t getNvImgCdcsImage() const;
     static void exportToPython(py::module& m);
 
@@ -52,6 +57,7 @@ class Image
     std::shared_ptr<unsigned char> img_buffer_;
     std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type> image_;
     py::dict cuda_array_interface_;
+    std::shared_ptr<DLPackTensor> dlpack_tensor_;
 };
 
 } // namespace nvimgcdcs

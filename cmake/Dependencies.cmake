@@ -34,6 +34,7 @@ endfunction()
 find_package(CUDAToolkit REQUIRED)
 include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/external/NVTX/c/include)
+include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/external/dlpack/include)
 
 # Linking with static nvjpeg2k until there is a python package for it
 if (BUILD_NVJPEG2K_EXT)
