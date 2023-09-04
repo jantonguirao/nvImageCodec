@@ -16,6 +16,10 @@
 #include <memory>
 #include <vector>
 #include <future>
+#include <mutex>
+#include <queue>
+#include <condition_variable>
+#include "error_handling.h"
 
 namespace nvjpeg2k {
 
@@ -53,13 +57,68 @@ class NvJpeg2kDecoderPlugin
             nvjpeg2kDecodeState_t state_;
             std::unique_ptr<ParseState> parse_state_;
             NppStreamContext npp_ctx_;
+        };
 
-            struct PerTileResources {
-                cudaStream_t stream_;
-                cudaEvent_t event_;
-                nvjpeg2kDecodeState_t state_;
-            };
-            std::vector<PerTileResources> per_tile_;
+        struct PerTileResources {
+            cudaStream_t stream_;
+            cudaEvent_t event_;
+            nvjpeg2kDecodeState_t state_;
+        };
+
+        struct PerTileResourcesPool {
+            const char* plugin_id_;
+            const nvimgcdcsFrameworkDesc_t* framework_;
+            nvjpeg2kHandle_t handle_ = nullptr;
+
+            std::vector<PerTileResources> res_;
+            std::queue<PerTileResources*> free_;
+            std::mutex mtx_;
+            std::condition_variable cv_;
+
+            PerTileResourcesPool(const char* id, const nvimgcdcsFrameworkDesc_t* framework, nvjpeg2kHandle_t handle, int num_parallel_tiles)
+                : plugin_id_(id)
+                , framework_(framework)
+                , handle_(handle)
+                , res_(num_parallel_tiles) {
+                for (auto& tile_res : res_) {
+                    XM_CHECK_CUDA(cudaStreamCreateWithFlags(&tile_res.stream_, cudaStreamNonBlocking));
+                    XM_CHECK_CUDA(cudaEventCreate(&tile_res.event_));
+                    XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateCreate(handle, &tile_res.state_));
+                    free_.push(&tile_res);
+                }
+            }
+
+            ~PerTileResourcesPool() {
+                for (auto& tile_res : res_) {
+                    if (tile_res.event_) {
+                        XM_CUDA_LOG_DESTROY(cudaEventDestroy(tile_res.event_));
+                    }
+                    if (tile_res.stream_) {
+                        XM_CUDA_LOG_DESTROY(cudaStreamDestroy(tile_res.stream_));
+                    }
+                    if (tile_res.state_) {
+                        XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(tile_res.state_));
+                    }
+                }
+            }
+
+            size_t size() const {
+                return res_.size();
+            }
+
+            PerTileResources* Acquire() {
+                std::unique_lock<std::mutex> lock(mtx_);
+                cv_.wait(lock, [&]() { return !free_.empty(); });
+                auto res_ptr = free_.front();
+                free_.pop();
+                return res_ptr;
+            }
+
+            void Release(PerTileResources* res_ptr) {
+                std::lock_guard<std::mutex> lock(mtx_);
+                free_.push(res_ptr);
+                cv_.notify_one();
+            }
         };
 
         struct Sample
@@ -77,6 +136,7 @@ class NvJpeg2kDecoderPlugin
         int device_id_;
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
+        PerTileResourcesPool per_tile_res_;
     };
 
     struct Decoder

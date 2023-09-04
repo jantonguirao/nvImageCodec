@@ -7,10 +7,11 @@
  * distribution of this software and related documentation without an express
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
+#pragma once
 
 #include <map>
 #include "exception.h"
-#pragma once
+#include "log.h"
 
 #define XM_CHECK_NULL(ptr)                                                 \
     {                                                                      \

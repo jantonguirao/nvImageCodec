@@ -159,7 +159,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcdcsDec
 
 void NvJpeg2kDecoderPlugin::Decoder::parseOptions(const char* options)
 {
-    num_parallel_tiles_ = 4;  // 4 tiles in parallel per CPU thread
+    num_parallel_tiles_ = 16;  // default 16 tiles in parallel for all threads
     std::istringstream iss(options ? options : "");
     std::string token;
     while (std::getline(iss, token, ' ')) {
@@ -285,6 +285,7 @@ NvJpeg2kDecoderPlugin::DecodeState::DecodeState(const char* id, const nvimgcdcsF
     , device_allocator_(device_allocator)
     , pinned_allocator_(pinned_allocator)
     , device_id_(device_id)
+    , per_tile_res_(id, framework, handle, num_parallel_tiles)
 {
     per_thread_.reserve(num_threads);
 
@@ -308,30 +309,12 @@ NvJpeg2kDecoderPlugin::DecodeState::DecodeState(const char* id, const nvimgcdcsF
         res.npp_ctx_.nMaxThreadsPerMultiProcessor = device_properties.maxThreadsPerMultiProcessor;
         res.npp_ctx_.nMaxThreadsPerBlock = device_properties.maxThreadsPerBlock;
         res.npp_ctx_.nSharedMemPerBlock = device_properties.sharedMemPerBlock;
-
-        res.per_tile_.resize(num_parallel_tiles);
-        for (auto& tile_res : res.per_tile_) {
-            XM_CHECK_CUDA(cudaStreamCreateWithFlags(&tile_res.stream_, cudaStreamNonBlocking));
-            XM_CHECK_CUDA(cudaEventCreate(&tile_res.event_));
-            XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateCreate(handle_, &tile_res.state_));
-        }
     }
 }
 
 NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
 {
     for (auto& res : per_thread_) {
-        for (auto& res2 : res.per_tile_) {
-            if (res2.event_) {
-                XM_CUDA_LOG_DESTROY(cudaEventDestroy(res2.event_));
-            }
-            if (res2.stream_) {
-                XM_CUDA_LOG_DESTROY(cudaStreamDestroy(res2.stream_));
-            }
-            if (res2.state_) {
-                XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(res2.state_));
-            }
-        }
         if (res.event_) {
             XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
         }
@@ -364,6 +347,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
         nvtx3::scoped_range marker{"nvjpeg2k decode " + std::to_string(sample_idx)};
         auto* decode_state = reinterpret_cast<NvJpeg2kDecoderPlugin::DecodeState*>(context);
         auto& t = decode_state->per_thread_[tid];
+        auto &per_tile_res = decode_state->per_tile_res_;
         auto& framework_ = decode_state->framework_;
         auto& plugin_id_ = decode_state->plugin_id_;
         auto* parse_state = t.parse_state_.get();
@@ -591,17 +575,16 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
             XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 
             bool tiled = (jpeg2k_info.num_tiles_y > 1 || jpeg2k_info.num_tiles_x > 1);
-            int num_parallel_tiles = t.per_tile_.size();
-            if (!tiled || num_parallel_tiles <= 1 || image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC) {
+            if (!tiled || per_tile_res.size() <= 1 || image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC) {
                 nvtx3::scoped_range marker{"nvjpeg2kDecodeImage"};
                 NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_, "nvjpeg2kDecodeImage");
                 XM_CHECK_NVJPEG2K(nvjpeg2kDecodeImage(
                     handle_, jpeg2k_state, parse_state->nvjpeg2k_stream_, decode_params_raii.get(), &output_image, t.stream_));
             } else {
-                int k = 0;
                 std::vector<uint8_t*> tile_decode_output(jpeg2k_info.num_components, nullptr);
 
                 bool has_roi = params->enable_roi && image_info.region.ndim > 0;
+                std::set<cudaEvent_t*> tile_events;
                 for (uint32_t tile_y = 0; tile_y < jpeg2k_info.num_tiles_y; tile_y++) {
                     for (uint32_t tile_x = 0; tile_x < jpeg2k_info.num_tiles_x; tile_x++) {
                         uint32_t tile_y_begin = tile_y * jpeg2k_info.tile_height;
@@ -623,10 +606,6 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                         if (tile_y_begin >= tile_y_end || tile_x_begin >= tile_x_end)
                             continue;
 
-                        auto &tile_res = t.per_tile_[k];
-                        k = k == (num_parallel_tiles - 1) ? 0 : k + 1;
-
-                        XM_CHECK_CUDA(cudaEventSynchronize(tile_res.event_));
                         XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetDecodeArea(decode_params, tile_x_begin, tile_x_end, tile_y_begin, tile_y_end));
 
                         nvjpeg2kImage_t output_tile;
@@ -641,17 +620,23 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                         NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_,
                             "nvjpeg2kDecodeTile: y=[" << tile_y_begin << ", " << tile_y_end << "), x=[" << tile_x_begin << ", "
                                                       << tile_x_end << ")");
+
+                        DecodeState::PerTileResources* tile_res = per_tile_res.Acquire();
+                        XM_CHECK_CUDA(cudaEventSynchronize(tile_res->event_));
                         {
                             auto tile_idx = tile_y * jpeg2k_info.num_tiles_x + tile_x;
                             nvtx3::scoped_range marker{"nvjpeg2kDecodeTile #" + std::to_string(tile_idx)};
-                            XM_CHECK_NVJPEG2K(nvjpeg2kDecodeTile(handle_, tile_res.state_, parse_state->nvjpeg2k_stream_,
-                                decode_params_raii.get(), tile_idx, 0, &output_tile, tile_res.stream_));
+                            XM_CHECK_NVJPEG2K(nvjpeg2kDecodeTile(handle_, tile_res->state_, parse_state->nvjpeg2k_stream_,
+                                decode_params_raii.get(), tile_idx, 0, &output_tile, tile_res->stream_));
                         }
-                        XM_CHECK_CUDA(cudaEventRecord(tile_res.event_, tile_res.stream_));
+                        XM_CHECK_CUDA(cudaEventRecord(tile_res->event_, tile_res->stream_));
+                        tile_events.insert(&tile_res->event_);
+
+                        per_tile_res.Release(tile_res);
                     }
                 }
-                for (auto &tile_res : t.per_tile_)
-                    XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, tile_res.event_));
+                for (auto *event : tile_events)
+                    XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, *event));
             }
 
             if (gray || interleaved) {
