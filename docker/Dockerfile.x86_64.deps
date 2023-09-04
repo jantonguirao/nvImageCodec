@@ -8,10 +8,16 @@ FROM ${BUILDER_EXTRA_DEPS} as extra_deps
 FROM ${FROM_IMAGE_NAME}
 
 # Install yum Dependencies
-RUN yum install -y wget nasm doxygen graphviz gettext xz openssl autogen zip \
-                   devtoolset-10-libasan-devel devtoolset-10-liblsan-devel \
-                   devtoolset-10-libtsan-devel devtoolset-10-libubsan-devel \
-                   dpkg dpkg-devel dpkg-dev
+# - Installing basic yum packages
+# - Downgrading to GCC 9 (devtoolset-9) as we want to be compatible with it
+# - Installing sanitizer required devtools packages
+RUN yum remove -y devtoolset-* && \
+    yum install -y wget nasm doxygen graphviz gettext xz openssl autogen zip \
+                   devtoolset-9 devtoolset-9-libasan-devel devtoolset-9-liblsan-devel devtoolset-9-libtsan-devel devtoolset-9-libubsan-devel
+# Adding devtoolset-9 to the paths
+ENV PATH=/opt/rh/devtoolset-9/root/usr/bin:${PATH}
+ENV LD_LIBRARY_PATH=/opt/rh/devtoolset-9/root/usr/lib64:/opt/rh/devtoolset-9/root/usr/lib:/opt/rh/devtoolset-9/root/usr/lib64/dyninst:/opt/rh/devtoolset-9/root/usr/lib/dyninst:${LD_LIBRARY_PATH}
+
 ENV ACLOCAL_PATH=/usr/share/aclocal/:/usr/local/share/aclocal
 
 # Don't want the short-unicode version for Python 2.7
