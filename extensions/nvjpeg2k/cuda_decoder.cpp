@@ -285,6 +285,7 @@ NvJpeg2kDecoderPlugin::DecodeState::DecodeState(const char* id, const nvimgcdcsF
     , device_allocator_(device_allocator)
     , pinned_allocator_(pinned_allocator)
     , device_id_(device_id)
+    , per_tile_res_(id, framework, handle, num_parallel_tiles)
 {
     per_thread_.reserve(num_threads);
 
@@ -309,29 +310,10 @@ NvJpeg2kDecoderPlugin::DecodeState::DecodeState(const char* id, const nvimgcdcsF
         res.npp_ctx_.nMaxThreadsPerBlock = device_properties.maxThreadsPerBlock;
         res.npp_ctx_.nSharedMemPerBlock = device_properties.sharedMemPerBlock;
     }
-
-    per_tile_res_.resize(num_parallel_tiles);
-    for (auto& tile_res : per_tile_res_) {
-        XM_CHECK_CUDA(cudaStreamCreateWithFlags(&tile_res.stream_, cudaStreamNonBlocking));
-        XM_CHECK_CUDA(cudaEventCreate(&tile_res.event_));
-        XM_CHECK_NVJPEG2K(nvjpeg2kDecodeStateCreate(handle_, &tile_res.state_));
-        free_per_tile_res_.push(&tile_res);
-    }
 }
 
 NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
 {
-    for (auto& tile_res : per_tile_res_) {
-        if (tile_res.event_) {
-            XM_CUDA_LOG_DESTROY(cudaEventDestroy(tile_res.event_));
-        }
-        if (tile_res.stream_) {
-            XM_CUDA_LOG_DESTROY(cudaStreamDestroy(tile_res.stream_));
-        }
-        if (tile_res.state_) {
-            XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(tile_res.state_));
-        }
-    }
     for (auto& res : per_thread_) {
         if (res.event_) {
             XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
@@ -365,10 +347,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
         nvtx3::scoped_range marker{"nvjpeg2k decode " + std::to_string(sample_idx)};
         auto* decode_state = reinterpret_cast<NvJpeg2kDecoderPlugin::DecodeState*>(context);
         auto& t = decode_state->per_thread_[tid];
-        size_t num_parallel_tiles = decode_state->per_tile_res_.size();
-        auto& free_per_tile_res = decode_state->free_per_tile_res_;
-        auto& free_per_tile_mtx = decode_state->free_per_tile_mtx_;
-        auto& free_per_tile_cv = decode_state->free_per_tile_cv_;
+        auto &per_tile_res = decode_state->per_tile_res_;
         auto& framework_ = decode_state->framework_;
         auto& plugin_id_ = decode_state->plugin_id_;
         auto* parse_state = t.parse_state_.get();
@@ -596,7 +575,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
             XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 
             bool tiled = (jpeg2k_info.num_tiles_y > 1 || jpeg2k_info.num_tiles_x > 1);
-            if (!tiled || num_parallel_tiles <= 1 || image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC) {
+            if (!tiled || per_tile_res.size() <= 1 || image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC) {
                 nvtx3::scoped_range marker{"nvjpeg2kDecodeImage"};
                 NVIMGCDCS_LOG_DEBUG(framework_, plugin_id_, "nvjpeg2kDecodeImage");
                 XM_CHECK_NVJPEG2K(nvjpeg2kDecodeImage(
@@ -642,16 +621,8 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                             "nvjpeg2kDecodeTile: y=[" << tile_y_begin << ", " << tile_y_end << "), x=[" << tile_x_begin << ", "
                                                       << tile_x_end << ")");
 
-                        DecodeState::PerTileResources* tile_res;
-                        {
-                            std::unique_lock<std::mutex> lock(free_per_tile_mtx);
-                            free_per_tile_cv.wait(lock, [&]() { return !free_per_tile_res.empty(); });
-                            tile_res = free_per_tile_res.front();
-                            free_per_tile_res.pop();
-                        }
-
+                        DecodeState::PerTileResources* tile_res = per_tile_res.Acquire();
                         XM_CHECK_CUDA(cudaEventSynchronize(tile_res->event_));
-
                         {
                             auto tile_idx = tile_y * jpeg2k_info.num_tiles_x + tile_x;
                             nvtx3::scoped_range marker{"nvjpeg2kDecodeTile #" + std::to_string(tile_idx)};
@@ -661,11 +632,7 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                         XM_CHECK_CUDA(cudaEventRecord(tile_res->event_, tile_res->stream_));
                         tile_events.insert(&tile_res->event_);
 
-                        {
-                            std::lock_guard<std::mutex> lock(free_per_tile_mtx);
-                            free_per_tile_res.push(tile_res);
-                            free_per_tile_cv.notify_one();
-                        }
+                        per_tile_res.Release(tile_res);
                     }
                 }
                 for (auto *event : tile_events)
