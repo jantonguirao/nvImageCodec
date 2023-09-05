@@ -50,16 +50,18 @@ class EncoderWorkerTest : public TestWithParam<test_case_tuple_t>
             auto image_dec = std::make_unique<MockImageEncoder>();
             image_dec_ptrs_[i] = image_dec.get();
             image_dec_factories_[i] = new MockImageEncoderFactory();
-            MockImageEncoderFactory* image_dec_factory(image_dec_factories_[i]);
-            EXPECT_CALL(*image_dec_factory, getBackendKind()).WillRepeatedly(Return(backend_kind));
-            EXPECT_CALL(*image_dec_factory, createEncoder(_, _)).WillRepeatedly(Return(ByMove(std::move(image_dec))));
-            EXPECT_CALL(*codec_.get(), getEncoderFactory(i)).WillRepeatedly(Return(image_dec_factory));
+            MockImageEncoderFactory* image_enc_factory(image_dec_factories_[i]);
+            ON_CALL(*image_enc_factory, getEncoderId()).WillByDefault(Return("encoder_id"));
+            EXPECT_CALL(*image_enc_factory, getBackendKind()).WillRepeatedly(Return(backend_kind));
+            EXPECT_CALL(*image_enc_factory, createEncoder(_, _)).WillRepeatedly(Return(ByMove(std::move(image_dec))));
+            EXPECT_CALL(*codec_.get(), getEncoderFactory(i)).WillRepeatedly(Return(image_enc_factory));
         }
-        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
-        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
-        exec_params.num_backends = allowed_backends_.size();
-        exec_params.backends = allowed_backends_.data();
-        encoder_worker_ = std::make_unique<EncoderWorker>(&logger_, nullptr,  &exec_params, "", codec_.get(), start_index);
+        exec_params_.type = NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS;
+        exec_params_.next = nullptr;
+        exec_params_.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        exec_params_.num_backends = allowed_backends_.size();
+        exec_params_.backends = allowed_backends_.data();
+        encoder_worker_ = std::make_unique<EncoderWorker>(&logger_, nullptr,  &exec_params_, "", codec_.get(), start_index);
     }
 
     void TearDown() override
@@ -79,6 +81,7 @@ class EncoderWorkerTest : public TestWithParam<test_case_tuple_t>
     std::vector<std::unique_ptr<MockImageEncoder>> image_decs_;
     std::vector<IImageEncoder*> image_dec_ptrs_;
     std::vector<MockImageEncoderFactory*> image_dec_factories_;
+    nvimgcdcsExecutionParams_t exec_params_;
     std::unique_ptr<EncoderWorker> encoder_worker_;
     std::vector<nvimgcdcsBackend_t> allowed_backends_;
     int expected_return_index_;
