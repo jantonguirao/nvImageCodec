@@ -8,7 +8,7 @@
 
 docs:nvimagecodecs:
     stage: build
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/docs-linux-x86_64:cuda-12.1.1-v1
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v2
     tags:
         - docker
     dependencies: 
@@ -27,7 +27,7 @@ docs:nvimagecodecs:
 
 pages:
     stage: deploy
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/docs-linux-x86_64:cuda-12.1.1-v1
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v2
     tags:
         - docker
     dependencies:

@@ -83,25 +83,25 @@ test:nvimagecodec-cuda12:
 
 test:nvimagecodec-python-cuda11:
     extends: .test:nvimagecodec-python
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.8.0-v1
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.8.0-v2
     dependencies:
         - build:nvimagecodec-cuda11
 
 test:nvimagecodec-python-cuda12:
     extends: .test:nvimagecodec-python
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v1
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v2
     dependencies:
         - build:nvimagecodec-cuda12
 
 test:nvimagecodec-transcode-cuda11:
     extends: .test:nvimagecodec-transcode
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.8.0-v1
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.8.0-v2
     dependencies:
         - build:nvimagecodec-cuda11
 
 test:nvimagecodec-transcode-cuda12:
     extends: .test:nvimagecodec-transcode
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v1
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v2
     dependencies:
         - build:nvimagecodec-cuda12
 

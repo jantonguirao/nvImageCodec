@@ -11,19 +11,50 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-         python3 \
-         python3-dev \
-         python3-pytest \
-         python3-pip \
-         libglib2.0-0 \
-         libgl1 \
-         libgomp1 \
+        python3 \
+        python3-dev \
+        python3-pytest \
+        python3-pip \
+        libglib2.0-0 \
+        libgl1 \
+        libgomp1 \
+        pandoc \
+        make \
+        wget \
+        doxygen \
     && rm -rf /var/lib/apt/lists/*
 
 RUN export LD_LIBRARY_PATH=/usr/local/cuda/compat:$LD_LIBRARY_PATH
 
-RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
-    python3 -m pip install cupy-cuda${CUDA_VERSION_MAJOR}x opencv-python numpy pytest && \
-    rm -rf /root/.cache/pip
+RUN mkdir cvcuda && \
+    cd cvcuda && \
+    wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.3.1-beta/nvcv_python-0.3.1_beta-cp38-cp38-linux_x86_64.whl && \
+    python3 -m pip install ./nvcv_python-0.3.1_beta-cp38-cp38-linux_x86_64.whl && \
+    cp /usr/local/lib/python3.8/dist-packages/python/* /usr/local/lib/python3.8/dist-packages/ && \
+    wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.3.1-beta/nvcv-lib-0.3.1_beta-cuda12-x86_64-linux.deb && \
+    dpkg -i nvcv-lib-0.3.1_beta-cuda12-x86_64-linux.deb
 
+RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
+    python3 -m pip install \
+    pytest \
+    cupy-cuda${CUDA_VERSION_MAJOR}x \
+    opencv-python \
+    sphinx \ 
+    sphinx_rtd_theme \
+    breathe \
+    nbsphinx \
+    nbsphinx_link \
+    ipython \
+    ipykernel \
+    matplotlib \
+    opencv-python \
+    numpy \
+    cucim \
+    scipy \
+    scikit-image \
+    torch \
+    torchvision \
+    tensorflow && \
+    rm -rf /root/.cache/pip
+   
 WORKDIR /workspace
