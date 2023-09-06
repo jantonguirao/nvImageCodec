@@ -45,6 +45,10 @@ if (BUILD_OPENCV_EXT)
     list(APPEND SRCS extensions/opencv_ext_decoder_test.cpp)
 endif()
 
+if (BUILD_NVBMP_EXT)
+    list(APPEND SRCS extensions/nvbmp_ext_decoder_test.cpp)
+endif()
+
 set(FILESTOPACK nvimgcodecs_tests)
 
 add_executable(nvimgcodecs_tests ${SRCS})
@@ -100,6 +104,9 @@ foreach(testapp nvimgcodecs_tests)
         list(APPEND TARGET_LIBS opencv_ext_static)
     endif()
 
+    if (BUILD_NVBMP_EXT)
+        list(APPEND TARGET_LIBS nvbmp_ext_static)
+    endif()
     
     target_link_libraries(${testapp} PUBLIC
         ${TARGET_LIBS}
