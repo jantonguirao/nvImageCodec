@@ -83,24 +83,16 @@ static nvimgcdcsSampleDataType_t type_from_format_str(const std::string& typestr
     return NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN;
 }
 
-struct Image::BufferDeleter
-{
-    cudaStream_t stream;
-    void operator()(unsigned char* buffer) { cudaFreeAsync(buffer, stream); }
-};
-struct Image::ImageDeleter
-{
-    void operator()(nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); }
-};
-
 Image::Image(nvimgcdcsImage_t image)
     : img_buffer_size_(0)
 {
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcsImageGetImageInfo(image, &image_info);
     initCudaArrayInterface(&image_info);
-    image_ = std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, ImageDeleter{});
-    dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info);
+    initCudaEventForDLPack();
+    image_ =
+        std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
+    dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info, img_buffer_);
 }
 
 Image::Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info)
@@ -109,17 +101,32 @@ Image::Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info)
     if (image_info->buffer == nullptr) {
         unsigned char* buffer;
         CHECK_CUDA(cudaMallocAsync((void**)&buffer, image_info->buffer_size, image_info->cuda_stream));
-
-        img_buffer_ = std::shared_ptr<unsigned char>(buffer, BufferDeleter{image_info->cuda_stream});
+        auto cuda_stream = image_info->cuda_stream;
+        img_buffer_ = std::shared_ptr<unsigned char>(buffer, [cuda_stream](unsigned char* buffer) { cudaFreeAsync(buffer, cuda_stream); });
         img_buffer_size_ = image_info->buffer_size;
         image_info->buffer = buffer;
     }
 
     nvimgcdcsImage_t image;
     CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &image, image_info));
-    image_ = std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, ImageDeleter{});
-    dlpack_tensor_ = std::make_shared<DLPackTensor>(*image_info);
+    image_ =
+        std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
+    dlpack_tensor_ = std::make_shared<DLPackTensor>(*image_info, img_buffer_);
     initCudaArrayInterface(image_info);
+    initCudaEventForDLPack();
+}
+
+void Image::initDLPack(nvimgcdcsImageInfo_t* image_info, py::capsule cap)
+{
+    if (auto* tensor = static_cast<DLManagedTensor*>(cap.get_pointer())) {
+        check_cuda_buffer(tensor->dl_tensor.data);
+        dlpack_tensor_ = std::make_shared<DLPackTensor>(tensor);
+        // signal that producer don't have to call tensor's deleter, consumer will do it instead
+        cap.set_name("used_dltensor");
+        dlpack_tensor_->getImageInfo(image_info);
+    } else {
+        throw std::runtime_error("Unsupported dlpack PyCapsule object.");
+    }
 }
 
 Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
@@ -130,19 +137,10 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
     }
     py::object tmp = py::reinterpret_borrow<py::object>(o);
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
     if (py::isinstance<py::capsule>(tmp)) {
         py::capsule cap = tmp.cast<py::capsule>();
-        if (auto* tensor = static_cast<DLManagedTensor*>(cap.get_pointer())) {
-            check_cuda_buffer(tensor->dl_tensor.data);
-            dlpack_tensor_ = std::make_shared<DLPackTensor>(std::move(*tensor));
-            // signal that producer don't have to call tensor's deleter, consumer will do it instead
-            cap.set_name("used_dltensor");
-
-            dlpack_tensor_->getImageInfo(&image_info);
-            image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
-        } else {
-            throw std::runtime_error("Unsupported dlpack PyCapsule object.");
-        }
+        initDLPack(&image_info, cap);
     } else if (hasattr(tmp, "__cuda_array_interface__")) {
         py::dict iface = tmp.attr("__cuda_array_interface__").cast<py::dict>();
 
@@ -188,8 +186,6 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
             }
         }
 
-        image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
-
         bool is_interleaved = true; //TODO detect interleaved if we have HWC layout
 
         if (is_interleaved) {
@@ -228,7 +224,7 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
         image_info.buffer = buffer;
         image_info.buffer_size = buffer_size;
         image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
-        dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info);
+        dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info, img_buffer_);
     } else if (hasattr(tmp, "__dlpack__")) {
         // Quickly check if we support the device
         if (hasattr(tmp, "__dlpack_device__")) {
@@ -238,27 +234,18 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
                 throw std::runtime_error("Unsupported device in DLTensor. Only CUDA-accessible memory buffers can be wrapped");
             }
         }
-
-        py::capsule cap = tmp.attr("__dlpack__")(py::int_(cuda_stream)).cast<py::capsule>();
-
-        if (auto* tensor = static_cast<DLManagedTensor*>(cap.get_pointer())) {
-            check_cuda_buffer(tensor->dl_tensor.data);
-            dlpack_tensor_ = std::make_shared<DLPackTensor>(std::move(*tensor));
-            // signal that producer don't have to call tensor's deleter, consumer will do it instead
-            cap.set_name("used_dltensor");
-
-            dlpack_tensor_->getImageInfo(&image_info);
-            image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
-        } else {
-            throw std::runtime_error("Unsupported dlpack object.");
-        }
+        py::object py_cuda_stream = cuda_stream ? py::int_((intptr_t)(cuda_stream)) : py::int_(1);
+        py::capsule cap = tmp.attr("__dlpack__")(py_cuda_stream).cast<py::capsule>();
+        initDLPack(&image_info, cap);
     } else {
         throw std::runtime_error("Object does not support neither __cuda_array_interface__ nor __dlpack__");
     }
     nvimgcdcsImage_t image;
     CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &image, &image_info));
-    image_ = std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, ImageDeleter{});
+    image_ =
+        std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
     initCudaArrayInterface(&image_info);
+    initCudaEventForDLPack();
 }
 
 void Image::initCudaArrayInterface(nvimgcdcsImageInfo_t* image_info)
@@ -293,6 +280,15 @@ void Image::initCudaArrayInterface(nvimgcdcsImageInfo_t* image_info)
         // clang-format on
     } catch (...) {
         throw std::runtime_error("Unable to initialize __cuda_array_interface__");
+    }
+}
+
+void Image::initCudaEventForDLPack()
+{
+    if (!dlpack_cuda_event_) {
+        cudaEvent_t event;
+        CHECK_CUDA(cudaEventCreate(&event));
+        dlpack_cuda_event_ = std::shared_ptr<std::remove_pointer<cudaEvent_t>::type>(event, [](cudaEvent_t e) { cudaEventDestroy(e); });
     }
 }
 
@@ -335,46 +331,32 @@ nvimgcdcsImage_t Image::getNvImgCdcsImage() const
     return image_.get();
 }
 
-py::capsule Image::dlpack(py::object stream) const
+py::capsule Image::dlpack(py::object stream_obj) const
 {
-    struct ManagerCtx
-    {
-        DLManagedTensor tensor;
-        std::shared_ptr<unsigned char> image_buffer;
-    };
+    py::capsule cap = dlpack_tensor_->getPyCapsule();
+    if (std::string(cap.name()) != "dltensor") {
+        throw std::runtime_error(
+            "Could not get DLTensor capsules. It can be consumed only once, so you might have already constructed a tensor from it once.");
+    }
 
-    auto ctx = std::make_unique<ManagerCtx>();
+    //Add synchronisation
+    cudaStream_t consumer_cuda_stream = 0;
 
-    // Set up tensor deleter to delete the ManagerCtx
-    ctx->tensor.manager_ctx = ctx.get();
-    ctx->tensor.deleter = [](DLManagedTensor* tensor) {
-        auto* ctx = static_cast<ManagerCtx*>(tensor->manager_ctx);
-        delete ctx;
-    };
+    std::optional<intptr_t> stream = stream_obj.cast<std::optional<intptr_t>>();
+    if (!stream.has_value()) {
+        consumer_cuda_stream = 0;
+    } else {
+        consumer_cuda_stream = reinterpret_cast<cudaStream_t>(*stream);
+    }
 
-    // Copy tensor data
-    ctx->tensor.dl_tensor = *(*dlpack_tensor_.get());
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
 
-    // Manager context holds a reference to image_buffer so that
-    // GC doesn't delete this buffer while the dlpack tensor still refers to it.
-    ctx->image_buffer = img_buffer_;
-
-    // Creates the python capsule with the DLManagedTensor instance we're returning.
-    py::capsule cap(&ctx->tensor, "dltensor", [](PyObject* ptr) {
-        if (PyCapsule_IsValid(ptr, "dltensor")) {
-            // If consumer didn't delete the tensor,
-            if (auto* dlTensor = static_cast<DLManagedTensor*>(PyCapsule_GetPointer(ptr, "dltensor"))) {
-                // Delete the tensor.
-                if (dlTensor->deleter != nullptr) {
-                    dlTensor->deleter(dlTensor);
-                }
-            }
-        }
-    });
-
-    // Now that the capsule is created and the manager ctx was transfered to it,
-    // we can release the unique_ptr.
-    ctx.release();
+    //if -1, no stream order should be established; otherwise, the consumer stream should wait for the work on Image stream
+    if ((consumer_cuda_stream >= 0) && (consumer_cuda_stream != image_info.cuda_stream)) {
+        CHECK_CUDA(cudaEventRecord(dlpack_cuda_event_.get(), image_info.cuda_stream));
+        CHECK_CUDA(cudaStreamWaitEvent(consumer_cuda_stream, dlpack_cuda_event_.get()));
+    }
 
     return cap;
 }
@@ -388,7 +370,11 @@ const py::tuple Image::getDlpackDevice() const
 void Image::exportToPython(py::module& m)
 {
     py::class_<Image>(m, "Image", "Class which wraps buffer with pixels. It can be decoded pixels or pixels to encode.")
-        .def_property_readonly("__cuda_array_interface__", &Image::cuda_interface)
+        .def_property_readonly("__cuda_array_interface__", &Image::cuda_interface,
+            R"pbdoc(
+            The CUDA array interchange interface compatible with Numba v0.39.0 or later (see 
+            `CUDA Array Interface <https://numba.readthedocs.io/en/stable/cuda/cuda_array_interface.html>`_ for details)
+            )pbdoc")
         .def_property_readonly("shape", &Image::shape)
         .def_property_readonly("width", &Image::getWidth)
         .def_property_readonly("height", &Image::getHeight)
@@ -402,7 +388,7 @@ void Image::exportToPython(py::module& m)
             
             Args:
                 cuda_stream: An optional cudaStream_t represented as a Python integer, 
-                upon which synchronization must take place in created Image.
+                             upon which synchronization must take place in created Image.
 
             Returns:
                 DLPack tensor which is encapsulated in a PyCapsule object.

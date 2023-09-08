@@ -420,6 +420,8 @@ def test_dlpack_export_to_torch(shape, dtype):
     assert (host_array == torch.from_dlpack(cap).cpu().numpy()).all()
     
 
+@t.mark.parametrize("src_cuda_stream", [cp.cuda.Stream.null, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
+@t.mark.parametrize("dst_cuda_stream", [cp.cuda.Stream.null, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
 @t.mark.parametrize("shape,dtype",
                     [
                         ((640, 480, 3), np.int8),
@@ -427,25 +429,26 @@ def test_dlpack_export_to_torch(shape, dtype):
                         ((640, 480, 3), np.int16),
                     ],
                     )
-def test_dlpack_import_from_cupy(shape, dtype):
-    cp_img = cp.random.randint(0, 128, size=shape, dtype=dtype)
+def test_dlpack_import_from_cupy(shape, dtype, src_cuda_stream, dst_cuda_stream):
+    with src_cuda_stream:
+        rng = np.random.default_rng()
+        host_array = rng.integers(0, 128, shape, dtype)
+        cp_img = cp.asarray(host_array)
     
-    #create copy for reference as we can grab dlpack only once 
-    ref = cp_img
-    
-    # Since nvimgcodecs.as_image can understand both dlpack and cuda_array_interface,
-    # and we don't know a priori which interfaces it'll use (cupy provides both),
-    # let's create one object with only the dlpack interface.
-    class DLPackObject:
-        pass
+        # Since nvimgcodecs.as_image can understand both dlpack and cuda_array_interface,
+        # and we don't know a priori which interfaces it'll use (cupy provides both),
+        # let's create one object with only the dlpack interface.
+        class DLPackObject:
+            pass
 
-    o = DLPackObject()
-    o.__dlpack__ = cp_img.__dlpack__
-    o.__dlpack_device__ = cp_img.__dlpack_device__
-    nv_img = nvimgcodecs.as_image(cp_img)
+        o = DLPackObject()
+        o.__dlpack__ = cp_img.__dlpack__
+        o.__dlpack_device__ = cp_img.__dlpack_device__
 
-    assert (torch.from_dlpack(ref.toDlpack()).cpu().numpy() ==
-            torch.from_dlpack(nv_img.to_dlpack()).cpu().numpy()).all()
+        nv_img = nvimgcodecs.as_image(o, dst_cuda_stream.ptr)
+
+        assert (host_array ==
+                torch.from_dlpack(nv_img.to_dlpack()).cpu().numpy()).all()
  
 
 @t.mark.parametrize("shape,dtype",

@@ -15,6 +15,7 @@
 #include <dlpack/dlpack.h>
 
 #include <pybind11/buffer_info.h>
+#include <pybind11/pybind11.h>
 
 namespace nvimgcdcs {
 
@@ -24,13 +25,12 @@ class DLPackTensor final
 {
   public:
     DLPackTensor() noexcept;
-    explicit DLPackTensor(const DLTensor& tensor);
-    explicit DLPackTensor(DLManagedTensor&& tensor);
-    explicit DLPackTensor(const nvimgcdcsImageInfo_t& image_info);
     DLPackTensor(DLPackTensor&& that) noexcept;
-    ~DLPackTensor();
 
-    DLPackTensor& operator=(DLPackTensor&& that) noexcept;
+    explicit DLPackTensor(DLManagedTensor* dl_managed_tensor);
+    explicit DLPackTensor(const nvimgcdcsImageInfo_t& image_info, std::shared_ptr<unsigned char> image_buffer);
+
+    ~DLPackTensor();
 
     const DLTensor* operator->() const;
     DLTensor* operator->();
@@ -39,8 +39,12 @@ class DLPackTensor final
     DLTensor& operator*();
 
     void getImageInfo(nvimgcdcsImageInfo_t* image_info);
+    py::capsule getPyCapsule();
+
   private:
-    DLManagedTensor dl_managed_tensor_;
+    DLManagedTensor internal_dl_managed_tensor_;
+    DLManagedTensor* dl_managed_tensor_ptr_;
+    std::shared_ptr<unsigned char> image_buffer_;
 };
 
 bool is_cuda_accessible(DLDeviceType devType);

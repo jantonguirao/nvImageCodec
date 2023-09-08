@@ -146,31 +146,30 @@ DLDataType type_to_dlpack(nvimgcdcsSampleDataType_t data_type)
 }
 
 DLPackTensor::DLPackTensor() noexcept
-    : dl_managed_tensor_{}
+    : internal_dl_managed_tensor_{}
 {
 }
 
-DLPackTensor::DLPackTensor(DLManagedTensor&& managed_tensor)
-    : dl_managed_tensor_{std::move(managed_tensor)}
-{
-    managed_tensor = {};
-}
 
-DLPackTensor::DLPackTensor(const DLTensor& tensor)
-    : DLPackTensor(DLManagedTensor{tensor})
+DLPackTensor::DLPackTensor(DLManagedTensor* dl_managed_tensor)
+    : internal_dl_managed_tensor_{}
+    , dl_managed_tensor_ptr_{dl_managed_tensor}
 {
 }
 
-DLPackTensor::DLPackTensor(const nvimgcdcsImageInfo_t& image_info)
+DLPackTensor::DLPackTensor(const nvimgcdcsImageInfo_t& image_info, std::shared_ptr<unsigned char> image_buffer)
+    : internal_dl_managed_tensor_{}
+    , dl_managed_tensor_ptr_{&internal_dl_managed_tensor_}
+    , image_buffer_(image_buffer)
 {
-    dl_managed_tensor_ = {};
-    dl_managed_tensor_.deleter = [](DLManagedTensor* self) {
+    internal_dl_managed_tensor_.manager_ctx = this;
+    internal_dl_managed_tensor_.deleter = [](DLManagedTensor* self) {
         delete[] self->dl_tensor.shape;
         delete[] self->dl_tensor.strides;
     };
 
     try {
-        DLTensor& tensor = dl_managed_tensor_.dl_tensor;
+        DLTensor& tensor = internal_dl_managed_tensor_.dl_tensor;
 
         // Set up device
         if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
@@ -225,61 +224,42 @@ DLPackTensor::DLPackTensor(const nvimgcdcsImageInfo_t& image_info)
             tensor.strides[2] = /*bytes_per_element*/ 1;
         }
     } catch (...) {
-        dl_managed_tensor_.deleter(&dl_managed_tensor_);
+        internal_dl_managed_tensor_.deleter(&internal_dl_managed_tensor_);
         throw;
     }
 }
 
-DLPackTensor::DLPackTensor(DLPackTensor&& that) noexcept
-    : dl_managed_tensor_{std::move(that.dl_managed_tensor_)}
-{
-    that.dl_managed_tensor_ = {};
-}
-
 DLPackTensor::~DLPackTensor()
 {
-    if (dl_managed_tensor_.deleter) {
-        dl_managed_tensor_.deleter(&dl_managed_tensor_);
+    if (dl_managed_tensor_ptr_ && dl_managed_tensor_ptr_->deleter) {
+        dl_managed_tensor_ptr_->deleter(dl_managed_tensor_ptr_);
     }
-}
-
-DLPackTensor& DLPackTensor::operator=(DLPackTensor&& that) noexcept
-{
-    if (this != &that) {
-        if (dl_managed_tensor_.deleter) {
-            dl_managed_tensor_.deleter(&dl_managed_tensor_);
-        }
-        dl_managed_tensor_ = std::move(that.dl_managed_tensor_);
-
-        that.dl_managed_tensor_ = {};
-    }
-    return *this;
 }
 
 const DLTensor* DLPackTensor::operator->() const
 {
-    return &dl_managed_tensor_.dl_tensor;
+    return &internal_dl_managed_tensor_.dl_tensor;
 }
 
 DLTensor* DLPackTensor::operator->()
 {
-    return &dl_managed_tensor_.dl_tensor;
+    return &internal_dl_managed_tensor_.dl_tensor;
 }
 
 const DLTensor& DLPackTensor::operator*() const
 {
-    return dl_managed_tensor_.dl_tensor;
+    return internal_dl_managed_tensor_.dl_tensor;
 }
 
 DLTensor& DLPackTensor::operator*()
 {
-    return dl_managed_tensor_.dl_tensor;
+    return internal_dl_managed_tensor_.dl_tensor;
 }
 
 void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
 {
     constexpr int NVIMGCDCS_MAXDIMS = 3; //The maximum number of dimensions allowed in arrays.
-    const int ndim = dl_managed_tensor_.dl_tensor.ndim;
+    const int ndim = dl_managed_tensor_ptr_->dl_tensor.ndim;
     if (ndim > NVIMGCDCS_MAXDIMS) {
         throw std::runtime_error("DLPack tensor number of dimension is higher than the supported maxdims=3");
     }
@@ -287,28 +267,28 @@ void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
         throw std::runtime_error("DLPack tensor number of dimension is lower than expected at least 3");
     }
 
-    if (!is_cuda_accessible(dl_managed_tensor_.dl_tensor.device.device_type)) {
+    if (!is_cuda_accessible(dl_managed_tensor_ptr_->dl_tensor.device.device_type)) {
         throw std::runtime_error("Unsupported device in DLTensor. Only CUDA-accessible memory buffers can be wrapped");
     }
 
-    if (dl_managed_tensor_.dl_tensor.dtype.lanes != 1) {
+    if (dl_managed_tensor_ptr_->dl_tensor.dtype.lanes != 1) {
         throw std::runtime_error("Unsupported lanes in DLTensor dtype.");
     }
 
-    auto sample_type = type_from_dlpack(dl_managed_tensor_.dl_tensor.dtype);
+    auto sample_type = type_from_dlpack(dl_managed_tensor_ptr_->dl_tensor.dtype);
     int bytes_per_element = static_cast<unsigned int>(sample_type) >> (8 + 3);
 
     bool is_interleaved = true; // For now always assume interleaved
-    void* buffer = (char*)dl_managed_tensor_.dl_tensor.data + dl_managed_tensor_.dl_tensor.byte_offset;
+    void* buffer = (char*)dl_managed_tensor_ptr_->dl_tensor.data + dl_managed_tensor_ptr_->dl_tensor.byte_offset;
     if (is_interleaved) {
         image_info->num_planes = 1;
-        image_info->plane_info[0].height = dl_managed_tensor_.dl_tensor.shape[0];
-        image_info->plane_info[0].width = dl_managed_tensor_.dl_tensor.shape[1];
-        image_info->plane_info[0].num_channels = dl_managed_tensor_.dl_tensor.shape[2];
+        image_info->plane_info[0].height = dl_managed_tensor_ptr_->dl_tensor.shape[0];
+        image_info->plane_info[0].width = dl_managed_tensor_ptr_->dl_tensor.shape[1];
+        image_info->plane_info[0].num_channels = dl_managed_tensor_ptr_->dl_tensor.shape[2];
     } else {
-        image_info->num_planes = dl_managed_tensor_.dl_tensor.shape[0];
-        image_info->plane_info[0].height = dl_managed_tensor_.dl_tensor.shape[1];
-        image_info->plane_info[0].width = dl_managed_tensor_.dl_tensor.shape[2];
+        image_info->num_planes = dl_managed_tensor_ptr_->dl_tensor.shape[0];
+        image_info->plane_info[0].height = dl_managed_tensor_ptr_->dl_tensor.shape[1];
+        image_info->plane_info[0].width = dl_managed_tensor_ptr_->dl_tensor.shape[2];
         image_info->plane_info[0].num_channels = 1;
     }
 
@@ -316,11 +296,11 @@ void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     image_info->sample_format = is_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_444;
 
-    int pitch_in_bytes = dl_managed_tensor_.dl_tensor.strides != NULL && dl_managed_tensor_.dl_tensor.strides
+    int pitch_in_bytes = dl_managed_tensor_ptr_->dl_tensor.strides != NULL && dl_managed_tensor_ptr_->dl_tensor.strides
                              ?
                              //dlpack strides of the tensor are in number of elements, not bytes so need to multiple by bytes_per_element
-                             (is_interleaved ? dl_managed_tensor_.dl_tensor.strides[0] * bytes_per_element
-                                             : dl_managed_tensor_.dl_tensor.strides[1] * bytes_per_element)
+                             (is_interleaved ? dl_managed_tensor_ptr_->dl_tensor.strides[0] * bytes_per_element
+                                             : dl_managed_tensor_ptr_->dl_tensor.strides[1] * bytes_per_element)
                              //can be NULL, indicating tensor is compact and row - majored
                              : image_info->plane_info[0].width * image_info->plane_info[0].num_channels * bytes_per_element;
     size_t buffer_size = 0;
@@ -335,6 +315,29 @@ void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     image_info->buffer = buffer;
     image_info->buffer_size = buffer_size;
     image_info->buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+}
+
+py::capsule DLPackTensor::getPyCapsule()
+{
+    // When ownership was already taken
+    if (dl_managed_tensor_ptr_ == nullptr) {
+        return py::capsule();
+    }
+
+    // Creates the python capsule with the DLManagedTensor instance we're returning.
+    py::capsule cap(dl_managed_tensor_ptr_, "dltensor", [](PyObject* ptr) {
+        if (PyCapsule_IsValid(ptr, "dltensor")) {
+            // If consumer didn't delete the tensor,
+            if (auto* dlTensor = static_cast<DLManagedTensor*>(PyCapsule_GetPointer(ptr, "dltensor"))) {
+                // Delete the tensor.
+                if (dlTensor->deleter != nullptr) {
+                    dlTensor->deleter(dlTensor);
+                }
+            }
+        }
+    });
+    dl_managed_tensor_ptr_ = nullptr;
+    return cap;
 }
 
 } // namespace nvimgcdcs
