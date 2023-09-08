@@ -102,6 +102,7 @@ Image
 .. autoclass:: Image
    :members:
    :undoc-members:
+   :special-members: __cuda_array_interface__, __dlpack__, __dlpack_device__
 
 Jpeg2kBitstreamType
 -------------------
@@ -128,6 +129,11 @@ as_image
 ---------
 
 .. autofunction:: as_image
+
+from_dlpack
+-----------
+
+.. autofunction:: from_dlpack
 
 .. toctree::
    :caption: Python API
