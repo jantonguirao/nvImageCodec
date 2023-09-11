@@ -70,7 +70,7 @@ void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             Wraps an external buffer as an image and ties the buffer lifetime to the image
 
             Args:
-                source: Input DLPpack tensor which is encapsulated in a PyCapsule object or other object with __cuda_array_interface__ 
+                source: Input DLPack tensor which is encapsulated in a PyCapsule object or other object with __cuda_array_interface__ 
                 or __dlpack__ and __dlpack_device__ methods.
                 
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
@@ -87,7 +87,7 @@ void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             Zero-copy conversion from a DLPack tensor to a image. 
 
             Args:
-                source: Input DLPpack tensor which is encapsulated in a PyCapsule object or other (array) object with __dlpack__ 
+                source: Input DLPack tensor which is encapsulated in a PyCapsule object or other (array) object with __dlpack__ 
                 and __dlpack_device__ methods.
                 
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
