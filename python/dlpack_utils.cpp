@@ -9,6 +9,7 @@
  */
 
 #include "dlpack_utils.h"
+#include "type_utils.h"
 
 namespace nvimgcdcs {
 
@@ -199,8 +200,8 @@ DLPackTensor::DLPackTensor(const nvimgcdcsImageInfo_t& image_info, std::shared_p
         // Set up dtype
         tensor.dtype = type_to_dlpack(image_info.plane_info[0].sample_type);
 
-        bool is_interleaved = static_cast<int>(image_info.sample_format) % 2 == 0 || image_info.num_planes == 1;
-        int bytes_per_element = static_cast<unsigned int>(image_info.plane_info[0].sample_type) >> (8 + 3);
+        bool is_interleaved = is_sample_format_interleaved(image_info.sample_format) || image_info.num_planes == 1;
+        int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
         // Set up shape and strides
         tensor.shape = new int64_t[tensor.ndim];
@@ -261,7 +262,7 @@ void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     constexpr int NVIMGCDCS_MAXDIMS = 3; //The maximum number of dimensions allowed in arrays.
     const int ndim = dl_managed_tensor_ptr_->dl_tensor.ndim;
     if (ndim > NVIMGCDCS_MAXDIMS) {
-        throw std::runtime_error("DLPack tensor number of dimension is higher than the supported maxdims=3");
+        throw std::runtime_error("DLPack tensor number of dimensions is higher than the supported maxdims=3");
     }
     if (ndim < 3) {
         throw std::runtime_error("DLPack tensor number of dimension is lower than expected at least 3");
@@ -276,7 +277,7 @@ void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     }
 
     auto sample_type = type_from_dlpack(dl_managed_tensor_ptr_->dl_tensor.dtype);
-    int bytes_per_element = static_cast<unsigned int>(sample_type) >> (8 + 3);
+    int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
 
     bool is_interleaved = true; // For now always assume interleaved
     void* buffer = (char*)dl_managed_tensor_ptr_->dl_tensor.data + dl_managed_tensor_ptr_->dl_tensor.byte_offset;

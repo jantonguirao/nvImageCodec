@@ -16,72 +16,10 @@
 
 #include "dlpack_utils.h"
 #include "error_handling.h"
+#include "type_utils.h"
 
 namespace nvimgcdcs {
 
-static std::string format_str_from_type(nvimgcdcsSampleDataType_t type)
-{
-    switch (type) {
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
-        return "|i1";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
-        return "|u1";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
-        return "<i2";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
-        return "<u2";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT32:
-        return "<i4";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32:
-        return "<u4";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT64:
-        return "<i8";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64:
-        return "<u8";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16:
-        return "<f2";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
-        return "<f4";
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64:
-        return "<f8";
-    default:
-        break;
-    }
-    return "";
-}
-
-static nvimgcdcsSampleDataType_t type_from_format_str(const std::string& typestr)
-{
-    pybind11::ssize_t itemsize = py::dtype(typestr).itemsize();
-    if (itemsize == 1) {
-        if (py::dtype(typestr).kind() == 'i')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT8;
-        if (py::dtype(typestr).kind() == 'u')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
-    } else if (itemsize == 2) {
-        if (py::dtype(typestr).kind() == 'i')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
-        if (py::dtype(typestr).kind() == 'u')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
-        if (py::dtype(typestr).kind() == 'f')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16;
-    } else if (itemsize == 4) {
-        if (py::dtype(typestr).kind() == 'i')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT32;
-        if (py::dtype(typestr).kind() == 'u')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32;
-        if (py::dtype(typestr).kind() == 'f')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
-    } else if (itemsize == 8) {
-        if (py::dtype(typestr).kind() == 'i')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_INT64;
-        if (py::dtype(typestr).kind() == 'u')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64;
-        if (py::dtype(typestr).kind() == 'f')
-            return NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64;
-    }
-    return NVIMGCDCS_SAMPLE_DATA_TYPE_UNKNOWN;
-}
 
 Image::Image(nvimgcdcsImage_t image)
     : img_buffer_size_(0)
@@ -162,7 +100,7 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
             vshape.push_back(o.cast<long>());
         }
         if (vshape.size() < 3) {
-            throw std::runtime_error("Unsupported vshape");
+            throw std::runtime_error("Unexpected number of dimensions");
         }
 
         std::vector<int> vstrides;
@@ -203,7 +141,7 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
         std::string typestr = iface["typestr"].cast<std::string>();
         auto sample_type = type_from_format_str(typestr);
 
-        int bytes_per_element = static_cast<unsigned int>(sample_type) >> (8 + 3);
+        int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
 
         image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
         image_info.sample_format = is_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
@@ -254,7 +192,7 @@ void Image::initCudaArrayInterface(nvimgcdcsImageInfo_t* image_info)
     std::string format = format_str_from_type(image_info->plane_info[0].sample_type);
     bool is_interleaved = static_cast<int>(image_info->sample_format) % 2 == 0 || image_info->num_planes == 1;
     try {
-        int bytes_per_element = static_cast<unsigned int>(image_info->plane_info[0].sample_type) >> (8 + 3);
+        int bytes_per_element = sample_type_to_bytes_per_element(image_info->plane_info[0].sample_type);
         py::tuple strides_tuple = is_interleaved ? py::make_tuple(image_info->plane_info[0].row_stride,
                                                        image_info->plane_info[0].num_channels * bytes_per_element, bytes_per_element)
                                                  : py::make_tuple(image_info->plane_info[0].row_stride * image_info->plane_info[0].height,
