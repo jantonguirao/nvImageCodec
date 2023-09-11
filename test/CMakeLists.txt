@@ -46,6 +46,7 @@ if (BUILD_OPENCV_EXT)
 endif()
 
 if (BUILD_NVBMP_EXT)
+    list(APPEND SRCS extensions/nvbmp_ext_encoder_test.cpp)
     list(APPEND SRCS extensions/nvbmp_ext_decoder_test.cpp)
 endif()
 
