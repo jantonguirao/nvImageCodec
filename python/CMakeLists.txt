@@ -34,7 +34,8 @@ set(PY_NVIMGCDCS_SRCS
     error_handling.cpp
     backend_kind.cpp
     backend_params.cpp
-    backend.cpp)
+    backend.cpp
+    dlpack_utils.cpp)
 
 build_per_python_lib(nvimgcodecs_python
     OUTPUT_NAME nvimgcodecs_impl

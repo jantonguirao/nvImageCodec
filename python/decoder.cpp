@@ -15,6 +15,7 @@
 
 #include "backend.h"
 #include "error_handling.h"
+#include "type_utils.h"
 
 namespace nvimgcdcs {
 
@@ -160,7 +161,7 @@ std::vector<Image> Decoder::decode(
             continue;
         }
 
-        int bytes_per_element = static_cast<unsigned int>(image_info.plane_info[0].sample_type) >> (8 + 3);
+        int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
 
         image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
 

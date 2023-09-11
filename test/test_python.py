@@ -5,6 +5,8 @@ import cv2
 import cupy as cp
 import pytest as t
 from nvidia import nvimgcodecs
+import torch
+import tensorflow as tf
 
 img_dir_path = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "../resources"))
@@ -369,3 +371,142 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
         np.asarray(bytearray(img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
     compare_cv_images(test_decoded_images, ref_images)
+    
+
+@t.mark.parametrize("shape,dtype", [
+    ((640, 480, 3), np.int8),
+    ((640, 480, 3), np.uint8),
+    ((640, 480, 3), np.int16),
+])
+def test_dlpack_import_from_torch(shape, dtype):
+    rng = np.random.default_rng()
+    host_array = rng.integers(0, 128, shape, dtype)
+    dev_array = torch.as_tensor(host_array, device="cuda")
+
+    # Since nvimgcodecs.as_image can understand both dlpack and cuda_array_interface,
+    # and we don't know a priori which interfaces it'll use (torch provides both),
+    # let's create one object with only the dlpack interface.
+    class DLPackObject:
+        pass
+
+    o = DLPackObject()
+    o.__dlpack__ = dev_array.__dlpack__
+    o.__dlpack_device__ = dev_array.__dlpack_device__
+
+    img = nvimgcodecs.as_image(o)
+    assert img.shape == shape
+    assert img.dtype == dtype
+    assert img.ndim == len(shape)
+    
+    assert (host_array == torch.from_dlpack(img).cpu().numpy()).all()
+
+@t.mark.parametrize("shape,dtype",
+                    [
+                        ((640, 480, 3), np.int8),
+                        ((640, 480, 3), np.uint8),
+                        ((640, 480, 3), np.int16),
+                    ],
+)
+def test_dlpack_export_to_torch(shape, dtype):
+    rng = np.random.default_rng()
+    host_array = rng.integers(0, 128, shape, dtype)
+    dev_array = torch.as_tensor(host_array, device="cuda")
+
+    img = nvimgcodecs.as_image(dev_array)
+
+    cap = img.to_dlpack()
+    
+    assert (host_array == torch.from_dlpack(cap).cpu().numpy()).all()
+    
+
+@t.mark.parametrize("src_cuda_stream", [cp.cuda.Stream.null, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
+@t.mark.parametrize("dst_cuda_stream", [cp.cuda.Stream.null, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
+@t.mark.parametrize("shape,dtype",
+                    [
+                        ((640, 480, 3), np.int8),
+                        ((640, 480, 3), np.uint8),
+                        ((640, 480, 3), np.int16),
+                    ],
+                    )
+def test_dlpack_import_from_cupy(shape, dtype, src_cuda_stream, dst_cuda_stream):
+    with src_cuda_stream:
+        rng = np.random.default_rng()
+        host_array = rng.integers(0, 128, shape, dtype)
+        cp_img = cp.asarray(host_array)
+    
+        # Since nvimgcodecs.as_image can understand both dlpack and cuda_array_interface,
+        # and we don't know a priori which interfaces it'll use (cupy provides both),
+        # let's create one object with only the dlpack interface.
+        class DLPackObject:
+            pass
+
+        o = DLPackObject()
+        o.__dlpack__ = cp_img.__dlpack__
+        o.__dlpack_device__ = cp_img.__dlpack_device__
+
+        nv_img = nvimgcodecs.as_image(o, dst_cuda_stream.ptr)
+
+        assert (host_array ==
+                torch.from_dlpack(nv_img.to_dlpack()).cpu().numpy()).all()
+ 
+
+@t.mark.parametrize("shape,dtype",
+                    [
+                        ((640, 480, 3), np.int8),
+                        ((640, 480, 3), np.uint8),
+                        ((640, 480, 3), np.int16),
+                    ],
+                    )
+def test_dlpack_export_to_cupy(shape, dtype):
+    rng = np.random.default_rng()
+    host_array = rng.integers(0, 128, shape, dtype)
+    dev_array = torch.as_tensor(host_array, device="cuda")
+
+    img = nvimgcodecs.as_image(dev_array)
+    
+    cap = img.to_dlpack()
+    cp_img = cp.from_dlpack(cap)
+    
+    assert (host_array == cp.asnumpy(cp_img)).all()
+
+@t.mark.parametrize("shape,dtype",
+                    [
+                        ((5, 23, 65), np.int32),
+                        ((65, 3, 3), np.int64),
+                        ((243, 65, 3), np.float16),
+                        ((243, 65, 3), np.float32),
+                    ],
+                    )
+def test_dlpack_import_from_tensorflow(shape, dtype):
+    with tf.device('/GPU:0'):
+        a = tf.random.uniform(shape, 0, 128, dtype)
+    ref = a
+    cap = tf.experimental.dlpack.to_dlpack(a)
+    img = nvimgcodecs.from_dlpack(cap)
+
+    cap_test = img.to_dlpack()
+    
+    assert (torch.from_dlpack(tf.experimental.dlpack.to_dlpack(ref)).cpu().numpy() ==
+            torch.from_dlpack(cap_test).cpu().numpy()).all()
+
+
+@t.mark.parametrize("shape,dtype",
+                    [
+                        ((640, 480, 3), np.int8),
+                        ((640, 480, 3), np.uint8),
+                        ((640, 480, 3), np.int16),
+                    ],
+                    )
+def test_dlpack_export_to_tensorflow(shape, dtype):
+    rng = np.random.default_rng()
+    host_array = rng.integers(0, 128, shape, dtype)
+    dev_array = torch.as_tensor(host_array, device="cuda")
+    ref = dev_array
+    img = nvimgcodecs.as_image(dev_array)
+
+    cap = img.to_dlpack()
+    tf_tensor = tf.experimental.dlpack.from_dlpack(cap)
+    
+    assert (torch.from_dlpack(tf.experimental.dlpack.to_dlpack(tf_tensor)).cpu().numpy() ==
+            torch.from_dlpack(ref).cpu().numpy()).all()
+    

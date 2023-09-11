@@ -25,7 +25,9 @@ RUN mkdir cvcuda && \
     python3 -m pip install ./nvcv_python-0.3.1_beta-cp38-cp38-linux_x86_64.whl && \
     cp /usr/local/lib/python3.8/dist-packages/python/* /usr/local/lib/python3.8/dist-packages/ && \
     wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.3.1-beta/nvcv-lib-0.3.1_beta-cuda12-x86_64-linux.deb && \
-    dpkg -i nvcv-lib-0.3.1_beta-cuda12-x86_64-linux.deb
+    dpkg -i nvcv-lib-0.3.1_beta-cuda12-x86_64-linux.deb && \
+    cd .. && \
+    rm -rf cvcuda
 
 RUN python3 -m pip install \ 
     sphinx \ 

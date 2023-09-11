@@ -478,7 +478,7 @@ extern "C"
 
         void* buffer;                                                   /**< Pointer to buffer in which image data is stored. */
         size_t buffer_size;                                             /**< Size of buffer in which image data is stored. */
-        nvimgcdcsImageBufferKind_t buffer_kind;                         /**< buffer kind in which image data is stored.*/
+        nvimgcdcsImageBufferKind_t buffer_kind;                         /**< Buffer kind in which image data is stored.*/
 
         cudaStream_t cuda_stream;                                       /**< CUDA stream to synchronize with */
     } nvimgcdcsImageInfo_t;

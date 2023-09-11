@@ -30,6 +30,7 @@ The following samples demonstrates the use of nvImageCodecs Python API:
    CuPy interoperability <cupy_sample.ipynb>
    cuCIM interoperability <cucim_sample.ipynb>
    CV-CUDA interoperability <cvcuda_sample.ipynb>
+   Tensorflow interoperability <tensorflow_sample.ipynb>
 
 .. 
    #Classification <python_samples/classification>
