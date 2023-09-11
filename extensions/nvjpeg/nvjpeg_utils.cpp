@@ -63,6 +63,13 @@ unsigned int get_nvjpeg_flags(const char* module_name, const char* options) {
         nvjpeg_flags |= NVJPEG_FLAGS_UPSAMPLING_WITH_INTERPOLATION;
     }
 #endif
+
+    const char *nvjpeg_extra_flags_env = std::getenv("NVIMGCDCS_NVJPEG_EXTRA_FLAGS");
+    if (nvjpeg_extra_flags_env) {
+        int nvjpeg_extra_flags = 0;
+        nvjpeg_extra_flags = atoi(nvjpeg_extra_flags_env);
+        nvjpeg_flags |= nvjpeg_extra_flags;
+    }
     return nvjpeg_flags;
 }
 
