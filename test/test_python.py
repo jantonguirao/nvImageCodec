@@ -382,7 +382,6 @@ def test_dlpack_import_from_torch(shape, dtype):
     rng = np.random.default_rng()
     host_array = rng.integers(0, 128, shape, dtype)
     dev_array = torch.as_tensor(host_array, device="cuda")
-    ref = dev_array
 
     # Since nvimgcodecs.as_image can understand both dlpack and cuda_array_interface,
     # and we don't know a priori which interfaces it'll use (torch provides both),
@@ -399,7 +398,7 @@ def test_dlpack_import_from_torch(shape, dtype):
     assert img.dtype == dtype
     assert img.ndim == len(shape)
     
-    assert (host_array == torch.from_dlpack(ref).cpu().numpy()).all()
+    assert (host_array == torch.from_dlpack(img).cpu().numpy()).all()
 
 @t.mark.parametrize("shape,dtype",
                     [
