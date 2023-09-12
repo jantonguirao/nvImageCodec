@@ -277,25 +277,21 @@ py::capsule Image::dlpack(py::object stream_obj) const
             "Could not get DLTensor capsules. It can be consumed only once, so you might have already constructed a tensor from it once.");
     }
 
-    //Add synchronisation
-    cudaStream_t consumer_cuda_stream = 0;
-
-    std::optional<intptr_t> stream = stream_obj.cast<std::optional<intptr_t>>();
-    if (!stream.has_value()) {
-        consumer_cuda_stream = 0;
-    } else {
-        consumer_cuda_stream = reinterpret_cast<cudaStream_t>(*stream);
-    }
-
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
 
-    //if -1, no stream order should be established; otherwise, the consumer stream should wait for the work on Image stream
-    if ((consumer_cuda_stream >= 0) && (consumer_cuda_stream != image_info.cuda_stream)) {
-        CHECK_CUDA(cudaEventRecord(dlpack_cuda_event_.get(), image_info.cuda_stream));
-        CHECK_CUDA(cudaStreamWaitEvent(consumer_cuda_stream, dlpack_cuda_event_.get()));
+    // Add synchronisation
+    std::optional<intptr_t> stream = stream_obj.cast<std::optional<intptr_t>>();
+    intptr_t stream_value = stream.has_value() ? *stream : 0;
+    static constexpr intptr_t kDoNotSync = -1; // if provided stream is -1, no stream order should be established;
+    if (stream_value != kDoNotSync) {
+        // the consumer stream should wait for the work on Image stream
+        auto consumer_stream = reinterpret_cast<cudaStream_t>(stream_value);
+        if (consumer_stream != image_info.cuda_stream) {
+            CHECK_CUDA(cudaEventRecord(dlpack_cuda_event_.get(), image_info.cuda_stream));
+            CHECK_CUDA(cudaStreamWaitEvent(consumer_stream, dlpack_cuda_event_.get()));
+        }
     }
-
     return cap;
 }
 
