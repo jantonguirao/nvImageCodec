@@ -130,8 +130,9 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
     cs_image_info_ref.chroma_subsampling = encoded_chroma_subsampling_;
     strcpy(cs_image_info.codec_name, "jpeg2k");
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
-                                            &NvJpeg2kExtEncoderTestSingleImage::ResizeBufferStatic, &cs_image_info));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
+        nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
+            &NvJpeg2kExtEncoderTestSingleImage::ResizeBufferStatic<NvJpeg2kExtEncoderTestSingleImage>, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
@@ -248,8 +249,9 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
     cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
     strcpy(cs_image_info.codec_name, "jpeg2k");
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
-                                            &NvJpeg2kExtEncoderTestSingleImageWithStatus::ResizeBufferStatic, &cs_image_info));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
+        nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
+            &NvJpeg2kExtEncoderTestSingleImageWithStatus::ResizeBufferStatic<NvJpeg2kExtEncoderTestSingleImageWithStatus>, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));

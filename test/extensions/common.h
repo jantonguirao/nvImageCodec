@@ -200,9 +200,10 @@ class ExtensionTestBase
         return code_stream_buffer_.data();
     }
 
+    template <class T>
     static unsigned char* ResizeBufferStatic(void* ctx, size_t bytes)
     {
-        auto handle = reinterpret_cast<ExtensionTestBase*>(ctx);
+        auto handle = reinterpret_cast<T*>(ctx);
         return handle->ResizeBuffer(bytes);
     }
 
