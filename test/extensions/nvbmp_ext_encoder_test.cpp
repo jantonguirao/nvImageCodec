@@ -66,7 +66,7 @@ class NvbmpExtTestBase : public ExtensionTestBase
     nvimgcdcsExtension_t nvbmp_parser_extension_;
 };
 
-class NvbmpExtEncoderTest : public ::testing::Test, public NvbmpExtTestBase
+class NvbmpExtEncoderTest :  public ::testing::Test, public NvbmpExtTestBase
 {
   public:
     NvbmpExtEncoderTest() {}
@@ -137,7 +137,8 @@ TEST_F(NvbmpExtEncoderTest, NVBMP_RandomImage_RGB_P)
     strcpy(cs_image_info.codec_name, "bmp");
 
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this, &NvbmpExtEncoderTest::ResizeBufferStatic, &cs_image_info));
+    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
+                                            &NvbmpExtEncoderTest::ResizeBufferStatic < NvbmpExtEncoderTest>, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
     ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
