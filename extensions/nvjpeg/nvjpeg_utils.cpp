@@ -37,7 +37,7 @@ unsigned int get_nvjpeg_flags(const char* module_name, const char* options) {
 
     // if available, we prefer this to be the default (it matches libjpeg implementation)
     bool fancy_upsampling = true;
-
+    unsigned int nvjpeg_extra_flags = 0;
     std::istringstream iss(options ? options : "");
     std::string token;
     while (std::getline(iss, token, ' ')) {
@@ -54,22 +54,18 @@ unsigned int get_nvjpeg_flags(const char* module_name, const char* options) {
         std::istringstream value(value_str);
         if (option == "fancy_upsampling") {
             value >> fancy_upsampling;
+        } else if (option == "nvjpeg_extra_flags") {
+            value >> nvjpeg_extra_flags;
         }
     }
 
     unsigned int nvjpeg_flags = 0;
+    nvjpeg_flags |= nvjpeg_extra_flags;
 #ifdef NVJPEG_FLAGS_UPSAMPLING_WITH_INTERPOLATION
     if (fancy_upsampling && nvjpeg_at_least(12, 1, 0)) {
         nvjpeg_flags |= NVJPEG_FLAGS_UPSAMPLING_WITH_INTERPOLATION;
     }
 #endif
-
-    const char *nvjpeg_extra_flags_env = std::getenv("NVIMGCDCS_NVJPEG_EXTRA_FLAGS");
-    if (nvjpeg_extra_flags_env) {
-        int nvjpeg_extra_flags = 0;
-        nvjpeg_extra_flags = atoi(nvjpeg_extra_flags_env);
-        nvjpeg_flags |= nvjpeg_extra_flags;
-    }
     return nvjpeg_flags;
 }
 
