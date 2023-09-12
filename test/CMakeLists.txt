@@ -68,7 +68,6 @@ foreach(testapp nvimgcodecs_tests)
         list(APPEND TARGET_LIBS nvjpeg_ext_static)
     endif()
 
-
     if (WITH_DYNAMIC_NVJPEG)
         list(APPEND TARGET_LIBS dynlink_nvjpeg)
     endif()
@@ -83,6 +82,7 @@ foreach(testapp nvimgcodecs_tests)
 
     if (BUILD_NVJPEG2K_EXT)
         list(APPEND TARGET_LIBS nvjpeg2k_ext_static)
+        list(APPEND TARGET_LIBS ${NVJPEG2K_LIBRARY})
     endif()
 
     if (BUILD_LIBJPEG_TURBO_EXT)
@@ -111,7 +111,6 @@ foreach(testapp nvimgcodecs_tests)
     target_link_libraries(${testapp} PUBLIC
         ${TARGET_LIBS}
         ${OpenCV_LIBRARIES}
-        ${NVJPEG2K_LIBRARY}
         CUDA::nvjpeg
         CUDA::cudart
         CUDA::nppc

@@ -187,7 +187,7 @@ class NvImageCodecsCanDecodeApiTest : public TestWithParam < std::tuple<test_cas
         }
     }
 
-    virtual void TearDown()
+    void TearDown() override
     {
         for (auto im : images_) {
             ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageDestroy(im));

@@ -56,9 +56,15 @@ add_custom_target(copy_libs_to_python_dir ALL DEPENDS nvimgcodecs_python)
 add_dependencies(copy_libs_to_python_dir
     nvimgcodecs
     nvbmp_ext
-    nvjpeg_ext
-    nvjpeg2k_ext
     nvpnm_ext)
+
+if (BUILD_NVJPEG_EXT)
+    add_dependencies(copy_libs_to_python_dir nvjpeg_ext)
+endif()
+
+if (BUILD_NVJPEG2K_EXT)
+    add_dependencies(copy_libs_to_python_dir nvjpeg2k_ext)
+endif()
 
 if(BUILD_LIBJPEG_TURBO_EXT)
     add_dependencies(copy_libs_to_python_dir libjpeg_turbo_ext)
