@@ -8,11 +8,11 @@
 
 docs:nvimagecodecs:
     stage: build
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v2
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-121-v3
     tags:
         - docker
     dependencies: 
-        - build:nvimagecodec-cuda12
+        - build:nvimagecodec-cuda121
     artifacts:
         paths:
             - html
@@ -27,11 +27,11 @@ docs:nvimagecodecs:
 
 pages:
     stage: deploy
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1.1-v2
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-121-v3
     tags:
         - docker
     dependencies:
-        - build:nvimagecodec-cuda12
+        - build:nvimagecodec-cuda121
     artifacts:
         paths:
             - public

@@ -1,27 +1,64 @@
 #!/bin/bash -ex
 
-IMG_ARCH="x86_64"
-IMG_UBUNTU="20.04"
+####### BASE IMAGES #######
 
-CUDA_VERSIONS=("11.8.0" "12.1.1")
-for IMG_CUDA_VERSION in "${CUDA_VERSIONS[@]}"; do
-    IMG_CUDA_VERSION_MAJOR_MINOR=$(echo $IMG_CUDA_VERSION | sed -E 's/^([0-9]+\.[0-9]+).*$/\1/')
-    IMG_CUDA_SHORT_VER=${IMG_CUDA_VERSION_MAJOR_MINOR//./}
-    TEST_IMG_BASE="nvidia/cuda:${IMG_CUDA_VERSION}-runtime-ubuntu${IMG_UBUNTU}"
-    CUDA_IMAGE="cuda${IMG_CUDA_VERSION}.${IMG_ARCH}"
-    DEPS_IMAGE="nvimgcodecs_deps.${IMG_ARCH}"
+# CUDA 11.3.1
+docker build -t cuda113.x86_64 -f docker/Dockerfile.cuda113.x86_64.deps docker
+# CUDA 11.8.0
+docker build -t cuda118.x86_64 -f docker/Dockerfile.cuda118.x86_64.deps docker
+# CUDA 12.1.1
+docker build -t cuda121.x86_64 -f docker/Dockerfile.cuda121.x86_64.deps docker
 
-    BUILDER_IMAGE_VER="2"
-    BUILDER_IMAGE="gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-${IMG_ARCH}:cuda-${IMG_CUDA_VERSION}-v${BUILDER_IMAGE_VER}"
+# GCC 9 (minimum supported)
+docker build -t nvimgcodecs_deps.x86_64.gcc9 -f docker/Dockerfile.x86_64.gcc9.deps docker
+# GCC 10
+docker build -t nvimgcodecs_deps.x86_64 -f docker/Dockerfile.x86_64.deps docker
 
-    TEST_IMAGE_VER="2"
-    TEST_IMAGE="gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-${IMG_ARCH}:cuda-${IMG_CUDA_VERSION}-v${TEST_IMAGE_VER}"
+####### BUILDER IMAGES #######
 
-    # Building dependencies
-    docker build -t ${CUDA_IMAGE} -f docker/Dockerfile.cuda${IMG_CUDA_SHORT_VER}.${IMG_ARCH}.deps docker
-    docker build -t ${DEPS_IMAGE} -f docker/Dockerfile.${IMG_ARCH}.deps docker
+# GCC 9, CUDA 11.3 (minimum supported)
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-113-gcc9-v3" \
+    -f docker/Dockerfile.cuda.deps \
+    --build-arg "FROM_IMAGE_NAME=nvimgcodecs_deps.x86_64.gcc9" \
+    --build-arg "CUDA_IMAGE=cuda113.x86_64" \
+    docker
 
-    docker build -t ${BUILDER_IMAGE} -f docker/Dockerfile.cuda.deps --build-arg "FROM_IMAGE_NAME=${DEPS_IMAGE}" --build-arg "CUDA_IMAGE=${CUDA_IMAGE}" docker
+# GCC 10, CUDA 11.8
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-118-v3" \
+    -f docker/Dockerfile.cuda.deps \
+    --build-arg "FROM_IMAGE_NAME=nvimgcodecs_deps.x86_64" \
+    --build-arg "CUDA_IMAGE=cuda118.x86_64" \
+    docker
 
-    docker build -t ${TEST_IMAGE} -f docker/Dockerfile --build-arg "BASE=${TEST_IMG_BASE}" --build-arg "VER_CUDA=${IMG_CUDA_VERSION}" --build-arg "VER_UBUNTU=${IMG_UBUNTU}" docker
-done
+# GCC 10, CUDA 12.1
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-121-v3" \
+    -f docker/Dockerfile.cuda.deps \
+    --build-arg "FROM_IMAGE_NAME=nvimgcodecs_deps.x86_64" \
+    --build-arg "CUDA_IMAGE=cuda121.x86_64" \
+    docker
+
+####### TEST IMAGES #######
+
+# CUDA 11.3 (minimum supported)
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-113-v3" \
+     -f docker/Dockerfile \
+     --build-arg "BASE=nvidia/cuda:11.3.1-runtime-ubuntu20.04" \
+     --build-arg "VER_CUDA=11.3.1" \
+     --build-arg "VER_UBUNTU=20.04" \
+     docker
+
+# CUDA 11.8
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-118-v3" \
+     -f docker/Dockerfile \
+     --build-arg "BASE=nvidia/cuda:11.8.0-runtime-ubuntu20.04" \
+     --build-arg "VER_CUDA=11.8.0" \
+     --build-arg "VER_UBUNTU=20.04" \
+     docker
+
+# CUDA 12.1
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-121-v3" \
+     -f docker/Dockerfile \
+     --build-arg "BASE=nvidia/cuda:12.1.1-runtime-ubuntu20.04" \
+     --build-arg "VER_CUDA=12.1.1" \
+     --build-arg "VER_UBUNTU=20.04" \
+     docker

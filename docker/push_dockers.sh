@@ -1,15 +1,23 @@
 #!/bin/bash -ex
 
-IMG_ARCH="x86_64"
-IMG_UBUNTU="20.04"
+####### BUILDER IMAGES #######
 
-CUDA_VERSIONS=("11.8.0" "12.1.1")
-for IMG_CUDA_VERSION in "${CUDA_VERSIONS[@]}"; do
-    BUILDER_IMAGE_VER="2"
-    BUILDER_IMAGE="gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-${IMG_ARCH}:cuda-${IMG_CUDA_VERSION}-v${BUILDER_IMAGE_VER}"
-    docker push ${BUILDER_IMAGE}
+# GCC 9, CUDA 11.3 (minimum supported)
+ docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-113-gcc9-v3"
 
-    TEST_IMAGE_VER="1"
-    TEST_IMAGE="gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-${IMG_ARCH}:cuda-${IMG_CUDA_VERSION}-v${TEST_IMAGE_VER}"
-    docker push ${TEST_IMAGE}
-done
+# GCC 10, CUDA 11.8
+docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-118-v3"
+
+# GCC 10, CUDA 12.1
+docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-121-v3"
+
+####### TEST IMAGES #######
+
+# CUDA 11.3 (minimum supported)
+docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-113-v3"
+
+# CUDA 11.8
+docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-118-v3"
+
+# CUDA 12.1
+docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-121-v3"
