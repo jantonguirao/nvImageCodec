@@ -54,7 +54,7 @@ unsigned int get_nvjpeg_flags(const char* module_name, const char* options) {
         std::istringstream value(value_str);
         if (option == "fancy_upsampling") {
             value >> fancy_upsampling;
-        } else if (option == "nvjpeg_extra_flags") {
+        } else if (option == "extra_flags") {
             value >> nvjpeg_extra_flags;
         }
     }
