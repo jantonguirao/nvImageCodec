@@ -7,16 +7,6 @@ ARG BUILDER_EXTRA_DEPS=scratch
 FROM ${BUILDER_EXTRA_DEPS} as extra_deps
 FROM ${FROM_IMAGE_NAME}
 
-# Install yum Dependencies
-RUN yum install -y wget nasm doxygen graphviz gettext xz openssl autogen zip dpkg \
-                   devtoolset-10 devtoolset-10-libasan-devel devtoolset-10-liblsan-devel \
-                   devtoolset-10-libtsan-devel devtoolset-10-libubsan-devel
-
-ENV ACLOCAL_PATH=/usr/share/aclocal/:/usr/local/share/aclocal
-
-# Don't want the short-unicode version for Python 2.7
-RUN rm -f /opt/python/cp27-cp27m
-
 # patchelf Needed to patch rpath of dependencies in bundle-wheel.sh
 RUN cd /tmp && export PATCHELF_VERSION=0.17.2 && export PATCHELF_ARCH=x86_64 && \
     wget https://github.com/NixOS/patchelf/releases/download/${PATCHELF_VERSION}/patchelf-${PATCHELF_VERSION}-${PATCHELF_ARCH}.tar.gz && \
