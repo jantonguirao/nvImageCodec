@@ -37,9 +37,9 @@ class Decoder
         std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options);
     ~Decoder();
 
-    Image decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream);
-    Image decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream);
-    Image decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream);
+    py::object decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream);
+    py::object decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream);
+    py::object decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream);
     std::vector<Image> decode(const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream);
     std::vector<Image> decode(const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
     std::vector<Image> decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);

@@ -20,17 +20,6 @@
 
 namespace nvimgcdcs {
 
-Image::Image(nvimgcdcsImage_t image)
-{
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image, &image_info);
-    initCudaArrayInterface(image_info);
-    initCudaEventForDLPack();
-    image_ =
-        std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
-    dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info, img_buffer_);
-}
-
 Image::Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info)
     : instance_(instance)
 {

@@ -76,36 +76,30 @@ Decoder::~Decoder()
 {
 }
 
-Image Decoder::decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream)
+py::object Decoder::decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(1);
     CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromFile(instance_, &code_streams[0], file_name.c_str()));
     std::vector<Image> images = decode(code_streams, params, cuda_stream);
-    if (images.size() == 1)
-        return images[0];
-    else
-        return Image(nullptr);
+    return images.size() == 1 ? py::cast(images[0]) : py ::none();
 }
 
-Image Decoder::decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream)
+py::object Decoder::decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(1);
     auto str_view = static_cast<std::string_view>(data);
     CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[0], (unsigned char*)str_view.data(), str_view.size()));
     std::vector<Image> images = decode(code_streams, params, cuda_stream);
-    if (images.size() == 1)
-        return images[0];
-    else
-        return Image(nullptr);
+    return images.size() == 1 ? py::cast(images[0]) :py ::none();
 }
 
-Image Decoder::decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream)
+py::object Decoder::decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
     std::vector<nvimgcdcsCodeStream_t> code_streams(1);
     auto img_data = data.unchecked<1>();
     CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[0], img_data.data(0), img_data.size()));
     std::vector<Image> images = decode(code_streams, params, cuda_stream);
-    return images.size() == 1 ? images[0] : Image(nullptr);
+    return images.size() == 1 ? py::cast(images[0]) : py::none();
 }
 
 std::vector<Image> Decoder::decode(const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream)
@@ -225,8 +219,9 @@ std::vector<Image> Decoder::decode(
 void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 {
     py::class_<Decoder>(m, "Decoder")
-        .def(py::init<>([instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
-                            const std::string& options) { return new Decoder(instance, device_id, max_num_cpu_threads, backends, options); }),
+        .def(py::init<>(
+                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+                     const std::string& options) { return new Decoder(instance, device_id, max_num_cpu_threads, backends, options); }),
             R"pbdoc(
             Initialize decoder.
 
@@ -272,7 +267,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
 
             Returns:
-                nvimgcodecs.Image
+                nvimgcodecs.Image or None if the image cannot be decoded because of any reason. 
 
             )pbdoc",
             "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
@@ -289,7 +284,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
            
             Returns:
-                nvimgcodecs.Image
+                nvimgcodecs.Image or None if the image cannot be decoded because of any reason.
 
             )pbdoc",
             "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
@@ -305,7 +300,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
             
             Returns:
-                nvimgcodecs.Image
+                nvimgcodecs.Image or None if the image cannot be decoded because of any reason.
         )pbdoc",
             "file_name"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
 

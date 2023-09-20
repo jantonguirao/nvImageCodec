@@ -30,7 +30,6 @@ using namespace py::literals;
 class Image
 {
   public:
-    explicit Image(nvimgcdcsImage_t image);
     Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info);
     Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream);
 
