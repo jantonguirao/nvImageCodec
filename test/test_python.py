@@ -622,3 +622,22 @@ def test_array_interface_import(input_img_file):
     assert (host_img.__array_interface__['typestr'] == ref_img.__array_interface__['typestr'])
       
     compare_host_images([host_img], [ref_img])
+
+def test_image_buffer_kind():
+    input_img_path = os.path.join(
+        img_dir_path, "jpeg/padlock-406986_640_410.jpg")
+
+    ref_img = cv2.imread(
+        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)  
+    
+    host_img = nvimgcodecs.as_image(ref_img)
+    assert (host_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_HOST)
+    
+    device_img = host_img.cuda()
+    assert (device_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_DEVICE)
+    
+    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    dec_device_img = decoder.read(input_img_path)
+    assert (dec_device_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_DEVICE)
+    

@@ -96,6 +96,13 @@ Encoder
    :members:
    :special-members: __init__  
 
+ImageBufferKind
+---------------
+
+.. autoclass:: ImageBufferKind
+   :members:
+   :exclude-members: name
+
 Image
 -----
 

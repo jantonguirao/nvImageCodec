@@ -285,10 +285,12 @@ int Image::getHeight() const
     nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
     return image_info.plane_info[0].height;
 }
+
 int Image::getNdim() const
 {
     return 3;
 }
+
 
 py::dict Image::array_interface() const
 {
@@ -310,6 +312,13 @@ py::object Image::dtype() const
     nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
     std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
     return py::dtype(format);
+}
+
+nvimgcdcsImageBufferKind_t Image::getBufferKind() const
+{
+    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
+    return image_info.buffer_kind;
 }
 
 nvimgcdcsImage_t Image::getNvImgCdcsImage() const
@@ -414,6 +423,7 @@ void Image::exportToPython(py::module& m)
         .def_property_readonly("height", &Image::getHeight)
         .def_property_readonly("ndim", &Image::getNdim)
         .def_property_readonly("dtype", &Image::dtype)
+        .def_property_readonly("buffer_kind", &Image::getBufferKind, R"pbdoc(Buffer kind in which image data is stored.)pbdoc")
         .def("__dlpack__", &Image::dlpack, "stream"_a = py::none(), "Export the image as a DLPack tensor")
         .def("__dlpack_device__", &Image::getDlpackDevice, "Get the device associated with the buffer")
         .def("to_dlpack", &Image::dlpack,

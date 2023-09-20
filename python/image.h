@@ -36,6 +36,7 @@ class Image
     int getWidth() const;
     int getHeight() const;
     int getNdim() const;
+    nvimgcdcsImageBufferKind_t getBufferKind() const;
 
     py::dict array_interface() const;
     py::dict cuda_interface() const;

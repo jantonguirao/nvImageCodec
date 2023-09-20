@@ -31,6 +31,7 @@
 #include "backend_kind.h"
 #include "backend_params.h"
 #include "backend.h"
+#include "image_buffer_kind.h"
 
 #include <iostream>
 
@@ -64,6 +65,7 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
     Backend::exportToPython(m);
     ColorSpec::exportToPython(m);
     ChromaSubsampling::exportToPython(m);
+    ImageBufferKind::exportToPython(m);
     Jpeg2kBitstreamType::exportToPython(m);
     Jpeg2kProgOrder::exportToPython(m);
     DecodeParams::exportToPython(m);

@@ -35,7 +35,8 @@ set(PY_NVIMGCDCS_SRCS
     backend_kind.cpp
     backend_params.cpp
     backend.cpp
-    dlpack_utils.cpp)
+    dlpack_utils.cpp
+    image_buffer_kind.cpp)
 
 build_per_python_lib(nvimgcodecs_python
     OUTPUT_NAME nvimgcodecs_impl
