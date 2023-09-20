@@ -24,7 +24,7 @@ Image::Image(nvimgcdcsImage_t image)
 {
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcsImageGetImageInfo(image, &image_info);
-    initCudaArrayInterface(&image_info);
+    initCudaArrayInterface(image_info);
     initCudaEventForDLPack();
     image_ =
         std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
@@ -42,10 +42,10 @@ Image::Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info)
         std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
     dlpack_tensor_ = std::make_shared<DLPackTensor>(*image_info, img_buffer_);
     if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
-        initCudaArrayInterface(image_info);
+        initCudaArrayInterface(*image_info);
         initCudaEventForDLPack();
     } else if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-        initArrayInterface(image_info);
+        initArrayInterface(*image_info);
     }
 }
 
@@ -90,6 +90,68 @@ void Image::initDLPack(nvimgcdcsImageInfo_t* image_info, py::capsule cap)
     }
 }
 
+void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcdcsImageInfo_t* image_info)
+{
+    std::vector<long> vshape;
+    py::tuple shape = iface["shape"].cast<py::tuple>();
+    for (auto& o : shape) {
+        vshape.push_back(o.cast<long>());
+    }
+    if (vshape.size() < 3) {
+        throw std::runtime_error("Unexpected number of dimensions");
+    }
+
+    std::vector<int> vstrides;
+    if (iface.contains("strides")) {
+        py::object strides = iface["strides"];
+        if (!strides.is(py::none())) {
+            strides = strides.cast<py::tuple>();
+            for (auto& o : strides) {
+                vstrides.push_back(o.cast<int>());
+            }
+        }
+    }
+
+    bool is_interleaved = true; //TODO detect interleaved if we have HWC layout
+
+    if (is_interleaved) {
+        image_info->num_planes = 1;
+        image_info->plane_info[0].height = vshape[0];
+        image_info->plane_info[0].width = vshape[1];
+        image_info->plane_info[0].num_channels = vshape[2];
+    } else {
+        image_info->num_planes = vshape[0];
+        image_info->plane_info[0].height = vshape[1];
+        image_info->plane_info[0].width = vshape[2];
+        image_info->plane_info[0].num_channels = 1;
+    }
+
+    std::string typestr = iface["typestr"].cast<std::string>();
+    auto sample_type = type_from_format_str(typestr);
+
+    int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
+
+    image_info->color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+    image_info->sample_format = is_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
+    image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_444;
+
+    int pitch_in_bytes = vstrides.size() > 1 ? (is_interleaved ? vstrides[0] : vstrides[1])
+                                             : image_info->plane_info[0].width * image_info->plane_info[0].num_channels * bytes_per_element;
+    size_t buffer_size = 0;
+    for (size_t c = 0; c < image_info->num_planes; c++) {
+        image_info->plane_info[c].width = image_info->plane_info[0].width;
+        image_info->plane_info[c].height = image_info->plane_info[0].height;
+        image_info->plane_info[c].row_stride = pitch_in_bytes;
+        image_info->plane_info[c].sample_type = sample_type;
+        image_info->plane_info[c].num_channels = image_info->plane_info[0].num_channels;
+        buffer_size += image_info->plane_info[c].row_stride * image_info->plane_info[0].height;
+    }
+    py::tuple tdata = iface["data"].cast<py::tuple>();
+    void* buffer = PyLong_AsVoidPtr(tdata[0].ptr());
+    image_info->buffer = buffer;
+    image_info->buffer_size = buffer_size;
+}
+
 Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
     : instance_(instance)
 {
@@ -113,31 +175,9 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
         if (version < 2) {
             throw std::runtime_error("Unsupported __cuda_array_interface__ with version < 2");
         }
-
-        py::tuple tdata = iface["data"].cast<py::tuple>();
-        void* buffer = PyLong_AsVoidPtr(tdata[0].ptr());
-        check_cuda_buffer(buffer);
-        std::vector<long> vshape;
-        py::tuple shape = iface["shape"].cast<py::tuple>();
-        for (auto& o : shape) {
-            vshape.push_back(o.cast<long>());
-        }
-        if (vshape.size() < 3) {
-            throw std::runtime_error("Unexpected number of dimensions");
-        }
-
-        std::vector<int> vstrides;
-        if (iface.contains("strides")) {
-            py::object strides = iface["strides"];
-            if (!strides.is(py::none())) {
-                strides = strides.cast<py::tuple>();
-                for (auto& o : strides) {
-                    vstrides.push_back(o.cast<int>());
-                }
-            }
-        }
-
-        std::optional<intptr_t> stream = version >= 3 ? iface["stream"].cast<std::optional<intptr_t>>() : std::optional<intptr_t>();
+        initImageInfoFromInterfaceDict(iface, &image_info);
+        std::optional<intptr_t> stream =
+            version >= 3 && iface.contains("stream") ? iface["stream"].cast<std::optional<intptr_t>>() : std::optional<intptr_t>();
 
         if (stream.has_value()) {
             if (*stream == 0) {
@@ -146,44 +186,7 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
                 image_info.cuda_stream = reinterpret_cast<cudaStream_t>(*stream);
             }
         }
-
-        bool is_interleaved = true; //TODO detect interleaved if we have HWC layout
-
-        if (is_interleaved) {
-            image_info.num_planes = 1;
-            image_info.plane_info[0].height = vshape[0];
-            image_info.plane_info[0].width = vshape[1];
-            image_info.plane_info[0].num_channels = vshape[2];
-        } else {
-            image_info.num_planes = vshape[0];
-            image_info.plane_info[0].height = vshape[1];
-            image_info.plane_info[0].width = vshape[2];
-            image_info.plane_info[0].num_channels = 1;
-        }
-
-        std::string typestr = iface["typestr"].cast<std::string>();
-        auto sample_type = type_from_format_str(typestr);
-
-        int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
-
-        image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-        image_info.sample_format = is_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-        image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
-
-        int pitch_in_bytes = vstrides.size() > 1
-                                 ? (is_interleaved ? vstrides[0] : vstrides[1])
-                                 : image_info.plane_info[0].width * image_info.plane_info[0].num_channels * bytes_per_element;
-        size_t buffer_size = 0;
-        for (size_t c = 0; c < image_info.num_planes; c++) {
-            image_info.plane_info[c].width = image_info.plane_info[0].width;
-            image_info.plane_info[c].height = image_info.plane_info[0].height;
-            image_info.plane_info[c].row_stride = pitch_in_bytes;
-            image_info.plane_info[c].sample_type = sample_type;
-            image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
-            buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[0].height;
-        }
-        image_info.buffer = buffer;
-        image_info.buffer_size = buffer_size;
+        check_cuda_buffer(image_info.buffer);
         image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
         dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info, img_buffer_);
     } else if (hasattr(tmp, "__array_interface__")) {
@@ -198,68 +201,7 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
             throw std::runtime_error("Unsupported __array_interface__ with version < 2");
         }
 
-        std::vector<long> vshape;
-        py::tuple shape = iface["shape"].cast<py::tuple>();
-        for (auto& o : shape) {
-            vshape.push_back(o.cast<long>());
-        }
-        if (vshape.size() < 3) {
-            throw std::runtime_error("Unexpected number of dimensions");
-        }
-
-        std::vector<int> vstrides;
-        if (iface.contains("strides")) {
-            py::object strides = iface["strides"];
-            if (!strides.is(py::none())) {
-                strides = strides.cast<py::tuple>();
-                for (auto& o : strides) {
-                    vstrides.push_back(o.cast<int>());
-                }
-            }
-        }
-
-        bool is_interleaved = true; //TODO detect interleaved if we have HWC layout
-
-        if (is_interleaved) {
-            image_info.num_planes = 1;
-            image_info.plane_info[0].height = vshape[0];
-            image_info.plane_info[0].width = vshape[1];
-            image_info.plane_info[0].num_channels = vshape[2];
-        } else {
-            image_info.num_planes = vshape[0];
-            image_info.plane_info[0].height = vshape[1];
-            image_info.plane_info[0].width = vshape[2];
-            image_info.plane_info[0].num_channels = 1;
-        }
-
-        std::string typestr = iface["typestr"].cast<std::string>();
-        auto sample_type = type_from_format_str(typestr);
-
-        int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
-
-        image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-        image_info.sample_format = is_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-        image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_444;
-
-        int pitch_in_bytes = vstrides.size() > 1
-                                 ? (is_interleaved ? vstrides[0] : vstrides[1])
-                                 : image_info.plane_info[0].width * image_info.plane_info[0].num_channels * bytes_per_element;
-        size_t buffer_size = 0;
-        for (size_t c = 0; c < image_info.num_planes; c++) {
-            image_info.plane_info[c].width = image_info.plane_info[0].width;
-            image_info.plane_info[c].height = image_info.plane_info[0].height;
-            image_info.plane_info[c].row_stride = pitch_in_bytes;
-            image_info.plane_info[c].sample_type = sample_type;
-            image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
-            buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[0].height;
-        }
-        image_info.buffer_size = buffer_size;
-        image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
-
-        py::tuple tdata = iface["data"].cast<py::tuple>();
-        void* buffer = PyLong_AsVoidPtr(tdata[0].ptr());
-        image_info.buffer = buffer;
-        image_info.buffer_size = buffer_size;
+        initImageInfoFromInterfaceDict(iface, &image_info);
         image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
         dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info, img_buffer_);
     } else if (hasattr(tmp, "__dlpack__")) {
@@ -282,74 +224,52 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
     image_ =
         std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
     if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
-        initCudaArrayInterface(&image_info);
+        initCudaArrayInterface(image_info);
         initCudaEventForDLPack();
     } else if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-        initArrayInterface(&image_info);
+        initArrayInterface(image_info);
     }
 }
 
-void Image::initArrayInterface(nvimgcdcsImageInfo_t* image_info)
+void Image::initInterfaceDictFromImageInfo(const nvimgcdcsImageInfo_t& image_info, py::dict* d)
 {
-    std::string format = format_str_from_type(image_info->plane_info[0].sample_type);
-    bool is_interleaved = is_sample_format_interleaved(image_info->sample_format) || image_info->num_planes == 1;
+    std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
+    bool is_interleaved = is_sample_format_interleaved(image_info.sample_format) || image_info.num_planes == 1;
+    int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
+    py::tuple strides_tuple = is_interleaved ? py::make_tuple(image_info.plane_info[0].row_stride,
+                                                   image_info.plane_info[0].num_channels * bytes_per_element, bytes_per_element)
+                                             : py::make_tuple(image_info.plane_info[0].row_stride * image_info.plane_info[0].height,
+                                                   image_info.plane_info[0].row_stride, bytes_per_element);
+
+    py::tuple shape_tuple =
+        is_interleaved
+            ? py::make_tuple(image_info.plane_info[0].height, image_info.plane_info[0].width, image_info.plane_info[0].num_channels)
+            : py::make_tuple(image_info.num_planes, image_info.plane_info[0].height, image_info.plane_info[0].width);
+
+    py::object strides = is_interleaved ? py::object(py::none()) : py::object(strides_tuple);
+
+    (*d)["shape"] = shape_tuple;
+    (*d)["strides"] = strides;
+    (*d)["typestr"] = format;
+    (*d)["data"] = py::make_tuple(py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(image_info.buffer)), false);
+    (*d)["version"] = 3;
+}
+
+void Image::initArrayInterface(const nvimgcdcsImageInfo_t& image_info)
+{
     try {
-        int bytes_per_element = sample_type_to_bytes_per_element(image_info->plane_info[0].sample_type);
-        py::tuple strides_tuple = is_interleaved ? py::make_tuple(image_info->plane_info[0].row_stride,
-                                                       image_info->plane_info[0].num_channels * bytes_per_element, bytes_per_element)
-                                                 : py::make_tuple(image_info->plane_info[0].row_stride * image_info->plane_info[0].height,
-                                                       image_info->plane_info[0].row_stride, bytes_per_element);
-
-        py::tuple shape_tuple =
-            is_interleaved
-                ? py::make_tuple(image_info->plane_info[0].height, image_info->plane_info[0].width, image_info->plane_info[0].num_channels)
-                : py::make_tuple(image_info->num_planes, image_info->plane_info[0].height, image_info->plane_info[0].width);
-
-        py::object strides = is_interleaved ? py::object(py::none()) : py::object(strides_tuple);
-        // clang-format off
-        array_interface_ = 
-             py::dict {
-                    "shape"_a = shape_tuple,
-                    "strides"_a = strides,
-                    "typestr"_a = format,
-                    "data"_a = py::make_tuple(py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(image_info->buffer)), false),
-                    "version"_a = 3
-                };
-        // clang-format on
+        initInterfaceDictFromImageInfo(image_info, &array_interface_);
     } catch (...) {
         throw std::runtime_error("Unable to initialize __array_interface__");
     }
 }
 
-void Image::initCudaArrayInterface(nvimgcdcsImageInfo_t* image_info)
+void Image::initCudaArrayInterface(const nvimgcdcsImageInfo_t& image_info)
 {
-    std::string format = format_str_from_type(image_info->plane_info[0].sample_type);
-    bool is_interleaved = is_sample_format_interleaved(image_info->sample_format) || image_info->num_planes == 1;
     try {
-        int bytes_per_element = sample_type_to_bytes_per_element(image_info->plane_info[0].sample_type);
-        py::tuple strides_tuple = is_interleaved ? py::make_tuple(image_info->plane_info[0].row_stride,
-                                                       image_info->plane_info[0].num_channels * bytes_per_element, bytes_per_element)
-                                                 : py::make_tuple(image_info->plane_info[0].row_stride * image_info->plane_info[0].height,
-                                                       image_info->plane_info[0].row_stride, bytes_per_element);
-
-        py::tuple shape_tuple =
-            is_interleaved
-                ? py::make_tuple(image_info->plane_info[0].height, image_info->plane_info[0].width, image_info->plane_info[0].num_channels)
-                : py::make_tuple(image_info->num_planes, image_info->plane_info[0].height, image_info->plane_info[0].width);
-
-        py::object strides = is_interleaved ? py::object(py::none()) : py::object(strides_tuple);
-        py::object stream = image_info->cuda_stream ? py::int_((intptr_t)(image_info->cuda_stream)) : py::int_(1);
-        // clang-format off
-        cuda_array_interface_ = 
-             py::dict {
-                    "shape"_a = shape_tuple,
-                    "strides"_a =  strides,
-                    "typestr"_a = format,
-                    "data"_a = py::make_tuple(py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(image_info->buffer)), false),
-                    "version"_a = 3,
-                    "stream"_a = stream
-                };
-        // clang-format on
+        initInterfaceDictFromImageInfo(image_info, &cuda_array_interface_);
+        py::object stream = image_info.cuda_stream ? py::int_((intptr_t)(image_info.cuda_stream)) : py::int_(1);
+        cuda_array_interface_["stream"] = stream;
     } catch (...) {
         throw std::runtime_error("Unable to initialize __cuda_array_interface__");
     }
@@ -449,9 +369,6 @@ py::object Image::cpu()
         nvimgcdcsImageInfo_t cpu_image_info(image_info);
         cpu_image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
         cpu_image_info.buffer = nullptr;
-        cpu_image_info.orientation.rotated = 0;
-        cpu_image_info.orientation.flip_x = 0;
-        cpu_image_info.orientation.flip_y = 0;
 
         auto image = new Image(instance_, &cpu_image_info);
         CHECK_CUDA(cudaMemcpyAsync(

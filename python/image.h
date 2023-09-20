@@ -54,8 +54,10 @@ class Image
     static void exportToPython(py::module& m);
 
   private:
-    void initArrayInterface(nvimgcdcsImageInfo_t* image_info);
-    void initCudaArrayInterface(nvimgcdcsImageInfo_t* image_info);
+    void initImageInfoFromInterfaceDict(const py::dict& d, nvimgcdcsImageInfo_t* image_info);
+    void initInterfaceDictFromImageInfo(const nvimgcdcsImageInfo_t& image_info, py::dict* d);
+    void initArrayInterface(const nvimgcdcsImageInfo_t& image_info);
+    void initCudaArrayInterface(const nvimgcdcsImageInfo_t& image_info);
     void initCudaEventForDLPack();
     void initDLPack(nvimgcdcsImageInfo_t* image_info, py::capsule cap);
     void initBuffer(nvimgcdcsImageInfo_t* image_info);
