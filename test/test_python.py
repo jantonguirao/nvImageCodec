@@ -378,7 +378,60 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
         np.asarray(bytearray(img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
     compare_host_images(test_decoded_images, ref_images)
-    
+
+
+@t.mark.parametrize(
+    "input_images_batch",
+    [("bmp/cat-111793_640.bmp",
+
+      "jpeg/padlock-406986_640_410.jpg",
+      "jpeg/padlock-406986_640_411.jpg",
+      "jpeg/padlock-406986_640_420.jpg",
+      "jpeg/padlock-406986_640_422.jpg",
+      "jpeg/padlock-406986_640_440.jpg",
+      "jpeg/padlock-406986_640_444.jpg",
+      "jpeg/padlock-406986_640_gray.jpg",
+      "jpeg/cmyk-dali.jpg",
+      "jpeg/progressive-subsampled-imagenet-n02089973_1957.jpg",
+
+      "jpeg/exif/padlock-406986_640_horizontal.jpg",
+      "jpeg/exif/padlock-406986_640_mirror_horizontal.jpg",
+      "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_270.jpg",
+      "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_90.jpg",
+      "jpeg/exif/padlock-406986_640_mirror_vertical.jpg",
+      "jpeg/exif/padlock-406986_640_no_orientation.jpg",
+      "jpeg/exif/padlock-406986_640_rotate_180.jpg",
+      "jpeg/exif/padlock-406986_640_rotate_270.jpg",
+      "jpeg/exif/padlock-406986_640_rotate_90.jpg",
+
+      "jpeg2k/cat-1046544_640.jp2",
+      "jpeg2k/cat-1046544_640.jp2",
+      "jpeg2k/cat-111793_640.jp2",
+      "jpeg2k/tiled-cat-1046544_640.jp2",
+      "jpeg2k/tiled-cat-111793_640.jp2",
+      "jpeg2k/cat-111793_640-16bit.jp2",
+      "jpeg2k/cat-1245673_640-12bit.jp2",
+      "base/4k_lossless.jp2",
+      "base/4k_lossless.jp2",
+      "base/4k_lossless.jp2")
+     ]
+)
+def test_as_images_with_cuda_array_interface(tmp_path, input_images_batch):
+    input_images = [os.path.join(img_dir_path, img)
+                    for img in input_images_batch]
+    ref_images = [cv2.imread(img, cv2.IMREAD_COLOR |
+                             cv2.IMREAD_ANYDEPTH) for img in input_images]
+    cp_ref_images = [cp.asarray(ref_img) for ref_img in ref_images]
+    nv_ref_images = nvimgcodecs.as_images(cp_ref_images)
+    encoder = nvimgcodecs.Encoder()
+    encode_params = nvimgcodecs.EncodeParams(
+        jpeg2k_encode_params=nvimgcodecs.Jpeg2kEncodeParams(reversible=True))
+    test_encoded_images = encoder.encode(
+        nv_ref_images, codec="jpeg2k", params=encode_params)
+    test_decoded_images = [cv2.cvtColor(cv2.imdecode(
+        np.asarray(bytearray(img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
+
+    compare_host_images(test_decoded_images, ref_images)
 
 @t.mark.parametrize("shape,dtype", [
     ((640, 480, 3), np.int8),
@@ -640,4 +693,3 @@ def test_image_buffer_kind():
     decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
     dec_device_img = decoder.read(input_img_path)
     assert (dec_device_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_DEVICE)
-    

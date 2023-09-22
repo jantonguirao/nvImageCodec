@@ -59,7 +59,6 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
     m.attr("__version__") = ver_ss.str();
     m.attr("__cuda_version__") = properties.cudart_version;
 
-    Module::exportToPython(m, module.instance_);
     BackendKind::exportToPython(m);
     BackendParams::exportToPython(m);
     Backend::exportToPython(m);
@@ -75,5 +74,5 @@ PYBIND11_MODULE(nvimgcodecs_impl, m)
     Image::exportToPython(m);
     Decoder::exportToPython(m, module.instance_);
     Encoder::exportToPython(m, module.instance_);
-
+    Module::exportToPython(m, module.instance_);
 }

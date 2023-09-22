@@ -133,9 +133,14 @@ ColorSpec
    :exclude-members: name
 
 as_image
----------
+--------
 
 .. autofunction:: as_image
+
+as_images
+---------
+
+.. autofunction:: as_images
 
 from_dlpack
 -----------
