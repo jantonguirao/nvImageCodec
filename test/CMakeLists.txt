@@ -71,6 +71,13 @@ foreach(testapp nvimgcodecs_tests)
 
     if (WITH_DYNAMIC_NVJPEG)
         list(APPEND TARGET_LIBS dynlink_nvjpeg)
+    else()
+        list(APPEND TARGET_LIBS CUDA::nvjpeg_static)
+    endif()
+
+    if (BUILD_NVJPEG2K_EXT)
+        list(APPEND TARGET_LIBS nvjpeg2k_ext_static)
+        list(APPEND TARGET_LIBS ${NVJPEG2K_LIBRARY})
     endif()
 
     if (WITH_DYNAMIC_NVJPEG2K)
@@ -79,11 +86,10 @@ foreach(testapp nvimgcodecs_tests)
 
     if (WITH_DYNAMIC_NPP)
         list(APPEND TARGET_LIBS dynlink_npp)
-    endif()
-
-    if (BUILD_NVJPEG2K_EXT)
-        list(APPEND TARGET_LIBS nvjpeg2k_ext_static)
-        list(APPEND TARGET_LIBS ${NVJPEG2K_LIBRARY})
+    else()
+        list(APPEND TARGET_LIBS CUDA::nppc_static)
+        list(APPEND TARGET_LIBS CUDA::nppidei_static)
+        list(APPEND TARGET_LIBS CUDA::nppicc_static)
     endif()
 
     if (BUILD_LIBJPEG_TURBO_EXT)
@@ -108,15 +114,12 @@ foreach(testapp nvimgcodecs_tests)
     if (BUILD_NVBMP_EXT)
         list(APPEND TARGET_LIBS nvbmp_ext_static)
     endif()
-    
+
+
     target_link_libraries(${testapp} PUBLIC
         ${TARGET_LIBS}
         ${OpenCV_LIBRARIES}
-        CUDA::nvjpeg
-        CUDA::cudart
-        CUDA::nppc
-        CUDA::nppidei
-        CUDA::nppicc
+        CUDA::cudart_static
         CUDA::cuda_driver
         gtest
         gmock

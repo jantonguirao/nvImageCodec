@@ -63,6 +63,11 @@
       "nvjpegEncoderStateCreate": {},
       "nvjpegEncoderStateDestroy": {},
       "nvjpegEncodeYUV": {},
-      "nvjpegJpegStreamGetJpegEncoding": {}
+      "nvjpegJpegStreamGetJpegEncoding": {},
+      "nvjpegJpegStreamGetFrameDimensions": {},
+      "nvjpegJpegStreamGetComponentsNum": {},
+      "nvjpegJpegStreamGetChromaSubsampling": {},
+      "nvjpegJpegStreamGetComponentDimensions": {},
+      "nvjpegJpegStreamGetExifOrientation": {}
    }
 }

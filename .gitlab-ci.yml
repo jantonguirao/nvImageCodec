@@ -3,6 +3,8 @@ image: nvidia/cuda:11.8.0-runtime-ubuntu20.04
 variables:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_SUBMODULE_DEPTH: 20
+    WITH_DYNAMIC_NVJPEG: "ON"
+    WITH_DYNAMIC_NPP: "ON"
 
 stages:
     - build
@@ -31,6 +33,9 @@ stages:
 
 build:nvimagecodec-cuda11.8:
     extends: .build:nvimagecodec
+    variables:
+        WITH_DYNAMIC_NVJPEG: "OFF"
+        WITH_DYNAMIC_NPP: "OFF"
     image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-v3
 
 build:nvimagecodec-cuda12.1:
@@ -72,7 +77,6 @@ build:nvimagecodec-cuda12.1:
 test:nvimagecodec-cuda11.3:
     extends: .test:nvimagecodec
     image: nvidia/cuda:11.3.1-runtime-ubuntu20.04
-    when: manual
     dependencies:
         - build:nvimagecodec-cuda11.8
 
@@ -109,7 +113,6 @@ test:nvimagecodec-python-cuda12.1:
 test:nvimagecodec-transcode-cuda11.3:
     extends: .test:nvimagecodec-transcode
     image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.3-v3
-    when: manual
     dependencies:
         - build:nvimagecodec-cuda11.8
 
