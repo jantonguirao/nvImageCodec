@@ -29,11 +29,6 @@ stages:
         - cd build_docker
         - source ../docker/build_helper.sh
 
-build:nvimagecodec-cuda11.3-gcc9:
-    extends: .build:nvimagecodec
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.3-gcc9-v3
-    when: manual
-
 build:nvimagecodec-cuda11.8:
     extends: .build:nvimagecodec
     image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-v3
@@ -74,12 +69,12 @@ build:nvimagecodec-cuda12.1:
         - dpkg -i artifacts/nvimgcodecs-*-cuda${CUDA_VERSION_MAJOR}*tests.deb
         - pytest-3 -v /opt/nvidia/nvimgcodecs/test/test_transcode.py
 
-test:nvimagecodec-cuda11.3-gcc9:
+test:nvimagecodec-cuda11.3:
     extends: .test:nvimagecodec
     image: nvidia/cuda:11.3.1-runtime-ubuntu20.04
     when: manual
     dependencies:
-        - build:nvimagecodec-cuda11.3-gcc9
+        - build:nvimagecodec-cuda11.8
 
 test:nvimagecodec-cuda11.8:
     extends: .test:nvimagecodec
@@ -93,12 +88,11 @@ test:nvimagecodec-cuda12.1:
     dependencies:
         - build:nvimagecodec-cuda12.1
 
-test:nvimagecodec-python-cuda11.3-gcc9:
+test:nvimagecodec-python-cuda11.3:
     extends: .test:nvimagecodec-python
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.3-v3
-    when: manual
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.3-v3
     dependencies:
-        - build:nvimagecodec-cuda11.3-gcc9
+        - build:nvimagecodec-cuda11.8
 
 test:nvimagecodec-python-cuda11.8:
     extends: .test:nvimagecodec-python
@@ -112,12 +106,12 @@ test:nvimagecodec-python-cuda12.1:
     dependencies:
         - build:nvimagecodec-cuda12.1
 
-test:nvimagecodec-transcode-cuda11.3-gcc9:
+test:nvimagecodec-transcode-cuda11.3:
     extends: .test:nvimagecodec-transcode
     image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.3-v3
     when: manual
     dependencies:
-        - build:nvimagecodec-cuda11.3-gcc9
+        - build:nvimagecodec-cuda11.8
 
 test:nvimagecodec-transcode-cuda11.8:
     extends: .test:nvimagecodec-transcode
