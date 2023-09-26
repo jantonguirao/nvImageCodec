@@ -6,13 +6,13 @@
     make html
     cd ../..
 
-docs:nvimagecodecs:
+docs:
     stage: build
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1-v3
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1-v4
     tags:
         - docker
-    dependencies: 
-        - build:nvimagecodec-cuda12.1
+    dependencies:
+        - build:cuda12.1
     artifacts:
         paths:
             - html
@@ -27,11 +27,11 @@ docs:nvimagecodecs:
 
 pages:
     stage: deploy
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1-v3
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1-v4
     tags:
         - docker
     dependencies:
-        - build:nvimagecodec-cuda12.1
+        - build:cuda12.1
     artifacts:
         paths:
             - public
