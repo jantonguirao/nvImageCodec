@@ -34,7 +34,8 @@ RUN mkdir cvcuda && \
     wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.3.1-beta/nvcv-lib-0.3.1_beta-cuda12-x86_64-linux.deb && \
     dpkg -i nvcv-lib-0.3.1_beta-cuda12-x86_64-linux.deb
 
-RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
+RUN CUDA_VERSION_SHORT=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\.([0-9]+)\..*/\1\2/') && \
+    CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
     python3 -m pip install \
     pytest \
     cupy-cuda${CUDA_VERSION_MAJOR}x \
@@ -52,9 +53,12 @@ RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
     cucim \
     scipy \
     scikit-image \
-    torch \
-    torchvision \
     tensorflow && \
+    test $CUDA_VERSION_SHORT -gt 118 && \
+        export PYTORCH_CU_VER=118 || \
+        export PYTORCH_CU_VER=${CUDA_VERSION_SHORT}; \
+    python3 -m pip install torch torchvision torchaudio \
+        --index-url https://download.pytorch.org/whl/cu${PYTORCH_CU_VER} && \
     rm -rf /root/.cache/pip
    
 WORKDIR /workspace
