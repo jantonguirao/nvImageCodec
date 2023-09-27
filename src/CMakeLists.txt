@@ -89,16 +89,81 @@ else()
         ARCHIVE_OUTPUT_NAME ${NVIMGCDCS_LIBRARY_NAME})
 endif()
 
-install(TARGETS
-    ${LIBTOPACK}
-    RUNTIME DESTINATION bin COMPONENT lib
-    LIBRARY DESTINATION lib64 COMPONENT lib
-    ARCHIVE DESTINATION lib64 COMPONENT lib
-    PUBLIC_HEADER DESTINATION include COMPONENT lib
+# Installation (https://github.com/forexample/package-example) {
+
+# Introduce variables:
+# * CMAKE_INSTALL_LIBDIR
+# * CMAKE_INSTALL_BINDIR
+# * CMAKE_INSTALL_INCLUDEDIR
+include(GNUInstallDirs)
+set(CMAKE_INSTALL_LIBDIR "lib64")  # use lib64 instead of lib
+set(CMAKE_INSTALL_FULL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")  # adjust accordingly
+
+# Layout. This works for all platforms:
+#   * <prefix>/cmake/
+#   * <prefix>/lib*/
+#   * <prefix>/include/
+set(config_install_dir "${CMAKE_INSTALL_PREFIX}/cmake")
+
+set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated")
+
+# Configuration
+set(version_config "${generated_dir}/${PROJECT_NAME}ConfigVersion.cmake")
+set(project_config "${generated_dir}/${PROJECT_NAME}Config.cmake")
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME}Targets")
+set(namespace "${PROJECT_NAME}::")
+
+# Include module with fuction 'write_basic_package_version_file'
+include(CMakePackageConfigHelpers)
+
+# Configure '<PROJECT-NAME>ConfigVersion.cmake'
+# Use:
+#   * PROJECT_VERSION
+write_basic_package_version_file(
+    "${version_config}" COMPATIBILITY SameMajorVersion
 )
 
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/../LICENSE.txt
-    DESTINATION .
+# Configure '<PROJECT-NAME>Config.cmake'
+# Use variables:
+#   * TARGETS_EXPORT_NAME
+#   * PROJECT_NAME
+configure_package_config_file(
+    "${CMAKE_SOURCE_DIR}/cmake/template/Config.cmake.in"
+    "${project_config}"
+    INSTALL_DESTINATION "${config_install_dir}"
+)
+
+# Targets:
+install(
+    TARGETS ${LIBTOPACK}
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+    ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}" COMPONENT lib
+    RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT lib
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}" COMPONENT lib
+)
+
+# License file
+install(
+    FILES "${CMAKE_SOURCE_DIR}/LICENSE.txt"
+    DESTINATION "."
     COMPONENT lib
 )
+
+# Config
+#   * <prefix>/lib/cmake/nvimgcodecs/nvimgcodecsConfig.cmake
+#   * <prefix>/lib/cmake/nvimgcodecs/nvimgcodecsConfigVersion.cmake
+install(
+    FILES "${project_config}" "${version_config}"
+    DESTINATION "${config_install_dir}"
+)
+
+# Config
+#   * <prefix>/lib/cmake/nvimgcodecs/nvimgcodecsTargets.cmake
+install(
+    EXPORT "${TARGETS_EXPORT_NAME}"
+    NAMESPACE "${namespace}"
+    DESTINATION "${config_install_dir}"
+)
+
+# }
