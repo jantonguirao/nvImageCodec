@@ -62,8 +62,10 @@ void Image::initDeviceBuffer(nvimgcdcsImageInfo_t* image_info)
 
 void Image::initHostBuffer(nvimgcdcsImageInfo_t* image_info)
 {
-    img_host_buffer_.resize(image_info->buffer_size, 128);
-    image_info->buffer = img_host_buffer_.data();
+    unsigned char* buffer;
+    CHECK_CUDA(cudaMallocHost((void**)&buffer, image_info->buffer_size));
+    img_host_buffer_ = std::shared_ptr<unsigned char>(buffer, [](unsigned char* buffer) { cudaFreeHost(buffer); });
+    image_info->buffer = buffer;
 }
 
 void Image::initDLPack(nvimgcdcsImageInfo_t* image_info, py::capsule cap)
@@ -368,7 +370,7 @@ py::object Image::cpu()
         cpu_image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
         cpu_image_info.buffer = nullptr;
 
-        auto image = new Image(instance_, &cpu_image_info);
+        auto image = Image(instance_, &cpu_image_info);
         CHECK_CUDA(cudaMemcpyAsync(
             cpu_image_info.buffer, image_info.buffer, image_info.buffer_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
         CHECK_CUDA(cudaStreamSynchronize(image_info.cuda_stream));
@@ -390,7 +392,7 @@ py::object Image::cuda()
         nvimgcdcsImageInfo_t cuda_image_info(image_info);
         cuda_image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
         cuda_image_info.buffer = nullptr;
-        auto image = new Image(instance_, &cuda_image_info);
+        auto image = Image(instance_, &cuda_image_info);
 
         CHECK_CUDA(cudaMemcpyAsync(
             cuda_image_info.buffer, image_info.buffer, image_info.buffer_size, cudaMemcpyHostToDevice, cuda_image_info.cuda_stream));

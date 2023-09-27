@@ -40,13 +40,15 @@ class Decoder
     py::object decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream);
     py::object decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream);
     py::object decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream);
-    std::vector<Image> decode(const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream);
-    std::vector<Image> decode(const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
-    std::vector<Image> decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
-    std::vector<Image> decode(std::vector<nvimgcdcsCodeStream_t>& code_streams, std::optional<DecodeParams> params, intptr_t cuda_stream);
-    static void exportToPython(py::module& m, nvimgcdcsInstance_t instance);
 
+    std::vector<py::object> decode(const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream);
+    std::vector<py::object> decode(const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
+    std::vector<py::object> decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
+
+    static void exportToPython(py::module& m, nvimgcdcsInstance_t instance);
   private:
+    std::vector<py::object> decode(std::vector<nvimgcdcsCodeStream_t>& code_streams, std::optional<DecodeParams> params, intptr_t cuda_stream);
+
     struct DecoderDeleter;
     std::shared_ptr<std::remove_pointer<nvimgcdcsDecoder_t>::type> decoder_;
     nvimgcdcsInstance_t instance_;

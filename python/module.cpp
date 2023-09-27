@@ -44,9 +44,9 @@ Module::Module()
             verbosity = std::stoi(v);
         }
     } catch (std::invalid_argument const& ex) {
-        std::cerr << "[Warning] PYNVIMGCODECS_VERBOSITY has wrong value " << std::endl;
+        std::cerr << "Warning: PYNVIMGCODECS_VERBOSITY has wrong value " << std::endl;
     } catch (std::out_of_range const& ex) {
-        std::cerr << "[Warning] PYNVIMGCODECS_VERBOSITY has out of range value " << std::endl;
+        std::cerr << "Warning: PYNVIMGCODECS_VERBOSITY has out of range value " << std::endl;
     }
 
     nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
@@ -83,11 +83,14 @@ void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
         "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>())
         .def(
             "as_images",
-            [instance](const std::vector<py::handle>& sources, intptr_t cuda_stream) -> std::vector<Image> {
-                std::vector<Image> py_images;
+            [instance](const std::vector<py::handle>& sources, intptr_t cuda_stream) -> std::vector<py::object> {
+                std::vector<py::object> py_images;
                 py_images.reserve(sources.size());
                 for (auto& source : sources) {
-                    py_images.emplace_back(instance, source.ptr(), cuda_stream);
+                    Image img(instance, source.ptr(), cuda_stream);
+                    py::object py_img = py::cast(img);
+                    py_images.push_back(py_img);
+                    py::detail::keep_alive_impl(py_img, source);
                 }
                 return py_images;
             },
