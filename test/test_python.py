@@ -488,15 +488,11 @@ def test_dlpack_export_to_cupy(shape, dtype):
 def test_dlpack_import_from_tensorflow(shape, dtype):
     with tf.device('/GPU:0'):
         a = tf.random.uniform(shape, 0, 128, dtype)
-    ref = a
+    ref = a.numpy()
     cap = tf.experimental.dlpack.to_dlpack(a)
     img = nvimgcodecs.from_dlpack(cap)
-
-    cap_test = img.to_dlpack()
     
-    assert (torch.from_dlpack(tf.experimental.dlpack.to_dlpack(ref)).cpu().numpy() ==
-            torch.from_dlpack(cap_test).cpu().numpy()).all()
-
+    assert (np.asarray(img.cpu()) ==  ref).all()
 
 @t.mark.skipif(not has_tf, reason="Tensorflow is not available")
 @t.mark.parametrize("shape,dtype",
