@@ -1,2 +1,2 @@
-add_subdirectory(pybind11)
-add_subdirectory(dlpack)
+add_subdirectory(pybind11 EXCLUDE_FROM_ALL)
+add_subdirectory(dlpack EXCLUDE_FROM_ALL)

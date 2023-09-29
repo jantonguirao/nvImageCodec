@@ -154,6 +154,27 @@ cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=Release
 ```
 This will generate in build directory *.zip or *tar.xz files
 
+## CMake package integration
+
+To use nvimagecodecs as a dependency in your CMake project, use:
+```
+list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodecs/")  # or the prefix where the package was installed if custom
+
+find_package(nvimgcodecs CONFIG REQUIRED)
+# Mostly for showing some of the variables defined
+message(STATUS "nvimgcodecs_FOUND=${nvimgcodecs_FOUND}")
+message(STATUS "nvimgcodecs_INCLUDE_DIR=${nvimgcodecs_INCLUDE_DIR}")
+message(STATUS "nvimgcodecs_LIB_DIR=${nvimgcodecs_LIB_DIR}")
+message(STATUS "nvimgcodecs_BIN_DIR=${nvimgcodecs_BIN_DIR}")
+message(STATUS "nvimgcodecs_LIB=${nvimgcodecs_LIB}")
+message(STATUS "nvimgcodecs_EXTENSIONS_DIR=${nvimgcodecs_EXTENSIONS_DIR}")
+message(STATUS "nvimgcodecs_VERSION=${nvimgcodecs_VERSION}")
+
+target_include_directories(<your-target> PUBLIC ${nvimgcodecs_INCLUDE_DIR})
+target_link_directories(<your-target> PUBLIC ${nvimgcodecs_LIB_DIR})
+target_link_libraries(<your-target> PUBLIC ${nvimgcodecs_LIB})
+```
+
 ## Requirements
 - [nvImageCodecs PRD](https://nam11.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdocs.google.com%2Fdocument%2Fd%2F1KrFzidHNfozNYk8a3crs0ekNH3ETisT1%2Fedit&data=05%7C01%7Csmatysik%40nvidia.com%7C7a7093b7b5804d1b98f008dac16b827e%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638034964732398522%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=GD26jloLP4IdjvI%2BdYrmIs5PZgYCMHXWMXnLjGRfAJ4%3D&reserved=0)
 

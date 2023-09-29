@@ -14,14 +14,17 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     option(BUILD_CVCUDA_SAMPLES "Build CVCUDA samples" OFF)
 
     find_package(CUDAToolkit REQUIRED)
-    link_directories("/opt/nvidia/nvimgcodecs/lib64")
+
+    list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodecs")
+    find_package(nvimgcodecs CONFIG REQUIRED)
+
+    include_directories(${nvimgcodecs_INCLUDE_DIR})
+    link_directories(${nvimgcodecs_LIB_DIR})
 
     if(NOT DEFINED NVIMGCDCS_INCLUDE_DIR)
-        set(NVIMGCDCS_INCLUDE_DIR "/opt/nvidia/nvimgcodecs/include/")
+        set(NVIMGCDCS_INCLUDE_DIR ${nvimgcodecs_INCLUDE_DIR})
     endif()
-
     include_directories(${NVIMGCDCS_INCLUDE_DIR})
-
 else()
     # Build as a part of nvImageCodecs project
     install(DIRECTORY
