@@ -7,7 +7,7 @@ ARG BUILDER_EXTRA_DEPS=scratch
 FROM ${BUILDER_EXTRA_DEPS} as extra_deps
 FROM ${FROM_IMAGE_NAME}
 
-ARG ARCH
+ARG ARCH=x86_64
 
 # patchelf Needed to patch rpath of dependencies in bundle-wheel.sh
 RUN cd /tmp && export PATCHELF_VERSION=0.17.2 && export PATCHELF_ARCH=${ARCH} && \

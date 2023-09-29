@@ -24,8 +24,6 @@ RUN apt-get update \
         doxygen \
     && rm -rf /var/lib/apt/lists/*
 
-RUN export LD_LIBRARY_PATH=/usr/local/cuda/compat:$LD_LIBRARY_PATH
-
 RUN mkdir cvcuda && \
     cd cvcuda && \
     wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.3.1-beta/nvcv_python-0.3.1_beta-cp38-cp38-linux_x86_64.whl && \
@@ -39,7 +37,7 @@ RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
     pytest \
     cupy-cuda${CUDA_VERSION_MAJOR}x \
     opencv-python \
-    sphinx \ 
+    sphinx \
     sphinx_rtd_theme \
     breathe \
     nbsphinx \
@@ -51,10 +49,22 @@ RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
     numpy \
     cucim \
     scipy \
-    scikit-image \
-    torch \
-    torchvision \
-    tensorflow && \
+    scikit-image && \
     rm -rf /root/.cache/pip
-   
+
+# Pytorch
+RUN CUDA_VERSION_SHORT=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\.([0-9]+)\..*/\1\2/') && \
+    test $CUDA_VERSION_SHORT -gt 118 && \
+        export PYTORCH_CU_VER=118 || \
+        export PYTORCH_CU_VER=${CUDA_VERSION_SHORT}; \
+    python3 -m pip install torch torchvision torchaudio \
+        --index-url https://download.pytorch.org/whl/cu${PYTORCH_CU_VER}
+
+# Tensorflow (only for CUDA 11.8)
+RUN CUDA_VERSION_SHORT=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\.([0-9]+)\..*/\1\2/') && \
+    test $CUDA_VERSION_SHORT -eq 118 && \
+        python3 -m pip install tensorflow==2.13.* || \
+        echo "Skipping tensorflow in this image, as it supports only CUDA 11.8"; \
+    rm -rf /root/.cache/pip
+
 WORKDIR /workspace

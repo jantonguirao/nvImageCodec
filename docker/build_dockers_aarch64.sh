@@ -18,6 +18,7 @@ docker build -t cuda12.1-aarch64 \
 # GCC 10, aarch64
 docker build -t nvimgcodecs_deps-aarch64 -f docker/Dockerfile.deps \
     --build-arg "FROM_IMAGE_NAME=manylinux2014_aarch64.gcc10" \
+    --build-arg "ARCH=aarch64" \
     docker
 
 ####### BUILDER IMAGES #######
