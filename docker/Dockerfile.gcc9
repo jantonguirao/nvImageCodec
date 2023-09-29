@@ -12,8 +12,11 @@ FROM ${FROM_IMAGE_NAME}
 # - Downgrading to GCC 9 (devtoolset-9) as we want to be compatible with it
 # - Installing sanitizer required devtools packages
 RUN yum remove -y devtoolset-* && \
-    yum install -y wget nasm doxygen graphviz gettext xz openssl autogen zip dpkg \
+    yum install -y wget nasm doxygen graphviz gettext xz openssl autogen zip \
                    devtoolset-9 devtoolset-9-libasan-devel devtoolset-9-liblsan-devel devtoolset-9-libtsan-devel devtoolset-9-libubsan-devel
+
+RUN yum install -y dpkg || echo "dpkg not found"
+
 # Adding devtoolset-9 to the paths
 ENV PATH=/opt/rh/devtoolset-9/root/usr/bin:${PATH}
 ENV LD_LIBRARY_PATH=/opt/rh/devtoolset-9/root/usr/lib64:/opt/rh/devtoolset-9/root/usr/lib:/opt/rh/devtoolset-9/root/usr/lib64/dyninst:/opt/rh/devtoolset-9/root/usr/lib/dyninst:${LD_LIBRARY_PATH}
