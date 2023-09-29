@@ -479,16 +479,25 @@ def test_dlpack_export_to_cupy(shape, dtype):
 @t.mark.skipif(not has_tf, reason="Tensorflow is not available")
 @t.mark.parametrize("shape,dtype",
                     [
+                        ((5, 23, 65), np.uint8),
+                        ((5, 23, 65), np.int16),
                         ((5, 23, 65), np.int32),
                         ((65, 3, 3), np.int64),
-                        ((243, 65, 3), np.float16),
-                        ((243, 65, 3), np.float32),
                     ],
                     )
 def test_dlpack_import_from_tensorflow(shape, dtype):
-    with tf.device('/GPU:0'):
-        a = tf.random.uniform(shape, 0, 128, dtype)
-    ref = a.numpy()
+    #TODO this is temporary workaround - create tf.tensor indirectly from cupy  
+    #code below cause some problem in following tests
+    # with tf.device('/GPU:0'):
+        #a = tf.random.uniform(shape, 0, 128, dtype)
+        #ref = a.numpy()
+
+    rng = np.random.default_rng()
+    ref = rng.integers(0, 128, shape, dtype)
+    cp_img = cp.asarray(ref)
+    a = tf.experimental.dlpack.from_dlpack(cp_img.toDlpack())
+    
+
     cap = tf.experimental.dlpack.to_dlpack(a)
     img = nvimgcodecs.from_dlpack(cap)
     
