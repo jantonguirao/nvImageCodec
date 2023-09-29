@@ -6,7 +6,13 @@ import cupy as cp
 import pytest as t
 from nvidia import nvimgcodecs
 import torch
-import tensorflow as tf
+
+try:
+    import tensorflow as tf
+    has_tf = True
+except:
+    print("Tensorflow not available, will skip related tests")
+    has_tf = False
 
 img_dir_path = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "../resources"))
@@ -469,6 +475,7 @@ def test_dlpack_export_to_cupy(shape, dtype):
     
     assert (host_array == cp.asnumpy(cp_img)).all()
 
+@t.mark.skipif(not has_tf, reason="Tensorflow is not available")
 @t.mark.parametrize("shape,dtype",
                     [
                         ((5, 23, 65), np.int32),
@@ -490,6 +497,7 @@ def test_dlpack_import_from_tensorflow(shape, dtype):
             torch.from_dlpack(cap_test).cpu().numpy()).all()
 
 
+@t.mark.skipif(not has_tf, reason="Tensorflow is not available")
 @t.mark.parametrize("shape,dtype",
                     [
                         ((640, 480, 3), np.int8),
