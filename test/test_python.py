@@ -168,13 +168,11 @@ def test_decode_single_image_unchanged(input_img_file):
         color_spec=nvimgcodecs.ColorSpec.UNCHANGED))
     ref_img = cv2.imread(input_img_path, cv2.IMREAD_UNCHANGED  | cv2.IMREAD_ANYDEPTH)
 
-   # TODO replace below two lines with test_img = np.asarray(test_img.cpu()) when cpu method available
-    test_img = cp.asarray(test_img)
-    test_img = cp.asnumpy(test_img)
+    test_img = np.asarray(test_img.cpu())
 
     test_img = test_img.reshape(test_img.__array_interface__['shape'][0:2])
 
-    compare_cv_images([test_img], [ref_img])
+    compare_host_images([test_img], [ref_img])
 
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
