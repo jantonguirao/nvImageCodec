@@ -30,32 +30,45 @@ using namespace py::literals;
 class Image
 {
   public:
-    explicit Image(nvimgcdcsImage_t image);
     Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info);
     Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream);
 
     int getWidth() const;
     int getHeight() const;
     int getNdim() const;
+    nvimgcdcsImageBufferKind_t getBufferKind() const;
 
+    py::dict array_interface() const;
     py::dict cuda_interface() const;
+
     py::object shape() const;
     py::object dtype() const;
 
     py::capsule dlpack(py::object stream) const;
     const py::tuple getDlpackDevice() const;
 
+    py::object cpu();
+    py::object cuda(bool synchronize);
+
     nvimgcdcsImage_t getNvImgCdcsImage() const;
     static void exportToPython(py::module& m);
 
   private:
-    void initCudaArrayInterface(nvimgcdcsImageInfo_t* image_info);
+    void initImageInfoFromInterfaceDict(const py::dict& d, nvimgcdcsImageInfo_t* image_info);
+    void initInterfaceDictFromImageInfo(const nvimgcdcsImageInfo_t& image_info, py::dict* d);
+    void initArrayInterface(const nvimgcdcsImageInfo_t& image_info);
+    void initCudaArrayInterface(const nvimgcdcsImageInfo_t& image_info);
     void initCudaEventForDLPack();
     void initDLPack(nvimgcdcsImageInfo_t* image_info, py::capsule cap);
+    void initBuffer(nvimgcdcsImageInfo_t* image_info);
+    void initDeviceBuffer(nvimgcdcsImageInfo_t* image_info);
+    void initHostBuffer(nvimgcdcsImageInfo_t* image_info);
 
-    size_t img_buffer_size_;
+    nvimgcdcsInstance_t instance_;
+    std::shared_ptr<unsigned char> img_host_buffer_;
     std::shared_ptr<unsigned char> img_buffer_;
     std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type> image_;
+    py::dict array_interface_;
     py::dict cuda_array_interface_;
     std::shared_ptr<DLPackTensor> dlpack_tensor_;
     std::shared_ptr<std::remove_pointer<cudaEvent_t>::type> dlpack_cuda_event_;

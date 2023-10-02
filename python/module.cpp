@@ -11,10 +11,11 @@
 #include <iostream>
 #include <string>
 
+#include <pybind11/stl_bind.h>
+
 #include <nvimgcodecs.h>
 #include "image.h"
 #include "module.h"
-
 namespace nvimgcdcs {
 
 uint32_t verbosity2severity(int verbose)
@@ -43,9 +44,9 @@ Module::Module()
             verbosity = std::stoi(v);
         }
     } catch (std::invalid_argument const& ex) {
-        std::cerr << "[Warning] PYNVIMGCODECS_VERBOSITY has wrong value " << std::endl;
+        std::cerr << "Warning: PYNVIMGCODECS_VERBOSITY has wrong value " << std::endl;
     } catch (std::out_of_range const& ex) {
-        std::cerr << "[Warning] PYNVIMGCODECS_VERBOSITY has out of range value " << std::endl;
+        std::cerr << "Warning: PYNVIMGCODECS_VERBOSITY has out of range value " << std::endl;
     }
 
     nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
@@ -65,21 +66,47 @@ Module ::~Module()
 void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 {
     m.def(
-         "as_image", [instance](py::handle source, intptr_t cuda_stream) -> Image { return Image(instance, source.ptr(), cuda_stream); },
-         R"pbdoc(
-            Wraps an external buffer as an image and ties the buffer lifetime to the image
+        "as_image", [instance](py::handle source, intptr_t cuda_stream) -> Image { return Image(instance, source.ptr(), cuda_stream); },
+        R"pbdoc(
+        Wraps an external buffer as an image and ties the buffer lifetime to the image
+
+        Args:
+            source: Input DLPack tensor which is encapsulated in a PyCapsule object or other object 
+                    with __cuda_array_interface__, __array_interface__ or __dlpack__ and __dlpack_device__ methods.
+            
+            cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in the created Image.
+
+        Returns:
+            nvimgcodecs.Image
+
+        )pbdoc",
+        "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>())
+        .def(
+            "as_images",
+            [instance](const std::vector<py::handle>& sources, intptr_t cuda_stream) -> std::vector<py::object> {
+                std::vector<py::object> py_images;
+                py_images.reserve(sources.size());
+                for (auto& source : sources) {
+                    Image img(instance, source.ptr(), cuda_stream);
+                    py::object py_img = py::cast(img);
+                    py_images.push_back(py_img);
+                    py::detail::keep_alive_impl(py_img, source);
+                }
+                return py_images;
+            },
+            R"pbdoc(
+            Wraps all an external buffers as an images and ties the buffers lifetime to the images
 
             Args:
-                source: Input DLPack tensor which is encapsulated in a PyCapsule object or other object with __cuda_array_interface__ 
-                or __dlpack__ and __dlpack_device__ methods.
+                sources: List of input DLPack tensors which is encapsulated in a PyCapsule objects or other objects 
+                         with __cuda_array_interface__, __array_interface__ or __dlpack__ and __dlpack_device__ methods.
                 
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
 
             Returns:
-                nvimgcodecs.Image
-
-        )pbdoc",
-         "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>())
+                List of nvimgcodecs.Image's
+            )pbdoc",
+            "sources"_a, "cuda_stream"_a = 0)
         .def(
             "from_dlpack",
             [instance](py::handle source, intptr_t cuda_stream) -> Image { return Image(instance, source.ptr(), cuda_stream); },
@@ -87,8 +114,8 @@ void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             Zero-copy conversion from a DLPack tensor to a image. 
 
             Args:
-                source: Input DLPack tensor which is encapsulated in a PyCapsule object or other (array) object with __dlpack__ 
-                and __dlpack_device__ methods.
+                source: Input DLPack tensor which is encapsulated in a PyCapsule object or other (array) object 
+                        with __dlpack__  and __dlpack_device__ methods.
                 
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
             

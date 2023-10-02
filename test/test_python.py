@@ -6,6 +6,7 @@ import cupy as cp
 import pytest as t
 from nvidia import nvimgcodecs
 import torch
+import sys
 
 try:
     import tensorflow as tf
@@ -34,7 +35,7 @@ def compare_image(test_img, ref_img):
     assert diff.max() <= get_max_diff_threshold()
 
 
-def compare_images(test_images, ref_images):
+def compare_device_with_host_images(test_images, ref_images):
     for i in range(0, len(test_images)):
         cp_test_img = cp.asarray(test_images[i])
         np_test_img = np.asarray(cp.asnumpy(cp_test_img))
@@ -43,7 +44,7 @@ def compare_images(test_images, ref_images):
         compare_image(np_test_img, ref_img)
 
 
-def compare_cv_images(test_images, ref_images):
+def compare_host_images(test_images, ref_images):
     for i in range(0, len(test_images)):
         test_img = np.asarray(test_images[i])
         ref_img = np.asarray(ref_images[i])
@@ -94,7 +95,7 @@ def decode_single_image_test(tmp_path, input_img_file, input_format, backends, m
     ref_img = cv2.imread(
         input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
 
-    compare_images([test_img], [ref_img])
+    compare_device_with_host_images([test_img], [ref_img])
 
 
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
@@ -236,7 +237,7 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
         test_images = decoder.read(encoded_images, cuda_stream=0 if cuda_stream is None else cuda_stream.ptr)
     else:
         test_images = decoder.decode(encoded_images, cuda_stream=0 if cuda_stream is None else cuda_stream.ptr)
-    compare_images(test_images, ref_images)
+    compare_device_with_host_images(test_images, ref_images)
 
 
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
@@ -394,7 +395,7 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
     test_decoded_images = [cv2.cvtColor(cv2.imdecode(
         np.asarray(bytearray(img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
-    compare_cv_images(test_decoded_images, ref_images)
+    compare_host_images(test_decoded_images, ref_images)
     
 
 @t.mark.parametrize("shape,dtype", [
@@ -496,24 +497,29 @@ def test_dlpack_export_to_cupy(shape, dtype):
 @t.mark.skipif(not has_tf, reason="Tensorflow is not available")
 @t.mark.parametrize("shape,dtype",
                     [
+                        ((5, 23, 65), np.uint8),
+                        ((5, 23, 65), np.int16),
                         ((5, 23, 65), np.int32),
                         ((65, 3, 3), np.int64),
-                        ((243, 65, 3), np.float16),
-                        ((243, 65, 3), np.float32),
                     ],
                     )
 def test_dlpack_import_from_tensorflow(shape, dtype):
-    with tf.device('/GPU:0'):
-        a = tf.random.uniform(shape, 0, 128, dtype)
-    ref = a
+    #TODO this is temporary workaround - create tf.tensor indirectly from cupy  
+    #code below cause some problem in following tests
+    # with tf.device('/GPU:0'):
+        #a = tf.random.uniform(shape, 0, 128, dtype)
+        #ref = a.numpy()
+
+    rng = np.random.default_rng()
+    ref = rng.integers(0, 128, shape, dtype)
+    cp_img = cp.asarray(ref)
+    a = tf.experimental.dlpack.from_dlpack(cp_img.toDlpack())
+    
+
     cap = tf.experimental.dlpack.to_dlpack(a)
     img = nvimgcodecs.from_dlpack(cap)
-
-    cap_test = img.to_dlpack()
     
-    assert (torch.from_dlpack(tf.experimental.dlpack.to_dlpack(ref)).cpu().numpy() ==
-            torch.from_dlpack(cap_test).cpu().numpy()).all()
-
+    assert (np.asarray(img.cpu()) ==  ref).all()
 
 @t.mark.skipif(not has_tf, reason="Tensorflow is not available")
 @t.mark.parametrize("shape,dtype",
@@ -536,3 +542,174 @@ def test_dlpack_export_to_tensorflow(shape, dtype):
     assert (torch.from_dlpack(tf.experimental.dlpack.to_dlpack(tf_tensor)).cpu().numpy() ==
             torch.from_dlpack(ref).cpu().numpy()).all()
     
+
+def test_image_cpu_exports_to_host():
+    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    input_img_file = "jpeg/padlock-406986_640_410.jpg"
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+
+    ref_img = cv2.imread(
+        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
+    test_image = decoder.read(input_img_path)
+    
+    host_image = test_image.cpu()
+
+    compare_host_images([host_image], [ref_img])
+
+def test_image_cpu_when_image_is_in_host_mem_returns_the_same_object():
+    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    input_img_file = "jpeg/padlock-406986_640_410.jpg"
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+    test_image = decoder.read(input_img_path)
+    host_image = test_image.cpu()
+    assert (sys.getrefcount(host_image) == 2)
+
+    host_image_2 = host_image.cpu()
+
+    assert (sys.getrefcount(host_image) == 3)
+    assert (sys.getrefcount(host_image_2) == 3)
+
+
+def test_image_cuda_exports_to_device():
+    input_img_file = "jpeg/padlock-406986_640_410.jpg"
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+    ref_img = cv2.imread(
+        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    test_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
+    host_img = nvimgcodecs.as_image(test_img)
+
+    device_img = host_img.cuda()
+
+    compare_device_with_host_images([device_img], [ref_img])
+    
+
+def test_image_cuda_when_image_is_in_device_mem_returns_the_same_object():
+    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    input_img_file = "jpeg/padlock-406986_640_410.jpg"
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+    device_img = decoder.read(input_img_path)
+    assert (sys.getrefcount(device_img) == 2)
+
+    device_img_2 = device_img.cuda()
+
+    assert (sys.getrefcount(device_img) == 3)
+    assert (sys.getrefcount(device_img_2) == 3)
+
+
+@t.mark.parametrize(
+    "input_img_file, shape",
+    [
+        ("bmp/cat-111793_640.bmp", (426, 640, 3)),
+        ("jpeg/padlock-406986_640_410.jpg", (426, 640, 3)),
+        ("jpeg2k/tiled-cat-1046544_640.jp2", (475, 640, 3))
+    ]
+)
+def test_array_interface_export(input_img_file, shape):
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+
+    ref_img = cv2.imread(
+        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
+
+    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    device_img = decoder.read(input_img_path)
+    
+    host_img = device_img.cpu()
+    array_interface = host_img.__array_interface__
+
+    assert(array_interface['strides'] == None)
+    assert (array_interface['shape'] == shape)
+    compare_host_images([host_img], [ref_img])
+
+
+@t.mark.parametrize(
+    "input_img_file",
+    [
+        "bmp/cat-111793_640.bmp",
+        "jpeg/padlock-406986_640_410.jpg", 
+        "jpeg2k/tiled-cat-1046544_640.jp2",
+    ]
+)
+def test_array_interface_import(input_img_file):
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+
+    ref_img = cv2.imread(
+        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)  
+    
+    host_img = nvimgcodecs.as_image(ref_img)
+    
+    assert (host_img.__array_interface__['strides'] == ref_img.__array_interface__['strides'])
+    assert (host_img.__array_interface__['shape'] == ref_img.__array_interface__['shape'])
+    assert (host_img.__array_interface__['typestr'] == ref_img.__array_interface__['typestr'])
+      
+    compare_host_images([host_img], [ref_img])
+
+def test_image_buffer_kind():
+    input_img_path = os.path.join(
+        img_dir_path, "jpeg/padlock-406986_640_410.jpg")
+
+    ref_img = cv2.imread(
+        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)  
+    
+    host_img = nvimgcodecs.as_image(ref_img)
+    assert (host_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_HOST)
+    
+    device_img = host_img.cuda()
+    assert (device_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_DEVICE)
+    
+    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    dec_device_img = decoder.read(input_img_path)
+    assert (dec_device_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_DEVICE)
+
+
+@t.mark.parametrize(
+    "input_images_batch",
+    [("bmp/cat-111793_640.bmp",
+
+      "jpeg/padlock-406986_640_410.jpg",
+      "jpeg/padlock-406986_640_411.jpg",
+      "jpeg/padlock-406986_640_420.jpg",
+      "jpeg/padlock-406986_640_422.jpg",
+      "jpeg/padlock-406986_640_440.jpg",
+      "jpeg/padlock-406986_640_444.jpg",
+      "jpeg/padlock-406986_640_gray.jpg",
+      "jpeg/cmyk-dali.jpg",
+      "jpeg/progressive-subsampled-imagenet-n02089973_1957.jpg",
+
+      "jpeg/exif/padlock-406986_640_horizontal.jpg",
+      "jpeg/exif/padlock-406986_640_mirror_horizontal.jpg",
+      "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_270.jpg",
+      "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_90.jpg",
+      "jpeg/exif/padlock-406986_640_mirror_vertical.jpg",
+      "jpeg/exif/padlock-406986_640_no_orientation.jpg",
+      "jpeg/exif/padlock-406986_640_rotate_180.jpg",
+      "jpeg/exif/padlock-406986_640_rotate_270.jpg",
+      "jpeg/exif/padlock-406986_640_rotate_90.jpg",
+
+      "jpeg2k/cat-1046544_640.jp2",
+      "jpeg2k/cat-1046544_640.jp2",
+      "jpeg2k/cat-111793_640.jp2",
+      "jpeg2k/tiled-cat-1046544_640.jp2",
+      "jpeg2k/tiled-cat-111793_640.jp2",
+      "jpeg2k/cat-111793_640-16bit.jp2",
+      "jpeg2k/cat-1245673_640-12bit.jp2",
+      "base/4k_lossless.jp2",
+      "base/4k_lossless.jp2",
+      "base/4k_lossless.jp2")
+     ]
+)
+def test_as_images_with_cuda_array_interface(tmp_path, input_images_batch):
+    input_images = [os.path.join(img_dir_path, img) for img in input_images_batch]
+    ref_images = [cv2.imread(img, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH) for img in input_images]
+    cp_ref_images = [cp.asarray(ref_img) for ref_img in ref_images]
+    nv_ref_images = nvimgcodecs.as_images(cp_ref_images)
+    encoder = nvimgcodecs.Encoder()
+    encode_params = nvimgcodecs.EncodeParams(jpeg2k_encode_params=nvimgcodecs.Jpeg2kEncodeParams(reversible=True))
+    test_encoded_images = encoder.encode(nv_ref_images, codec="jpeg2k", params=encode_params)
+    test_decoded_images = [cv2.cvtColor(cv2.imdecode(
+        np.asarray(bytearray(img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
+
+    compare_host_images(test_decoded_images, ref_images)

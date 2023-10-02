@@ -96,6 +96,13 @@ Encoder
    :members:
    :special-members: __init__  
 
+ImageBufferKind
+---------------
+
+.. autoclass:: ImageBufferKind
+   :members:
+   :exclude-members: name
+
 Image
 -----
 
@@ -126,9 +133,14 @@ ColorSpec
    :exclude-members: name
 
 as_image
----------
+--------
 
 .. autofunction:: as_image
+
+as_images
+---------
+
+.. autofunction:: as_images
 
 from_dlpack
 -----------

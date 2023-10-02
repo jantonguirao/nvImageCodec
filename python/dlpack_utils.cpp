@@ -186,9 +186,14 @@ DLPackTensor::DLPackTensor(const nvimgcdcsImageInfo_t& image_info, std::shared_p
                 throw std::runtime_error("Buffer is not CUDA-accessible");
             }
             tensor.device.device_id = attrs.device;
-        } else {
-            throw std::runtime_error("Buffer type not supported, must be CUDA"); //TODO either CUDA or Host (CPU)");
-        }
+            } else if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+                tensor.device.device_type = kDLCPU;
+                if (image_info.buffer == nullptr) {
+                    throw std::runtime_error("NULL host buffer not accepted");
+                }
+            } else {
+                throw std::runtime_error("Unsupported buffer type. Buffer type must be CUDA or CPU"); 
+            }
 
         // Set up ndim
         tensor.ndim = 3; //TODO For now only IRGB
