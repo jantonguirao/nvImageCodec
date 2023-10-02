@@ -8,48 +8,7 @@ from nvidia import nvimgcodecs
 import torch
 import sys
 
-try:
-    import tensorflow as tf
-    has_tf = True
-except:
-    print("Tensorflow not available, will skip related tests")
-    has_tf = False
-
-img_dir_path = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), "../resources"))
-
-def is_fancy_upsampling_available():
-    return nvimgcodecs.__cuda_version__ >= 12010
-
-def get_default_decoder_options():
-    return ":fancy_upsampling=1" if is_fancy_upsampling_available() else ":fancy_upsampling=0"
-
-def get_max_diff_threshold():
-    return 4 if is_fancy_upsampling_available() else 44
-
-def compare_image(test_img, ref_img):
-    diff = ref_img.astype(np.int32) - test_img.astype(np.int32)
-    diff = np.absolute(diff)
-
-    assert test_img.shape == ref_img.shape
-    assert diff.max() <= get_max_diff_threshold()
-
-
-def compare_device_with_host_images(test_images, ref_images):
-    for i in range(0, len(test_images)):
-        cp_test_img = cp.asarray(test_images[i])
-        np_test_img = np.asarray(cp.asnumpy(cp_test_img))
-        ref_img = cv2.cvtColor(ref_images[i], cv2.COLOR_BGR2RGB)
-        ref_img = np.asarray(ref_img)
-        compare_image(np_test_img, ref_img)
-
-
-def compare_host_images(test_images, ref_images):
-    for i in range(0, len(test_images)):
-        test_img = np.asarray(test_images[i])
-        ref_img = np.asarray(ref_images[i])
-        compare_image(test_img, ref_img)
-
+from test_utils import get_default_decoder_options, compare_image, compare_device_with_host_images, compare_host_images, load_single_image, load_batch
 
 def load_single_image(file_path: str, load_mode: str = None):
     """
