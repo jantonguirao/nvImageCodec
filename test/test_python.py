@@ -157,6 +157,24 @@ def test_decode_single_image_cuda12_only(tmp_path, input_img_file, input_format,
     decode_single_image_test(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads)
 
 
+@t.mark.parametrize(
+    "input_img_file",
+    ["jpeg2k/tiled-cat-1046544_640_gray.jp2",])
+def test_decode_single_image_unchanged(input_img_file):
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    test_img = decoder.read(input_img_path, params=nvimgcodecs.DecodeParams(
+        color_spec=nvimgcodecs.ColorSpec.UNCHANGED))
+    ref_img = cv2.imread(input_img_path, cv2.IMREAD_UNCHANGED  | cv2.IMREAD_ANYDEPTH)
+
+   # TODO replace below two lines with test_img = np.asarray(test_img.cpu()) when cpu method available
+    test_img = cp.asarray(test_img)
+    test_img = cp.asnumpy(test_img)
+
+    test_img = test_img.reshape(test_img.__array_interface__['shape'][0:2])
+
+    compare_cv_images([test_img], [ref_img])
+
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
                                  [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(

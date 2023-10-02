@@ -451,9 +451,12 @@ nvimgcdcsStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool im
                 }
             }
 
+            nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            code_stream->getImageInfo(code_stream->instance, &cs_image_info);
             bool interleaved =
                 image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_RGB || image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED;
-            bool gray = image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y;
+            bool gray =
+                (image_info.sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y) && (cs_image_info.sample_format != NVIMGCDCS_SAMPLEFORMAT_P_Y);
 
             nvjpeg2kDecodeParams_t decode_params;
             nvjpeg2kDecodeParamsCreate(&decode_params);
