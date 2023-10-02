@@ -48,7 +48,7 @@ class Image
     const py::tuple getDlpackDevice() const;
 
     py::object cpu();
-    py::object cuda();
+    py::object cuda(bool synchronize);
 
     nvimgcdcsImage_t getNvImgCdcsImage() const;
     static void exportToPython(py::module& m);

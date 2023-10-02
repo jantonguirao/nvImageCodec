@@ -383,7 +383,7 @@ py::object Image::cpu()
     }
 }
 
-py::object Image::cuda()
+py::object Image::cuda(bool synchronize)
 {
     nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
     nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
@@ -396,7 +396,8 @@ py::object Image::cuda()
 
         CHECK_CUDA(cudaMemcpyAsync(
             cuda_image_info.buffer, image_info.buffer, image_info.buffer_size, cudaMemcpyHostToDevice, cuda_image_info.cuda_stream));
-        CHECK_CUDA(cudaStreamSynchronize(cuda_image_info.cuda_stream));
+        if (synchronize)
+            CHECK_CUDA(cudaStreamSynchronize(cuda_image_info.cuda_stream));
 
         return py::cast(image);
     } else if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
@@ -453,9 +454,15 @@ void Image::exportToPython(py::module& m)
             Returns a copy of this image in device memory. If this image is already in device memory, 
             than no copy is performed and the original object is returned.  
             
+            Args:
+                synchronize: If True (by default) it blocks and waits for copy from host to device to be finished, 
+                             else not synchronization is executed and further synchronization needs to be done using
+                             cuda stream provided by e.g. \_\_cuda_array_interface\_\_. 
+
             Returns:
                 Image object with content in device memory or None if copy could not be done.
-            )pbdoc");
+            )pbdoc",
+            "synchronize"_a = true);
 }
 
 } // namespace nvimgcdcs

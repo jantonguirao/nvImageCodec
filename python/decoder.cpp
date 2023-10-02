@@ -190,9 +190,8 @@ std::vector<py::object> Decoder::decode(
         image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
         Image img(instance_, &image_info);
-        py_images.push_back(py::cast(img));
-
         images[i - skip_samples] = img.getNvImgCdcsImage();
+        py_images.push_back(py::cast(std::move(img)));
     }
     nvimgcdcsFuture_t decode_future;
     CHECK_NVIMGCDCS(nvimgcdcsDecoderDecode(

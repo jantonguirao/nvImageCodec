@@ -74,7 +74,7 @@ void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             source: Input DLPack tensor which is encapsulated in a PyCapsule object or other object 
                     with __cuda_array_interface__, __array_interface__ or __dlpack__ and __dlpack_device__ methods.
             
-            cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
+            cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in the created Image.
 
         Returns:
             nvimgcodecs.Image
