@@ -34,7 +34,6 @@ def compare_image(test_img, ref_img):
     assert test_img.shape == ref_img.shape
     assert diff.max() <= get_max_diff_threshold()
 
-
 def compare_device_with_host_images(test_images, ref_images):
     for i in range(0, len(test_images)):
         cp_test_img = cp.asarray(test_images[i])
@@ -92,8 +91,7 @@ def decode_single_image_test(tmp_path, input_img_file, input_format, backends, m
     else:
         test_img = decoder.decode(decoder_input)
 
-    ref_img = cv2.imread(
-        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    ref_img = cv2.imread(input_img_path, cv2.IMREAD_COLOR)
 
     compare_device_with_host_images([test_img], [ref_img])
 
@@ -165,8 +163,8 @@ def test_decode_single_image_unchanged(input_img_file):
     input_img_path = os.path.join(img_dir_path, input_img_file)
     decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
     test_img = decoder.read(input_img_path, params=nvimgcodecs.DecodeParams(
-        color_spec=nvimgcodecs.ColorSpec.UNCHANGED))
-    ref_img = cv2.imread(input_img_path, cv2.IMREAD_UNCHANGED  | cv2.IMREAD_ANYDEPTH)
+        color_spec=nvimgcodecs.ColorSpec.UNCHANGED, allow_any_depth=True))
+    ref_img = cv2.imread(input_img_path, cv2.IMREAD_UNCHANGED)
 
     test_img = np.asarray(test_img.cpu())
 
@@ -220,8 +218,7 @@ def test_decode_single_image_unchanged(input_img_file):
 def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda_stream, max_num_cpu_threads):
     input_images = [os.path.join(img_dir_path, img)
                     for img in input_images_batch]
-    ref_images = [cv2.imread(img, cv2.IMREAD_COLOR |
-                             cv2.IMREAD_ANYDEPTH) for img in input_images]
+    ref_images = [cv2.imread(img, cv2.IMREAD_COLOR) for img in input_images]
     if backends:
         decoder = nvimgcodecs.Decoder(
             max_num_cpu_threads=max_num_cpu_threads, backends=backends, options=get_default_decoder_options())
@@ -281,8 +278,7 @@ def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stre
     encoder = nvimgcodecs.Encoder(max_num_cpu_threads=max_num_cpu_threads)
 
     input_img_path = os.path.join(img_dir_path, input_img_file)
-    ref_img = cv2.imread(
-        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+    ref_img = cv2.imread(input_img_path, cv2.IMREAD_COLOR)
     ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
 
     cp_ref_img = cp.asarray(ref_img)
@@ -311,7 +307,7 @@ def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stre
             test_encoded_img = in_file.read()
 
     test_img = cv2.imdecode(
-        np.asarray(bytearray(test_encoded_img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+        np.asarray(bytearray(test_encoded_img)), cv2.IMREAD_COLOR)
 
     test_img = cv2.cvtColor(test_img, cv2.COLOR_BGR2RGB)
     compare_image(np.asarray(test_img), np.asarray(ref_img))
@@ -361,8 +357,7 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
 
     input_images = [os.path.join(img_dir_path, img)
                     for img in input_images_batch]
-    ref_images = [cv2.cvtColor(cv2.imread(img, cv2.IMREAD_COLOR |
-                                          cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in input_images]
+    ref_images = [cv2.cvtColor(cv2.imread(img, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB) for img in input_images]
     cp_ref_images = [cp.asarray(ref_img) for ref_img in ref_images]
     nv_ref_images = [nvimgcodecs.as_image(cp_ref_img) for cp_ref_img in cp_ref_images]
 
@@ -391,7 +386,7 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
                 test_encoded_images.append(test_encoded_img)
 
     test_decoded_images = [cv2.cvtColor(cv2.imdecode(
-        np.asarray(bytearray(img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
+        np.asarray(bytearray(img)), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
     compare_host_images(test_decoded_images, ref_images)
     
@@ -547,7 +542,7 @@ def test_image_cpu_exports_to_host():
     input_img_path = os.path.join(img_dir_path, input_img_file)
 
     ref_img = cv2.imread(
-        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+        input_img_path, cv2.IMREAD_COLOR)
     ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
     test_image = decoder.read(input_img_path)
     
@@ -573,7 +568,7 @@ def test_image_cuda_exports_to_device():
     input_img_file = "jpeg/padlock-406986_640_410.jpg"
     input_img_path = os.path.join(img_dir_path, input_img_file)
     ref_img = cv2.imread(
-        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+        input_img_path, cv2.IMREAD_COLOR)
     test_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
     host_img = nvimgcodecs.as_image(test_img)
 
@@ -607,7 +602,7 @@ def test_array_interface_export(input_img_file, shape):
     input_img_path = os.path.join(img_dir_path, input_img_file)
 
     ref_img = cv2.imread(
-        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+        input_img_path, cv2.IMREAD_COLOR)
     ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
 
     decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
@@ -633,7 +628,7 @@ def test_array_interface_import(input_img_file):
     input_img_path = os.path.join(img_dir_path, input_img_file)
 
     ref_img = cv2.imread(
-        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+        input_img_path, cv2.IMREAD_COLOR)
     ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)  
     
     host_img = nvimgcodecs.as_image(ref_img)
@@ -649,7 +644,7 @@ def test_image_buffer_kind():
         img_dir_path, "jpeg/padlock-406986_640_410.jpg")
 
     ref_img = cv2.imread(
-        input_img_path, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH)
+        input_img_path, cv2.IMREAD_COLOR)
     ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)  
     
     host_img = nvimgcodecs.as_image(ref_img)
@@ -701,13 +696,13 @@ def test_image_buffer_kind():
 )
 def test_as_images_with_cuda_array_interface(tmp_path, input_images_batch):
     input_images = [os.path.join(img_dir_path, img) for img in input_images_batch]
-    ref_images = [cv2.imread(img, cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH) for img in input_images]
+    ref_images = [cv2.imread(img, cv2.IMREAD_COLOR) for img in input_images]
     cp_ref_images = [cp.asarray(ref_img) for ref_img in ref_images]
     nv_ref_images = nvimgcodecs.as_images(cp_ref_images)
     encoder = nvimgcodecs.Encoder()
     encode_params = nvimgcodecs.EncodeParams(jpeg2k_encode_params=nvimgcodecs.Jpeg2kEncodeParams(reversible=True))
     test_encoded_images = encoder.encode(nv_ref_images, codec="jpeg2k", params=encode_params)
     test_decoded_images = [cv2.cvtColor(cv2.imdecode(
-        np.asarray(bytearray(img)), cv2.IMREAD_COLOR | cv2.IMREAD_ANYDEPTH), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
+        np.asarray(bytearray(img)), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
     compare_host_images(test_decoded_images, ref_images)
