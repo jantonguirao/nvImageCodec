@@ -10,6 +10,16 @@ import sys
 
 from test_utils import get_default_decoder_options, compare_image, compare_device_with_host_images, compare_host_images, load_single_image, load_batch
 
+try:
+    import tensorflow as tf
+    has_tf = True
+except:
+    print("Tensorflow not available, will skip related tests")
+    has_tf = False
+
+img_dir_path = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), "../resources"))
+
 def load_single_image(file_path: str, load_mode: str = None):
     """
     Loads a single image to de decoded.
