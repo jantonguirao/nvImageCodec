@@ -16,9 +16,9 @@
 #include "iimage_encoder_factory.h"
 #include "log.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcdcsEncodeParams_t>* work_manager, const nvimgcdcsExecutionParams_t* exec_params, const std::string& options, const ICodec* codec, int index)
+EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcodecEncodeParams_t>* work_manager, const nvimgcodecExecutionParams_t* exec_params, const std::string& options, const ICodec* codec, int index)
     : logger_(logger)
     , work_manager_(work_manager)
     , codec_(codec)
@@ -68,11 +68,11 @@ IImageEncoder* EncoderWorker::getEncoder()
             }
 
             if (backend_allowed) {
-                NVIMGCDCS_LOG_DEBUG(logger_, "createEncoder " << encoder_factory->getEncoderId());
+                NVIMGCODEC_LOG_DEBUG(logger_, "createEncoder " << encoder_factory->getEncoderId());
                 encoder_ = encoder_factory->createEncoder(exec_params_, options_.c_str());
                 if (encoder_) {
                     encode_state_batch_ = encoder_->createEncodeStateBatch();
-                    is_input_expected_in_device_ = backend_kind != NVIMGCDCS_BACKEND_KIND_CPU_ONLY;
+                    is_input_expected_in_device_ = backend_kind != NVIMGCODEC_BACKEND_KIND_CPU_ONLY;
                 }
             } else {
                 index_++;
@@ -119,7 +119,7 @@ void EncoderWorker::run()
     }
 }
 
-void EncoderWorker::addWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
+void EncoderWorker::addWork(std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work)
 {
     assert(work->getSamplesNum() > 0);
     {
@@ -136,7 +136,7 @@ void EncoderWorker::addWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
     start();
 }
 
-static void move_work_to_fallback(Work<nvimgcdcsEncodeParams_t>* fb, Work<nvimgcdcsEncodeParams_t>* work, const std::vector<bool>& keep)
+static void move_work_to_fallback(Work<nvimgcodecEncodeParams_t>* fb, Work<nvimgcodecEncodeParams_t>* work, const std::vector<bool>& keep)
 {
     int moved = 0;
     size_t n = work->code_streams_.size();
@@ -166,29 +166,29 @@ static void move_work_to_fallback(Work<nvimgcdcsEncodeParams_t>* fb, Work<nvimgc
         work->resize(n - moved);
 }
 
-static void filter_work(Work<nvimgcdcsEncodeParams_t>* work, const std::vector<bool>& keep)
+static void filter_work(Work<nvimgcodecEncodeParams_t>* work, const std::vector<bool>& keep)
 {
     move_work_to_fallback(nullptr, work, keep);
 }
 
-void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work) noexcept
+void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work) noexcept
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "processBatch");
+    NVIMGCODEC_LOG_TRACE(logger_, "processBatch");
     assert(work->getSamplesNum() > 0);
     assert(work->images_.size() == work->code_streams_.size());
 
     IImageEncoder* encoder = getEncoder();
     std::vector<bool> mask(work->code_streams_.size());
-    std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
+    std::vector<nvimgcodecProcessingStatus_t> status(work->code_streams_.size());
     if (encoder) {
-        NVIMGCDCS_LOG_DEBUG(logger_, "code streams: " << work->code_streams_.size());
+        NVIMGCODEC_LOG_DEBUG(logger_, "code streams: " << work->code_streams_.size());
         encoder->canEncode(work->images_, work->code_streams_, work->params_, &mask, &status);
     } else {
-        NVIMGCDCS_LOG_ERROR(logger_, "Could not create encoder");
-        work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
+        NVIMGCODEC_LOG_ERROR(logger_, "Could not create encoder");
+        work->results_.setAll(ProcessingResult::failure(NVIMGCODEC_PROCESSING_STATUS_CODEC_UNSUPPORTED));
         return;
     }
-    std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> fallback_work;
+    std::unique_ptr<Work<nvimgcodecEncodeParams_t>> fallback_work;
     auto fallback_worker = getFallback();
     if (fallback_worker) {
         fallback_work = work_manager_->createNewWork(work->results_, work->params_);
@@ -238,4 +238,4 @@ void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> 
     work_manager_->recycleWork(std::move(work));
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

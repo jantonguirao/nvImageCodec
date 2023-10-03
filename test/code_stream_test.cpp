@@ -20,7 +20,7 @@
 #include "mock_image_parser.h"
 #include "mock_iostream_factory.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 using ::testing::_;
 using ::testing::ByMove;
@@ -68,4 +68,4 @@ TEST(CodeStreamTest, test_parse_from_mem)
     code_stream.parseFromMem(nullptr, 0);
 }
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

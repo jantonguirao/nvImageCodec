@@ -10,7 +10,7 @@
 
 #include "exception.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace StatusStrings {
 const std::string sNotValidFormat    = "Not valid format";
@@ -74,4 +74,4 @@ const char* Exception::where() const
     return sLocation_.c_str();
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <string>
 #include "ilibrary_loader.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
 class LibraryLoader : public ILibraryLoader
@@ -63,4 +63,4 @@ class LibraryLoader : public ILibraryLoader
 
 #endif
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

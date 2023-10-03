@@ -17,10 +17,10 @@
 #include "log.h"
 #include <nvtx3/nvtx3.hpp>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-DecoderWorker::DecoderWorker(ILogger* logger, IWorkManager<nvimgcdcsDecodeParams_t>* work_manager,
-    const nvimgcdcsExecutionParams_t* exec_params, const std::string& options, const ICodec* codec, int index)
+DecoderWorker::DecoderWorker(ILogger* logger, IWorkManager<nvimgcodecDecodeParams_t>* work_manager,
+    const nvimgcodecExecutionParams_t* exec_params, const std::string& options, const ICodec* codec, int index)
     : logger_(logger)
     , work_manager_(work_manager)
     , codec_(codec)
@@ -69,11 +69,11 @@ IImageDecoder* DecoderWorker::getDecoder()
             }
 
             if (backend_allowed) {
-                NVIMGCDCS_LOG_DEBUG(logger_, "createDecoder " << decoder_factory->getDecoderId());
+                NVIMGCODEC_LOG_DEBUG(logger_, "createDecoder " << decoder_factory->getDecoderId());
                 decoder_ = decoder_factory->createDecoder(exec_params_, options_.c_str());
                 if (decoder_) {
                     decode_state_batch_ = decoder_->createDecodeStateBatch();
-                    is_device_output_ = backend_kind != NVIMGCDCS_BACKEND_KIND_CPU_ONLY;
+                    is_device_output_ = backend_kind != NVIMGCODEC_BACKEND_KIND_CPU_ONLY;
                 }
             } else {
                 index_++;
@@ -127,7 +127,7 @@ void DecoderWorker::run()
     }
 }
 
-void DecoderWorker::addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate)
+void DecoderWorker::addWork(std::unique_ptr<Work<nvimgcodecDecodeParams_t>> work, bool immediate)
 {
     assert(work->getSamplesNum() > 0);
     if (immediate) {
@@ -149,11 +149,11 @@ void DecoderWorker::addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work,
 }
 
 void DecoderWorker::processCurrentResults(
-    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> curr_work, std::unique_ptr<ProcessingResultsFuture> curr_results, bool immediate)
+    std::unique_ptr<Work<nvimgcodecDecodeParams_t>> curr_work, std::unique_ptr<ProcessingResultsFuture> curr_results, bool immediate)
 {
     assert(curr_work);
     assert(curr_results);
-    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> fallback_work;
+    std::unique_ptr<Work<nvimgcodecDecodeParams_t>> fallback_work;
     auto fallback_worker = getFallback();
     for (;;) {
         auto indices = curr_results->waitForNew();
@@ -164,11 +164,11 @@ void DecoderWorker::processCurrentResults(
             int sub_idx = indices.first[i];
             ProcessingResult r = curr_results->getOne(sub_idx);
             if (r.isSuccess()) {
-                NVIMGCDCS_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
+                NVIMGCODEC_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
                 curr_work->copy_buffer_if_necessary(is_device_output_, sub_idx, &r);
                 curr_work->results_.set(curr_work->indices_[sub_idx], r);
             } else { // failed to decode
-                NVIMGCDCS_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
+                NVIMGCODEC_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
                 if (fallback_worker) {
                     // if there's fallback, we don't set the result, but try to use the fallback first
                     if (!fallback_work)
@@ -187,7 +187,7 @@ void DecoderWorker::processCurrentResults(
     work_manager_->recycleWork(std::move(curr_work));
 }
 
-void DecoderWorker::updateCurrentWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, std::unique_ptr<ProcessingResultsFuture> future)
+void DecoderWorker::updateCurrentWork(std::unique_ptr<Work<nvimgcodecDecodeParams_t>> work, std::unique_ptr<ProcessingResultsFuture> future)
 {
     assert(work);
     assert(future);
@@ -203,7 +203,7 @@ void DecoderWorker::updateCurrentWork(std::unique_ptr<Work<nvimgcdcsDecodeParams
     start();
 }
 
-static void move_work_to_fallback(Work<nvimgcdcsDecodeParams_t>* fb, Work<nvimgcdcsDecodeParams_t>* work, const std::vector<bool>& keep)
+static void move_work_to_fallback(Work<nvimgcodecDecodeParams_t>* fb, Work<nvimgcodecDecodeParams_t>* work, const std::vector<bool>& keep)
 {
     int moved = 0;
     size_t n = work->code_streams_.size();
@@ -233,12 +233,12 @@ static void move_work_to_fallback(Work<nvimgcdcsDecodeParams_t>* fb, Work<nvimgc
         work->resize(n - moved);
 }
 
-static void filter_work(Work<nvimgcdcsDecodeParams_t>* work, const std::vector<bool>& keep)
+static void filter_work(Work<nvimgcodecDecodeParams_t>* work, const std::vector<bool>& keep)
 {
     move_work_to_fallback(nullptr, work, keep);
 }
 
-void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate) noexcept
+void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcodecDecodeParams_t>> work, bool immediate) noexcept
 {
     nvtx3::scoped_range marker{"processBatch"};
     assert(work->getSamplesNum() > 0);
@@ -246,21 +246,21 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
 
     IImageDecoder* decoder = getDecoder();
     std::vector<bool> mask(work->code_streams_.size());
-    std::vector<nvimgcdcsProcessingStatus_t> status(work->code_streams_.size());
+    std::vector<nvimgcodecProcessingStatus_t> status(work->code_streams_.size());
     if (decoder) {
-        NVIMGCDCS_LOG_DEBUG(logger_, "code streams: " << work->code_streams_.size());
+        NVIMGCODEC_LOG_DEBUG(logger_, "code streams: " << work->code_streams_.size());
         decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask, &status);
 #ifndef NDEBUG
         for (size_t i = 0; i < work->code_streams_.size(); i++) {
-            NVIMGCDCS_LOG_DEBUG(logger_, "[" << decoder->decoderId() << "]" << " canDecode status sample #" << i << " : " << status[i]);
+            NVIMGCODEC_LOG_DEBUG(logger_, "[" << decoder->decoderId() << "]" << " canDecode status sample #" << i << " : " << status[i]);
         }
 #endif
     } else {
-        NVIMGCDCS_LOG_ERROR(logger_, "Could not create decoder");
-        work->results_.setAll(ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
+        NVIMGCODEC_LOG_ERROR(logger_, "Could not create decoder");
+        work->results_.setAll(ProcessingResult::failure(NVIMGCODEC_PROCESSING_STATUS_CODEC_UNSUPPORTED));
         return;
     }
-    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> fallback_work;
+    std::unique_ptr<Work<nvimgcodecDecodeParams_t>> fallback_work;
     auto fallback_worker = getFallback();
     if (fallback_worker) {
         fallback_work = work_manager_->createNewWork(work->results_, work->params_);
@@ -290,4 +290,4 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> 
     }
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

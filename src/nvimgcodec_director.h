@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include "code_stream.h"
 #include "codec_registry.h"
@@ -23,7 +23,7 @@
 #include "logger.h"
 #include "plugin_framework.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IDebugMessenger;
 
@@ -50,12 +50,12 @@ class NvImgCodecsDirector
         std::unique_ptr<DefaultDebugMessenger> dbg_messenger_;
     };
 
-    explicit NvImgCodecsDirector(const nvimgcdcsInstanceCreateInfo_t* create_info);
+    explicit NvImgCodecsDirector(const nvimgcodecInstanceCreateInfo_t* create_info);
     ~NvImgCodecsDirector();
 
     std::unique_ptr<CodeStream> createCodeStream();
-    std::unique_ptr<ImageGenericDecoder> createGenericDecoder(const nvimgcdcsExecutionParams_t* exec_params, const char* options);
-    std::unique_ptr<ImageGenericEncoder> createGenericEncoder(const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    std::unique_ptr<ImageGenericDecoder> createGenericDecoder(const nvimgcodecExecutionParams_t* exec_params, const char* options);
+    std::unique_ptr<ImageGenericEncoder> createGenericEncoder(const nvimgcodecExecutionParams_t* exec_params, const char* options);
     void registerDebugMessenger(IDebugMessenger* messenger);
     void unregisterDebugMessenger(IDebugMessenger* messenger);
 
@@ -66,4 +66,4 @@ class NvImgCodecsDirector
     PluginFramework plugin_framework_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

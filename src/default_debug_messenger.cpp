@@ -9,29 +9,29 @@
 #define TERM_GREEN "\033[0;32m"
 #define TERM_MAGENTA "\033[1;35m"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 DefaultDebugMessenger::DefaultDebugMessenger(uint32_t message_severity, uint32_t message_category)
-    : desc_{NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC, nullptr, message_severity, message_category,
+    : desc_{NVIMGCODEC_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC, nullptr, message_severity, message_category,
           DefaultDebugMessenger::static_debug_callback, this}
 {
 }
 
-int DefaultDebugMessenger::debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,
-    const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data)
+int DefaultDebugMessenger::debugCallback(const nvimgcodecDebugMessageSeverity_t message_severity,
+    const nvimgcodecDebugMessageCategory_t message_category, const nvimgcodecDebugMessageData_t* callback_data)
 {
     switch (message_severity) {
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL:
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_FATAL:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_ERROR:
         std::cerr << TERM_RED;
         break;
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_WARNING:
         std::cerr << TERM_YELLOW;
         break;
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_INFO:
         std::cerr << TERM_GREEN;
         break;
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE:
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_TRACE:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEBUG:
         std::cerr << TERM_MAGENTA;
         break;
     default:
@@ -39,22 +39,22 @@ int DefaultDebugMessenger::debugCallback(const nvimgcdcsDebugMessageSeverity_t m
     }
 
     switch (message_severity) {
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_ERROR:
         std::cerr << "[ERROR] ";
         break;
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_FATAL:
         std::cerr << "[FATAL ERROR] ";
         break;
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_WARNING:
         std::cerr << "[WARNING] ";
         break;
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_INFO:
         std::cerr << "[INFO] ";
         break;
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEBUG:
         std::cerr << "[DEBUG] ";
         break;
-    case NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE:
+    case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_TRACE:
         std::cerr << "[TRACE] ";
         break;
 
@@ -71,8 +71,8 @@ int DefaultDebugMessenger::debugCallback(const nvimgcdcsDebugMessageSeverity_t m
 }
 
 int DefaultDebugMessenger::static_debug_callback(
-    const nvimgcdcsDebugMessageSeverity_t message_severity,
-    const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* callback_data,
+    const nvimgcodecDebugMessageSeverity_t message_severity,
+    const nvimgcodecDebugMessageCategory_t message_category, const nvimgcodecDebugMessageData_t* callback_data,
     void* user_data)
 {
     assert(user_data);
@@ -80,4 +80,4 @@ int DefaultDebugMessenger::static_debug_callback(
     return handle->debugCallback(message_severity, message_category, callback_data);
 }
 
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

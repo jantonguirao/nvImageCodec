@@ -8,10 +8,10 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include "opencv_ext.h"
 
-nvimgcdcsStatus_t nvimgcdcsExtensionModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc)
+nvimgcodecStatus_t nvimgcodecExtensionModuleEntry(nvimgcodecExtensionDesc_t* ext_desc)
 {
     return get_opencv_extension_desc(ext_desc);
 }

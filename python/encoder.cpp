@@ -19,19 +19,19 @@
 
 namespace fs = std::filesystem;
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 struct Encoder::EncoderDeleter
 {
-    void operator()(nvimgcdcsEncoder_t encoder) { nvimgcdcsEncoderDestroy(encoder); }
+    void operator()(nvimgcodecEncoder_t encoder) { nvimgcodecEncoderDestroy(encoder); }
 };
 
-Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
     const std::string& options)
     : encoder_(nullptr)
     , instance_(instance)
 {
-    std::vector<nvimgcdcsBackend_t> nvimgcds_backends(backends.has_value() ? backends.value().size() : 0);
+    std::vector<nvimgcodecBackend_t> nvimgcds_backends(backends.has_value() ? backends.value().size() : 0);
     if (backends.has_value()) {
         for (size_t i = 0; i < backends.value().size(); ++i) {
             nvimgcds_backends[i] = backends.value()[i].backend_;
@@ -39,38 +39,38 @@ Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_th
     }
 
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
-    nvimgcdcsEncoder_t encoder;
-    nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecEncoder_t encoder;
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
     exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
 
-    nvimgcdcsEncoderCreate(instance, &encoder, &exec_params, options.c_str());
-    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type>(encoder, EncoderDeleter{});
+    nvimgcodecEncoderCreate(instance, &encoder, &exec_params, options.c_str());
+    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type>(encoder, EncoderDeleter{});
 }
 
-Encoder::Encoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads,
-    std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options)
+Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads,
+    std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options)
     : encoder_(nullptr)
     , instance_(instance)
 {
-    std::vector<nvimgcdcsBackend_t> nvimgcds_backends(backend_kinds.has_value() ? backend_kinds.value().size() : 0);
+    std::vector<nvimgcodecBackend_t> nvimgcds_backends(backend_kinds.has_value() ? backend_kinds.value().size() : 0);
     if (backend_kinds.has_value()) {
         for (size_t i = 0; i < backend_kinds.value().size(); ++i) {
             nvimgcds_backends[i].kind = backend_kinds.value()[i];
-            nvimgcds_backends[i].params = {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f};
+            nvimgcds_backends[i].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f};
         }
     }
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
-    nvimgcdcsEncoder_t encoder;
-    nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecEncoder_t encoder;
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
     exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
-    nvimgcdcsEncoderCreate(instance, &encoder, &exec_params, options.c_str());
-    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type>(encoder, EncoderDeleter{});
+    nvimgcodecEncoderCreate(instance, &encoder, &exec_params, options.c_str());
+    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type>(encoder, EncoderDeleter{});
 }
 
 Encoder::~Encoder()
@@ -125,47 +125,47 @@ void Encoder::encode(
 }
 
 void Encoder::encode(const std::vector<Image*>& images, std::optional<EncodeParams> params_opt, intptr_t cuda_stream,
-    std::function<void(size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream,
-    std::function<void(size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream)> post_encode_call_back)
+    std::function<void(size_t i, nvimgcodecImageInfo_t& out_image_info, nvimgcodecCodeStream_t* code_stream)> create_code_stream,
+    std::function<void(size_t i, bool skip_item, nvimgcodecCodeStream_t code_stream)> post_encode_call_back)
 {
-    std::vector<nvimgcdcsCodeStream_t> code_streams(images.size());
-    std::vector<nvimgcdcsImage_t> int_images(images.size());
+    std::vector<nvimgcodecCodeStream_t> code_streams(images.size());
+    std::vector<nvimgcodecImage_t> int_images(images.size());
     EncodeParams params = params_opt.has_value() ? params_opt.value() : EncodeParams();
 
-    params.jpeg2k_encode_params_.nvimgcdcs_jpeg2k_encode_params_.next = nullptr;
-    params.jpeg_encode_params_.nvimgcdcs_jpeg_encode_params_.next = &params.jpeg2k_encode_params_.nvimgcdcs_jpeg2k_encode_params_;
-    params.encode_params_.next = &params.jpeg_encode_params_.nvimgcdcs_jpeg_encode_params_;
+    params.jpeg2k_encode_params_.nvimgcodec_jpeg2k_encode_params_.next = nullptr;
+    params.jpeg_encode_params_.nvimgcodec_jpeg_encode_params_.next = &params.jpeg2k_encode_params_.nvimgcodec_jpeg2k_encode_params_;
+    params.encode_params_.next = &params.jpeg_encode_params_.nvimgcodec_jpeg_encode_params_;
 
     for (size_t i = 0; i < images.size(); i++) {
         int_images[i] = images[i]->getNvImgCdcsImage();
 
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        nvimgcdcsImageGetImageInfo(int_images[i], &image_info);
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageGetImageInfo(int_images[i], &image_info);
 
-        nvimgcdcsImageInfo_t out_image_info(image_info);
+        nvimgcodecImageInfo_t out_image_info(image_info);
         out_image_info.chroma_subsampling = params.chroma_subsampling_;
         out_image_info.color_spec = params.color_spec_;
-        out_image_info.next = (void*)(&params.jpeg_encode_params_.nvimgcdcs_jpeg_image_info_);
+        out_image_info.next = (void*)(&params.jpeg_encode_params_.nvimgcodec_jpeg_image_info_);
 
         create_code_stream(i, out_image_info, &code_streams[i]);
     }
-    nvimgcdcsFuture_t encode_future;
-    CHECK_NVIMGCDCS(nvimgcdcsEncoderEncode(
+    nvimgcodecFuture_t encode_future;
+    CHECK_NVIMGCODEC(nvimgcodecEncoderEncode(
         encoder_.get(), int_images.data(), code_streams.data(), images.size(), &params.encode_params_, &encode_future));
-    nvimgcdcsFutureWaitForAll(encode_future);
+    nvimgcodecFutureWaitForAll(encode_future);
     size_t status_size;
-    nvimgcdcsFutureGetProcessingStatus(encode_future, nullptr, &status_size);
-    std::vector<nvimgcdcsProcessingStatus_t> encode_status(status_size);
-    nvimgcdcsFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
+    nvimgcodecFutureGetProcessingStatus(encode_future, nullptr, &status_size);
+    std::vector<nvimgcodecProcessingStatus_t> encode_status(status_size);
+    nvimgcodecFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
     for (size_t i = 0; i < encode_status.size(); ++i) {
-        if (encode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+        if (encode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
             std::cerr << "Error: Something went wrong during encoding image #" << i << " it will not be included in output" << std::endl;
         }
-        post_encode_call_back(i, encode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS, code_streams[i]);
+        post_encode_call_back(i, encode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS, code_streams[i]);
     }
-    nvimgcdcsFutureDestroy(encode_future);
+    nvimgcodecFutureDestroy(encode_future);
     for (auto& cs : code_streams) {
-        nvimgcdcsCodeStreamDestroy(cs);
+        nvimgcodecCodeStreamDestroy(cs);
     }
 }
 
@@ -218,14 +218,14 @@ std::vector<py::bytes> Encoder::encode(
 
     std::vector<PyObjectWrap> py_objects(images.size());
 
-    auto create_code_stream = [&](size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
+    auto create_code_stream = [&](size_t i, nvimgcodecImageInfo_t& out_image_info, nvimgcodecCodeStream_t* code_stream) -> void {
         strcpy(out_image_info.codec_name, codec_name.c_str());
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToHostMem(
+        CHECK_NVIMGCODEC(nvimgcodecCodeStreamCreateToHostMem(
             instance_, code_stream, (void*)&py_objects[i], &PyObjectWrap::resize_buffer_static, &out_image_info));
     };
 
     data_list.reserve(images.size());
-    auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream) -> void {
+    auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcodecCodeStream_t code_stream) -> void {
         if (skip_item && py_objects[i].ptr_) {
             Py_DECREF(py_objects[i].ptr_);
         } else {
@@ -241,8 +241,8 @@ std::vector<py::bytes> Encoder::encode(
 void Encoder::encode(const std::vector<std::string>& file_names, const std::vector<Image*>& images, const std::string& codec,
     std::optional<EncodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<nvimgcdcsCodeStream_t> code_streams(images.size());
-    auto create_code_stream = [&](size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream) -> void {
+    std::vector<nvimgcodecCodeStream_t> code_streams(images.size());
+    auto create_code_stream = [&](size_t i, nvimgcodecImageInfo_t& out_image_info, nvimgcodecCodeStream_t* code_stream) -> void {
         std::string codec_name{};
 
         if (codec.empty()) {
@@ -260,13 +260,13 @@ void Encoder::encode(const std::vector<std::string>& file_names, const std::vect
             }
         }
         strcpy(out_image_info.codec_name, codec_name.c_str());
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateToFile(instance_, code_stream, file_names[i].c_str(), &out_image_info));
+        CHECK_NVIMGCODEC(nvimgcodecCodeStreamCreateToFile(instance_, code_stream, file_names[i].c_str(), &out_image_info));
     };
-    auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream) -> void {};
+    auto post_encode_callback = [&](size_t i, bool skip_item, nvimgcodecCodeStream_t code_stream) -> void {};
     encode(images, params, cuda_stream, create_code_stream, post_encode_callback);
 }
 
-void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
+void Encoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
 {
     py::class_<Encoder>(m, "Encoder")
         .def(py::init<>(
@@ -286,9 +286,9 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
 
             )pbdoc",
 
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backends"_a = py::none(), "options"_a = "")
+            "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backends"_a = py::none(), "options"_a = "")
         .def(py::init<>(
-                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
+                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds,
                      const std::string& options) { return new Encoder(instance, device_id, max_num_cpu_threads, backend_kinds, options); }),
             R"pbdoc(
             Initialize encoder.
@@ -303,7 +303,7 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 options: Encoder specific options.
 
             )pbdoc",
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
+            "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
         .def("encode", py::overload_cast<py::handle, const std::string&, std::optional<EncodeParams>, intptr_t>(&Encoder::encode),
             R"pbdoc(
@@ -369,4 +369,4 @@ void Encoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             "file_names"_a, "images"_a, "codec"_a = "", "params"_a = py::none(), "cuda_stream"_a = 0);
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -24,7 +24,7 @@
 #include "processing_results.h"
 #include "work.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IEncodeState;
 class IImage;
@@ -34,35 +34,35 @@ class ICodec;
 class EncoderWorker;
 class ILogger;
 
-class ImageGenericEncoder: public IWorkManager<nvimgcdcsEncodeParams_t>
+class ImageGenericEncoder: public IWorkManager<nvimgcodecEncodeParams_t>
 {
   public:
     explicit ImageGenericEncoder(
-        ILogger* logger, ICodecRegistry* codec_registry, const nvimgcdcsExecutionParams_t* exec_params, const char* options = nullptr);
+        ILogger* logger, ICodecRegistry* codec_registry, const nvimgcodecExecutionParams_t* exec_params, const char* options = nullptr);
     ~ImageGenericEncoder() override;
-    void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params,
-        nvimgcdcsProcessingStatus_t* processing_status, int force_format);
+    void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcodecEncodeParams_t* params,
+        nvimgcodecProcessingStatus_t* processing_status, int force_format);
     std::unique_ptr<ProcessingResultsFuture> encode(const std::vector<IImage*>& images,
-        const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params);
+        const std::vector<ICodeStream*>& code_streams, const nvimgcodecEncodeParams_t* params);
 
   private:
     EncoderWorker* getWorker(const ICodec* codec);
 
-    std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> createNewWork(
+    std::unique_ptr<Work<nvimgcodecEncodeParams_t>> createNewWork(
         const ProcessingResultsPromise& results, const void* params);
-    void recycleWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work) override;
-    void combineWork(Work<nvimgcdcsEncodeParams_t>* target, std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> source);
-    void distributeWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work);
+    void recycleWork(std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work) override;
+    void combineWork(Work<nvimgcodecEncodeParams_t>* target, std::unique_ptr<Work<nvimgcodecEncodeParams_t>> source);
+    void distributeWork(std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work);
 
     ILogger* logger_;
     std::mutex work_mutex_;
-    std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> free_work_items_;
+    std::unique_ptr<Work<nvimgcodecEncodeParams_t>> free_work_items_;
     std::map<const ICodec*, std::unique_ptr<EncoderWorker>> workers_;
     ICodecRegistry* codec_registry_;
-    nvimgcdcsExecutionParams_t exec_params_;
-    std::vector<nvimgcdcsBackend_t> backends_;
+    nvimgcodecExecutionParams_t exec_params_;
+    std::vector<nvimgcodecBackend_t> backends_;
     std::string options_;
     std::unique_ptr<IExecutor> executor_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

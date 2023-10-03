@@ -8,12 +8,12 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 #include "logger.h"
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <algorithm>
 #include "idebug_messenger.h"
 #include "default_debug_messenger.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 Logger::Logger(IDebugMessenger* messenger)
 {
@@ -29,15 +29,15 @@ ILogger* Logger::get()
 }
 
 void Logger::log(
-    const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_category, const std::string& message)
+    const nvimgcodecDebugMessageSeverity_t message_severity, const nvimgcodecDebugMessageCategory_t message_category, const std::string& message)
 {
-    nvimgcdcsDebugMessageData_t data{NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr, message.c_str(), 0, nullptr, "nvimgcodecs", 0};
+    nvimgcodecDebugMessageData_t data{NVIMGCODEC_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr, message.c_str(), 0, nullptr, "nvimgcodec", 0};
 
     log(message_severity, message_category, &data);
 }
 
-void Logger::log(const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_category,
-    const nvimgcdcsDebugMessageData_t* data)
+void Logger::log(const nvimgcodecDebugMessageSeverity_t message_severity, const nvimgcodecDebugMessageCategory_t message_category,
+    const nvimgcodecDebugMessageData_t* data)
 {
     for (auto dbgmsg : messengers_) {
         if ((dbgmsg->getDesc()->message_severity & message_severity) && (dbgmsg->getDesc()->message_category & message_category)) {
@@ -59,4 +59,4 @@ void Logger::unregisterDebugMessenger(IDebugMessenger* messenger)
     }
 }
 
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

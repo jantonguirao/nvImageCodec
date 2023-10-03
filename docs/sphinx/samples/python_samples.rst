@@ -20,12 +20,12 @@
 Python
 ----------------
 
-The following samples demonstrates the use of nvImageCodecs Python API:
+The following samples demonstrates the use of nvImageCodec Python API:
 
 .. toctree::
    :maxdepth: 2
 
-   Basics <nvimgcodecs.nblink>
+   Basics <nvimgcodec.nblink>
    Batch processing <batch_sample.nblink>
    CuPy interoperability <cupy_sample.ipynb>
    cuCIM interoperability <cucim_sample.ipynb>

@@ -1,7 +1,7 @@
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # Build as a stand-alone samples project
     cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
-    project(nvimgcodecs_samples LANGUAGES CXX CUDA)
+    project(nvimgcodec_samples LANGUAGES CXX CUDA)
 
     set(CMAKE_CXX_STANDARD 17)
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -15,18 +15,18 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     find_package(CUDAToolkit REQUIRED)
 
-    list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodecs")
-    find_package(nvimgcodecs CONFIG REQUIRED)
+    list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodec")
+    find_package(nvimgcodec CONFIG REQUIRED)
 
-    include_directories(${nvimgcodecs_INCLUDE_DIR})
-    link_directories(${nvimgcodecs_LIB_DIR})
+    include_directories(${nvimgcodec_INCLUDE_DIR})
+    link_directories(${nvimgcodec_LIB_DIR})
 
-    if(NOT DEFINED NVIMGCDCS_INCLUDE_DIR)
-        set(NVIMGCDCS_INCLUDE_DIR ${nvimgcodecs_INCLUDE_DIR})
+    if(NOT DEFINED NVIMGCODEC_INCLUDE_DIR)
+        set(NVIMGCODEC_INCLUDE_DIR ${nvimgcodec_INCLUDE_DIR})
     endif()
-    include_directories(${NVIMGCDCS_INCLUDE_DIR})
+    include_directories(${NVIMGCODEC_INCLUDE_DIR})
 else()
-    # Build as a part of nvImageCodecs project
+    # Build as a part of nvImageCodec project
     install(DIRECTORY
         ${CMAKE_CURRENT_SOURCE_DIR}/assets
         ${CMAKE_CURRENT_SOURCE_DIR}/nvimtrans

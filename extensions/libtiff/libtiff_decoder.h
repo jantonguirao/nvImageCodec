@@ -12,25 +12,25 @@
 
 #include <memory>
 #include <vector>
-#include "nvimgcodecs.h"
+#include "nvimgcodec.h"
 
 namespace libtiff {
 
 class LibtiffDecoderPlugin
 {
   public:
-    explicit LibtiffDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
-    nvimgcdcsDecoderDesc_t* getDecoderDesc();
+    explicit LibtiffDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework);
+    nvimgcodecDecoderDesc_t* getDecoderDesc();
 
   private:
-    nvimgcdcsStatus_t create(
-        nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
-    static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    nvimgcodecStatus_t create(
+        nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
+    static nvimgcodecStatus_t static_create(
+        void* instance, nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "libtiff_decoder";
-    nvimgcdcsDecoderDesc_t decoder_desc_;
-    const nvimgcdcsFrameworkDesc_t* framework_;
+    nvimgcodecDecoderDesc_t decoder_desc_;
+    const nvimgcodecFrameworkDesc_t* framework_;
 };
 
 } // namespace libtiff

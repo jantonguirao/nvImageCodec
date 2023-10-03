@@ -14,12 +14,12 @@
 #include <vector>
 #include <tuple>
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -30,20 +30,20 @@ class JpegEncodeParams
     JpegEncodeParams();
 
     bool getJpegProgressive(){
-        return nvimgcdcs_jpeg_image_info_.encoding == NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;}
+        return nvimgcodec_jpeg_image_info_.encoding == NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;}
     void setJpegProgressive(bool progressive) {
-        nvimgcdcs_jpeg_image_info_.encoding =
-            progressive ? NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN : NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT; }
+        nvimgcodec_jpeg_image_info_.encoding =
+            progressive ? NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN : NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT; }
 
     bool getJpegOptimizedHuffman(){
-        return nvimgcdcs_jpeg_encode_params_.optimized_huffman;}
+        return nvimgcodec_jpeg_encode_params_.optimized_huffman;}
     void setJpegOptimizedHuffman(bool optimized_huffman) {
-       nvimgcdcs_jpeg_encode_params_.optimized_huffman = optimized_huffman; }
+       nvimgcodec_jpeg_encode_params_.optimized_huffman = optimized_huffman; }
 
     static void exportToPython(py::module& m);
 
-    nvimgcdcsJpegEncodeParams_t nvimgcdcs_jpeg_encode_params_;
-    nvimgcdcsJpegImageInfo_t nvimgcdcs_jpeg_image_info_;
+    nvimgcodecJpegEncodeParams_t nvimgcodec_jpeg_encode_params_;
+    nvimgcodecJpegImageInfo_t nvimgcodec_jpeg_image_info_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

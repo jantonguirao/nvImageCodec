@@ -13,7 +13,7 @@
 #include <map>
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
  std::string file_ext_to_codec(const std::string& file_ext)
  {

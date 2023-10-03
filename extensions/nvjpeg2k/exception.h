@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <nvjpeg2k.h>
 #include <iostream>
 #include <map>
@@ -39,7 +39,7 @@ class NvJpeg2kException : public std::exception
 
     std::string info() const throw();
 
-    nvimgcdcsStatus_t nvimgcdcsStatus() const;
+    nvimgcodecStatus_t nvimgcodecStatus() const;
 
   private:
     NvJpeg2kException();

@@ -141,9 +141,9 @@ This Agreement and any exhibits incorporated into this Agreement constitute the 
 (v. January 28, 2020)
 
 
-nvImageCodecs SUPPLEMENT TO SOFTWARE LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS
+nvImageCodec SUPPLEMENT TO SOFTWARE LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS
 
-The terms in this supplement govern your use of the NVIDIA nvImageCodecs SDK under the terms of your license agreement (“Agreement”) as modified by this supplement. Capitalized terms used but not defined below have the meaning assigned to them in the Agreement.
+The terms in this supplement govern your use of the NVIDIA nvImageCodec SDK under the terms of your license agreement (“Agreement”) as modified by this supplement. Capitalized terms used but not defined below have the meaning assigned to them in the Agreement.
 
 This supplement is an exhibit to the Agreement and is incorporated as an integral part of the Agreement. In the event of conflict between the terms in this supplement and the terms in the Agreement, the terms in this supplement govern.  
 

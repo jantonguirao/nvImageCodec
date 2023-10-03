@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
-set(NVIMGCODECS_PROJECT_NAME "nvimgcodecs")
-set(NVIMGCODECS_VERSION "0.1.0")
+set(NVIMGCODEC_PROJECT_NAME "nvimgcodec")
+set(NVIMGCODEC_VERSION "0.1.0")
 
-if (NVIMGCODECS_FLAVOR)
-    set(NVIMGCODECS_FLAVOR "${NVIMGCODECS_FLAVOR} ")  # could be nightly, weekly, etc if necessary
-    set(NVIMGCODECS_FLAVOR_MINUS "-${NVIMGCODECS_FLAVOR}")  # -nightly, -weekly, etc
+if (NVIMGCODEC_FLAVOR)
+    set(NVIMGCODEC_FLAVOR "${NVIMGCODEC_FLAVOR} ")  # could be nightly, weekly, etc if necessary
+    set(NVIMGCODEC_FLAVOR_MINUS "-${NVIMGCODEC_FLAVOR}")  # -nightly, -weekly, etc
 endif()
 
 # Used when creating special builds
@@ -15,16 +15,16 @@ if (NOT ARCH)
     set(ARCH "x86_64")
 endif()
 
-if (NOT NVIMGCODECS_WHL_PLATFORM_NAME)
-    set(NVIMGCODECS_WHL_PLATFORM_NAME "manylinux2014_${ARCH}")
+if (NOT NVIMGCODEC_WHL_PLATFORM_NAME)
+    set(NVIMGCODEC_WHL_PLATFORM_NAME "manylinux2014_${ARCH}")
 endif()
 
 if(NOT BUILD_ID)
     set (BUILD_ID 0)
 endif()
 
-set(NVIMGCODECS_VERSION_WITH_BUILD "${NVIMGCODECS_VERSION}.${BUILD_ID}")
-project(${NVIMGCODECS_PROJECT_NAME} VERSION ${NVIMGCODECS_VERSION} LANGUAGES CXX CUDA)
+set(NVIMGCODEC_VERSION_WITH_BUILD "${NVIMGCODEC_VERSION}.${BUILD_ID}")
+project(${NVIMGCODEC_PROJECT_NAME} VERSION ${NVIMGCODEC_VERSION} LANGUAGES CXX CUDA)
 set(CUDA_VERSION "${CMAKE_CUDA_COMPILER_VERSION}")
 
 # Include custom cmake modules/scripts
@@ -38,12 +38,12 @@ add_definitions("-DCUDA_VERSION_MINOR=${CUDA_VERSION_MINOR}")
 add_definitions("-DCUDA_VERSION_PATCH=${CUDA_VERSION_PATCH}")
 
 if(UNIX)
-    set(NVIMGCODECS_SYSTEM_NAME "${CMAKE_SYSTEM_PROCESSOR}-linux")
+    set(NVIMGCODEC_SYSTEM_NAME "${CMAKE_SYSTEM_PROCESSOR}-linux")
 else()
-    set(NVIMGCODECS_SYSTEM_NAME "${CMAKE_SYSTEM_PROCESSOR}-win")
+    set(NVIMGCODEC_SYSTEM_NAME "${CMAKE_SYSTEM_PROCESSOR}-win")
 endif()
 
-set(NVIMGCODECS_BUILD_SUFFIX "cuda${CUDA_VERSION_MAJOR}-${NVIMGCODECS_SYSTEM_NAME}")
+set(NVIMGCODEC_BUILD_SUFFIX "cuda${CUDA_VERSION_MAJOR}-${NVIMGCODEC_SYSTEM_NAME}")
 
 
 # Set a default build type if none was specified
@@ -92,7 +92,7 @@ else()
     set(CPACK_GENERATOR "TGZ;DEB")
 
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        set(CMAKE_INSTALL_PREFIX "/opt/nvidia/nvimgcodecs" CACHE PATH "where nvImageCodecs will be installed" FORCE)
+        set(CMAKE_INSTALL_PREFIX "/opt/nvidia/nvimgcodec" CACHE PATH "where nvImageCodec will be installed" FORCE)
     endif()
 
     set(CPACK_COMPONENTS_GROUPING IGNORE)
@@ -113,9 +113,9 @@ endif()
 
 set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VENDOR "NVIDIA CORPORATION")
-set(CPACK_PACKAGE_CONTACT "nvImageCodecs Support <nvimgcodecs@exchange.nvidia.com>")
+set(CPACK_PACKAGE_CONTACT "nvImageCodec Support <nvimgcodec@exchange.nvidia.com>")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "GPU Accelerated Image Codecs library")
-set(CPACK_PACKAGE_VERSION "${NVIMGCODECS_VERSION}${PROJECT_VERSION_SUFFIX}")
+set(CPACK_PACKAGE_VERSION "${NVIMGCODEC_VERSION}${PROJECT_VERSION_SUFFIX}")
 set(CPACK_PACKAGE_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR "${PROJECT_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH "${PROJECT_VERSION_PATCH}")
@@ -125,8 +125,8 @@ set(CPACK_PACKAGE_VERSION_SUFFIX "${PROJECT_VERSION_SUFFIX}")
 # we split the file name components with '-', so the version component can't
 # have this character, let's replace it by '_'
 string(REPLACE "-" "_" tmp ${CPACK_PACKAGE_VERSION})
-set(NVIMGCODECS_VERSION_BUILD "${tmp}-${NVIMGCODECS_BUILD_SUFFIX}")
-set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${NVIMGCODECS_VERSION_BUILD}")
+set(NVIMGCODEC_VERSION_BUILD "${tmp}-${NVIMGCODEC_BUILD_SUFFIX}")
+set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${NVIMGCODEC_VERSION_BUILD}")
 set(CPACK_STRIP_FILES TRUE)
 set(CPACK_PROJECT_CONFIG_FILE ${CMAKE_SOURCE_DIR}/cmake/Package.cmake)
 set(CPACK_COMPONENTS_ALL lib tests samples)
@@ -172,7 +172,7 @@ if(WIN32)
     include(third_party/generate_product_version)
 
     generate_product_version(ProductVersionFiles
-        NAME "NVIDIA nvImageCodecs library"
+        NAME "NVIDIA nvImageCodec library"
         VERSION_MAJOR ${CMAKE_PROJECT_VERSION_MAJOR}
         VERSION_MINOR ${CMAKE_PROJECT_VERSION_MINOR}
         VERSION_PATCH ${CMAKE_PROJECT_VERSION_PATCH}
@@ -221,7 +221,7 @@ if(BUILD_TEST)
     add_subdirectory(test)
 endif()
 
-set (NVIMGCDCS_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/)
+set (NVIMGCODEC_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 if(BUILD_EXTENSIONS)
     add_subdirectory(extensions)
 endif()
@@ -231,7 +231,7 @@ add_custom_target(coverity COMMAND ../coverity.sh
   WORKING_DIRECTORY
     ${CMAKE_CURRENT_BINARY_DIR}
   COMMENT
-    "Running static analysis for nvImageCodecs code with Coverity"
+    "Running static analysis for nvImageCodec code with Coverity"
   VERBATIM
   )
 endif()

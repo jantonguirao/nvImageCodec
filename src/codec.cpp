@@ -14,7 +14,7 @@
 #include "image_parser.h"
 #include "log.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
     
 Codec::Codec(ILogger* logger, const char* name)
     : logger_(logger)
@@ -22,13 +22,13 @@ Codec::Codec(ILogger* logger, const char* name)
 {
 }
 
-std::unique_ptr<IImageParser> Codec::createParser(nvimgcdcsCodeStreamDesc_t* code_stream) const
+std::unique_ptr<IImageParser> Codec::createParser(nvimgcodecCodeStreamDesc_t* code_stream) const
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "Codec::getParser " << name_);
+    NVIMGCODEC_LOG_TRACE(logger_, "Codec::getParser " << name_);
     for (const auto& entry : parsers_) {
-        NVIMGCDCS_LOG_TRACE(logger_, "- probing parser:" << entry.second->getParserId());
+        NVIMGCODEC_LOG_TRACE(logger_, "- probing parser:" << entry.second->getParserId());
         if (entry.second->canParse(code_stream)) {
-            NVIMGCDCS_LOG_TRACE(logger_, "- - can parse");
+            NVIMGCODEC_LOG_TRACE(logger_, "- - can parse");
             return entry.second->createParser();
         }
     }
@@ -76,13 +76,13 @@ const std::string& Codec::name() const
 void Codec::registerParserFactory(
     std::unique_ptr<IImageParserFactory> parserFactory, float priority)
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "Codec::registerParser");
+    NVIMGCODEC_LOG_TRACE(logger_, "Codec::registerParser");
     parsers_.emplace(priority, std::move(parserFactory));
 }
 
 void Codec::unregisterParserFactory(const std::string parser_id)
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "Codec::unregisterParser");
+    NVIMGCODEC_LOG_TRACE(logger_, "Codec::unregisterParser");
     for (auto it = parsers_.begin(); it != parsers_.end(); ++it) {
         if (it->second->getParserId() == parser_id) {
             parsers_.erase(it);
@@ -94,13 +94,13 @@ void Codec::unregisterParserFactory(const std::string parser_id)
 void Codec::registerEncoderFactory(
     std::unique_ptr<IImageEncoderFactory> encoderFactory, float priority)
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "Codec::registerEncoder");
+    NVIMGCODEC_LOG_TRACE(logger_, "Codec::registerEncoder");
     encoders_.emplace(priority, std::move(encoderFactory));
 }
 
 void Codec::unregisterEncoderFactory(const std::string encoder_id)
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "Codec::unregisterEncoder");
+    NVIMGCODEC_LOG_TRACE(logger_, "Codec::unregisterEncoder");
     for (auto it = encoders_.begin(); it != encoders_.end(); ++it) {
         if (it->second->getEncoderId() == encoder_id) {
             encoders_.erase(it);
@@ -112,13 +112,13 @@ void Codec::unregisterEncoderFactory(const std::string encoder_id)
 void Codec::registerDecoderFactory(
     std::unique_ptr<IImageDecoderFactory> decoderFactory, float priority)
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "Codec::registerDecoder");
+    NVIMGCODEC_LOG_TRACE(logger_, "Codec::registerDecoder");
     decoders_.emplace(priority, std::move(decoderFactory));
 }
 
 void Codec::unregisterDecoderFactory(const std::string decoder_id)
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "Codec::unregisterDecoder");
+    NVIMGCODEC_LOG_TRACE(logger_, "Codec::unregisterDecoder");
     for (auto it = decoders_.begin(); it != decoders_.end(); ++it) {
         if (it->second->getDecoderId() == decoder_id) {
             decoders_.erase(it);
@@ -127,4 +127,4 @@ void Codec::unregisterDecoderFactory(const std::string decoder_id)
     }
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

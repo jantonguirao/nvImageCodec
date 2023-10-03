@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <filesystem>
 #include <string>
 
@@ -36,9 +36,9 @@ struct CommandLineParams
     bool enc_color_trans;
     bool optimized_huffman;
     bool ignore_orientation;
-    nvimgcdcsJpegEncoding_t jpeg_encoding;
-    nvimgcdcsJpeg2kProgOrder_t jpeg2k_prog_order;
-    nvimgcdcsChromaSubsampling_t chroma_subsampling;
+    nvimgcodecJpegEncoding_t jpeg_encoding;
+    nvimgcodecJpeg2kProgOrder_t jpeg2k_prog_order;
+    nvimgcodecChromaSubsampling_t chroma_subsampling;
     bool list_cuda_devices;
 };
 
@@ -190,21 +190,21 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
         params->optimized_huffman = strcmp(argv[pidx + 1], "true") == 0;
     }
 
-    params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
+    params->jpeg_encoding = NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT;
     if ((pidx = find_param_index(argv, argc, "--jpeg_encoding")) != -1) {
         if (strcmp(argv[pidx + 1], "baseline_dct") == 0) {
-            params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
+            params->jpeg_encoding = NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT;
         } else if (strcmp(argv[pidx + 1], "progressive_dct") == 0) {
-            params->jpeg_encoding = NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
+            params->jpeg_encoding = NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
         } else {
             std::cout << "Unknown jpeg encoding type: " << argv[pidx + 1] << std::endl;
         }
     }
-    params->chroma_subsampling = NVIMGCDCS_SAMPLING_444;
+    params->chroma_subsampling = NVIMGCODEC_SAMPLING_444;
     if ((pidx = find_param_index(argv, argc, "--chroma_subsampling")) != -1) {
-        std::map<std::string, nvimgcdcsChromaSubsampling_t> str2Css = {{"444", NVIMGCDCS_SAMPLING_444}, {"420", NVIMGCDCS_SAMPLING_420},
-            {"440", NVIMGCDCS_SAMPLING_440}, {"422", NVIMGCDCS_SAMPLING_422}, {"411", NVIMGCDCS_SAMPLING_411},
-            {"410", NVIMGCDCS_SAMPLING_410}, {"gray", NVIMGCDCS_SAMPLING_GRAY}, {"410v", NVIMGCDCS_SAMPLING_410V}};
+        std::map<std::string, nvimgcodecChromaSubsampling_t> str2Css = {{"444", NVIMGCODEC_SAMPLING_444}, {"420", NVIMGCODEC_SAMPLING_420},
+            {"440", NVIMGCODEC_SAMPLING_440}, {"422", NVIMGCODEC_SAMPLING_422}, {"411", NVIMGCODEC_SAMPLING_411},
+            {"410", NVIMGCODEC_SAMPLING_410}, {"gray", NVIMGCODEC_SAMPLING_GRAY}, {"410v", NVIMGCODEC_SAMPLING_410V}};
         auto it = str2Css.find(argv[pidx + 1]);
         if (it != str2Css.end()) {
             params->chroma_subsampling = it->second;
@@ -212,11 +212,11 @@ int process_commandline_params(int argc, const char* argv[], CommandLineParams* 
             std::cout << "Unknown chroma subsampling type: " << argv[pidx + 1] << std::endl;
         }
     }
-    params->jpeg2k_prog_order = NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL;
+    params->jpeg2k_prog_order = NVIMGCODEC_JPEG2K_PROG_ORDER_RPCL;
     if ((pidx = find_param_index(argv, argc, "--jpeg2k_prog_order")) != -1) {
-        std::map<std::string, nvimgcdcsJpeg2kProgOrder_t> str2Css = {{"LRCP", NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP},
-            {"RLCP", NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP}, {"RPCL", NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL},
-            {"PCRL", NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL}, {"CPRL", NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL}};
+        std::map<std::string, nvimgcodecJpeg2kProgOrder_t> str2Css = {{"LRCP", NVIMGCODEC_JPEG2K_PROG_ORDER_LRCP},
+            {"RLCP", NVIMGCODEC_JPEG2K_PROG_ORDER_RLCP}, {"RPCL", NVIMGCODEC_JPEG2K_PROG_ORDER_RPCL},
+            {"PCRL", NVIMGCODEC_JPEG2K_PROG_ORDER_PCRL}, {"CPRL", NVIMGCODEC_JPEG2K_PROG_ORDER_CPRL}};
         auto it = str2Css.find(argv[pidx + 1]);
         if (it != str2Css.end()) {
             params->jpeg2k_prog_order = it->second;

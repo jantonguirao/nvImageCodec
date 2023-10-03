@@ -15,7 +15,7 @@
 
 #include <gtest/gtest.h>
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <extensions/nvjpeg/nvjpeg_ext.h>
 #include <parsers/parser_test_utils.h>
@@ -23,7 +23,7 @@
 #include "nvjpeg_ext_test_common.h"
 
 #include <test_utils.h>
-#include "nvimgcodecs_tests.h"
+#include "nvimgcodec_tests.h"
 
 using ::testing::Bool;
 using ::testing::Combine;
@@ -32,7 +32,7 @@ using ::testing::Values;
 
 #define NV_DEVELOPER_DUMP_OUTPUT_IMAGE_TO_BMP 0
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
 {
@@ -44,29 +44,29 @@ class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
         NvJpegExtTestBase::SetUp();
         // reference is decoded with GPU hybrid backend
         std::string dec_options{":fancy_upsampling=0 nvjpeg_cuda_decoder:hybrid_huffman_threshold=0"};
-        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
-        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, &exec_params, dec_options.c_str()));
-        params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderCreate(instance_, &decoder_, &exec_params, dec_options.c_str()));
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         params_.apply_exif_orientation= 1;
     }
 
     void TearDown()
     {
         if (decoder_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDestroy(decoder_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderDestroy(decoder_));
         NvJpegExtTestBase::TearDown();
     }
 
 
-    nvimgcdcsDecoder_t decoder_;
-    nvimgcdcsDecodeParams_t params_;
+    nvimgcodecDecoder_t decoder_;
+    nvimgcodecDecodeParams_t params_;
 };
 
 class NvJpegExtDecoderTestSingleImage : public NvJpegExtDecoderTestBase,
                                         public NvJpegTestBase,
-                                        public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
-                                            nvimgcdcsChromaSubsampling_t, nvimgcdcsSampleFormat_t, nvimgcdcsColorSpec_t>>
+                                        public TestWithParam<std::tuple<const char*, nvimgcodecColorSpec_t, nvimgcodecSampleFormat_t,
+                                            nvimgcodecChromaSubsampling_t, nvimgcodecSampleFormat_t, nvimgcodecColorSpec_t>>
 {
   public:
     virtual ~NvJpegExtDecoderTestSingleImage() = default;
@@ -90,30 +90,30 @@ class NvJpegExtDecoderTestSingleImage : public NvJpegExtDecoderTestBase,
         NvJpegExtDecoderTestBase::TearDown();
     }
 
-    nvimgcdcsColorSpec_t output_color_spec_ = NVIMGCDCS_COLORSPEC_UNCHANGED;
+    nvimgcodecColorSpec_t output_color_spec_ = NVIMGCODEC_COLORSPEC_UNCHANGED;
 };
 
 TEST_P(NvJpegExtDecoderTestSingleImage, ValidFormatAndParameters)
 {
     LoadImageFromFilename(instance_, in_code_stream_, resources_dir + image_file_);
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &image_info_));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &image_info_));
     PrepareImageForFormat();
 
-    nvimgcdcsImageInfo_t out_image_info(image_info_);
+    nvimgcodecImageInfo_t out_image_info(image_info_);
     out_image_info.color_spec = output_color_spec_;
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &out_image_, &out_image_info));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageCreate(instance_, &out_image_, &out_image_info));
     streams_.push_back(in_code_stream_);
     images_.push_back(out_image_);
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDecode(decoder_, streams_.data(), images_.data(), 1, &params_, &future_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderDecode(decoder_, streams_.data(), images_.data(), 1, &params_, &future_));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureWaitForAll(future_));
     cudaDeviceSynchronize();
-    nvimgcdcsProcessingStatus_t status;
+    nvimgcodecProcessingStatus_t status;
     size_t status_size;
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, status);
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
-    bool allow_cmyk = (output_color_spec_ != NVIMGCDCS_COLORSPEC_UNCHANGED) && (output_color_spec_ != NVIMGCDCS_COLORSPEC_CMYK) &&
-                      ((output_color_spec_ != NVIMGCDCS_COLORSPEC_YCCK));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureGetProcessingStatus(future_, &status, &status_size));
+    ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, status);
+    ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, 1);
+    bool allow_cmyk = (output_color_spec_ != NVIMGCODEC_COLORSPEC_UNCHANGED) && (output_color_spec_ != NVIMGCODEC_COLORSPEC_CMYK) &&
+                      ((output_color_spec_ != NVIMGCODEC_COLORSPEC_YCCK));
     DecodeReference(resources_dir, image_file_, reference_output_format_, allow_cmyk);
     ConvertToPlanar();
     if (NV_DEVELOPER_DUMP_OUTPUT_IMAGE_TO_BMP) {
@@ -139,54 +139,54 @@ static const char* css_filenames[] = {"/jpeg/padlock-406986_640_410.jpg", "/jpeg
 // clang-format off
 INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_FORMATS, NvJpegExtDecoderTestSingleImage,
     Combine(::testing::ValuesIn(css_filenames),
-        Values(NVIMGCDCS_COLORSPEC_SRGB),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB, NVIMGCDCS_SAMPLEFORMAT_I_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
+        Values(NVIMGCODEC_COLORSPEC_SRGB),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_RGB, NVIMGCODEC_SAMPLEFORMAT_I_RGB, NVIMGCODEC_SAMPLEFORMAT_P_BGR, NVIMGCODEC_SAMPLEFORMAT_I_BGR),
         //Various output chroma subsampling are ignored for SRGB 
-         Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
-                NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
-        Values(NVIMGCDCS_COLORSPEC_SRGB)));
+         Values(NVIMGCODEC_SAMPLING_NONE, NVIMGCODEC_SAMPLING_422, NVIMGCODEC_SAMPLING_420, NVIMGCODEC_SAMPLING_440, 
+                NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY, NVIMGCODEC_SAMPLING_410V), 
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_RGB),
+        Values(NVIMGCODEC_COLORSPEC_SRGB)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_VARIOUS_CHROMA_WITH_VALID_SYCC_OUTPUT_FORMATS, NvJpegExtDecoderTestSingleImage,
      Combine(::testing::ValuesIn(css_filenames),
-         Values(NVIMGCDCS_COLORSPEC_SYCC),
-         Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
+         Values(NVIMGCODEC_COLORSPEC_SYCC),
+         Values(NVIMGCODEC_SAMPLEFORMAT_P_YUV),
          //Various output chroma subsampling should be ignored - there is not resampling in nvjpeg 
-         Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
-                NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
-         Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-         Values(NVIMGCDCS_COLORSPEC_SYCC)));
+         Values(NVIMGCODEC_SAMPLING_NONE, NVIMGCODEC_SAMPLING_422, NVIMGCODEC_SAMPLING_420, NVIMGCODEC_SAMPLING_440, 
+                NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY, NVIMGCODEC_SAMPLING_410V), 
+         Values(NVIMGCODEC_SAMPLEFORMAT_P_YUV),
+         Values(NVIMGCODEC_COLORSPEC_SYCC)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_VARIOUS_CHROMA_WITH_VALID_GRAY_OUTPUT_FORMATS, NvJpegExtDecoderTestSingleImage,
      Combine(::testing::ValuesIn(css_filenames),
-         Values(NVIMGCDCS_COLORSPEC_GRAY),
-         Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
+         Values(NVIMGCODEC_COLORSPEC_GRAY),
+         Values(NVIMGCODEC_SAMPLEFORMAT_P_Y),
          //Various output chroma subsampling should be ignored - there is only luma
-         Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
-                NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
-         Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
-         Values(NVIMGCDCS_COLORSPEC_GRAY)));
+         Values(NVIMGCODEC_SAMPLING_NONE, NVIMGCODEC_SAMPLING_422, NVIMGCODEC_SAMPLING_420, NVIMGCODEC_SAMPLING_440, 
+                NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY, NVIMGCODEC_SAMPLING_410V), 
+         Values(NVIMGCODEC_SAMPLEFORMAT_P_Y),
+         Values(NVIMGCODEC_COLORSPEC_GRAY)));
 
 static const char* cmyk_and_ycck_filenames[] = {"/jpeg/cmyk.jpg", "/jpeg/cmyk-dali.jpg",
     "/jpeg/ycck_colorspace.jpg"};
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_CYMK_AND_YCCK_WITH_VALID_SRGB_OUTPUT_FORMATS, NvJpegExtDecoderTestSingleImage,
     Combine(::testing::ValuesIn(cmyk_and_ycck_filenames),
-        Values(NVIMGCDCS_COLORSPEC_SRGB),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB, NVIMGCDCS_SAMPLEFORMAT_I_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
-        Values(NVIMGCDCS_SAMPLING_NONE), 
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB),
-        Values(NVIMGCDCS_COLORSPEC_SRGB)));
+        Values(NVIMGCODEC_COLORSPEC_SRGB),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_RGB, NVIMGCODEC_SAMPLEFORMAT_I_RGB, NVIMGCODEC_SAMPLEFORMAT_P_BGR, NVIMGCODEC_SAMPLEFORMAT_I_BGR),
+        Values(NVIMGCODEC_SAMPLING_NONE), 
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_RGB),
+        Values(NVIMGCODEC_COLORSPEC_SRGB)));
 
  INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_CYMK_AND_YCCK_WITH_VALID_CMYK_OUTPUT_FORMATS, NvJpegExtDecoderTestSingleImage,
      Combine(::testing::ValuesIn(css_filenames),
-         Values(NVIMGCDCS_COLORSPEC_CMYK, NVIMGCDCS_COLORSPEC_YCCK), //for unchanged format it should be ignored
-         Values(NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED),
+         Values(NVIMGCODEC_COLORSPEC_CMYK, NVIMGCODEC_COLORSPEC_YCCK), //for unchanged format it should be ignored
+         Values(NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED),
          //Various output chroma subsampling should be ignored - there is not resampling in nvjpeg 
-         Values(NVIMGCDCS_SAMPLING_NONE, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420, NVIMGCDCS_SAMPLING_440, 
-                NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY, NVIMGCDCS_SAMPLING_410V), 
-         Values(NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED),
-         Values(NVIMGCDCS_COLORSPEC_UNCHANGED)));
+         Values(NVIMGCODEC_SAMPLING_NONE, NVIMGCODEC_SAMPLING_422, NVIMGCODEC_SAMPLING_420, NVIMGCODEC_SAMPLING_440, 
+                NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY, NVIMGCODEC_SAMPLING_410V), 
+         Values(NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED),
+         Values(NVIMGCODEC_COLORSPEC_UNCHANGED)));
 
 // clang-format on
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

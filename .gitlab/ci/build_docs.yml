@@ -1,5 +1,5 @@
-.build-nvimagecodecs-docs-script: &build-nvimagecodecs-docs-script |
-    python3 -m pip install artifacts/nvidia_nvimgcodecs_cuda110-*.whl
+.build-nvimagecodec-docs-script: &build-nvimagecodec-docs-script |
+    python3 -m pip install artifacts/nvidia_nvimgcodec_cuda110-*.whl
     cd docs/doxygen
     doxygen
     cd ../sphinx
@@ -21,7 +21,7 @@ docs:
         refs:
             - /^docs.*$/ # branch contains "docs"
     script:
-        - *build-nvimagecodecs-docs-script
+        - *build-nvimagecodec-docs-script
         - mkdir -p html
         - cp -r docs/sphinx/_build/html/* html
 
@@ -46,7 +46,7 @@ pages:
             - docs/CMakeLists.txt
             - CMakeLists.txt
     script:
-        - *build-nvimagecodecs-docs-script
+        - *build-nvimagecodec-docs-script
         - mkdir .public
         - cp -r docs/sphinx/_build/html/* .public
         - mv .public public

@@ -22,14 +22,14 @@
 
 #include <memory>
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class MockCodec : public ICodec
 {
   public:
     MOCK_METHOD(const std::string&, name, (), (const, override));
     MOCK_METHOD(std::unique_ptr<IImageParser>, createParser,
-        (nvimgcdcsCodeStreamDesc_t* code_stream), (const, override));
+        (nvimgcodecCodeStreamDesc_t* code_stream), (const, override));
     MOCK_METHOD(int, getDecodersNum, (), (const, override));
     MOCK_METHOD(IImageDecoderFactory*, getDecoderFactory, (int index), (const, override));
     MOCK_METHOD(int, getEncodersNum, (), (const, override));
@@ -45,4 +45,4 @@ class MockCodec : public ICodec
     MOCK_METHOD(void, unregisterParserFactory, (const std::string parser_id) ,(override));
 };
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

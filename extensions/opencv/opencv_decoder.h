@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "nvimgcodecs.h"
+#include "nvimgcodec.h"
 #include <memory>
 #include <vector>
 #include <string>
@@ -20,18 +20,18 @@ namespace opencv {
 class OpenCVDecoderPlugin
 {
   public:
-    explicit OpenCVDecoderPlugin(const std::string& codec_name, const nvimgcdcsFrameworkDesc_t* framework);
-    nvimgcdcsDecoderDesc_t* getDecoderDesc();
+    explicit OpenCVDecoderPlugin(const std::string& codec_name, const nvimgcodecFrameworkDesc_t* framework);
+    nvimgcodecDecoderDesc_t* getDecoderDesc();
 
   private:
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    nvimgcodecStatus_t create(nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
+    static nvimgcodecStatus_t static_create(void* instance, nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
 
     std::string codec_name_;
     std::string plugin_id_;
-    nvimgcdcsDecoderDesc_t decoder_desc_;
+    nvimgcodecDecoderDesc_t decoder_desc_;
     
-    const nvimgcdcsFrameworkDesc_t* framework_;
+    const nvimgcodecFrameworkDesc_t* framework_;
 };
 
 } // namespace opencv

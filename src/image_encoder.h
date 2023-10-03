@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 #include "iimage_encoder.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IEncodeState;
 class IImage;
@@ -24,19 +24,19 @@ class ICodeStream;
 class ImageEncoder : public IImageEncoder
 {
   public:
-    ImageEncoder(const nvimgcdcsEncoderDesc_t* desc, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    ImageEncoder(const nvimgcodecEncoderDesc_t* desc, const nvimgcodecExecutionParams_t* exec_params, const char* options);
     ~ImageEncoder() override;
-    nvimgcdcsBackendKind_t getBackendKind() const override;
+    nvimgcodecBackendKind_t getBackendKind() const override;
     std::unique_ptr<IEncodeState> createEncodeStateBatch() const override;
-    void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params,
-        std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const override;
+    void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcodecEncodeParams_t* params,
+        std::vector<bool>* result, std::vector<nvimgcodecProcessingStatus_t>* status) const override;
     std::unique_ptr<ProcessingResultsFuture> encode(IEncodeState* encode_state_batch,
         const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
-        const nvimgcdcsEncodeParams_t* params) override;
+        const nvimgcodecEncodeParams_t* params) override;
 
   private:
-    const nvimgcdcsEncoderDesc_t* encoder_desc_;
-    nvimgcdcsEncoder_t encoder_;
+    const nvimgcodecEncoderDesc_t* encoder_desc_;
+    nvimgcodecEncoder_t encoder_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

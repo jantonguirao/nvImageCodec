@@ -11,7 +11,7 @@
 #include <extensions/nvbmp/nvbmp_ext.h>
 #include "common_ext_decoder_test.h"
 #include <gtest/gtest.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <parsers/bmp.h>
 #include <parsers/parser_test_utils.h>
 #include <test_utils.h>
@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 #include <filesystem>
-#include "nvimgcodecs_tests.h"
+#include "nvimgcodec_tests.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class NvbmpExtDecoderTest : public ::testing::Test, public CommonExtDecoderTest
 {
@@ -33,18 +33,18 @@ class NvbmpExtDecoderTest : public ::testing::Test, public CommonExtDecoderTest
     {
         CommonExtDecoderTest::SetUp();
 
-        nvimgcdcsExtensionDesc_t bmp_parser_extension_desc;
-        bmp_parser_extension_desc.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_bmp_parser_extension_desc(&bmp_parser_extension_desc));
+        nvimgcodecExtensionDesc_t bmp_parser_extension_desc;
+        bmp_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_bmp_parser_extension_desc(&bmp_parser_extension_desc));
         extensions_.emplace_back();
-        nvimgcdcsExtensionCreate(instance_, &extensions_.back(), &bmp_parser_extension_desc);
+        nvimgcodecExtensionCreate(instance_, &extensions_.back(), &bmp_parser_extension_desc);
 
-        nvimgcdcsExtensionDesc_t nvbmp_extension_desc;
-        nvbmp_extension_desc.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t nvbmp_extension_desc;
+        nvbmp_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
         nvbmp_extension_desc.next = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvbmp_extension_desc(&nvbmp_extension_desc));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_nvbmp_extension_desc(&nvbmp_extension_desc));
         extensions_.emplace_back();
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &extensions_.back(), &nvbmp_extension_desc));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &extensions_.back(), &nvbmp_extension_desc));
     }
 
     void TearDown() override
@@ -55,12 +55,12 @@ class NvbmpExtDecoderTest : public ::testing::Test, public CommonExtDecoderTest
 
 TEST_F(NvbmpExtDecoderTest, NVBMP_SingleImage_RGB_I)
 {
-    TestSingleImage("bmp/cat-111793_640.bmp", NVIMGCDCS_SAMPLEFORMAT_I_RGB);
+    TestSingleImage("bmp/cat-111793_640.bmp", NVIMGCODEC_SAMPLEFORMAT_I_RGB);
 }
 
 TEST_F(NvbmpExtDecoderTest, NVBMP_SingleImage_RGB_P)
 {
-    TestSingleImage("bmp/cat-111793_640.bmp", NVIMGCDCS_SAMPLEFORMAT_P_RGB);
+    TestSingleImage("bmp/cat-111793_640.bmp", NVIMGCODEC_SAMPLEFORMAT_P_RGB);
 }
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <condition_variable>
 #include <memory>
 #include <string>
@@ -23,7 +23,7 @@
 #include "idecode_state.h"
 #include "iwork_manager.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class ICodec;
 class ILogger;
@@ -48,11 +48,11 @@ class DecoderWorker
    * @param work_manager   - creates and recycles work
    * @param codec   - the factory that constructs the decoder for this worker
    */
-    DecoderWorker(ILogger* logger, IWorkManager<nvimgcdcsDecodeParams_t>* work_manager, const nvimgcdcsExecutionParams_t* exec_params,
+    DecoderWorker(ILogger* logger, IWorkManager<nvimgcodecDecodeParams_t>* work_manager, const nvimgcodecExecutionParams_t* exec_params,
         const std::string& options, const ICodec* codec, int index);
     ~DecoderWorker();
 
-    void addWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate);
+    void addWork(std::unique_ptr<Work<nvimgcodecDecodeParams_t>> work, bool immediate);
 
     DecoderWorker* getFallback();
     IImageDecoder* getDecoder();
@@ -71,7 +71,7 @@ class DecoderWorker
    * @param immediate If true, work is not scheduled to a worker thread but executed in the current
    *                  thread instead.
    */
-    void processBatch(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, bool immediate) noexcept;
+    void processBatch(std::unique_ptr<Work<nvimgcodecDecodeParams_t>> work, bool immediate) noexcept;
 
   /**
    * @brief Waits for and process current work results
@@ -81,7 +81,7 @@ class DecoderWorker
    * @param immediate 
    */
   void processCurrentResults(
-    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> curr_work, std::unique_ptr<ProcessingResultsFuture> curr_results, bool immediate);
+    std::unique_ptr<Work<nvimgcodecDecodeParams_t>> curr_work, std::unique_ptr<ProcessingResultsFuture> curr_results, bool immediate);
 
   /**
    * @brief Set current work future results for processing in the working thread
@@ -89,7 +89,7 @@ class DecoderWorker
    * @param work 
    * @param future 
    */
-  void updateCurrentWork(std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work, std::unique_ptr<ProcessingResultsFuture> future);
+  void updateCurrentWork(std::unique_ptr<Work<nvimgcodecDecodeParams_t>> work, std::unique_ptr<ProcessingResultsFuture> future);
 
     /**
    * @brief The main loop of the worker thread.
@@ -97,17 +97,17 @@ class DecoderWorker
     void run();
 
     ILogger* logger_;
-    IWorkManager<nvimgcdcsDecodeParams_t>* work_manager_ = nullptr;
+    IWorkManager<nvimgcodecDecodeParams_t>* work_manager_ = nullptr;
     const ICodec* codec_ = nullptr;
     int index_ = 0;
-    const nvimgcdcsExecutionParams_t* exec_params_;
+    const nvimgcodecExecutionParams_t* exec_params_;
     const std::string& options_;
 
     std::mutex mtx_;
     std::condition_variable cv_;
 
-    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> work_;  // next iteration
-    std::unique_ptr<Work<nvimgcdcsDecodeParams_t>> curr_work_;  // current (already scheduled iteration)
+    std::unique_ptr<Work<nvimgcodecDecodeParams_t>> work_;  // next iteration
+    std::unique_ptr<Work<nvimgcodecDecodeParams_t>> curr_work_;  // current (already scheduled iteration)
     std::unique_ptr<ProcessingResultsFuture> curr_results_;  // future results from current iteration
     std::thread worker_;
     bool stop_requested_ = false;

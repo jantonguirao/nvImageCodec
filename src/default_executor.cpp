@@ -13,11 +13,11 @@
 #include "exception.h"
 #include "log.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 DefaultExecutor::DefaultExecutor(ILogger* logger, int num_threads)
     : logger_(logger)
-    , desc_{NVIMGCDCS_STRUCTURE_TYPE_EXECUTOR_DESC, nullptr, this, &static_launch, &static_get_num_threads}
+    , desc_{NVIMGCODEC_STRUCTURE_TYPE_EXECUTOR_DESC, nullptr, this, &static_launch, &static_get_num_threads}
     , num_threads_(num_threads)
 {
     if (num_threads_ == 0) {
@@ -30,12 +30,12 @@ DefaultExecutor::~DefaultExecutor()
 {
 }
 
-nvimgcdcsExecutorDesc_t* DefaultExecutor::getExecutorDesc()
+nvimgcodecExecutorDesc_t* DefaultExecutor::getExecutorDesc()
 {
     return &desc_;
 }
 
-nvimgcdcsStatus_t DefaultExecutor::launch(int device_id, int sample_idx, void* task_context,
+nvimgcodecStatus_t DefaultExecutor::launch(int device_id, int sample_idx, void* task_context,
     void (*task)(int thread_id, int sample_idx, void* task_context))
 {
     try {
@@ -50,11 +50,11 @@ nvimgcdcsStatus_t DefaultExecutor::launch(int device_id, int sample_idx, void* t
         };
         thread_pool.addWork(task_wrapper, 0, true);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(logger_, e.what());
-        return NVIMGCDCS_STATUS_INTERNAL_ERROR;
+        NVIMGCODEC_LOG_ERROR(logger_, e.what());
+        return NVIMGCODEC_STATUS_INTERNAL_ERROR;
     }
 
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
 int DefaultExecutor::get_num_threads() const
@@ -62,7 +62,7 @@ int DefaultExecutor::get_num_threads() const
     return num_threads_;
 }
 
-nvimgcdcsStatus_t DefaultExecutor::static_launch(void* instance, int device_id, int sample_idx, void* task_context,
+nvimgcodecStatus_t DefaultExecutor::static_launch(void* instance, int device_id, int sample_idx, void* task_context,
     void (*task)(int thread_id, int sample_idx, void* task_context))
 {
     DefaultExecutor* handle = reinterpret_cast<DefaultExecutor*>(instance);
@@ -75,4 +75,4 @@ int DefaultExecutor::static_get_num_threads(void* instance)
     return handle->get_num_threads();
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

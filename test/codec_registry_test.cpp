@@ -16,7 +16,7 @@
 #include "mock_image_parser.h"
 #include "mock_logger.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 using ::testing::ByMove;
 using ::testing::Return;
@@ -47,8 +47,8 @@ TEST(codec_registry, get_codec_by_name)
 
 TEST(codec_registry, get_parser_for_given_code_stream)
 {
-    nvimgcdcsCodeStreamDesc_t code_stream1;
-    nvimgcdcsCodeStreamDesc_t code_stream2;
+    nvimgcodecCodeStreamDesc_t code_stream1;
+    nvimgcodecCodeStreamDesc_t code_stream2;
 
     std::unique_ptr<MockImageParser> parser1 = std::make_unique<MockImageParser>();
     MockImageParser* parser1_ptr             = parser1.get();
@@ -81,4 +81,4 @@ TEST(codec_registry, get_parser_for_given_code_stream)
     EXPECT_EQ(parser_1.get(), parser1_ptr);
 }
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

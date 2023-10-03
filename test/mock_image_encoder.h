@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <memory>
 #include <vector>
@@ -22,19 +22,19 @@
 #include "../src/icode_stream.h"
 #include "../src/iimage.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class MockImageEncoder : public IImageEncoder
 {
   public:
-    MOCK_METHOD(nvimgcdcsBackendKind_t, getBackendKind, (), (const, override));
+    MOCK_METHOD(nvimgcodecBackendKind_t, getBackendKind, (), (const, override));
     MOCK_METHOD(std::unique_ptr<IEncodeState>, createEncodeStateBatch, (), (const, override));
     MOCK_METHOD(void, canEncode,
-        (const std::vector<IImage*>&, const std::vector<ICodeStream*>&, const nvimgcdcsEncodeParams_t*, std::vector<bool>*,
-            std::vector<nvimgcdcsProcessingStatus_t>*),
+        (const std::vector<IImage*>&, const std::vector<ICodeStream*>&, const nvimgcodecEncodeParams_t*, std::vector<bool>*,
+            std::vector<nvimgcodecProcessingStatus_t>*),
         (const, override));
     MOCK_METHOD(std::unique_ptr<ProcessingResultsFuture>, encode,
-        (IEncodeState*, const std::vector<IImage*>&, const std::vector<ICodeStream*>&, const nvimgcdcsEncodeParams_t*), (override));
+        (IEncodeState*, const std::vector<IImage*>&, const std::vector<ICodeStream*>&, const nvimgcodecEncodeParams_t*), (override));
 };
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

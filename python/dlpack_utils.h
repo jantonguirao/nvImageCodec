@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <dlpack/dlpack.h>
 
 #include <pybind11/buffer_info.h>
 #include <pybind11/pybind11.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 
@@ -28,7 +28,7 @@ class DLPackTensor final
     DLPackTensor(DLPackTensor&& that) noexcept;
 
     explicit DLPackTensor(DLManagedTensor* dl_managed_tensor);
-    explicit DLPackTensor(const nvimgcdcsImageInfo_t& image_info, std::shared_ptr<unsigned char> image_buffer);
+    explicit DLPackTensor(const nvimgcodecImageInfo_t& image_info, std::shared_ptr<unsigned char> image_buffer);
 
     ~DLPackTensor();
 
@@ -38,7 +38,7 @@ class DLPackTensor final
     const DLTensor& operator*() const;
     DLTensor& operator*();
 
-    void getImageInfo(nvimgcdcsImageInfo_t* image_info);
+    void getImageInfo(nvimgcodecImageInfo_t* image_info);
     py::capsule getPyCapsule();
 
   private:
@@ -49,4 +49,4 @@ class DLPackTensor final
 
 bool is_cuda_accessible(DLDeviceType devType);
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

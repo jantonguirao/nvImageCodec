@@ -14,7 +14,7 @@
 #include <memory>
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IoStream;
 class IIoStreamFactory
@@ -27,4 +27,4 @@ class IIoStreamFactory
     virtual std::unique_ptr<IoStream> createMemIoStream(void* ctx, std::function<unsigned char*(void* ctx, size_t)> get_buffer_func) const = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -22,7 +22,7 @@ Installation
 Pre-requisites
 --------------
 
-This section describes the recommended dependencies to use nvImageCodecs
+This section describes the recommended dependencies to use nvImageCodec
 
 * Ubuntu >= 20.04
 * CUDA driver >= 11.8
@@ -31,37 +31,37 @@ This section describes the recommended dependencies to use nvImageCodecs
 Setup
 -----
 
-The following steps describe how to install nvImageCodecs from pre-built install packages. Choose the installation method that meets your environment needs.
+The following steps describe how to install nvImageCodec from pre-built install packages. Choose the installation method that meets your environment needs.
 
-Download the nvImageCodecs tar/deb package from `here <https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec/-/releases>`_
+Download the nvImageCodec tar/deb package from `here <https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec/-/releases>`_
 
 * Tar File Installation
 
-    Navigate to directory containing the nvImageCodecs tar file.
+    Navigate to directory containing the nvImageCodec tar file.
 
-    Unzip the nvImageCodecs runtime and developer package: ::
+    Unzip the nvImageCodec runtime and developer package: ::
 
-        tar -xvf nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
+        tar -xvf nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
 
     Optionally Unzip the tests. ::
 
-        tar -xvf nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-tests.tar.gz -C /opt/nvidia/
+        tar -xvf nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-tests.tar.gz -C /opt/nvidia/
 
 * Debian Local Installation
 
-    Navigate to directory containing the nvImageCodecs tar file.
+    Navigate to directory containing the nvImageCodec tar file.
 
-    Install the nvImageCodecs runtime and developer package: ::
+    Install the nvImageCodec runtime and developer package: ::
 
-        sudo apt-get install -y ./nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
+        sudo apt-get install -y ./nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
 
     Optionally install the tests. ::
 
-        sudo apt-get install -y ./nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-tests.deb
+        sudo apt-get install -y ./nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-tests.deb
 
 * Python WHL File Installation. ::
 
-    pip install nvidia_nvimgcodecs_cuda120-0.1.0-py3-none-manylinux2014_x86_64.whl
+    pip install nvidia_nvimgcodec_cuda120-0.1.0-py3-none-manylinux2014_x86_64.whl
 
 * Running the samples. ::
 

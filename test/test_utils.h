@@ -11,7 +11,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 cv::Mat rgb2bgr(const cv::Mat& img);
 cv::Mat bgr2rgb(const cv::Mat& img);
@@ -19,4 +19,4 @@ cv::Mat bgr2rgb(const cv::Mat& img);
 int write_bmp(const char* filename, const unsigned char* d_chanR, int pitchR, const unsigned char* d_chanG, int pitchG,
     const unsigned char* d_chanB, int pitchB, int width, int height);
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

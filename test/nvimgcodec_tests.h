@@ -12,8 +12,8 @@
 
 #include <string>
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 extern std::string resources_dir;
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

@@ -10,27 +10,27 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 #include "iimage_encoder_factory.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IImageEncoder;
 
 class ImageEncoderFactory : public IImageEncoderFactory
 {
   public:
-    explicit ImageEncoderFactory(const nvimgcdcsEncoderDesc_t* desc);
+    explicit ImageEncoderFactory(const nvimgcodecEncoderDesc_t* desc);
     std::string getEncoderId() const override;
     std::string getCodecName() const override;
-    nvimgcdcsBackendKind_t getBackendKind() const override;
+    nvimgcodecBackendKind_t getBackendKind() const override;
     std::unique_ptr<IImageEncoder> createEncoder(
-        const nvimgcdcsExecutionParams_t* exec_params, const char* options) const override;
+        const nvimgcodecExecutionParams_t* exec_params, const char* options) const override;
 
   private:
-    const nvimgcdcsEncoderDesc_t* encoder_desc_;
+    const nvimgcodecEncoderDesc_t* encoder_desc_;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

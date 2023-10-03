@@ -11,7 +11,7 @@
 #include "device_guard.h"
 #include "exception.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 bool cuInitChecked()
 {
@@ -52,4 +52,4 @@ DeviceGuard::~DeviceGuard() {
   }
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

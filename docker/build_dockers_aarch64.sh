@@ -16,7 +16,7 @@ docker build -t cuda12.1-aarch64 \
     docker
 
 # GCC 10, aarch64
-docker build -t nvimgcodecs_deps-aarch64 -f docker/Dockerfile.deps \
+docker build -t nvimgcodec_deps-aarch64 -f docker/Dockerfile.deps \
     --build-arg "FROM_IMAGE_NAME=manylinux2014_aarch64.gcc10" \
     --build-arg "ARCH=aarch64" \
     docker
@@ -26,7 +26,7 @@ docker build -t nvimgcodecs_deps-aarch64 -f docker/Dockerfile.deps \
 # GCC 10, CUDA 12.1, aarch64
 docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-aarch64:cuda-12.1-v3" \
     -f docker/Dockerfile.cuda.deps \
-    --build-arg "FROM_IMAGE_NAME=nvimgcodecs_deps-aarch64" \
+    --build-arg "FROM_IMAGE_NAME=nvimgcodec_deps-aarch64" \
     --build-arg "CUDA_IMAGE=cuda12.1-aarch64" \
     docker
 

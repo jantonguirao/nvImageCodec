@@ -3,7 +3,7 @@
 # Stop at any error, show all commands
 set -ex
 
-usage="ENV1=VAL1 ENV2=VAL2 [...] $(basename "$0") [-h] -- this nvimgcodecs build helper mean to run from the docker environment.
+usage="ENV1=VAL1 ENV2=VAL2 [...] $(basename "$0") [-h] -- this nvimgcodec build helper mean to run from the docker environment.
 Please don't call it directly.
 
 where:
@@ -46,7 +46,7 @@ export WITH_DYNAMIC_NPP=${WITH_DYNAMIC_NPP:-ON}
 
 export NVIDIA_BUILD_ID=${NVIDIA_BUILD_ID:-0}
 export GIT_SHA=${GIT_SHA}
-export NVIMGCODECS_TIMESTAMP=${NVIMGCODECS_TIMESTAMP}
+export NVIMGCODEC_TIMESTAMP=${NVIMGCODEC_TIMESTAMP}
 export BUILD_FLAVOR=${BUILD_FLAVOR}
 export CUDA_TARGET_ARCHS=${CUDA_TARGET_ARCHS}
 export WHL_PLATFORM_NAME=${WHL_PLATFORM_NAME:-manylinux2014_${ARCH}}
@@ -83,9 +83,9 @@ cmake ../                                                            \
       -DWITH_DYNAMIC_NVJPEG=${WITH_DYNAMIC_NVJPEG}                   \
       -DWITH_DYNAMIC_NVJPEG2K=${WITH_DYNAMIC_NVJPEG2K}               \
       -DWITH_DYNAMIC_NPP=${WITH_DYNAMIC_NPP}                         \
-      -DNVIMGCODECS_BUILD_FLAVOR=${BUILD_FLAVOR}                     \
-      -DNVIMGCODECS_WHL_PLATFORM_NAME=${WHL_PLATFORM_NAME}           \
-      -DTIMESTAMP=${NVIMGCODECS_TIMESTAMP} -DGIT_SHA=${GIT_SHA}      \
+      -DNVIMGCODEC_BUILD_FLAVOR=${BUILD_FLAVOR}                     \
+      -DNVIMGCODEC_WHL_PLATFORM_NAME=${WHL_PLATFORM_NAME}           \
+      -DTIMESTAMP=${NVIMGCODEC_TIMESTAMP} -DGIT_SHA=${GIT_SHA}      \
       -DPython_EXECUTABLE=${Python_EXECUTABLE}                       \
       ${EXTRA_CMAKE_OPTIONS}
 

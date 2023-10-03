@@ -24,7 +24,7 @@ NvImageCodecs-0.1.0-alpha.2 is the second release of the project. This release i
 Release Highlights
 ------------------
 
-This nvImageCodecs release includes the following updates over v0.1.0-alpha.1:
+This nvImageCodec release includes the following updates over v0.1.0-alpha.1:
 
 * Fixed multiple logging when more than one instance of library is created
 * Fixed synchronization issues with Image CUDA stream in GPU encoders
@@ -38,8 +38,8 @@ This nvImageCodecs release includes the following updates over v0.1.0-alpha.1:
 * C API improvements
     * Removed binary literals
     * Changed bool type to integer
-    * Remove MCT struct and enable_color_transform parameters and use nvimgcdcsImageInfo_t instead
-    * Added map and unmap to nvimgcdcsIOStreamDesc_t
+    * Remove MCT struct and enable_color_transform parameters and use nvimgcodecImageInfo_t instead
+    * Added map and unmap to nvimgcodecIOStreamDesc_t
 * Python API improvements
     * Change decode and encode function which operates on files to read and write respectively
     * Replaced MCT and enable_color_conversion parameters with ColorSpec
@@ -47,7 +47,7 @@ This nvImageCodecs release includes the following updates over v0.1.0-alpha.1:
 
 Compatibility
 -------------
-This section highlights the compute stack nvImageCodecs has been tested on
+This section highlights the compute stack nvImageCodec has been tested on
 
 * Ubuntu x86_x64 >= 20.04
 * CUDA Toolkit >= 11.8

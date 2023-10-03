@@ -20,7 +20,7 @@
 C
 ----------------
 
-The following samples demonstrates the use of nvImageCodecs C API with cmake:
+The following samples demonstrates the use of nvImageCodec C API with cmake:
 
 
 .. toctree::

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IDebugMessenger;
 
@@ -20,12 +20,12 @@ class ILogger
 {
   public:
     virtual ~ILogger() = default;
-    virtual void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageCategory_t message_category, const std::string& message) = 0;
-    virtual void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data) = 0;
+    virtual void log(const nvimgcodecDebugMessageSeverity_t message_severity,
+        const nvimgcodecDebugMessageCategory_t message_category, const std::string& message) = 0;
+    virtual void log(const nvimgcodecDebugMessageSeverity_t message_severity,
+        const nvimgcodecDebugMessageCategory_t message_category, const nvimgcodecDebugMessageData_t* data) = 0;
     virtual void registerDebugMessenger(IDebugMessenger* messenger) = 0;
     virtual void unregisterDebugMessenger(IDebugMessenger* messenger) = 0;
 };
 
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

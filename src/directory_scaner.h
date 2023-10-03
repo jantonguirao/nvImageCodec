@@ -16,7 +16,7 @@
 
 namespace fs = std::filesystem;
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class DirectoryScaner : public IDirectoryScaner
 {
@@ -36,4 +36,4 @@ class DirectoryScaner : public IDirectoryScaner
     fs::directory_iterator dir_it_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

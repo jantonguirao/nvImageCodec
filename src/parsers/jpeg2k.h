@@ -10,56 +10,56 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <vector>
 #include <array>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class JPEG2KParserPlugin
 {
   public:
-    explicit JPEG2KParserPlugin(const nvimgcdcsFrameworkDesc_t* framework);
-    nvimgcdcsParserDesc_t* getParserDesc();
+    explicit JPEG2KParserPlugin(const nvimgcodecFrameworkDesc_t* framework);
+    nvimgcodecParserDesc_t* getParserDesc();
 
   private:
     struct Parser
     {
-        Parser(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework);
+        Parser(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework);
 
         
-        nvimgcdcsStatus_t parseJP2(nvimgcdcsIoStreamDesc_t* io_stream);
-        nvimgcdcsStatus_t parseCodeStream(nvimgcdcsIoStreamDesc_t* io_stream);
-        nvimgcdcsStatus_t getImageInfo(
-            nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream);
+        nvimgcodecStatus_t parseJP2(nvimgcodecIoStreamDesc_t* io_stream);
+        nvimgcodecStatus_t parseCodeStream(nvimgcodecIoStreamDesc_t* io_stream);
+        nvimgcodecStatus_t getImageInfo(
+            nvimgcodecImageInfo_t* image_info, nvimgcodecCodeStreamDesc_t* code_stream);
 
-        static nvimgcdcsStatus_t static_destroy(nvimgcdcsParser_t parser);
+        static nvimgcodecStatus_t static_destroy(nvimgcodecParser_t parser);
 
-        static nvimgcdcsStatus_t static_get_image_info(nvimgcdcsParser_t parser,
-            nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream);
+        static nvimgcodecStatus_t static_get_image_info(nvimgcodecParser_t parser,
+            nvimgcodecImageInfo_t* image_info, nvimgcodecCodeStreamDesc_t* code_stream);
 
         const char* plugin_id_;
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         uint16_t num_components, CSiz;
         uint32_t height = 0, width;
         uint8_t bits_per_component;
-        nvimgcdcsColorSpec_t color_spec;
+        nvimgcodecColorSpec_t color_spec;
         uint32_t XSiz, YSiz, XOSiz, YOSiz;
-        std::array<uint8_t, NVIMGCDCS_MAX_NUM_PLANES> XRSiz, YRSiz, Ssiz;
+        std::array<uint8_t, NVIMGCODEC_MAX_NUM_PLANES> XRSiz, YRSiz, Ssiz;
     };
 
-    nvimgcdcsStatus_t canParse(int* result, nvimgcdcsCodeStreamDesc_t* code_stream);
-    nvimgcdcsStatus_t create(nvimgcdcsParser_t* parser);
+    nvimgcodecStatus_t canParse(int* result, nvimgcodecCodeStreamDesc_t* code_stream);
+    nvimgcodecStatus_t create(nvimgcodecParser_t* parser);
 
-    static nvimgcdcsStatus_t static_can_parse(
-        void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream);
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsParser_t* parser);
+    static nvimgcodecStatus_t static_can_parse(
+        void* instance, int* result, nvimgcodecCodeStreamDesc_t* code_stream);
+    static nvimgcodecStatus_t static_create(void* instance, nvimgcodecParser_t* parser);
 
     static constexpr const char* plugin_id_ = "jpeg2k_parser";
-    const nvimgcdcsFrameworkDesc_t* framework_;
-    nvimgcdcsParserDesc_t parser_desc_;
+    const nvimgcodecFrameworkDesc_t* framework_;
+    nvimgcodecParserDesc_t parser_desc_;
 };
 
-nvimgcdcsStatus_t get_jpeg2k_parser_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);
+nvimgcodecStatus_t get_jpeg2k_parser_extension_desc(nvimgcodecExtensionDesc_t* ext_desc);
 
-}  // namespace nvimgcdcs
+}  // namespace nvimgcodec

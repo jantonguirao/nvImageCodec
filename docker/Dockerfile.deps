@@ -1,6 +1,6 @@
 #########################################################################################
-##  Build nvImageCodecs dependencies on top of manylinux2014
-##  nvImageCodecs is based on "manylinux2014", official page https://github.com/pypa/manylinux
+##  Build nvImageCodec dependencies on top of manylinux2014
+##  nvImageCodec is based on "manylinux2014", official page https://github.com/pypa/manylinux
 #########################################################################################
 ARG FROM_IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
 ARG BUILDER_EXTRA_DEPS=scratch
@@ -99,8 +99,8 @@ ENV PYBIN=${PYTHONPATH}/bin \
     PYLIB=${PYTHONPATH}/lib
 
 ENV PATH=/opt/python/cp37-cp37m/bin:/opt/python/cp38-cp38/bin:/opt/python/cp39-cp39/bin:${PYBIN}:/opt/python/cp310-cp310/bin:/opt/python/cp311-cp311/bin:${PYBIN}:${PATH} \
-    LD_LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LD_LIBRARY_PATH} \
-    LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LIBRARY_PATH}
+    LD_LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodec/${NVIMGCODEC_BUILD_DIR}:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LD_LIBRARY_PATH} \
+    LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodec/${NVIMGCODEC_BUILD_DIR}:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LIBRARY_PATH}
 
 RUN ln -s /opt/python/cp${PYV}* /opt/python/v
 

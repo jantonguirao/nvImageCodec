@@ -13,7 +13,7 @@
 #include <gmock/gmock.h>
 #include "../src/ienvironment.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class MockEnvironment : public IEnvironment
 {
@@ -21,4 +21,4 @@ class MockEnvironment : public IEnvironment
     MOCK_METHOD(std::string, getVariable, (const std::string&), (override));
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,37 +10,37 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <sstream>
 #include <string>
 
 #ifdef NDEBUG
-    #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO
+    #define NVIMGCODEC_SEVERITY NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_INFO
 #else
-    #define NVIMGCDCS_SEVERITY NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE
+    #define NVIMGCODEC_SEVERITY NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_TRACE
 #endif
 
-#define NVIMGCDCS_LOG(framework, id, svr, type, msg)                                                                   \
+#define NVIMGCODEC_LOG(framework, id, svr, type, msg)                                                                   \
     do {                                                                                                               \
-        if (svr >= NVIMGCDCS_SEVERITY) {                                                                               \
+        if (svr >= NVIMGCODEC_SEVERITY) {                                                                               \
             std::stringstream ss{};                                                                                    \
             ss << msg;                                                                                                 \
             std::string msg_str{ss.str()};                                                                             \
-            const nvimgcdcsDebugMessageData_t data{                                                                    \
-                NVIMGCDCS_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr, msg_str.c_str(), 0, nullptr, id, NVIMGCDCS_VER}; \
+            const nvimgcodecDebugMessageData_t data{                                                                    \
+                NVIMGCODEC_STRUCTURE_TYPE_DEBUG_MESSAGE_DATA, nullptr, msg_str.c_str(), 0, nullptr, id, NVIMGCODEC_VER}; \
             framework->log(framework->instance, svr, type, &data);                                                     \
         }                                                                                                              \
     } while (0)
 
-#define NVIMGCDCS_LOG_TRACE(framework, id, ...) \
-    NVIMGCDCS_LOG(framework, id, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE, NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
-#define NVIMGCDCS_LOG_DEBUG(framework, id, ...) \
-    NVIMGCDCS_LOG(framework, id, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG, NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
-#define NVIMGCDCS_LOG_INFO(framework, id, ...) \
-    NVIMGCDCS_LOG(framework, id, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO, NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
-#define NVIMGCDCS_LOG_WARNING(framework, id, ...) \
-    NVIMGCDCS_LOG(framework, id, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING, NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
-#define NVIMGCDCS_LOG_ERROR(framework, id, ...) \
-    NVIMGCDCS_LOG(framework, id, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR, NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
-#define NVIMGCDCS_LOG_FATAL(framework, id, ...) \
-    NVIMGCDCS_LOG(framework, id, NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL, NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
+#define NVIMGCODEC_LOG_TRACE(framework, id, ...) \
+    NVIMGCODEC_LOG(framework, id, NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_TRACE, NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
+#define NVIMGCODEC_LOG_DEBUG(framework, id, ...) \
+    NVIMGCODEC_LOG(framework, id, NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEBUG, NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
+#define NVIMGCODEC_LOG_INFO(framework, id, ...) \
+    NVIMGCODEC_LOG(framework, id, NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_INFO, NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
+#define NVIMGCODEC_LOG_WARNING(framework, id, ...) \
+    NVIMGCODEC_LOG(framework, id, NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_WARNING, NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
+#define NVIMGCODEC_LOG_ERROR(framework, id, ...) \
+    NVIMGCODEC_LOG(framework, id, NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_ERROR, NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)
+#define NVIMGCODEC_LOG_FATAL(framework, id, ...) \
+    NVIMGCODEC_LOG(framework, id, NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_FATAL, NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_GENERAL, __VA_ARGS__)

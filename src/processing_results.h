@@ -10,29 +10,29 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <stdexcept>
 #include <utility>
 #include <vector>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 /**
  * @brief Results of a processing operation.
  */
 struct ProcessingResult
 {
-    nvimgcdcsProcessingStatus_t status_ = NVIMGCDCS_PROCESSING_STATUS_UNKNOWN;
+    nvimgcodecProcessingStatus_t status_ = NVIMGCODEC_PROCESSING_STATUS_UNKNOWN;
     std::exception_ptr exception_ = nullptr;
 
     bool isSuccess() const {
-      return status_ == NVIMGCDCS_PROCESSING_STATUS_SUCCESS && exception_ == nullptr;
+      return status_ == NVIMGCODEC_PROCESSING_STATUS_SUCCESS && exception_ == nullptr;
     }
 
-    static ProcessingResult success() { return {NVIMGCDCS_PROCESSING_STATUS_SUCCESS, {}}; }
-    static ProcessingResult failure(nvimgcdcsProcessingStatus_t status) { return {status, {}}; }
-    static ProcessingResult failure(std::exception_ptr exception) { return {NVIMGCDCS_PROCESSING_STATUS_FAIL, std::move(exception)}; }
+    static ProcessingResult success() { return {NVIMGCODEC_PROCESSING_STATUS_SUCCESS, {}}; }
+    static ProcessingResult failure(nvimgcodecProcessingStatus_t status) { return {status, {}}; }
+    static ProcessingResult failure(std::exception_ptr exception) { return {NVIMGCODEC_PROCESSING_STATUS_FAIL, std::move(exception)}; }
 };
 
 class ProcessingResultsSharedState;
@@ -182,10 +182,10 @@ class ProcessingResultsFuture
     explicit ProcessingResultsFuture(std::shared_ptr<ProcessingResultsSharedState> impl);
     friend class ProcessingResultsPromise;
     // friend std::unique_ptr<ProcessingResultsFuture> std::make_unique<ProcessingResultsFuture>(
-    //     std::shared_ptr<nvimgcdcs::ProcessingResultsSharedState>&);
+    //     std::shared_ptr<nvimgcodec::ProcessingResultsSharedState>&);
     // friend std::unique_ptr<ProcessingResultsFuture> std::make_unique<ProcessingResultsFuture>(
-    //     std::shared_ptr<nvimgcdcs::ProcessingResultsSharedState>&&);
+    //     std::shared_ptr<nvimgcodec::ProcessingResultsSharedState>&&);
     std::shared_ptr<ProcessingResultsSharedState> impl_ = nullptr;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

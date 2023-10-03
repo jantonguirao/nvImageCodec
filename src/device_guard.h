@@ -12,7 +12,7 @@
 
 #include <cuda.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 bool cuInitChecked();
 
@@ -35,6 +35,6 @@ class DeviceGuard {
   CUcontext old_context_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec
 
 

@@ -9,4 +9,4 @@ bin/*
 .DS_Store
 .*.swp
 .dockerignore
-nvimgcdcs_version.h
+nvimgcodec_version.h

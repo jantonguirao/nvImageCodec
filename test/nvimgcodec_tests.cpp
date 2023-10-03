@@ -8,17 +8,17 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
-#include "nvimgcodecs_tests.h"
+#include "nvimgcodec_tests.h"
 #include <cuda_runtime.h>
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <iostream>
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 std::string resources_dir;
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test
 
 namespace {
 std::string getCmdOption(char** begin, char** end, const std::string& option)
@@ -35,10 +35,10 @@ int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
 
-    nvimgcdcs::test::resources_dir = getCmdOption(argv, argv + argc, "--resources_dir");
-    if (nvimgcdcs::test::resources_dir.empty()) {
+    nvimgcodec::test::resources_dir = getCmdOption(argv, argv + argc, "--resources_dir");
+    if (nvimgcodec::test::resources_dir.empty()) {
         std::cerr << "Some tests needs a valid resources dir (e.g. --resources_dir path/to/resources)\n";
-        nvimgcdcs::test::resources_dir = "../../resources";
+        nvimgcodec::test::resources_dir = "../../resources";
     }
 
     cudaDeviceProp props;

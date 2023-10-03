@@ -12,7 +12,7 @@
 
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IEnvironment
 {
@@ -22,4 +22,4 @@ class IEnvironment
     virtual std::string getVariable(const std::string& env_var) = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

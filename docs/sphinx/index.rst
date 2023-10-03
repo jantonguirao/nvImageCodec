@@ -14,11 +14,11 @@
   # See the License for the specific language governing permissions and
   # limitations under the License.
 
-NVIDIA nvImageCodecs
+NVIDIA nvImageCodec
 ======================================
-The nvImageCodecs is a library of accelerated codecs with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
+The nvImageCodec is a library of accelerated codec with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
 
-This nvImageCodecs release includes the following key features:
+This nvImageCodec release includes the following key features:
 
 * Unified API for decoding and encoding images
 * Batch processing, with variable shape and heterogeneous formats images

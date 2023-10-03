@@ -15,14 +15,14 @@
 #include "iencode_state.h"
 #include "processing_results.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 Image::Image()
     : index_(0)
     , image_info_{}
     , decode_state_(nullptr)
     , encode_state_(nullptr)
-    , image_desc_{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
+    , image_desc_{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
           Image::static_image_ready}
     , promise_(nullptr)
 {
@@ -37,16 +37,16 @@ void Image::setIndex(int index)
     index_ = index;
 }
 
-void Image::setImageInfo(const nvimgcdcsImageInfo_t* image_info)
+void Image::setImageInfo(const nvimgcodecImageInfo_t* image_info)
 {
     image_info_ = *image_info;
 }
-void Image::getImageInfo(nvimgcdcsImageInfo_t* image_info)
+void Image::getImageInfo(nvimgcodecImageInfo_t* image_info)
 {
     *image_info = image_info_;
 }
 
-nvimgcdcsImageDesc_t* Image::getImageDesc()
+nvimgcodecImageDesc_t* Image::getImageDesc()
 {
     return &image_desc_;
 }
@@ -56,29 +56,29 @@ void Image::setPromise(const ProcessingResultsPromise& promise)
     promise_ = std::make_unique<ProcessingResultsPromise>(promise);
 }
 
-nvimgcdcsStatus_t Image::imageReady(nvimgcdcsProcessingStatus_t processing_status)
+nvimgcodecStatus_t Image::imageReady(nvimgcodecProcessingStatus_t processing_status)
 {
     assert(promise_);
     promise_->set(index_, {processing_status, {}});
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t Image::static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result)
+nvimgcodecStatus_t Image::static_get_image_info(void* instance, nvimgcodecImageInfo_t* result)
 {
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
     handle->getImageInfo(result);
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t Image::static_image_ready(
-    void* instance, nvimgcdcsProcessingStatus_t processing_status)
+nvimgcodecStatus_t Image::static_image_ready(
+    void* instance, nvimgcodecProcessingStatus_t processing_status)
 {
     assert(instance);
     Image* handle = reinterpret_cast<Image*>(instance);
     handle->imageReady(processing_status);
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

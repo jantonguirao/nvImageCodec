@@ -10,31 +10,31 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include "idebug_messenger.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class DefaultDebugMessenger : public IDebugMessenger
 {
   public:
-    DefaultDebugMessenger(uint32_t message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT, 
-        uint32_t message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL);
+    DefaultDebugMessenger(uint32_t message_severity = NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEFAULT, 
+        uint32_t message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL);
 
-    const nvimgcdcsDebugMessengerDesc_t* getDesc() override { return &desc_; }
+    const nvimgcodecDebugMessengerDesc_t* getDesc() override { return &desc_; }
 
   private:
-    int debugCallback(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageCategory_t message_category,
-        const nvimgcdcsDebugMessageData_t* callback_data);
+    int debugCallback(const nvimgcodecDebugMessageSeverity_t message_severity,
+        const nvimgcodecDebugMessageCategory_t message_category,
+        const nvimgcodecDebugMessageData_t* callback_data);
 
-    static int static_debug_callback(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageCategory_t message_category,
-        const nvimgcdcsDebugMessageData_t* callback_data,
+    static int static_debug_callback(const nvimgcodecDebugMessageSeverity_t message_severity,
+        const nvimgcodecDebugMessageCategory_t message_category,
+        const nvimgcodecDebugMessageData_t* callback_data,
         void* user_data
     );
 
-    const nvimgcdcsDebugMessengerDesc_t desc_;
+    const nvimgcodecDebugMessengerDesc_t desc_;
 };
 
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

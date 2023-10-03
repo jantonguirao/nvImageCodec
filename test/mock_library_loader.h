@@ -13,7 +13,7 @@
 #include <gmock/gmock.h>
 #include "../src/ilibrary_loader.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class MockLibraryLoader : public ILibraryLoader
 {
@@ -24,4 +24,4 @@ class MockLibraryLoader : public ILibraryLoader
         (override));
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

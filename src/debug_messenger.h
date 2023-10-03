@@ -10,19 +10,19 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include "idebug_messenger.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class DebugMessenger : public IDebugMessenger
 {
   public:
-    DebugMessenger(const nvimgcdcsDebugMessengerDesc_t* desc): desc_(*desc){}
-    const nvimgcdcsDebugMessengerDesc_t* getDesc() override { return &desc_; }
+    DebugMessenger(const nvimgcodecDebugMessengerDesc_t* desc): desc_(*desc){}
+    const nvimgcodecDebugMessengerDesc_t* getDesc() override { return &desc_; }
   private:
-    const nvimgcdcsDebugMessengerDesc_t desc_;
+    const nvimgcodecDebugMessengerDesc_t desc_;
 };
 
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

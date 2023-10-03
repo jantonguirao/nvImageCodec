@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 StdFileIoStream::StdFileIoStream(const std::string& path, bool to_write)
     : FileIoStream(path)
@@ -79,4 +79,4 @@ std::size_t StdFileIoStream::size() const
     }
     return sb.st_size;
 }
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

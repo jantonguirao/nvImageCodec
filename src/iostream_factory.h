@@ -17,7 +17,7 @@
 #include "iiostream_factory.h"
 #include "mem_io_stream.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IoStream;
 class IoStreamFactory : public IIoStreamFactory
@@ -39,4 +39,4 @@ class IoStreamFactory : public IIoStreamFactory
     }
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

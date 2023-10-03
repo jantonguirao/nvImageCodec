@@ -11,7 +11,7 @@
 #pragma once
 
 #include <nppdefs.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <nvjpeg2k.h>
 #include <memory>
 #include <vector>
@@ -26,27 +26,27 @@ namespace nvjpeg2k {
 class NvJpeg2kDecoderPlugin
 {
   public:
-    explicit NvJpeg2kDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
-    nvimgcdcsDecoderDesc_t* getDecoderDesc();
+    explicit NvJpeg2kDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework);
+    nvimgcodecDecoderDesc_t* getDecoderDesc();
 
   private:
     struct Decoder;
 
     struct ParseState
     {
-        explicit ParseState(const char* id, const nvimgcdcsFrameworkDesc_t* framework);
+        explicit ParseState(const char* id, const nvimgcodecFrameworkDesc_t* framework);
         ~ParseState();
 
         const char* plugin_id_;
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         nvjpeg2kStream_t nvjpeg2k_stream_;
         std::vector<unsigned char> buffer_;
     };
 
     struct DecodeState
     {
-        explicit DecodeState(const char* id, const nvimgcdcsFrameworkDesc_t* framework, nvjpeg2kHandle_t handle,
-            nvimgcdcsDeviceAllocator_t* device_allocator, nvimgcdcsPinnedAllocator_t* pinned_allocator, int device_id, int num_threads,
+        explicit DecodeState(const char* id, const nvimgcodecFrameworkDesc_t* framework, nvjpeg2kHandle_t handle,
+            nvimgcodecDeviceAllocator_t* device_allocator, nvimgcodecPinnedAllocator_t* pinned_allocator, int device_id, int num_threads,
             int num_parallel_tiles);
         ~DecodeState();
 
@@ -67,7 +67,7 @@ class NvJpeg2kDecoderPlugin
 
         struct PerTileResourcesPool {
             const char* plugin_id_;
-            const nvimgcdcsFrameworkDesc_t* framework_;
+            const nvimgcodecFrameworkDesc_t* framework_;
             nvjpeg2kHandle_t handle_ = nullptr;
 
             std::vector<PerTileResources> res_;
@@ -75,7 +75,7 @@ class NvJpeg2kDecoderPlugin
             std::mutex mtx_;
             std::condition_variable cv_;
 
-            PerTileResourcesPool(const char* id, const nvimgcdcsFrameworkDesc_t* framework, nvjpeg2kHandle_t handle, int num_parallel_tiles)
+            PerTileResourcesPool(const char* id, const nvimgcodecFrameworkDesc_t* framework, nvjpeg2kHandle_t handle, int num_parallel_tiles)
                 : plugin_id_(id)
                 , framework_(framework)
                 , handle_(handle)
@@ -123,16 +123,16 @@ class NvJpeg2kDecoderPlugin
 
         struct Sample
         {
-            nvimgcdcsCodeStreamDesc_t* code_stream;
-            nvimgcdcsImageDesc_t* image;
-            const nvimgcdcsDecodeParams_t* params;
+            nvimgcodecCodeStreamDesc_t* code_stream;
+            nvimgcodecImageDesc_t* image;
+            const nvimgcodecDecodeParams_t* params;
         };
 
         const char* plugin_id_;
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         nvjpeg2kHandle_t handle_ = nullptr;
-        nvimgcdcsDeviceAllocator_t* device_allocator_;
-        nvimgcdcsPinnedAllocator_t* pinned_allocator_;
+        nvimgcodecDeviceAllocator_t* device_allocator_;
+        nvimgcodecPinnedAllocator_t* pinned_allocator_;
         int device_id_;
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
@@ -142,56 +142,56 @@ class NvJpeg2kDecoderPlugin
     struct Decoder
     {
         Decoder(
-            const char* id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+            const char* id, const nvimgcodecFrameworkDesc_t* framework, const nvimgcodecExecutionParams_t* exec_params, const char* options);
         ~Decoder();
 
-        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
-            nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params);
-        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
-            nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-        nvimgcdcsStatus_t decode(int sample_idx, bool immediate);
-        nvimgcdcsStatus_t decodeBatch(
-            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t* code_stream,
+            nvimgcodecImageDesc_t* image, const nvimgcodecDecodeParams_t* params);
+        nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
+            nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
+        nvimgcodecStatus_t decode(int sample_idx, bool immediate);
+        nvimgcodecStatus_t decodeBatch(
+            nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
         nvjpeg2kHandle_t getNvjpeg2kHandle();
 
         void parseOptions(const char* options);
 
-        static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
-        static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-        static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
-            nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        static nvimgcodecStatus_t static_destroy(nvimgcodecDecoder_t decoder);
+        static nvimgcodecStatus_t static_can_decode(nvimgcodecDecoder_t decoder, nvimgcodecProcessingStatus_t* status,
+            nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
+        static nvimgcodecStatus_t static_decode_batch(nvimgcodecDecoder_t decoder, nvimgcodecCodeStreamDesc_t** code_streams,
+            nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
         const char* plugin_id_;
         nvjpeg2kHandle_t handle_;
         nvjpeg2kDeviceAllocatorV2_t device_allocator_;
         nvjpeg2kPinnedAllocatorV2_t pinned_allocator_;
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
-        const nvimgcdcsExecutionParams_t* exec_params_;
+        const nvimgcodecExecutionParams_t* exec_params_;
         int num_parallel_tiles_;
 
         struct CanDecodeCtx {
             Decoder *this_ptr;
-            nvimgcdcsProcessingStatus_t* status;
-            nvimgcdcsCodeStreamDesc_t** code_streams;
-            nvimgcdcsImageDesc_t** images;
-            const nvimgcdcsDecodeParams_t* params;
+            nvimgcodecProcessingStatus_t* status;
+            nvimgcodecCodeStreamDesc_t** code_streams;
+            nvimgcodecImageDesc_t** images;
+            const nvimgcodecDecodeParams_t* params;
             int num_samples;
             int num_blocks;
             std::vector<std::promise<void>> promise;
         };
     };
 
-    nvimgcdcsStatus_t create(
-        nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    nvimgcodecStatus_t create(
+        nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
 
-    static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    static nvimgcodecStatus_t static_create(
+        void* instance, nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "nvjpeg2k_decoder";
-    nvimgcdcsDecoderDesc_t decoder_desc_;
-    const nvimgcdcsFrameworkDesc_t* framework_;
+    nvimgcodecDecoderDesc_t decoder_desc_;
+    const nvimgcodecFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg2k

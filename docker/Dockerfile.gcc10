@@ -1,6 +1,6 @@
 #########################################################################################
-##  Build nvImageCodecs dependencies on top of manylinux2014
-##  nvImageCodecs is based on "manylinux2014", official page https://github.com/pypa/manylinux
+##  Build nvImageCodec dependencies on top of manylinux2014
+##  nvImageCodec is based on "manylinux2014", official page https://github.com/pypa/manylinux
 #########################################################################################
 ARG FROM_IMAGE_NAME=quay.io/pypa/manylinux2014_x86_64
 ARG BUILDER_EXTRA_DEPS=scratch

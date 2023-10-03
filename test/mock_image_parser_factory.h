@@ -15,7 +15,7 @@
 #include "../src/iimage_parser.h"
 #include "../src/iimage_parser_factory.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 namespace test {
 
 class MockImageParserFactory : public IImageParserFactory
@@ -23,7 +23,7 @@ class MockImageParserFactory : public IImageParserFactory
   public:
     MOCK_METHOD(std::string, getParserId, (), (const, override));
     MOCK_METHOD(std::string, getCodecName, (), (const, override));
-    MOCK_METHOD(bool, canParse, (nvimgcdcsCodeStreamDesc_t* code_stream), (override));
+    MOCK_METHOD(bool, canParse, (nvimgcodecCodeStreamDesc_t* code_stream), (override));
     MOCK_METHOD(std::unique_ptr<IImageParser>, createParser, (), (const, override));
 };
 

@@ -12,7 +12,7 @@
 //#include "mmaped_file_io_stream.h"
 #include <cassert>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 std::unique_ptr<FileIoStream> FileIoStream::open(
     const std::string& uri, bool read_ahead, bool use_mmap, bool to_write)
@@ -46,4 +46,4 @@ void FileIoStream::freeFileMappings(unsigned int num)
     //MmapedFileIoStream::freeFileMappings(num);
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

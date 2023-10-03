@@ -9,7 +9,7 @@
  */
 #include "decode_state_batch.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 void DecodeStateBatch::setPromise(const ProcessingResultsPromise& promise)
 {
@@ -21,4 +21,4 @@ const ProcessingResultsPromise& DecodeStateBatch::getPromise()
     return *promise_;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

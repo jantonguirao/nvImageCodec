@@ -12,9 +12,9 @@
 #include "code_stream.h"
 #include "image.h"
 #include "image_encoder.h"
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-ImageEncoderFactory::ImageEncoderFactory(const nvimgcdcsEncoderDesc_t* desc)
+ImageEncoderFactory::ImageEncoderFactory(const nvimgcodecEncoderDesc_t* desc)
     : encoder_desc_(desc)
 {
 }
@@ -29,14 +29,14 @@ std::string ImageEncoderFactory::getEncoderId() const
     return encoder_desc_->id;
 }
 
-nvimgcdcsBackendKind_t ImageEncoderFactory::getBackendKind() const
+nvimgcodecBackendKind_t ImageEncoderFactory::getBackendKind() const
 {
     return encoder_desc_->backend_kind;
 }
 
 std::unique_ptr<IImageEncoder> ImageEncoderFactory::createEncoder(
-    const nvimgcdcsExecutionParams_t* exec_params, const char* options) const
+    const nvimgcodecExecutionParams_t* exec_params, const char* options) const
 {
     return std::make_unique<ImageEncoder>(encoder_desc_, exec_params, options);
 }
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -20,12 +20,12 @@
         }                                                                                                      \
     }
 
-#define CHECK_NVIMGCDCS(call)                                   \
+#define CHECK_NVIMGCODEC(call)                                   \
     {                                                           \
-        nvimgcdcsStatus_t _e = (call);                          \
-        if (_e != NVIMGCDCS_STATUS_SUCCESS) {                   \
+        nvimgcodecStatus_t _e = (call);                          \
+        if (_e != NVIMGCODEC_STATUS_SUCCESS) {                   \
             std::stringstream _error;                           \
-            _error << "nvImageCodecs failure: '#" << _e << "'"; \
+            _error << "nvImageCodec failure: '#" << _e << "'"; \
             throw std::runtime_error(_error.str());             \
         }                                                       \
     }

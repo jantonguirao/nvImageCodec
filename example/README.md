@@ -1,8 +1,8 @@
-# nvImageCodecs Samples
+# nvImageCodec Samples
 
 ## Description
 
-These are some sample applications showcasing various nvImageCodecs APIs. Sample applications are available in C++ and Python.
+These are some sample applications showcasing various nvImageCodec APIs. Sample applications are available in C++ and Python.
 
 ## Pre-requisites
 - Recommended linux distros:
@@ -43,7 +43,7 @@ need to point folders with *-config.cmake files. Apart of that, BUILD_CVCUDA_SAM
 
 ## Open Python Jupyter notebooks samples
 
-Change directory to nvimgcodecs/samples/python and start the notebook server from the command line: 
+Change directory to nvimgcodec/samples/python and start the notebook server from the command line: 
 
 ```
 cd samples/python

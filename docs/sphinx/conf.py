@@ -18,17 +18,17 @@ import os
 import sphinx_rtd_theme
 
 # For build documentation for nvimgcodec from specif location (default is installed module), 
-# uncomment below line to specify path to nvimgcodecs module
+# uncomment below line to specify path to nvimgcodec module
 # sys.path.insert(0, os.path.abspath("../../build/python"))
 
 # Specify path to images used in jupyter notebooks samples
-os.environ["PYNVIMGCODECS_EXAMPLES_RESOURCES_DIR"] = "../../../example/assets/images/"
+os.environ["PYNVIMGCODEC_EXAMPLES_RESOURCES_DIR"] = "../../../example/assets/images/"
 
 # nbsphinx_allow_errors = True
 
 # -- Project information -----------------------------------------------------
 
-project = 'nvImageCodecs'
+project = 'nvImageCodec'
 copyright = '2023, NVIDIA Corporation & Affiliates'
 author = 'NVIDIA Corporation'
 
@@ -116,12 +116,12 @@ html_theme_options = {
 html_static_path = ['_static']
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'nvImageCodecsDoc'
+htmlhelp_basename = 'nvImageCodecDoc'
 
 def setup(app):
-    app.add_css_file('nvimagecodecs_override.css')
+    app.add_css_file('nvimagecodec_override.css')
 
 # -- Options for BREATHE -------------------------------------------------
 
-breathe_default_project = "nvImageCodecs"
-breathe_projects = { "nvImageCodecs": "../doxygen/xml" }
+breathe_default_project = "nvImageCodec"
+breathe_projects = { "nvImageCodec": "../doxygen/xml" }

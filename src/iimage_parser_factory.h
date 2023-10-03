@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IImageParser;
 class IImageParserFactory
@@ -23,8 +23,8 @@ class IImageParserFactory
     virtual ~IImageParserFactory() = default;
     virtual std::string getParserId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual bool canParse(nvimgcdcsCodeStreamDesc_t* code_stream) = 0;
+    virtual bool canParse(nvimgcodecCodeStreamDesc_t* code_stream) = 0;
     virtual std::unique_ptr<IImageParser> createParser() const = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

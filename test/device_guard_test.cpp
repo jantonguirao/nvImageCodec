@@ -13,7 +13,7 @@
 #include "../src/device_guard.h"
 #include "../src/exception.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 namespace test {
 
 TEST(DeviceGuard, ConstructorWithDevice) {
@@ -156,4 +156,4 @@ TEST(DeviceGuard, CheckcontextNoArgs) {
 }
 
 } //namespace test
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 namespace test {
 
 inline std::vector<uint8_t> read_file(const std::string &filename) {
@@ -39,7 +39,7 @@ inline std::vector<uint8_t> replace(const std::vector<uint8_t>& data, const std:
     return result;
 }
 
-inline void expect_eq(nvimgcdcsImageInfo_t expected, nvimgcdcsImageInfo_t actual) {
+inline void expect_eq(nvimgcodecImageInfo_t expected, nvimgcodecImageInfo_t actual) {
     EXPECT_EQ(expected.type, actual.type);
     EXPECT_EQ(expected.next, actual.next);
     EXPECT_EQ(expected.sample_format, actual.sample_format);
@@ -58,23 +58,23 @@ inline void expect_eq(nvimgcdcsImageInfo_t expected, nvimgcdcsImageInfo_t actual
     }
 }
 
-inline void LoadImageFromFilename(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t& stream_handle, const std::string& filename)
+inline void LoadImageFromFilename(nvimgcodecInstance_t instance, nvimgcodecCodeStream_t& stream_handle, const std::string& filename)
 {
     if (stream_handle) {
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(stream_handle));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamDestroy(stream_handle));
         stream_handle = nullptr;
     }
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateFromFile(instance, &stream_handle, filename.c_str()));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamCreateFromFile(instance, &stream_handle, filename.c_str()));
 }
 
-inline void LoadImageFromHostMemory(nvimgcdcsInstance_t instance, nvimgcdcsCodeStream_t& stream_handle, const uint8_t* data, size_t data_size)
+inline void LoadImageFromHostMemory(nvimgcodecInstance_t instance, nvimgcodecCodeStream_t& stream_handle, const uint8_t* data, size_t data_size)
 {
     if (stream_handle) {
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(stream_handle));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamDestroy(stream_handle));
         stream_handle = nullptr;
     }
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateFromHostMem(instance, &stream_handle, data, data_size));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamCreateFromHostMem(instance, &stream_handle, data, data_size));
 }
 
 }  // namespace test
-}  // namespace nvimgcdcs
+}  // namespace nvimgcodec

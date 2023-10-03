@@ -48,7 +48,7 @@ namespace {
     };
 }
 
-namespace nvimgcdcs
+namespace nvimgcodec
 {
 
 namespace cv 
@@ -535,4 +535,4 @@ std::vector<u_rational_t> ExifReader::getRefBW(const size_t offset) const
 
 } //namespace cv
 
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

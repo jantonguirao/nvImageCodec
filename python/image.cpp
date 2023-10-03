@@ -18,32 +18,32 @@
 #include "error_handling.h"
 #include "type_utils.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-Image::Image(nvimgcdcsInstance_t instance, nvimgcdcsImageInfo_t* image_info)
+Image::Image(nvimgcodecInstance_t instance, nvimgcodecImageInfo_t* image_info)
     : instance_(instance)
 {
     initBuffer(image_info);
 
-    nvimgcdcsImage_t image;
-    CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &image, image_info));
+    nvimgcodecImage_t image;
+    CHECK_NVIMGCODEC(nvimgcodecImageCreate(instance, &image, image_info));
     image_ =
-        std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
+        std::shared_ptr<std::remove_pointer<nvimgcodecImage_t>::type>(image, [](nvimgcodecImage_t image) { nvimgcodecImageDestroy(image); });
     dlpack_tensor_ = std::make_shared<DLPackTensor>(*image_info, img_buffer_);
-    if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+    if (image_info->buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
         initCudaArrayInterface(*image_info);
         initCudaEventForDLPack();
-    } else if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+    } else if (image_info->buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
         initArrayInterface(*image_info);
     }
 }
 
-void Image::initBuffer(nvimgcdcsImageInfo_t* image_info)
+void Image::initBuffer(nvimgcodecImageInfo_t* image_info)
 {
     if (image_info->buffer == nullptr) {
-        if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+        if (image_info->buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
             initDeviceBuffer(image_info);
-        } else if (image_info->buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+        } else if (image_info->buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
             initHostBuffer(image_info);
         } else {
             throw std::runtime_error("Unsupported buffer type.");
@@ -51,7 +51,7 @@ void Image::initBuffer(nvimgcdcsImageInfo_t* image_info)
     }
 }
 
-void Image::initDeviceBuffer(nvimgcdcsImageInfo_t* image_info)
+void Image::initDeviceBuffer(nvimgcodecImageInfo_t* image_info)
 {
     unsigned char* buffer;
     CHECK_CUDA(cudaMallocAsync((void**)&buffer, image_info->buffer_size, image_info->cuda_stream));
@@ -60,7 +60,7 @@ void Image::initDeviceBuffer(nvimgcdcsImageInfo_t* image_info)
     image_info->buffer = buffer;
 }
 
-void Image::initHostBuffer(nvimgcdcsImageInfo_t* image_info)
+void Image::initHostBuffer(nvimgcodecImageInfo_t* image_info)
 {
     unsigned char* buffer;
     CHECK_CUDA(cudaMallocHost((void**)&buffer, image_info->buffer_size));
@@ -68,7 +68,7 @@ void Image::initHostBuffer(nvimgcdcsImageInfo_t* image_info)
     image_info->buffer = buffer;
 }
 
-void Image::initDLPack(nvimgcdcsImageInfo_t* image_info, py::capsule cap)
+void Image::initDLPack(nvimgcodecImageInfo_t* image_info, py::capsule cap)
 {
     if (auto* tensor = static_cast<DLManagedTensor*>(cap.get_pointer())) {
         check_cuda_buffer(tensor->dl_tensor.data);
@@ -81,7 +81,7 @@ void Image::initDLPack(nvimgcdcsImageInfo_t* image_info, py::capsule cap)
     }
 }
 
-void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcdcsImageInfo_t* image_info)
+void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcodecImageInfo_t* image_info)
 {
     std::vector<long> vshape;
     py::tuple shape = iface["shape"].cast<py::tuple>();
@@ -122,9 +122,9 @@ void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcdcsImage
 
     int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
 
-    image_info->color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-    image_info->sample_format = is_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-    image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_444;
+    image_info->color_spec = NVIMGCODEC_COLORSPEC_SRGB;
+    image_info->sample_format = is_interleaved ? NVIMGCODEC_SAMPLEFORMAT_I_RGB : NVIMGCODEC_SAMPLEFORMAT_P_RGB;
+    image_info->chroma_subsampling = NVIMGCODEC_SAMPLING_444;
 
     int pitch_in_bytes = vstrides.size() > 1 ? (is_interleaved ? vstrides[0] : vstrides[1])
                                              : image_info->plane_info[0].width * image_info->plane_info[0].num_channels * bytes_per_element;
@@ -143,14 +143,14 @@ void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcdcsImage
     image_info->buffer_size = buffer_size;
 }
 
-Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
+Image::Image(nvimgcodecInstance_t instance, PyObject* o, intptr_t cuda_stream)
     : instance_(instance)
 {
     if (!o) {
         throw std::runtime_error("Object cannot be None");
     }
     py::object tmp = py::reinterpret_borrow<py::object>(o);
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
     image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
     if (py::isinstance<py::capsule>(tmp)) {
         py::capsule cap = tmp.cast<py::capsule>();
@@ -178,7 +178,7 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
             }
         }
         check_cuda_buffer(image_info.buffer);
-        image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+        image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
         dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info, img_buffer_);
     } else if (hasattr(tmp, "__array_interface__")) {
         py::dict iface = tmp.attr("__array_interface__").cast<py::dict>();
@@ -193,7 +193,7 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
         }
 
         initImageInfoFromInterfaceDict(iface, &image_info);
-        image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
+        image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST;
         dlpack_tensor_ = std::make_shared<DLPackTensor>(image_info, img_buffer_);
     } else if (hasattr(tmp, "__dlpack__")) {
         // Quickly check if we support the device
@@ -210,19 +210,19 @@ Image::Image(nvimgcdcsInstance_t instance, PyObject* o, intptr_t cuda_stream)
     } else {
         throw std::runtime_error("Object does not support neither __cuda_array_interface__ nor __dlpack__");
     }
-    nvimgcdcsImage_t image;
-    CHECK_NVIMGCDCS(nvimgcdcsImageCreate(instance, &image, &image_info));
+    nvimgcodecImage_t image;
+    CHECK_NVIMGCODEC(nvimgcodecImageCreate(instance, &image, &image_info));
     image_ =
-        std::shared_ptr<std::remove_pointer<nvimgcdcsImage_t>::type>(image, [](nvimgcdcsImage_t image) { nvimgcdcsImageDestroy(image); });
-    if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+        std::shared_ptr<std::remove_pointer<nvimgcodecImage_t>::type>(image, [](nvimgcodecImage_t image) { nvimgcodecImageDestroy(image); });
+    if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
         initCudaArrayInterface(image_info);
         initCudaEventForDLPack();
-    } else if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+    } else if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
         initArrayInterface(image_info);
     }
 }
 
-void Image::initInterfaceDictFromImageInfo(const nvimgcdcsImageInfo_t& image_info, py::dict* d)
+void Image::initInterfaceDictFromImageInfo(const nvimgcodecImageInfo_t& image_info, py::dict* d)
 {
     std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
     bool is_interleaved = is_sample_format_interleaved(image_info.sample_format) || image_info.num_planes == 1;
@@ -246,7 +246,7 @@ void Image::initInterfaceDictFromImageInfo(const nvimgcdcsImageInfo_t& image_inf
     (*d)["version"] = 3;
 }
 
-void Image::initArrayInterface(const nvimgcdcsImageInfo_t& image_info)
+void Image::initArrayInterface(const nvimgcodecImageInfo_t& image_info)
 {
     try {
         initInterfaceDictFromImageInfo(image_info, &array_interface_);
@@ -255,7 +255,7 @@ void Image::initArrayInterface(const nvimgcdcsImageInfo_t& image_info)
     }
 }
 
-void Image::initCudaArrayInterface(const nvimgcdcsImageInfo_t& image_info)
+void Image::initCudaArrayInterface(const nvimgcodecImageInfo_t& image_info)
 {
     try {
         initInterfaceDictFromImageInfo(image_info, &cuda_array_interface_);
@@ -277,14 +277,14 @@ void Image::initCudaEventForDLPack()
 
 int Image::getWidth() const
 {
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.plane_info[0].width;
 }
 int Image::getHeight() const
 {
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.plane_info[0].height;
 }
 
@@ -310,20 +310,20 @@ py::object Image::shape() const
 
 py::object Image::dtype() const
 {
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
     return py::dtype(format);
 }
 
-nvimgcdcsImageBufferKind_t Image::getBufferKind() const
+nvimgcodecImageBufferKind_t Image::getBufferKind() const
 {
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.buffer_kind;
 }
 
-nvimgcdcsImage_t Image::getNvImgCdcsImage() const
+nvimgcodecImage_t Image::getNvImgCdcsImage() const
 {
     return image_.get();
 }
@@ -336,8 +336,8 @@ py::capsule Image::dlpack(py::object stream_obj) const
             "Could not get DLTensor capsules. It can be consumed only once, so you might have already constructed a tensor from it once.");
     }
 
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
 
     // Add synchronisation
     std::optional<intptr_t> stream = stream_obj.cast<std::optional<intptr_t>>();
@@ -362,12 +362,12 @@ const py::tuple Image::getDlpackDevice() const
 
 py::object Image::cpu()
 {
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
 
-    if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
-        nvimgcdcsImageInfo_t cpu_image_info(image_info);
-        cpu_image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
+    if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+        nvimgcodecImageInfo_t cpu_image_info(image_info);
+        cpu_image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST;
         cpu_image_info.buffer = nullptr;
 
         auto image = Image(instance_, &cpu_image_info);
@@ -376,7 +376,7 @@ py::object Image::cpu()
         CHECK_CUDA(cudaStreamSynchronize(image_info.cuda_stream));
 
         return py::cast(image);
-    } else if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+    } else if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
         return py::cast(this);
     } else {
         return py::none();
@@ -385,12 +385,12 @@ py::object Image::cpu()
 
 py::object Image::cuda(bool synchronize)
 {
-    nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsImageGetImageInfo(image_.get(), &image_info);
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
 
-    if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-        nvimgcdcsImageInfo_t cuda_image_info(image_info);
-        cuda_image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+    if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+        nvimgcodecImageInfo_t cuda_image_info(image_info);
+        cuda_image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
         cuda_image_info.buffer = nullptr;
         auto image = Image(instance_, &cuda_image_info);
 
@@ -400,7 +400,7 @@ py::object Image::cuda(bool synchronize)
             CHECK_CUDA(cudaStreamSynchronize(cuda_image_info.cuda_stream));
 
         return py::cast(image);
-    } else if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+    } else if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
         return py::cast(this);
     } else {
         return py::none();
@@ -465,4 +465,4 @@ void Image::exportToPython(py::module& m)
             "synchronize"_a = true);
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

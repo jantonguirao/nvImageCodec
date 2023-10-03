@@ -10,18 +10,18 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 class IImageParser
 {
   public:
     virtual ~IImageParser() = default;
     virtual std::string getParserId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual nvimgcdcsStatus_t getImageInfo(nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageInfo_t* image_info) = 0;
+    virtual nvimgcodecStatus_t getImageInfo(nvimgcodecCodeStreamDesc_t* code_stream, nvimgcodecImageInfo_t* image_info) = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

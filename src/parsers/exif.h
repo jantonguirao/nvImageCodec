@@ -50,7 +50,7 @@
 #include <vector>
 #include <iostream>
 
-namespace nvimgcdcs
+namespace nvimgcodec
 {
 
 namespace cv
@@ -230,4 +230,4 @@ private:
 
 } //namespace cv
 
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

@@ -15,14 +15,14 @@
 
 #include "error_handling.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 EncodeParams::EncodeParams()
     : jpeg2k_encode_params_{}
     , jpeg_encode_params_{}
-    , encode_params_{NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, nullptr, 95, 50}
-    , chroma_subsampling_{NVIMGCDCS_SAMPLING_444}
-    , color_spec_{NVIMGCDCS_COLORSPEC_UNCHANGED}
+    , encode_params_{NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, nullptr, 95, 50}
+    , chroma_subsampling_{NVIMGCODEC_SAMPLING_444}
+    , color_spec_{NVIMGCODEC_COLORSPEC_UNCHANGED}
 {
 }
 
@@ -30,7 +30,7 @@ void EncodeParams::exportToPython(py::module& m)
 {
     py::class_<EncodeParams>(m, "EncodeParams")
         .def(py::init([]() { return EncodeParams{}; }), "Default constructor")
-        .def(py::init([](float quality, float target_psnr, nvimgcdcsColorSpec_t color_spec, nvimgcdcsChromaSubsampling_t chroma_subsampling,
+        .def(py::init([](float quality, float target_psnr, nvimgcodecColorSpec_t color_spec, nvimgcodecChromaSubsampling_t chroma_subsampling,
                           std::optional<JpegEncodeParams> jpeg_encode_params, std::optional<Jpeg2kEncodeParams> jpeg2k_encode_params) {
             EncodeParams p;
             p.encode_params_.quality = quality;
@@ -45,8 +45,8 @@ void EncodeParams::exportToPython(py::module& m)
             // clang-format off
             "quality"_a = 95, 
             "target_psnr"_a = 50, 
-            "color_spec"_a = NVIMGCDCS_COLORSPEC_UNCHANGED, 
-            "chroma_subsampling"_a = NVIMGCDCS_SAMPLING_444,
+            "color_spec"_a = NVIMGCODEC_COLORSPEC_UNCHANGED, 
+            "chroma_subsampling"_a = NVIMGCODEC_SAMPLING_444,
             "jpeg_encode_params"_a = py::none(),
             "jpeg2k_encode_params"_a = py::none(),
             "Constructor with quality, target_psnr, color_spec, chroma_subsampling etc. parameters")
@@ -62,4 +62,4 @@ void EncodeParams::exportToPython(py::module& m)
             "jpeg2k_params", &EncodeParams::getJpeg2kEncodeParams, &EncodeParams::setJpeg2kEncodeParams, "Jpeg2000 encode parameters");
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

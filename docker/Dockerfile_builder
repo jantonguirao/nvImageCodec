@@ -1,5 +1,5 @@
 #########################################################################################
-##  Stage 2: build NVIMGCODECS wheels on top of the dependencies image built in Stage 1
+##  Stage 2: build NVIMGCODEC wheels on top of the dependencies image built in Stage 1
 #########################################################################################
 ARG DEPS_IMAGE_NAME
 # clean builder without source code inside
@@ -14,8 +14,8 @@ ENV PYBIN=${PYTHONPATH}/bin \
     PYLIB=${PYTHONPATH}/lib
 
 ENV PATH=/opt/python/cp37-cp37m/bin:/opt/python/cp38-cp38/bin:/opt/python/cp39-cp39/bin:${PYBIN}:/opt/python/cp310-cp310/bin:/opt/python/cp311-cp311/bin:${PYBIN}:${PATH} \
-    LD_LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LD_LIBRARY_PATH} \
-    LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LIBRARY_PATH}
+    LD_LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodec/${NVIMGCODEC_BUILD_DIR}:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LD_LIBRARY_PATH} \
+    LIBRARY_PATH=/usr/local/lib:/opt/nvidia/nvimgcodec/${NVIMGCODEC_BUILD_DIR}:/opt/python/cp37-cp37m/lib:/opt/python/cp38-cp38/lib:/opt/python/cp39-cp39/lib:/opt/python/cp310-cp310/lib:/opt/python/cp311-cp311/lib:${PYLIB}:${LIBRARY_PATH}
 
 RUN ln -s /opt/python/cp${PYV}* /opt/python/v
 
@@ -28,7 +28,7 @@ RUN python -m pip install future setuptools wheel clang==14.0 flake8 && \
 
 RUN ldconfig
 
-WORKDIR /opt/nvimgcodecs
+WORKDIR /opt/nvimgcodec
 
 ARG CC
 ARG CXX
@@ -85,8 +85,8 @@ ARG NVIDIA_BUILD_ID
 ENV NVIDIA_BUILD_ID=${NVIDIA_BUILD_ID}
 ARG GIT_SHA
 ENV GIT_SHA=${GIT_SHA}
-ARG NVIMGCODECS_TIMESTAMP
-ENV NVIMGCODECS_TIMESTAMP=${NVIMGCODECS_TIMESTAMP}
+ARG NVIMGCODEC_TIMESTAMP
+ENV NVIMGCODEC_TIMESTAMP=${NVIMGCODEC_TIMESTAMP}
 ARG BUILD_FLAVOR
 ENV BUILD_FLAVOR=${BUILD_FLAVOR}
 ARG WHL_PLATFORM_NAME
@@ -100,7 +100,7 @@ RUN mkdir /wheelhouse && chmod 0777 /wheelhouse
 FROM builder
 COPY . .
 
-ARG NVIMGCODECS_BUILD_DIR=build-docker-release
-WORKDIR /opt/nvimgcodecs/${NVIMGCODECS_BUILD_DIR}
+ARG NVIMGCODEC_BUILD_DIR=build-docker-release
+WORKDIR /opt/nvimgcodec/${NVIMGCODEC_BUILD_DIR}
 
-RUN bash /opt/nvimgcodecs/docker/build_helper.sh
+RUN bash /opt/nvimgcodec/docker/build_helper.sh

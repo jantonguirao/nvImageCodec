@@ -14,11 +14,11 @@
 
 #include "error_handling.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 JpegEncodeParams::JpegEncodeParams()
-    : nvimgcdcs_jpeg_encode_params_{NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, nullptr, false}
-    , nvimgcdcs_jpeg_image_info_{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, nullptr, NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT}
+    : nvimgcodec_jpeg_encode_params_{NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, nullptr, false}
+    , nvimgcodec_jpeg_image_info_{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, nullptr, NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT}
 {
 }
 
@@ -28,9 +28,9 @@ void JpegEncodeParams::exportToPython(py::module& m)
         .def(py::init([]() { return JpegEncodeParams{}; }), "Default constructor")
         .def(py::init([](bool jpeg_progressive, bool jpeg_optimized_huffman) {
             JpegEncodeParams p;
-            p.nvimgcdcs_jpeg_encode_params_.optimized_huffman = jpeg_optimized_huffman;
-            p.nvimgcdcs_jpeg_image_info_.encoding =
-                jpeg_progressive ? NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN : NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT;
+            p.nvimgcodec_jpeg_encode_params_.optimized_huffman = jpeg_optimized_huffman;
+            p.nvimgcodec_jpeg_image_info_.encoding =
+                jpeg_progressive ? NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN : NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT;
             return p;
         }),
             // clang-format off
@@ -44,4 +44,4 @@ void JpegEncodeParams::exportToPython(py::module& m)
             "Use Jpeg encoding with optimized Huffman (default False)");
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

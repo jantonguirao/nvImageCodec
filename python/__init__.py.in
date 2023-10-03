@@ -14,9 +14,9 @@
 
 # we need to have that defined and accessible before any other nvimgcodec import
 
-from nvidia.nvimgcodecs.nvimgcodecs_impl import *
+from nvidia.nvimgcodec.nvimgcodec_impl import *
 
-__version__ = nvimgcodecs_impl.__version__
-__cuda_version__ = nvimgcodecs_impl.__cuda_version__
-__doc__ =  nvimgcodecs_impl.__doc__
+__version__ = nvimgcodec_impl.__version__
+__cuda_version__ = nvimgcodec_impl.__cuda_version__
+__doc__ =  nvimgcodec_impl.__doc__
 __git_sha__ = '@GIT_SHA@'

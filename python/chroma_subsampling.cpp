@@ -10,22 +10,22 @@
 
 #include "chroma_subsampling.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 void ChromaSubsampling::exportToPython(py::module& m)
 {
     // clang-format off
-    py::enum_<nvimgcdcsChromaSubsampling_t>(m, "ChromaSubsampling")
-        .value("CSS_444", NVIMGCDCS_SAMPLING_444)
-        .value("CSS_422", NVIMGCDCS_SAMPLING_422)
-        .value("CSS_420", NVIMGCDCS_SAMPLING_420)
-        .value("CSS_440", NVIMGCDCS_SAMPLING_440)
-        .value("CSS_411", NVIMGCDCS_SAMPLING_411)
-        .value("CSS_410", NVIMGCDCS_SAMPLING_410)
-        .value("CSS_GRAY", NVIMGCDCS_SAMPLING_GRAY)
-        .value("CSS_410V", NVIMGCDCS_SAMPLING_410V)
+    py::enum_<nvimgcodecChromaSubsampling_t>(m, "ChromaSubsampling")
+        .value("CSS_444", NVIMGCODEC_SAMPLING_444)
+        .value("CSS_422", NVIMGCODEC_SAMPLING_422)
+        .value("CSS_420", NVIMGCODEC_SAMPLING_420)
+        .value("CSS_440", NVIMGCODEC_SAMPLING_440)
+        .value("CSS_411", NVIMGCODEC_SAMPLING_411)
+        .value("CSS_410", NVIMGCODEC_SAMPLING_410)
+        .value("CSS_GRAY", NVIMGCODEC_SAMPLING_GRAY)
+        .value("CSS_410V", NVIMGCODEC_SAMPLING_410V)
         .export_values();
     // clang-format on
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

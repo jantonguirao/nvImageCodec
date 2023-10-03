@@ -16,7 +16,7 @@
 #include "../src/iiostream_factory.h"
 #include "../src/io_stream.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class MockIoStreamFactory : public IIoStreamFactory
 {
@@ -30,4 +30,4 @@ class MockIoStreamFactory : public IIoStreamFactory
         (const, override));
 };
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

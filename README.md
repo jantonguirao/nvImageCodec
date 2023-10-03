@@ -1,6 +1,6 @@
-# nvImageCodecs
+# nvImageCodec
 
-nvImageCodecs is a library of accelerated codecs with unified interface.
+nvImageCodec is a library of accelerated codecs with unified interface.
 It is designed as a framework for extension modules which delivers codec plugins.
 
 Currently there are following codecs supported:
@@ -34,23 +34,23 @@ To get a local copy up and running follow these steps.
 
 ### Installation
 
-The following steps describe how to install nvImageCodecs from pre-built install packages.
+The following steps describe how to install nvImageCodec from pre-built install packages.
 Choose the installation method that meets your environment needs.
 
 #### Tar file installation
 
 ```
-tar -xvf nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
+tar -xvf nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
 ```
 
 #### DEB File Installation
 ```
-sudo apt-get install -y ./nvimgcodecs-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
+sudo apt-get install -y ./nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
 ```
 #### Python WHL File Installation
 
 ```
-pip install nvidia_nvimgcodecs_cuda120-0.1.0-py3-none-manylinux2014_x86_64.whl
+pip install nvidia_nvimgcodec_cuda120-0.1.0-py3-none-manylinux2014_x86_64.whl
 ```
 
 ### Build
@@ -76,44 +76,44 @@ need to point folders with *-config.cmake files. Apart of that, BUILD_CVCUDA_SAM
 ##### Linux
 ```
 cd build
-cmake --install . --config Release -prefix /opt/nvidia/nvimgcodecs
+cmake --install . --config Release -prefix /opt/nvidia/nvimgcodec
 ```
 
 After execution there should be:
-- all extension modules in /opt/nvidia/nvimgcodecs/extensions (it is default directory for extension discovery)
-- libnvimgcodecs.so in /opt/nvidia/nvimgcodecs/lib64
+- all extension modules in /opt/nvidia/nvimgcodec/extensions (it is default directory for extension discovery)
+- libnvimgcodec.so in /opt/nvidia/nvimgcodec/lib64
 
-Add directory with libnvimgcodecs.so to LD_LIBRARY_PATH
+Add directory with libnvimgcodec.so to LD_LIBRARY_PATH
 
 ```
-export LD_LIBRARY_PATH=/opt/nvidia/nvimgcodecs/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/nvidia/nvimgcodec/lib64:$LD_LIBRARY_PATH
 ```
 
 ##### Windows
 
-To install nvImageCodecs on Windows please execute following commands in console with administrator privileges
+To install nvImageCodec on Windows please execute following commands in console with administrator privileges
 ```
 cd build
 cmake --install . --config Release
 ```
-All necessary files should be installed in C:\Program Files\nvimgcodecs directory.
+All necessary files should be installed in C:\Program Files\nvimgcodec directory.
 
 ```
-C:\Program Files\nvimgcodecs
+C:\Program Files\nvimgcodec
 │   LICENSE.txt
 │
 ├───bin
-│       nvimgcodecs.dll
+│       nvimgcodec.dll
 │       nvimtrans.exe
 │
 ├───include
-│       nvimgcodecs.h
-│       nvimgcdcs_version.h
-│       nvimgcodecs.h
+│       nvimgcodec.h
+│       nvimgcodec_version.h
+│       nvimgcodec.h
 │
 ├───lib64
-│       nvimgcodecs.lib
-│       nvimgcodecs_static.lib
+│       nvimgcodec.lib
+│       nvimgcodec_static.lib
 │
 ├───extensions
 │       nvbmp_ext_0.dll
@@ -156,27 +156,27 @@ This will generate in build directory *.zip or *tar.xz files
 
 ## CMake package integration
 
-To use nvimagecodecs as a dependency in your CMake project, use:
+To use nvimagecodec as a dependency in your CMake project, use:
 ```
-list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodecs/")  # or the prefix where the package was installed if custom
+list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodec/")  # or the prefix where the package was installed if custom
 
-find_package(nvimgcodecs CONFIG REQUIRED)
+find_package(nvimgcodec CONFIG REQUIRED)
 # Mostly for showing some of the variables defined
-message(STATUS "nvimgcodecs_FOUND=${nvimgcodecs_FOUND}")
-message(STATUS "nvimgcodecs_INCLUDE_DIR=${nvimgcodecs_INCLUDE_DIR}")
-message(STATUS "nvimgcodecs_LIB_DIR=${nvimgcodecs_LIB_DIR}")
-message(STATUS "nvimgcodecs_BIN_DIR=${nvimgcodecs_BIN_DIR}")
-message(STATUS "nvimgcodecs_LIB=${nvimgcodecs_LIB}")
-message(STATUS "nvimgcodecs_EXTENSIONS_DIR=${nvimgcodecs_EXTENSIONS_DIR}")
-message(STATUS "nvimgcodecs_VERSION=${nvimgcodecs_VERSION}")
+message(STATUS "nvimgcodec_FOUND=${nvimgcodec_FOUND}")
+message(STATUS "nvimgcodec_INCLUDE_DIR=${nvimgcodec_INCLUDE_DIR}")
+message(STATUS "nvimgcodec_LIB_DIR=${nvimgcodec_LIB_DIR}")
+message(STATUS "nvimgcodec_BIN_DIR=${nvimgcodec_BIN_DIR}")
+message(STATUS "nvimgcodec_LIB=${nvimgcodec_LIB}")
+message(STATUS "nvimgcodec_EXTENSIONS_DIR=${nvimgcodec_EXTENSIONS_DIR}")
+message(STATUS "nvimgcodec_VERSION=${nvimgcodec_VERSION}")
 
-target_include_directories(<your-target> PUBLIC ${nvimgcodecs_INCLUDE_DIR})
-target_link_directories(<your-target> PUBLIC ${nvimgcodecs_LIB_DIR})
-target_link_libraries(<your-target> PUBLIC ${nvimgcodecs_LIB})
+target_include_directories(<your-target> PUBLIC ${nvimgcodec_INCLUDE_DIR})
+target_link_directories(<your-target> PUBLIC ${nvimgcodec_LIB_DIR})
+target_link_libraries(<your-target> PUBLIC ${nvimgcodec_LIB})
 ```
 
 ## Requirements
-- [nvImageCodecs PRD](https://nam11.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdocs.google.com%2Fdocument%2Fd%2F1KrFzidHNfozNYk8a3crs0ekNH3ETisT1%2Fedit&data=05%7C01%7Csmatysik%40nvidia.com%7C7a7093b7b5804d1b98f008dac16b827e%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638034964732398522%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=GD26jloLP4IdjvI%2BdYrmIs5PZgYCMHXWMXnLjGRfAJ4%3D&reserved=0)
+- [nvImageCodec PRD](https://nam11.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdocs.google.com%2Fdocument%2Fd%2F1KrFzidHNfozNYk8a3crs0ekNH3ETisT1%2Fedit&data=05%7C01%7Csmatysik%40nvidia.com%7C7a7093b7b5804d1b98f008dac16b827e%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638034964732398522%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=GD26jloLP4IdjvI%2BdYrmIs5PZgYCMHXWMXnLjGRfAJ4%3D&reserved=0)
 
 ## Design
 - [Design slides](https://nam11.safelinks.protection.outlook.com/ap/p-59584e83/?url=https%3A%2F%2Fnvidia-my.sharepoint.com%2F%3Ap%3A%2Fp%2Ftrybicki%2FEbDMoASyk0hLukzPdpW66S4BzOvJZ9vymm0fkddy7utfkw%3Fe%3DMlduBI&data=05%7C01%7Csmatysik%40nvidia.com%7C347ebe243c764d22761908dad7cbbad2%7C43083d15727340c1b7db39efd9ccc17a%7C0%7C0%7C638059567268905928%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=xut9HNCGgftyfTR635%2BJu2Amp%2F6bF2eZsjkzhrpNOYg%3D&reserved=0)

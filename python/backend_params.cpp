@@ -14,10 +14,10 @@
 
 #include "error_handling.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 BackendParams::BackendParams()
-    : backend_params_{NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f}
+    : backend_params_{NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f}
 {
 }
 
@@ -37,4 +37,4 @@ void BackendParams::exportToPython(py::module& m)
             "value");
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

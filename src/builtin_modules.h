@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <vector>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-const std::vector<nvimgcdcsExtensionDesc_t>& get_builtin_modules();
+const std::vector<nvimgcodecExtensionDesc_t>& get_builtin_modules();
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,22 +10,22 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <map>
 #include "iexecutor.h"
 #include "thread_pool.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class UserExecutor : public IExecutor
 {
   public:
-    explicit UserExecutor(nvimgcdcsExecutorDesc_t* executor_desc) : desc_(executor_desc) {}
+    explicit UserExecutor(nvimgcodecExecutorDesc_t* executor_desc) : desc_(executor_desc) {}
     ~UserExecutor() override = default;
-    nvimgcdcsExecutorDesc_t* getExecutorDesc() override { return desc_; }
+    nvimgcodecExecutorDesc_t* getExecutorDesc() override { return desc_; }
 
   private:
-    nvimgcdcsExecutorDesc_t* desc_;
+    nvimgcodecExecutorDesc_t* desc_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -1,8 +1,8 @@
-set(NVIMGCDCS_LIBRARY_NAME nvimgcodecs)
+set(NVIMGCODEC_LIBRARY_NAME nvimgcodec)
 
-set(NVIMGCDCS_SRCS
-    ${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodecs.h
-    nvimgcdcs_capi.cpp
+set(NVIMGCODEC_SRCS
+    ${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodec.h
+    nvimgcodec_capi.cpp
     exception.cpp
     plugin_framework.cpp
     codec_registry.cpp
@@ -21,7 +21,7 @@ set(NVIMGCDCS_SRCS
     image_decoder_factory.cpp
     image_generic_decoder.cpp
     image_generic_encoder.cpp
-    nvimgcodecs_director.cpp
+    nvimgcodec_director.cpp
     processing_results.cpp
     decode_state_batch.cpp
     encode_state_batch.cpp
@@ -45,48 +45,48 @@ set(NVIMGCDCS_SRCS
 # Build the library
 message(STATUS "props ProductVersionFiles ${ProductVersionFiles}")
 
-add_library(${NVIMGCDCS_LIBRARY_NAME} SHARED ${NVIMGCDCS_SRCS} ${ProductVersionFiles})
-add_library(${NVIMGCDCS_LIBRARY_NAME}_static STATIC ${NVIMGCDCS_SRCS} ${ProductVersionFiles})
+add_library(${NVIMGCODEC_LIBRARY_NAME} SHARED ${NVIMGCODEC_SRCS} ${ProductVersionFiles})
+add_library(${NVIMGCODEC_LIBRARY_NAME}_static STATIC ${NVIMGCODEC_SRCS} ${ProductVersionFiles})
 
-set(LIBTOPACK ${NVIMGCDCS_LIBRARY_NAME} ${NVIMGCDCS_LIBRARY_NAME}_static)
+set(LIBTOPACK ${NVIMGCODEC_LIBRARY_NAME} ${NVIMGCODEC_LIBRARY_NAME}_static)
 
 find_package(CUDAToolkit REQUIRED)
 add_subdirectory(dynlink)
 
-target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PRIVATE CUDA::cudart_static dynlink_cuda)
+target_link_libraries(${NVIMGCODEC_LIBRARY_NAME} PRIVATE CUDA::cudart_static dynlink_cuda)
 
 if(UNIX)
     # CXX flags
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
-    target_link_libraries(${NVIMGCDCS_LIBRARY_NAME} PRIVATE dl)
-    target_link_libraries(${NVIMGCDCS_LIBRARY_NAME}_static PRIVATE dl)
+    target_link_libraries(${NVIMGCODEC_LIBRARY_NAME} PRIVATE dl)
+    target_link_libraries(${NVIMGCODEC_LIBRARY_NAME}_static PRIVATE dl)
 endif()
 
 
 # Configure library version
 include(ConfigureVersion)
-configure_library_version(NVIMGCDCS_LIBRARY_NAME
-    "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcdcs_version.h.in"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcdcs_version.h"
+configure_library_version(NVIMGCODEC_LIBRARY_NAME
+    "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodec_version.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodec_version.h"
 )
 
-set(NVIMGCDCS_PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodecs.h")
-set(NVIMGCDCS_PUBLIC_HEADERS "${NVIMGCDCS_PUBLIC_HEADERS}\;${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcdcs_version.h")
-set(NVIMGCDCS_PUBLIC_HEADERS "${NVIMGCDCS_PUBLIC_HEADERS}\;${CMAKE_CURRENT_SOURCE_DIR}/../include/nvcv_adapter.hpp")
+set(NVIMGCODEC_PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodec.h")
+set(NVIMGCODEC_PUBLIC_HEADERS "${NVIMGCODEC_PUBLIC_HEADERS}\;${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodec_version.h")
+set(NVIMGCODEC_PUBLIC_HEADERS "${NVIMGCODEC_PUBLIC_HEADERS}\;${CMAKE_CURRENT_SOURCE_DIR}/../include/nvcv_adapter.hpp")
 
 if(UNIX)
-    set_target_properties(${NVIMGCDCS_LIBRARY_NAME} PROPERTIES
+    set_target_properties(${NVIMGCODEC_LIBRARY_NAME} PROPERTIES
         POSITION_INDEPENDENT_CODE ON
-        PUBLIC_HEADER ${NVIMGCDCS_PUBLIC_HEADERS}
+        PUBLIC_HEADER ${NVIMGCODEC_PUBLIC_HEADERS}
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR})
 else()
-    set_target_properties(${NVIMGCDCS_LIBRARY_NAME} PROPERTIES
+    set_target_properties(${NVIMGCODEC_LIBRARY_NAME} PROPERTIES
         POSITION_INDEPENDENT_CODE ON
-        PUBLIC_HEADER ${NVIMGCDCS_PUBLIC_HEADERS}
+        PUBLIC_HEADER ${NVIMGCODEC_PUBLIC_HEADERS}
         VERSION ${PROJECT_VERSION}
-        OUTPUT_NAME ${NVIMGCDCS_LIBRARY_NAME}_${PROJECT_VERSION_MAJOR}
-        ARCHIVE_OUTPUT_NAME ${NVIMGCDCS_LIBRARY_NAME})
+        OUTPUT_NAME ${NVIMGCODEC_LIBRARY_NAME}_${PROJECT_VERSION_MAJOR}
+        ARCHIVE_OUTPUT_NAME ${NVIMGCODEC_LIBRARY_NAME})
 endif()
 
 # Installation (https://github.com/forexample/package-example) {
@@ -151,15 +151,15 @@ install(
 )
 
 # Config
-#   * <prefix>/lib/cmake/nvimgcodecs/nvimgcodecsConfig.cmake
-#   * <prefix>/lib/cmake/nvimgcodecs/nvimgcodecsConfigVersion.cmake
+#   * <prefix>/lib/cmake/nvimgcodec/nvimgcodecConfig.cmake
+#   * <prefix>/lib/cmake/nvimgcodec/nvimgcodecConfigVersion.cmake
 install(
     FILES "${project_config}" "${version_config}"
     DESTINATION "${config_install_dir}"
 )
 
 # Config
-#   * <prefix>/lib/cmake/nvimgcodecs/nvimgcodecsTargets.cmake
+#   * <prefix>/lib/cmake/nvimgcodec/nvimgcodecTargets.cmake
 install(
     EXPORT "${TARGETS_EXPORT_NAME}"
     NAMESPACE "${namespace}"

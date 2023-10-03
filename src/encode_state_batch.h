@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include "iencode_state.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class EncodeStateBatch : public IEncodeState
 {
@@ -26,4 +26,4 @@ class EncodeStateBatch : public IEncodeState
     std::unique_ptr<ProcessingResultsPromise> promise_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -28,10 +28,10 @@ static const char __CudaLibName[] = "libcuda.dll";
 static const char __CudaLibName1[] = "nvcuda.dll";
 #endif
 
-nvimgcdcs::ILibraryLoader::LibraryHandle loadCudaLibrary()
+nvimgcodec::ILibraryLoader::LibraryHandle loadCudaLibrary()
 {
-    nvimgcdcs::LibraryLoader lib_loader;
-    nvimgcdcs::ILibraryLoader::LibraryHandle ret = nullptr;
+    nvimgcodec::LibraryLoader lib_loader;
+    nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
     ret = lib_loader.loadLibrary(__CudaLibName1);
     if (!ret) {
         ret = lib_loader.loadLibrary(__CudaLibName);
@@ -51,8 +51,8 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadCudaLibrary()
 
 void* CudaLoadSymbol(const char* name)
 {
-    static nvimgcdcs::ILibraryLoader::LibraryHandle cudaDrvLib = loadCudaLibrary();
-    nvimgcdcs::LibraryLoader lib_loader;
+    static nvimgcodec::ILibraryLoader::LibraryHandle cudaDrvLib = loadCudaLibrary();
+    nvimgcodec::LibraryLoader lib_loader;
     try {
         void *ret = cudaDrvLib ? lib_loader.getFuncAddress(cudaDrvLib, name) : nullptr;
         return ret;

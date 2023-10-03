@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <iostream>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 namespace test {
 
 cv::Mat rgb2bgr(const cv::Mat& img) {
@@ -142,4 +142,4 @@ int write_bmp(const char* filename, const unsigned char* chanR, int pitchR, cons
     return 0;
 }
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

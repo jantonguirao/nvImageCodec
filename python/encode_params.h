@@ -14,7 +14,7 @@
 #include <vector>
 #include <tuple>
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -22,7 +22,7 @@
 #include "jpeg2k_encode_params.h"
 #include "jpeg_encode_params.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -38,11 +38,11 @@ class EncodeParams
     float getTargetPsnr() { return encode_params_.target_psnr; }
     void setTargetPsnr(float target_psnr) { encode_params_.target_psnr = target_psnr; };
 
-    nvimgcdcsColorSpec_t getColorSpec() { return color_spec_; }
-    void setColorSpec(nvimgcdcsColorSpec_t color_spec) { color_spec_ = color_spec; };
+    nvimgcodecColorSpec_t getColorSpec() { return color_spec_; }
+    void setColorSpec(nvimgcodecColorSpec_t color_spec) { color_spec_ = color_spec; };
 
-    nvimgcdcsChromaSubsampling_t getChromaSubsampling() { return chroma_subsampling_; }
-    void setChromaSubsampling(nvimgcdcsChromaSubsampling_t chroma_subsampling) { chroma_subsampling_ = chroma_subsampling; }
+    nvimgcodecChromaSubsampling_t getChromaSubsampling() { return chroma_subsampling_; }
+    void setChromaSubsampling(nvimgcodecChromaSubsampling_t chroma_subsampling) { chroma_subsampling_ = chroma_subsampling; }
 
     Jpeg2kEncodeParams& getJpeg2kEncodeParams() { return jpeg2k_encode_params_; }
     void setJpeg2kEncodeParams(Jpeg2kEncodeParams jpeg2k_encode_params) { jpeg2k_encode_params_ = jpeg2k_encode_params; }
@@ -53,9 +53,9 @@ class EncodeParams
 
     Jpeg2kEncodeParams jpeg2k_encode_params_;
     JpegEncodeParams jpeg_encode_params_;
-    nvimgcdcsEncodeParams_t encode_params_;
-    nvimgcdcsChromaSubsampling_t chroma_subsampling_;
-    nvimgcdcsColorSpec_t color_spec_;
+    nvimgcodecEncodeParams_t encode_params_;
+    nvimgcodecChromaSubsampling_t chroma_subsampling_;
+    nvimgcodecColorSpec_t color_spec_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

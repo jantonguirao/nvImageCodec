@@ -15,7 +15,7 @@
 #include <condition_variable>
 #include "processing_results.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 /**
  * @brief State object shared between ProcessingResultsPromise and ProcessingResultsFuture
@@ -249,4 +249,4 @@ ProcessingResultsPromise::~ProcessingResultsPromise() {
   }
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

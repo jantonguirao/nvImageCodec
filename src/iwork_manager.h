@@ -14,7 +14,7 @@
 #include "processing_results.h"
 #include "work.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 template<typename T>
 class IWorkManager
@@ -28,4 +28,4 @@ class IWorkManager
         Work<T>* target, std::unique_ptr<Work<T>> source) = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

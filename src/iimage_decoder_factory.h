@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IImageDecoder;
 
@@ -24,8 +24,8 @@ class IImageDecoderFactory
     virtual ~IImageDecoderFactory() = default;
     virtual std::string getDecoderId() const = 0;
     virtual std::string getCodecName() const = 0;
-    virtual nvimgcdcsBackendKind_t getBackendKind() const = 0;
+    virtual nvimgcodecBackendKind_t getBackendKind() const = 0;
     virtual std::unique_ptr<IImageDecoder> createDecoder(
-        const nvimgcdcsExecutionParams_t* exec_params, const char* options) const = 0;
+        const nvimgcodecExecutionParams_t* exec_params, const char* options) const = 0;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

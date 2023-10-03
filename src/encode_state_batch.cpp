@@ -11,7 +11,7 @@
 #include <memory>
 #include "encode_state_batch.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 void EncodeStateBatch::setPromise(const ProcessingResultsPromise& promise)
 {
@@ -23,4 +23,4 @@ const ProcessingResultsPromise& EncodeStateBatch::getPromise()
     return *promise_;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

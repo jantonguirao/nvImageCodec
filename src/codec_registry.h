@@ -17,7 +17,7 @@
 #include "icodec.h"
 #include "icodec_registry.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IImageParser;
 class ILogger;
@@ -28,7 +28,7 @@ class CodecRegistry : public ICodecRegistry
     CodecRegistry(ILogger* logger);
     void registerCodec(std::unique_ptr<ICodec> codec) override;
     std::unique_ptr<IImageParser> getParser(
-        nvimgcdcsCodeStreamDesc_t* code_stream) const override;
+        nvimgcodecCodeStreamDesc_t* code_stream) const override;
     ICodec* getCodecByName(const char* name) override;
 
     size_t getCodecsCount() const override;
@@ -39,4 +39,4 @@ class CodecRegistry : public ICodecRegistry
     std::deque<ICodec*> codec_ptrs_;
     std::map<std::string, std::unique_ptr<ICodec>> by_name_;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

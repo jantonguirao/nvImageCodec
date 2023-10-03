@@ -12,9 +12,9 @@
 #include <iostream>
 #include "image_parser.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-ImageParserFactory::ImageParserFactory(const nvimgcdcsParserDesc_t* desc)
+ImageParserFactory::ImageParserFactory(const nvimgcodecParserDesc_t* desc)
     : parser_desc_(desc)
 {
 }
@@ -33,7 +33,7 @@ std::unique_ptr<IImageParser> ImageParserFactory::createParser() const
     return std::make_unique<ImageParser>(parser_desc_);
 }
 
-bool ImageParserFactory::canParse(nvimgcdcsCodeStreamDesc_t* code_stream)
+bool ImageParserFactory::canParse(nvimgcodecCodeStreamDesc_t* code_stream)
 {
     assert(code_stream);
     int result = 0;
@@ -41,4 +41,4 @@ bool ImageParserFactory::canParse(nvimgcdcsCodeStreamDesc_t* code_stream)
     return result;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

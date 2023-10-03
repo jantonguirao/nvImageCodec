@@ -10,6 +10,6 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
-nvimgcdcsStatus_t get_libtiff_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc);
+nvimgcodecStatus_t get_libtiff_extension_desc(nvimgcodecExtensionDesc_t* ext_desc);
