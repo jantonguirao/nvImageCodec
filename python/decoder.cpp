@@ -155,18 +155,33 @@ std::vector<py::object> Decoder::decode(
             continue;
         }
 
-        int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
+        auto sample_type = params.allow_any_depth_ ? image_info.plane_info[0].sample_type : NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+        int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
 
         image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
 
         //Decode to format
         bool decode_to_interleaved = true;
+        image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+
         if (params.color_spec_ == NVIMGCDCS_COLORSPEC_SRGB) {
             image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
             image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
             image_info.plane_info[0].num_channels = decode_to_interleaved ? 3 /*I_RGB*/ : 1 /*P_RGB*/;
             image_info.num_planes = decode_to_interleaved ? 1 : image_info.num_planes;
-            image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+        } else if (params.color_spec_ == NVIMGCDCS_COLORSPEC_GRAY) {
+            image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_Y;
+            image_info.color_spec = NVIMGCDCS_COLORSPEC_GRAY;
+            image_info.plane_info[0].num_channels = 1;
+            image_info.num_planes = 1;
+        } else if (params.color_spec_ == NVIMGCDCS_COLORSPEC_UNCHANGED) {
+            image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED : NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED;
+            image_info.color_spec = NVIMGCDCS_COLORSPEC_UNCHANGED;
+            uint32_t num_channels = std::max(image_info.num_planes, image_info.plane_info[0].num_channels);
+            image_info.plane_info[0].num_channels = decode_to_interleaved ? num_channels : 1;
+            image_info.num_planes = decode_to_interleaved ? 1 : num_channels;
+        } else {
+            // TODO(janton): support more?
         }
 
         bool swap_wh = params.decode_params_.apply_exif_orientation && ((image_info.orientation.rotated / 90) % 2);
@@ -181,7 +196,7 @@ std::vector<py::object> Decoder::decode(
             image_info.plane_info[c].height = image_info.plane_info[0].height;
             image_info.plane_info[c].width = image_info.plane_info[0].width;
             image_info.plane_info[c].row_stride = device_pitch_in_bytes;
-            image_info.plane_info[c].sample_type = image_info.plane_info[0].sample_type;
+            image_info.plane_info[c].sample_type = sample_type;
             image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
             buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[c].height;
         }

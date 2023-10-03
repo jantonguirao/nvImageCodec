@@ -32,7 +32,8 @@ enum TiffTag : uint16_t
     HEIGHT_TAG = 257,
     PHOTOMETRIC_INTERPRETATION_TAG = 262,
     ORIENTATION_TAG = 274,
-    SAMPLESPERPIXEL_TAG = 277
+    SAMPLESPERPIXEL_TAG = 277,
+    BITSPERSAMPLE_TAG = 258
 };
 
 enum TiffDataType : uint16_t
@@ -71,17 +72,35 @@ nvimgcdcsStatus_t GetInfoImpl(
     info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
     info->orientation = {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
 
-    bool width_read = false, height_read = false, samples_per_px_read = false, palette_read = false;
+    bool width_read = false, height_read = false, samples_per_px_read = false, palette_read = false, bitdepth_read = false;
     int64_t width = 0, height = 0, nchannels = 0;
-
+    std::array<uint16_t, NVIMGCDCS_MAX_NUM_PLANES> bitdepth = {0};
     for (int entry_idx = 0; entry_idx < entry_count; entry_idx++) {
         const auto entry_offset = ifd_offset + sizeof(uint16_t) + entry_idx * ENTRY_SIZE;
         io_stream->seek(io_stream->instance, entry_offset, SEEK_SET);
         const auto tag_id = TiffRead<uint16_t, is_little_endian>(io_stream);
-        if (tag_id == WIDTH_TAG || tag_id == HEIGHT_TAG || tag_id == SAMPLESPERPIXEL_TAG || tag_id == ORIENTATION_TAG ||
-            tag_id == PHOTOMETRIC_INTERPRETATION_TAG) {
-            const auto value_type = TiffRead<uint16_t, is_little_endian>(io_stream);
-            const auto value_count = TiffRead<uint32_t, is_little_endian>(io_stream);
+        const auto value_type = TiffRead<uint16_t, is_little_endian>(io_stream);
+        const auto value_count = TiffRead<uint32_t, is_little_endian>(io_stream);
+        if (tag_id == BITSPERSAMPLE_TAG) {
+            if (value_count > 1) {
+                uint32_t value_offset = TiffRead<uint32_t, is_little_endian>(io_stream);
+                io_stream->seek(io_stream->instance, value_offset, SEEK_SET);
+            }
+            if (value_type == TYPE_WORD) {
+                for (size_t i = 0; i < value_count; i++) {
+                    bitdepth[i] = TiffRead<uint16_t, is_little_endian>(io_stream);
+                }
+            } else if (value_type == TYPE_DWORD) {
+                for (size_t i = 0; i < value_count; i++) {
+                    bitdepth[i] = TiffRead<uint32_t, is_little_endian>(io_stream);
+                }
+            } else {
+                NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Couldn't read TIFF bits per sample information");
+                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+            }
+            bitdepth_read = true;
+        } else if (tag_id == WIDTH_TAG || tag_id == HEIGHT_TAG || tag_id == SAMPLESPERPIXEL_TAG || tag_id == ORIENTATION_TAG ||
+                   tag_id == PHOTOMETRIC_INTERPRETATION_TAG) {
             if (value_count != 1) {
                 NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected value count");
                 return NVIMGCDCS_STATUS_BAD_CODESTREAM;
@@ -115,7 +134,7 @@ nvimgcdcsStatus_t GetInfoImpl(
                 palette_read = true;
             }
         }
-        if (width_read && height_read && palette_read)
+        if (width_read && height_read && palette_read && bitdepth_read)
             break;
     }
 
@@ -129,7 +148,8 @@ nvimgcdcsStatus_t GetInfoImpl(
         info->plane_info[p].height = height;
         info->plane_info[p].width = width;
         info->plane_info[p].num_channels = 1;
-        info->plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+        info->plane_info[p].sample_type =
+            bitdepth_read && bitdepth[p] == 16 ? NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16 : NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
     }
     if (nchannels == 1)
         info->sample_format = NVIMGCDCS_SAMPLEFORMAT_P_Y;
@@ -158,16 +178,16 @@ nvimgcdcsStatus_t TIFFParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDes
         NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "tiff_parser_can_parse");
         CHECK_NULL(result);
         CHECK_NULL(code_stream);
-    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
-    size_t length;
-    io_stream->size(io_stream->instance, &length);
-    io_stream->seek(io_stream->instance, 0, SEEK_SET);
-    if (length < 4) {
-        *result = 0;
-        return NVIMGCDCS_STATUS_SUCCESS;
-    }
-    tiff_magic_t header = ReadValue<tiff_magic_t>(io_stream);
-    *result = header == le_header || header == be_header;
+        nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+        size_t length;
+        io_stream->size(io_stream->instance, &length);
+        io_stream->seek(io_stream->instance, 0, SEEK_SET);
+        if (length < 4) {
+            *result = 0;
+            return NVIMGCDCS_STATUS_SUCCESS;
+        }
+        tiff_magic_t header = ReadValue<tiff_magic_t>(io_stream);
+        *result = header == le_header || header == be_header;
     } catch (const std::runtime_error& e) {
         NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
         return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
@@ -286,30 +306,30 @@ class TiffParserExtension
 
     static nvimgcdcsStatus_t tiff_parser_extension_create(
         void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
-{
-    try {
-        CHECK_NULL(framework)
+    {
+        try {
+            CHECK_NULL(framework)
             NVIMGCDCS_LOG_TRACE(framework, "tiff_parser_ext", "tiff_parser_extension_create");
-        CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new TiffParserExtension(framework));
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            CHECK_NULL(extension)
+            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new TiffParserExtension(framework));
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
 
     static nvimgcdcsStatus_t tiff_parser_extension_destroy(nvimgcdcsExtension_t extension)
-{
-    try {
-        CHECK_NULL(extension)
-        auto ext_handle = reinterpret_cast<nvimgcdcs::TiffParserExtension*>(extension);
+    {
+        try {
+            CHECK_NULL(extension)
+            auto ext_handle = reinterpret_cast<nvimgcdcs::TiffParserExtension*>(extension);
             NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "tiff_parser_ext", "tiff_parser_extension_destroy");
-        delete ext_handle;
-    } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            delete ext_handle;
+        } catch (const std::runtime_error& e) {
+            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        }
+        return NVIMGCDCS_STATUS_SUCCESS;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
-}
 
   private:
     const nvimgcdcsFrameworkDesc_t* framework_;

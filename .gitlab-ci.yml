@@ -73,6 +73,7 @@ build:cuda11.8-gcc9:
         - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
         - python3 -m pip install artifacts/nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-*.whl
         - pytest-3 -v test/test_python.py
+        - pytest-3 -v test/test_decode_multichannel.py
 
 .test:transcode:
     extends: .test
