@@ -10,25 +10,25 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 #include "iimage_parser_factory.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IImageParser;
 class ImageParserFactory : public IImageParserFactory
 {
   public:
-    explicit ImageParserFactory(const nvimgcdcsParserDesc_t* desc);
+    explicit ImageParserFactory(const nvimgcodecParserDesc_t* desc);
     std::string getParserId() const override;
     std::string getCodecName() const override;
-    bool canParse(nvimgcdcsCodeStreamDesc_t* code_stream) override;
+    bool canParse(nvimgcodecCodeStreamDesc_t* code_stream) override;
     std::unique_ptr<IImageParser> createParser() const override;
 
   private:
-    const nvimgcdcsParserDesc_t* parser_desc_;
+    const nvimgcodecParserDesc_t* parser_desc_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -15,7 +15,7 @@
 #include <string>
 #include <cuda_runtime.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 enum Status
 {
@@ -99,4 +99,4 @@ class Exception : public std::exception
          }                                                                                          \
      }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

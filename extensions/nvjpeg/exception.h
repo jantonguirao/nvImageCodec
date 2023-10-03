@@ -14,7 +14,7 @@
 #include <sstream>
 #include <string>
 #include <map>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <nvjpeg.h>
 
 const char* getErrorString(nvjpegStatus_t);
@@ -41,7 +41,7 @@ class NvJpegException : public std::exception
 
     std::string info() const throw();
 
-    nvimgcdcsStatus_t nvimgcdcsStatus() const;
+    nvimgcodecStatus_t nvimgcodecStatus() const;
 
   private:
     NvJpegException();

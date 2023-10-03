@@ -20,18 +20,18 @@
 #include <limits>
 #include <type_traits>
 #include "host_dev.h"
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 template <typename T>
 struct const_limits;
 
 // std::numeric_limits are not compatible with CUDA
 template <typename T>
-NVIMGCDCS_HOST_DEV constexpr T max_value() {
+NVIMGCODEC_HOST_DEV constexpr T max_value() {
   return const_limits<std::remove_cv_t<T>>::max;
 }
 template <typename T>
-NVIMGCDCS_HOST_DEV constexpr T min_value() {
+NVIMGCODEC_HOST_DEV constexpr T min_value() {
   return const_limits<std::remove_cv_t<T>>::min;
 }
 
@@ -83,7 +83,7 @@ struct ret_type {  // a placeholder for return type
 };
 
 template <typename T, typename U>
-NVIMGCDCS_HOST_DEV constexpr std::enable_if_t<
+NVIMGCODEC_HOST_DEV constexpr std::enable_if_t<
     needs_clamp<U, T>::value && std::is_signed<U>::value && std::is_signed<T>::value,
     T>
 clamp(U value, ret_type<T>) {
@@ -93,7 +93,7 @@ clamp(U value, ret_type<T>) {
 }
 
 template <typename T, typename U>
-NVIMGCDCS_HOST_DEV constexpr std::enable_if_t<
+NVIMGCODEC_HOST_DEV constexpr std::enable_if_t<
     needs_clamp<U, T>::value && std::is_signed<U>::value && std::is_floating_point<U>::value
         && std::is_unsigned<T>::value,
     T>
@@ -104,7 +104,7 @@ clamp(U value, ret_type<T>) {
 }
 
 template <typename T, typename U>
-NVIMGCDCS_HOST_DEV constexpr std::enable_if_t<
+NVIMGCODEC_HOST_DEV constexpr std::enable_if_t<
     needs_clamp<U, T>::value && std::is_signed<U>::value && std::is_integral<U>::value
         && std::is_unsigned<T>::value,
     T>
@@ -116,7 +116,7 @@ clamp(U value, ret_type<T>) {
 
 
 template <typename T, typename U>
-NVIMGCDCS_HOST_DEV constexpr std::enable_if_t<
+NVIMGCODEC_HOST_DEV constexpr std::enable_if_t<
     needs_clamp<U, T>::value && std::is_unsigned<U>::value,
     T>
 clamp(U value, ret_type<T>) {
@@ -128,49 +128,49 @@ clamp(U value, ret_type<T>) {
 }
 
 template <typename T, typename U>
-NVIMGCDCS_HOST_DEV constexpr std::enable_if_t<!needs_clamp<U, T>::value, T>
+NVIMGCODEC_HOST_DEV constexpr std::enable_if_t<!needs_clamp<U, T>::value, T>
 clamp(U value, ret_type<T>) { return value; }
 
-NVIMGCDCS_HOST_DEV constexpr int32_t clamp(uint32_t value, ret_type<int32_t>) {
+NVIMGCODEC_HOST_DEV constexpr int32_t clamp(uint32_t value, ret_type<int32_t>) {
   return value & 0x80000000u ? 0x7fffffff : value;
 }
 
-NVIMGCDCS_HOST_DEV constexpr uint32_t clamp(int32_t value, ret_type<uint32_t>) {
+NVIMGCODEC_HOST_DEV constexpr uint32_t clamp(int32_t value, ret_type<uint32_t>) {
   return value < 0 ? 0u : value;
 }
 
-NVIMGCDCS_HOST_DEV constexpr int32_t clamp(int64_t value, ret_type<int32_t>) {
+NVIMGCODEC_HOST_DEV constexpr int32_t clamp(int64_t value, ret_type<int32_t>) {
   return value < static_cast<int64_t>(min_value<int32_t>()) ? min_value<int32_t>() :
          value > static_cast<int64_t>(max_value<int32_t>()) ? max_value<int32_t>() :
          static_cast<int32_t>(value);
 }
 
 template <>
-NVIMGCDCS_HOST_DEV constexpr int32_t clamp(uint64_t value, ret_type<int32_t>) {
+NVIMGCODEC_HOST_DEV constexpr int32_t clamp(uint64_t value, ret_type<int32_t>) {
   return value > static_cast<uint64_t>(max_value<int32_t>()) ? max_value<int32_t>() :
          static_cast<int32_t>(value);
 }
 
 template <>
-NVIMGCDCS_HOST_DEV constexpr uint32_t clamp(int64_t value, ret_type<uint32_t>) {
+NVIMGCODEC_HOST_DEV constexpr uint32_t clamp(int64_t value, ret_type<uint32_t>) {
   return value < 0 ? 0 :
          value > static_cast<int64_t>(max_value<uint32_t>()) ? max_value<uint32_t>() :
          static_cast<uint32_t>(value);
 }
 
 template <>
-NVIMGCDCS_HOST_DEV constexpr uint32_t clamp(uint64_t value, ret_type<uint32_t>) {
+NVIMGCODEC_HOST_DEV constexpr uint32_t clamp(uint64_t value, ret_type<uint32_t>) {
   return value > static_cast<uint64_t>(max_value<uint32_t>()) ? max_value<uint32_t>() :
          static_cast<uint32_t>(value);
 }
 
 template <typename T>
-NVIMGCDCS_HOST_DEV constexpr bool clamp(T value, ret_type<bool>) {
+NVIMGCODEC_HOST_DEV constexpr bool clamp(T value, ret_type<bool>) {
   return static_cast<bool>(value);
 }
 
 template <typename T, typename U>
-NVIMGCDCS_HOST_DEV constexpr T clamp(U value) {
+NVIMGCODEC_HOST_DEV constexpr T clamp(U value) {
   return clamp(value, ret_type<T>());
 }
 
@@ -224,40 +224,40 @@ template <typename Out, typename In>
 struct Converter : ConverterBase<Out, In> {
   static_assert(std::is_arithmetic<Out>::value && std::is_arithmetic<In>::value,
     "Default ConverterBase can only be used with arithmetic types. For custom types, "
-    "specialize or overload nvimgcdcs::Convert");
+    "specialize or overload nvimgcodec::Convert");
 };
 
 /// Converts between two FP types
 template <typename Out, typename In>
 struct ConverterBase<Out, In, true, true> {
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out Convert(In value) { return value; }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertNorm(In value) { return value; }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSat(In value) { return value; }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSatNorm(In value) { return value; }
 };
 
 /// Converts integral to FP type
 template <typename Out, typename In>
 struct ConverterBase<Out, In, true, false> {
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out Convert(In value) { return value; }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSat(In value) { return value; }
 
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertNorm(In value) { return value * (Out(1) / (max_value<In>())); }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSatNorm(In value) { return value * (Out(1) / (max_value<In>())); }
 };
 
 /// Converts FP to integral type
 template <typename Out, typename In>
 struct ConverterBase<Out, In, false, true> {
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out Convert(In value) {
 #ifdef __CUDA_ARCH__
   return clamp<Out>(detail::cuda_round_helper(value, Out()));
@@ -266,7 +266,7 @@ struct ConverterBase<Out, In, false, true> {
 #endif
   }
 
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSat(In value) {
 #ifdef __CUDA_ARCH__
   return clamp<Out>(detail::cuda_round_helper(value, Out()));
@@ -275,7 +275,7 @@ struct ConverterBase<Out, In, false, true> {
 #endif
   }
 
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertNorm(In value) {
 #ifdef __CUDA_ARCH__
     return detail::cuda_round_helper(value * max_value<Out>(), Out());
@@ -284,7 +284,7 @@ struct ConverterBase<Out, In, false, true> {
 #endif
   }
 
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSatNorm(In value) {
 #ifdef __CUDA_ARCH__
     return std::is_signed<Out>::value
@@ -301,15 +301,15 @@ template <typename Out, typename In,
           bool IsOutSigned = std::is_signed<Out>::value,
           bool IsInSigned = std::is_signed<In>::value>
 struct ConvertIntInt {
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out Convert(In value) { return value; }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertNorm(In value) {
     return Converter<Out, float>::Convert(value * (1.0f * max_value<Out>() / max_value<In>()));
   }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSat(In value) { return clamp<Out>(value); }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSatNorm(In value) {
     return ConvertNorm(value);
   }
@@ -318,15 +318,15 @@ struct ConvertIntInt {
 /// Converts signed to unsigned integer
 template <typename Out, typename In>
 struct ConvertIntInt<Out, In, false, true> {
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out Convert(In value) { return value; }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertNorm(In value) {
     return Converter<Out, float>::Convert(value * (1.0f * max_value<Out>() / max_value<In>()));
   }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSat(In value) { return clamp<Out>(value); }
-  NVIMGCDCS_HOST_DEV
+  NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSatNorm(In value) {
 #ifdef __CUDA_ARCH__
     return detail::cuda_round_helper(
@@ -342,22 +342,22 @@ template <typename Out, typename In>
 struct ConverterBase<Out, In, false, false> : ConvertIntInt<Out, In> {
   static_assert(std::is_arithmetic<Out>::value && std::is_arithmetic<In>::value,
     "Default ConverterBase can only be used with arithmetic types. For custom types, "
-    "specialize or overload nvimgcdcs::Convert");
+    "specialize or overload nvimgcodec::Convert");
 };
 
 /// Pass-through conversion
 template <typename T>
 struct Converter<T, T> {
-  static NVIMGCDCS_HOST_DEV
+  static NVIMGCODEC_HOST_DEV
   constexpr T Convert(T value) { return value; }
 
-  static NVIMGCDCS_HOST_DEV
+  static NVIMGCODEC_HOST_DEV
   constexpr T ConvertSat(T value) { return value; }
 
-    static NVIMGCDCS_HOST_DEV
+    static NVIMGCODEC_HOST_DEV
   constexpr T ConvertNorm(T value) { return value; }
 
-  static NVIMGCDCS_HOST_DEV
+  static NVIMGCODEC_HOST_DEV
   constexpr T ConvertSatNorm(T value) { return value; }
 };
 
@@ -379,7 +379,7 @@ using converter_t = Converter<
 ///   Convert<uint8_t>(100.0.0f); // undefined
 /// ```
 template <typename Out, typename In>
-NVIMGCDCS_HOST_DEV constexpr Out Convert(In value) {
+NVIMGCODEC_HOST_DEV constexpr Out Convert(In value) {
   return detail::converter_t<Out, In>::Convert(value);
 }
 
@@ -405,7 +405,7 @@ NVIMGCDCS_HOST_DEV constexpr Out Convert(In value) {
 ///   ConvertNorm<uint8_t>(1000.0f);            // undefined
 /// ```
 template <typename Out, typename In>
-NVIMGCDCS_HOST_DEV constexpr Out ConvertNorm(In value) {
+NVIMGCODEC_HOST_DEV constexpr Out ConvertNorm(In value) {
   return detail::converter_t<Out, In>::ConvertNorm(value);
 }
 
@@ -419,7 +419,7 @@ NVIMGCDCS_HOST_DEV constexpr Out ConvertNorm(In value) {
 ///   ConvertSat<unsigned>(-1000.0f);   // == 0
 /// ```
 template <typename Out, typename In>
-NVIMGCDCS_HOST_DEV constexpr Out ConvertSat(In value) {
+NVIMGCODEC_HOST_DEV constexpr Out ConvertSat(In value) {
   return detail::converter_t<Out, In>::ConvertSat(value);
 }
 
@@ -443,8 +443,8 @@ NVIMGCDCS_HOST_DEV constexpr Out ConvertSat(In value) {
 ///   ConvertSatNorm<uint8_t, int8_t>(-1);        // == 0
 /// ```
 template <typename Out, typename In>
-NVIMGCDCS_HOST_DEV constexpr Out ConvertSatNorm(In value) {
+NVIMGCODEC_HOST_DEV constexpr Out ConvertSatNorm(In value) {
   return detail::converter_t<Out, In>::ConvertSatNorm(value);
 }
 
-}  // namespace nvimgcdcs
+}  // namespace nvimgcodec

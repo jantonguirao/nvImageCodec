@@ -11,11 +11,11 @@
 #pragma once
 
 #include <memory>
-#include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
+#include <nvimgcodec.h>
 #include "iimage.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 class IDecodeState;
 class IEncodeState;
 
@@ -25,21 +25,21 @@ class Image : public IImage
     explicit Image();
     ~Image() override;
     void setIndex(int index) override;
-    void setImageInfo(const nvimgcdcsImageInfo_t* image_info) override;
-    void getImageInfo(nvimgcdcsImageInfo_t* image_info) override;
-    nvimgcdcsImageDesc_t* getImageDesc() override;
+    void setImageInfo(const nvimgcodecImageInfo_t* image_info) override;
+    void getImageInfo(nvimgcodecImageInfo_t* image_info) override;
+    nvimgcodecImageDesc_t* getImageDesc() override;
     void setPromise(const ProcessingResultsPromise& promise) override;
   private:
-    nvimgcdcsStatus_t imageReady(nvimgcdcsProcessingStatus_t processing_status);
+    nvimgcodecStatus_t imageReady(nvimgcodecProcessingStatus_t processing_status);
 
-    static nvimgcdcsStatus_t static_get_image_info(void* instance, nvimgcdcsImageInfo_t* result);
-    static nvimgcdcsStatus_t static_image_ready(
-        void* instance, nvimgcdcsProcessingStatus_t processing_status);
+    static nvimgcodecStatus_t static_get_image_info(void* instance, nvimgcodecImageInfo_t* result);
+    static nvimgcodecStatus_t static_image_ready(
+        void* instance, nvimgcodecProcessingStatus_t processing_status);
     int index_;
-    nvimgcdcsImageInfo_t image_info_;
+    nvimgcodecImageInfo_t image_info_;
     IDecodeState* decode_state_;
     IEncodeState* encode_state_;
-    nvimgcdcsImageDesc_t image_desc_;
+    nvimgcodecImageDesc_t image_desc_;
     std::unique_ptr<ProcessingResultsPromise> promise_;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,7 +10,7 @@
 
 #include <extensions/nvjpeg/nvjpeg_ext.h>
 #include <gtest/gtest.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <parsers/parser_test_utils.h>
 #include <cstring>
 #include <filesystem>
@@ -19,7 +19,7 @@
 #include <tuple>
 #include <vector>
 
-#include "nvimgcodecs_tests.h"
+#include "nvimgcodec_tests.h"
 #include "nvjpeg_ext_test_common.h"
 
 using ::testing::Bool;
@@ -31,7 +31,7 @@ using ::testing::ValuesIn;
 #define NV_DEVELOPER_DUMP_OUTPUT_CODE_STREAM 0
 #define NV_DEVELOPER_DEBUG_DUMP_DECODE_OUTPUT 0
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
 {
@@ -42,36 +42,36 @@ class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
     {
         NvJpegExtTestBase::SetUp();
         const char* options = nullptr;
-        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
-        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderCreate(instance_, &encoder_, &exec_params, options));
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecEncoderCreate(instance_, &encoder_, &exec_params, options));
 
-        jpeg_enc_params_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
+        jpeg_enc_params_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
         jpeg_enc_params_.optimized_huffman = 0;
-        params_ = {NVIMGCDCS_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
         params_.next = &jpeg_enc_params_;
         params_.quality = 95;
         params_.target_psnr = 0;
-        out_jpeg_image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+        out_jpeg_image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     }
 
     virtual void TearDown()
     {
         if (encoder_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderDestroy(encoder_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecEncoderDestroy(encoder_));
         NvJpegExtTestBase::TearDown();
     }
 
-    nvimgcdcsEncoder_t encoder_;
-    nvimgcdcsJpegEncodeParams_t jpeg_enc_params_;
-    nvimgcdcsEncodeParams_t params_;
-    nvimgcdcsJpegImageInfo_t out_jpeg_image_info_;
+    nvimgcodecEncoder_t encoder_;
+    nvimgcodecJpegEncodeParams_t jpeg_enc_params_;
+    nvimgcodecEncodeParams_t params_;
+    nvimgcodecJpegImageInfo_t out_jpeg_image_info_;
 };
 
 class NvJpegExtEncoderTestSingleImage : public NvJpegExtEncoderTestBase,
                                         public NvJpegTestBase,
-                                        public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
-                                            nvimgcdcsChromaSubsampling_t, nvimgcdcsChromaSubsampling_t, nvimgcdcsJpegEncoding_t>>
+                                        public TestWithParam<std::tuple<const char*, nvimgcodecColorSpec_t, nvimgcodecSampleFormat_t,
+                                            nvimgcodecChromaSubsampling_t, nvimgcodecChromaSubsampling_t, nvimgcodecJpegEncoding_t>>
 {
   public:
     virtual ~NvJpegExtEncoderTestSingleImage() = default;
@@ -96,44 +96,44 @@ class NvJpegExtEncoderTestSingleImage : public NvJpegExtEncoderTestBase,
         NvJpegExtEncoderTestBase::TearDown();
     }
 
-    nvimgcdcsChromaSubsampling_t encoded_chroma_subsampling_;
+    nvimgcodecChromaSubsampling_t encoded_chroma_subsampling_;
 };
 
 TEST_P(NvJpegExtEncoderTestSingleImage, ValidFormatAndParameters)
 {
-    nvimgcdcsImageInfo_t ref_cs_image_info;
+    nvimgcodecImageInfo_t ref_cs_image_info;
     DecodeReference(resources_dir, image_file_, sample_format_, true, &ref_cs_image_info);
     image_info_.plane_info[0] = ref_cs_image_info.plane_info[0];
     PrepareImageForFormat();
     memcpy(image_buffer_.data(), reinterpret_cast<void*>(ref_buffer_.data()), ref_buffer_.size());
 
-    nvimgcdcsImageInfo_t cs_image_info(image_info_);
+    nvimgcodecImageInfo_t cs_image_info(image_info_);
     cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
     strcpy(cs_image_info.codec_name,"jpeg");
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS,
-        nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageCreate(instance_, &in_image_, &image_info_));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
+        nvimgcodecCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
             &NvJpegExtEncoderTestSingleImage::ResizeBufferStatic<NvJpegExtEncoderTestSingleImage>, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
-    nvimgcdcsProcessingStatus_t status;
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureWaitForAll(future_));
+    nvimgcodecProcessingStatus_t status;
     size_t status_size;
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, status);
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureGetProcessingStatus(future_, &status, &status_size));
+    ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, status);
+    ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, 1);
     if (NV_DEVELOPER_DUMP_OUTPUT_CODE_STREAM) {
         std::ofstream b_stream("./encoded_out.jpg", std::fstream::out | std::fstream::binary);
         b_stream.write(reinterpret_cast<char*>(code_stream_buffer_.data()), code_stream_buffer_.size());
     }
 
     LoadImageFromHostMemory(instance_, in_code_stream_, code_stream_buffer_.data(), code_stream_buffer_.size());
-    nvimgcdcsImageInfo_t load_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcdcsJpegImageInfo_t load_jpeg_info{NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecJpegImageInfo_t load_jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
     load_info.next = &load_jpeg_info;
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &load_info));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &load_info));
     EXPECT_EQ(out_jpeg_image_info_.encoding, load_jpeg_info.encoding);
     EXPECT_EQ(cs_image_info.chroma_subsampling, load_info.chroma_subsampling);
 
@@ -152,88 +152,88 @@ static const char* css_filenames[] = {"/jpeg/padlock-406986_640_410.jpg", "/jpeg
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_VALID_SRGB_INPUT_FORMATS_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImage,
     Combine(
         ValuesIn(css_filenames),
-        Values(NVIMGCDCS_COLORSPEC_SRGB),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_RGB, NVIMGCDCS_SAMPLEFORMAT_I_RGB, NVIMGCDCS_SAMPLEFORMAT_P_BGR, NVIMGCDCS_SAMPLEFORMAT_I_BGR),
-        Values(NVIMGCDCS_SAMPLING_444),
-        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_422 , NVIMGCDCS_SAMPLING_420, 
-            NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
+        Values(NVIMGCODEC_COLORSPEC_SRGB),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_RGB, NVIMGCODEC_SAMPLEFORMAT_I_RGB, NVIMGCODEC_SAMPLEFORMAT_P_BGR, NVIMGCODEC_SAMPLEFORMAT_I_BGR),
+        Values(NVIMGCODEC_SAMPLING_444),
+        Values(NVIMGCODEC_SAMPLING_444, NVIMGCODEC_SAMPLING_440, NVIMGCODEC_SAMPLING_422 , NVIMGCODEC_SAMPLING_420, 
+            NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_VALID_SYCC_CSS444_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImage,
     Combine(
         Values("/jpeg/padlock-406986_640_444.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-        Values(NVIMGCDCS_SAMPLING_444),
-        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_422 , NVIMGCDCS_SAMPLING_420, 
-            NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410,  NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
+        Values(NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCODEC_SAMPLING_444),
+        Values(NVIMGCODEC_SAMPLING_444, NVIMGCODEC_SAMPLING_440, NVIMGCODEC_SAMPLING_422 , NVIMGCODEC_SAMPLING_420, 
+            NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410,  NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_VALID_SYCC_CSS410_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImage,
     Combine(
         Values("/jpeg/padlock-406986_640_410.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-        Values(NVIMGCDCS_SAMPLING_410),
-        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_422 , NVIMGCDCS_SAMPLING_420, 
-            NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
+        Values(NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCODEC_SAMPLING_410),
+        Values(NVIMGCODEC_SAMPLING_444, NVIMGCODEC_SAMPLING_440, NVIMGCODEC_SAMPLING_422 , NVIMGCODEC_SAMPLING_420, 
+            NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_VALID_SYCC_CSS411_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImage,
     Combine(
         Values("/jpeg/padlock-406986_640_411.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-        Values(NVIMGCDCS_SAMPLING_411),
-        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_422 , NVIMGCDCS_SAMPLING_420, 
-            NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
+        Values(NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCODEC_SAMPLING_411),
+        Values(NVIMGCODEC_SAMPLING_444, NVIMGCODEC_SAMPLING_440, NVIMGCODEC_SAMPLING_422 , NVIMGCODEC_SAMPLING_420, 
+            NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_VALID_SYCC_CSS420_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImage,
     Combine(
         Values("/jpeg/padlock-406986_640_420.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-        Values(NVIMGCDCS_SAMPLING_420),
-        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_422 , NVIMGCDCS_SAMPLING_420, 
-            NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
+        Values(NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCODEC_SAMPLING_420),
+        Values(NVIMGCODEC_SAMPLING_444, NVIMGCODEC_SAMPLING_440, NVIMGCODEC_SAMPLING_422 , NVIMGCODEC_SAMPLING_420, 
+            NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_VALID_SYCC_CSS422_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImage,
     Combine(
         Values("/jpeg/padlock-406986_640_422.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-        Values(NVIMGCDCS_SAMPLING_422),
-        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_422 , NVIMGCDCS_SAMPLING_420, 
-            NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
+        Values(NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCODEC_SAMPLING_422),
+        Values(NVIMGCODEC_SAMPLING_444, NVIMGCODEC_SAMPLING_440, NVIMGCODEC_SAMPLING_422 , NVIMGCODEC_SAMPLING_420, 
+            NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_VALID_SYCC_CSS440_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImage,
     Combine(
         Values("/jpeg/padlock-406986_640_440.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_YUV),
-        Values(NVIMGCDCS_SAMPLING_440),
-        Values(NVIMGCDCS_SAMPLING_444, NVIMGCDCS_SAMPLING_440, NVIMGCDCS_SAMPLING_422 , NVIMGCDCS_SAMPLING_420, 
-            NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
+        Values(NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_YUV),
+        Values(NVIMGCODEC_SAMPLING_440),
+        Values(NVIMGCODEC_SAMPLING_444, NVIMGCODEC_SAMPLING_440, NVIMGCODEC_SAMPLING_422 , NVIMGCODEC_SAMPLING_420, 
+            NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
 
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_VALID_GRAY_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImage,
     Combine(
         ValuesIn(css_filenames),
-        Values(NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
-        Values(NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
+        Values(NVIMGCODEC_COLORSPEC_GRAY, NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_Y),
+        Values(NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN)));
 
 
 class NvJpegExtEncoderTestSingleImageWithStatus : public NvJpegExtEncoderTestBase,
                                         public NvJpegTestBase,
-                                        public TestWithParam<std::tuple<const char*, nvimgcdcsColorSpec_t, nvimgcdcsSampleFormat_t,
-                                            nvimgcdcsChromaSubsampling_t, nvimgcdcsChromaSubsampling_t, nvimgcdcsJpegEncoding_t, nvimgcdcsProcessingStatus_t>>
+                                        public TestWithParam<std::tuple<const char*, nvimgcodecColorSpec_t, nvimgcodecSampleFormat_t,
+                                            nvimgcodecChromaSubsampling_t, nvimgcodecChromaSubsampling_t, nvimgcodecJpegEncoding_t, nvimgcodecProcessingStatus_t>>
 {
   public:
     virtual ~NvJpegExtEncoderTestSingleImageWithStatus() = default;
@@ -260,68 +260,68 @@ class NvJpegExtEncoderTestSingleImageWithStatus : public NvJpegExtEncoderTestBas
         NvJpegExtEncoderTestBase::TearDown();
     }
 
-    nvimgcdcsChromaSubsampling_t encoded_chroma_subsampling_;
-    nvimgcdcsProcessingStatus_t expected_status_;
+    nvimgcodecChromaSubsampling_t encoded_chroma_subsampling_;
+    nvimgcodecProcessingStatus_t expected_status_;
 };
 
 
 TEST_P(NvJpegExtEncoderTestSingleImageWithStatus, InvalidFormatsOrParameters)
 {
-    nvimgcdcsImageInfo_t ref_cs_image_info;
+    nvimgcodecImageInfo_t ref_cs_image_info;
     DecodeReference(resources_dir, image_file_, sample_format_, true, &ref_cs_image_info);
     image_info_.plane_info[0] = ref_cs_image_info.plane_info[0];
     PrepareImageForFormat();
     memcpy(image_buffer_.data(), reinterpret_cast<void*>(ref_buffer_.data()), ref_buffer_.size());
 
-    nvimgcdcsImageInfo_t cs_image_info(image_info_);
+    nvimgcodecImageInfo_t cs_image_info(image_info_);
     cs_image_info.chroma_subsampling = encoded_chroma_subsampling_;
     strcpy(cs_image_info.codec_name, "jpeg");
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &in_image_, &image_info_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageCreate(instance_, &in_image_, &image_info_));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamCreateToHostMem(instance_, &out_code_stream_, (void*)this,
      &NvJpegExtEncoderTestSingleImageWithStatus::ResizeBufferStatic<NvJpegExtEncoderTestSingleImageWithStatus>, &cs_image_info));
     images_.push_back(in_image_);
     streams_.push_back(out_code_stream_);
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
-    nvimgcdcsProcessingStatus_t encode_status;
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecEncoderEncode(encoder_, images_.data(), streams_.data(), 1, &params_, &future_));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureWaitForAll(future_));
+    nvimgcodecProcessingStatus_t encode_status;
     size_t status_size;
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &encode_status, &status_size));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureGetProcessingStatus(future_, &encode_status, &status_size));
     ASSERT_EQ(expected_status_, encode_status);
-    ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, 1);
+    ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, 1);
 }
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_INVALID_OUTPUT_CHROMA_FOR_P_Y_FORMAT_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImageWithStatus,
     Combine(
         Values("/jpeg/padlock-406986_640_444.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
-        Values(NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_SAMPLING_440, 
-                NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410, NVIMGCDCS_SAMPLING_410V, NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN),
-        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED | NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
+        Values(NVIMGCODEC_COLORSPEC_GRAY, NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_Y),
+        Values(NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_SAMPLING_440, 
+                NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_410V, NVIMGCODEC_SAMPLING_422, NVIMGCODEC_SAMPLING_420),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN),
+        Values(NVIMGCODEC_PROCESSING_STATUS_SAMPLING_UNSUPPORTED | NVIMGCODEC_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_INVALID_INPUT_CHROMA_FOR_P_Y_FORMAT_WITH_VARIOUS_ENCODING, NvJpegExtEncoderTestSingleImageWithStatus,
     Combine(
         Values("/jpeg/padlock-406986_640_444.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_GRAY, NVIMGCDCS_COLORSPEC_SYCC),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
-        Values(NVIMGCDCS_SAMPLING_440, 
-                NVIMGCDCS_SAMPLING_411, NVIMGCDCS_SAMPLING_410,  NVIMGCDCS_SAMPLING_410V,  NVIMGCDCS_SAMPLING_422, NVIMGCDCS_SAMPLING_420),
-        Values(NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT, NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN),
-        Values(NVIMGCDCS_PROCESSING_STATUS_SAMPLING_UNSUPPORTED | NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
+        Values(NVIMGCODEC_COLORSPEC_GRAY, NVIMGCODEC_COLORSPEC_SYCC),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_Y),
+        Values(NVIMGCODEC_SAMPLING_440, 
+                NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410,  NVIMGCODEC_SAMPLING_410V,  NVIMGCODEC_SAMPLING_422, NVIMGCODEC_SAMPLING_420),
+        Values(NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT, NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN),
+        Values(NVIMGCODEC_PROCESSING_STATUS_SAMPLING_UNSUPPORTED | NVIMGCODEC_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
 
 INSTANTIATE_TEST_SUITE_P(NVJPEG_ENCODE_INVALID_COLOR_SPEC_FOR_P_Y_FORMAT, NvJpegExtEncoderTestSingleImageWithStatus,
     Combine(
         Values("/jpeg/padlock-406986_640_444.jpg"),
-        Values(NVIMGCDCS_COLORSPEC_SRGB, NVIMGCDCS_COLORSPEC_YCCK, NVIMGCDCS_COLORSPEC_CMYK),
-        Values(NVIMGCDCS_SAMPLEFORMAT_P_Y),
-        Values(NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_SAMPLING_GRAY),
-        Values(NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT),
-        Values(NVIMGCDCS_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED| NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
+        Values(NVIMGCODEC_COLORSPEC_SRGB, NVIMGCODEC_COLORSPEC_YCCK, NVIMGCODEC_COLORSPEC_CMYK),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_Y),
+        Values(NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_SAMPLING_GRAY),
+        Values(NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT),
+        Values(NVIMGCODEC_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED| NVIMGCODEC_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED)));
 
 // clang-format on
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

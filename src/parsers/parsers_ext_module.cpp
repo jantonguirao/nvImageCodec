@@ -8,7 +8,7 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include "exception.h"
 #include "log_ext.h"
 #include "parsers/bmp.h"
@@ -19,12 +19,12 @@
 #include "parsers/tiff.h"
 #include "parsers/webp.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class ParsersExtension
 {
   public:
-    explicit ParsersExtension(const nvimgcdcsFrameworkDesc_t* framework)
+    explicit ParsersExtension(const nvimgcodecFrameworkDesc_t* framework)
         : framework_(framework)
         , bmp_parser_plugin_(framework)
         , jpeg_parser_plugin_(framework)
@@ -34,13 +34,13 @@ class ParsersExtension
         , tiff_parser_plugin_(framework)
         , webp_parser_plugin_(framework)
     {
-        framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
-        framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
-        framework->registerParser(framework->instance, jpeg2k_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
-        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
-        framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
-        framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
-        framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, bmp_parser_plugin_.getParserDesc(), NVIMGCODEC_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, jpeg_parser_plugin_.getParserDesc(), NVIMGCODEC_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, jpeg2k_parser_plugin_.getParserDesc(), NVIMGCODEC_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc(), NVIMGCODEC_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, pnm_parser_plugin_.getParserDesc(), NVIMGCODEC_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, tiff_parser_plugin_.getParserDesc(), NVIMGCODEC_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, webp_parser_plugin_.getParserDesc(), NVIMGCODEC_PRIORITY_NORMAL);
     }
     ~ParsersExtension() {
         framework_->unregisterParser(framework_->instance, bmp_parser_plugin_.getParserDesc());
@@ -52,34 +52,34 @@ class ParsersExtension
         framework_->unregisterParser(framework_->instance, webp_parser_plugin_.getParserDesc());
     }
 
-    static nvimgcdcsStatus_t parsers_extension_create(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+    static nvimgcodecStatus_t parsers_extension_create(void* instance, nvimgcodecExtension_t* extension, const nvimgcodecFrameworkDesc_t* framework)
     {
         try {
             CHECK_NULL(framework)
-            NVIMGCDCS_LOG_TRACE(framework, "nvimgcdcs_builtin_parsers", "parsers_extension_create");
+            NVIMGCODEC_LOG_TRACE(framework, "nvimgcodec_builtin_parsers", "parsers_extension_create");
             CHECK_NULL(extension)
-            *extension = reinterpret_cast<nvimgcdcsExtension_t>(new ParsersExtension(framework));
+            *extension = reinterpret_cast<nvimgcodecExtension_t>(new ParsersExtension(framework));
         } catch (const std::runtime_error& e) {
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        return NVIMGCODEC_STATUS_SUCCESS;
     }
 
-    static nvimgcdcsStatus_t parsers_extension_destroy(nvimgcdcsExtension_t extension)
+    static nvimgcodecStatus_t parsers_extension_destroy(nvimgcodecExtension_t extension)
     {
         try {
             CHECK_NULL(extension)
-            auto ext_handle = reinterpret_cast<nvimgcdcs::ParsersExtension*>(extension);
-            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "nvimgcdcs_builtin_parsers", "parsers_extension_destroy");
+            auto ext_handle = reinterpret_cast<nvimgcodec::ParsersExtension*>(extension);
+            NVIMGCODEC_LOG_TRACE(ext_handle->framework_, "nvimgcodec_builtin_parsers", "parsers_extension_destroy");
             delete ext_handle;
         } catch (const std::runtime_error& e) {
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        return NVIMGCODEC_STATUS_SUCCESS;
     }
 
   private:
-    const nvimgcdcsFrameworkDesc_t* framework_;
+    const nvimgcodecFrameworkDesc_t* framework_;
     BMPParserPlugin bmp_parser_plugin_;
     JPEGParserPlugin jpeg_parser_plugin_;
     JPEG2KParserPlugin jpeg2k_parser_plugin_;
@@ -90,32 +90,32 @@ class ParsersExtension
 };
 
 // clang-format off
-nvimgcdcsExtensionDesc_t parsers_extension = {
-    NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
+nvimgcodecExtensionDesc_t parsers_extension = {
+    NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
     NULL,
-    "nvimgcdcs_builtin_parsers",
-    NVIMGCDCS_VER,
-    NVIMGCDCS_EXT_API_VER, 
+    "nvimgcodec_builtin_parsers",
+    NVIMGCODEC_VER,
+    NVIMGCODEC_EXT_API_VER, 
 
     ParsersExtension::parsers_extension_create,
     ParsersExtension::parsers_extension_destroy
 };
 // clang-format on
 
-nvimgcdcsStatus_t get_parsers_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc)
+nvimgcodecStatus_t get_parsers_extension_desc(nvimgcodecExtensionDesc_t* ext_desc)
 {
     if (ext_desc == nullptr) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
-    if (ext_desc->type != NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    if (ext_desc->type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
+        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
     *ext_desc = parsers_extension;
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -11,7 +11,7 @@
 #pragma once
 
 #include <gtest/gtest.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <parsers/parser_test_utils.h>
 #include <test_utils.h>
 #include <cstring>
@@ -21,11 +21,11 @@
 #include <opencv2/imgproc.hpp>
 #include <string>
 #include <vector>
-#include "nvimgcodecs_tests.h"
+#include "nvimgcodec_tests.h"
 
 #define DEBUG_DUMP_DECODE_OUTPUT 0
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class CommonExtDecoderTest
 {
@@ -35,44 +35,44 @@ class CommonExtDecoderTest
 
     void SetUp()
     {
-        nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-        create_info.message_severity = NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEFAULT;
-        create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
+        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+        create_info.message_severity = NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEFAULT;
+        create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
 
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, &create_info));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecInstanceCreate(&instance_, &create_info));
 
-        image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
         images_.clear();
         streams_.clear();
-        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
-        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
         exec_params.max_num_cpu_threads = 1;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, &exec_params, nullptr));
-        params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderCreate(instance_, &decoder_, &exec_params, nullptr));
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, 0};
         params_.apply_exif_orientation= 1;
     }
 
     void TearDown()
     {
         if (decoder_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDestroy(decoder_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderDestroy(decoder_));
         if (future_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureDestroy(future_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureDestroy(future_));
         if (image_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageDestroy(image_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageDestroy(image_));
         if (in_code_stream_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(in_code_stream_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamDestroy(in_code_stream_));
         for (auto& ext : extensions_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(ext));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionDestroy(ext));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecInstanceDestroy(instance_));
     }
 
-    void TestSingleImage(const std::string& rel_path, nvimgcdcsSampleFormat_t sample_format,
-        nvimgcdcsRegion_t region = {NVIMGCDCS_STRUCTURE_TYPE_REGION, nullptr, 0})
+    void TestSingleImage(const std::string& rel_path, nvimgcodecSampleFormat_t sample_format,
+        nvimgcodecRegion_t region = {NVIMGCODEC_STRUCTURE_TYPE_REGION, nullptr, 0})
     {
         std::string filename = resources_dir + "/" + rel_path;
         std::string reference_filename = std::filesystem::path(resources_dir + "/ref/" + rel_path).replace_extension(".ppm").string();
-        int num_channels = sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y ? 1 : 3;
+        int num_channels = sample_format == NVIMGCODEC_SAMPLEFORMAT_P_Y ? 1 : 3;
         auto cv_type = num_channels == 1 ? CV_8UC1 : CV_8UC3;
         int cv_flags = num_channels == 1 ? cv::IMREAD_GRAYSCALE : cv::IMREAD_COLOR;
         cv::Mat ref;
@@ -88,16 +88,16 @@ class CommonExtDecoderTest
             tmp(roi).copyTo(ref);
         }
 
-        bool planar = sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB || sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR ||
-                      sample_format == NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED;
-        bool bgr = sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR || sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR;
+        bool planar = sample_format == NVIMGCODEC_SAMPLEFORMAT_P_RGB || sample_format == NVIMGCODEC_SAMPLEFORMAT_P_BGR ||
+                      sample_format == NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED;
+        bool bgr = sample_format == NVIMGCODEC_SAMPLEFORMAT_P_BGR || sample_format == NVIMGCODEC_SAMPLEFORMAT_I_BGR;
         if (!bgr && num_channels >= 3)
             ref = bgr2rgb(ref);
 
         LoadImageFromFilename(instance_, in_code_stream_, filename);
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &image_info_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &image_info_));
         image_info_.sample_format = sample_format;
-        image_info_.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        image_info_.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         image_info_.num_planes = 1;
         uint32_t& width = image_info_.plane_info[0].width;
         uint32_t& height = image_info_.plane_info[0].height;
@@ -118,20 +118,20 @@ class CommonExtDecoderTest
             image_info_.plane_info[p].height = height;
             image_info_.plane_info[p].row_stride = width * plane_nchannels;
             image_info_.plane_info[p].num_channels = plane_nchannels;
-            image_info_.plane_info[p].sample_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+            image_info_.plane_info[p].sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
         }
         image_info_.buffer_size = height * width * num_channels;
         out_buffer_.resize(image_info_.buffer_size);
         image_info_.buffer = out_buffer_.data();
-        image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &image_, &image_info_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDecode(decoder_, &in_code_stream_, &image_, 1, &params_, &future_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
+        image_info_.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST;
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageCreate(instance_, &image_, &image_info_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderDecode(decoder_, &in_code_stream_, &image_, 1, &params_, &future_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureWaitForAll(future_));
 
-        nvimgcdcsProcessingStatus_t status;
+        nvimgcodecProcessingStatus_t status;
         size_t status_size;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
-        ASSERT_EQ(NVIMGCDCS_PROCESSING_STATUS_SUCCESS, status);
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureGetProcessingStatus(future_, &status, &status_size));
+        ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, status);
 
         ASSERT_EQ(ref.size[0], height);
         ASSERT_EQ(ref.size[1], width);
@@ -176,16 +176,16 @@ class CommonExtDecoderTest
         }
     }
 
-    void TestNotSupported(const std::string& rel_path, nvimgcdcsSampleFormat_t sample_format, nvimgcdcsSampleDataType_t sample_type,
-        nvimgcdcsProcessingStatus_t expected_status)
+    void TestNotSupported(const std::string& rel_path, nvimgcodecSampleFormat_t sample_format, nvimgcodecSampleDataType_t sample_type,
+        nvimgcodecProcessingStatus_t expected_status)
     {
         std::string filename = resources_dir + "/" + rel_path;
 
-        int num_channels = sample_format == NVIMGCDCS_SAMPLEFORMAT_P_Y ? 1 : 3;
+        int num_channels = sample_format == NVIMGCODEC_SAMPLEFORMAT_P_Y ? 1 : 3;
         LoadImageFromFilename(instance_, in_code_stream_, filename);
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamGetImageInfo(in_code_stream_, &image_info_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &image_info_));
         image_info_.sample_format = sample_format;
-        image_info_.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        image_info_.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         image_info_.num_planes = 1;
         image_info_.plane_info[0].row_stride = image_info_.plane_info[0].width * num_channels;
         image_info_.plane_info[0].num_channels = num_channels;
@@ -194,28 +194,28 @@ class CommonExtDecoderTest
             image_info_.plane_info[0].height * image_info_.plane_info[0].width * image_info_.plane_info[0].num_channels;
         out_buffer_.resize(image_info_.buffer_size);
         image_info_.buffer = out_buffer_.data();
-        image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &image_, &image_info_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDecode(decoder_, &in_code_stream_, &image_, 1, &params_, &future_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureWaitForAll(future_));
+        image_info_.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST;
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageCreate(instance_, &image_, &image_info_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderDecode(decoder_, &in_code_stream_, &image_, 1, &params_, &future_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureWaitForAll(future_));
 
-        nvimgcdcsProcessingStatus_t status;
+        nvimgcodecProcessingStatus_t status;
         size_t status_size;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsFutureGetProcessingStatus(future_, &status, &status_size));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureGetProcessingStatus(future_, &status, &status_size));
         ASSERT_EQ(expected_status, status);
     }
 
-    nvimgcdcsInstance_t instance_;
-    nvimgcdcsDecoder_t decoder_;
-    nvimgcdcsDecodeParams_t params_;
-    nvimgcdcsImageInfo_t image_info_;
-    nvimgcdcsCodeStream_t in_code_stream_ = nullptr;
-    nvimgcdcsImage_t image_ = nullptr;
-    std::vector<nvimgcdcsImage_t> images_;
-    std::vector<nvimgcdcsCodeStream_t> streams_;
-    nvimgcdcsFuture_t future_ = nullptr;
+    nvimgcodecInstance_t instance_;
+    nvimgcodecDecoder_t decoder_;
+    nvimgcodecDecodeParams_t params_;
+    nvimgcodecImageInfo_t image_info_;
+    nvimgcodecCodeStream_t in_code_stream_ = nullptr;
+    nvimgcodecImage_t image_ = nullptr;
+    std::vector<nvimgcodecImage_t> images_;
+    std::vector<nvimgcodecCodeStream_t> streams_;
+    nvimgcodecFuture_t future_ = nullptr;
     std::vector<uint8_t> out_buffer_;
-    std::vector<nvimgcdcsExtension_t> extensions_;
+    std::vector<nvimgcodecExtension_t> extensions_;
 };
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

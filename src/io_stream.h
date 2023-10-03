@@ -16,7 +16,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 /**
  * @brief An abstract file-like interface for reading and writting data.
@@ -171,4 +171,4 @@ class IoStream
     virtual void unmap(void* ptr, size_t size){};
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

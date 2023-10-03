@@ -14,16 +14,16 @@
 
 from setuptools import setup, find_packages
 
-setup(name='nvidia-nvimgcodecs@NVIMGCODECS_FLAVOR_MINUS@-cuda@CUDA_VERSION_SHORT_DIGIT_ONLY@',
-      description='NVIDIA nvimgcodecs @NVIMGCODECS_FLAVOR@ for CUDA @CUDA_VERSION_SHORT@. Git SHA: @GIT_SHA@',
-          long_description='''NVIDIA nvimgcodecs
+setup(name='nvidia-nvimgcodec@NVIMGCODEC_FLAVOR_MINUS@-cuda@CUDA_VERSION_SHORT_DIGIT_ONLY@',
+      description='NVIDIA nvimgcodec @NVIMGCODEC_FLAVOR@ for CUDA @CUDA_VERSION_SHORT@. Git SHA: @GIT_SHA@',
+          long_description='''NVIDIA nvimgcodec
 ===========
 
-nvImageCodecs is a library of accelerated codecs with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
+nvImageCodec is a library of accelerated codec with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
 ''',
       long_description_content_type="text/x-rst",
       url='https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec',
-      version='@NVIMGCODECS_VERSION@',
+      version='@NVIMGCODEC_VERSION@',
       author='NVIDIA Corporation',
       license='Apache License 2.0',
       packages=find_packages(),

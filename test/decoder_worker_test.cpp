@@ -18,7 +18,7 @@
 #include "mock_image_decoder_factory.h"
 #include "mock_logger.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 using ::testing::_;
 using ::testing::ByMove;
@@ -26,7 +26,7 @@ using ::testing::Return;
 using ::testing::TestWithParam;
 using ::testing::Values;
 
-using test_case_tuple_t = std::tuple<std::vector<nvimgcdcsBackendKind_t>, std::vector<nvimgcdcsBackend_t>, int, int>;
+using test_case_tuple_t = std::tuple<std::vector<nvimgcodecBackendKind_t>, std::vector<nvimgcodecBackend_t>, int, int>;
 
 class DecoderWorkerTest : public TestWithParam<test_case_tuple_t>
 {
@@ -56,9 +56,9 @@ class DecoderWorkerTest : public TestWithParam<test_case_tuple_t>
             EXPECT_CALL(*image_dec_factory, createDecoder(_, _)).WillRepeatedly(Return(ByMove(std::move(image_dec))));
             EXPECT_CALL(*codec_.get(), getDecoderFactory(i)).WillRepeatedly(Return(image_dec_factory));
         }
-        exec_params_.type = NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS;
+        exec_params_.type = NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS;
         exec_params_.next = nullptr;
-        exec_params_.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        exec_params_.device_id = NVIMGCODEC_DEVICE_CURRENT;
         exec_params_.num_backends = allowed_backends_.size();
         exec_params_.backends = allowed_backends_.data();
         decoder_worker_ = std::make_unique<DecoderWorker>(&logger_, nullptr, &exec_params_, "", codec_.get(), start_index);
@@ -81,9 +81,9 @@ class DecoderWorkerTest : public TestWithParam<test_case_tuple_t>
     std::vector<std::unique_ptr<MockImageDecoder>> image_decs_;
     std::vector<IImageDecoder*> image_dec_ptrs_;
     std::vector<MockImageDecoderFactory*> image_dec_factories_;
-    nvimgcdcsExecutionParams_t exec_params_;
+    nvimgcodecExecutionParams_t exec_params_;
     std::unique_ptr<DecoderWorker> decoder_worker_;
-    std::vector<nvimgcdcsBackend_t> allowed_backends_;
+    std::vector<nvimgcodecBackend_t> allowed_backends_;
     int expected_return_index_;
 };
 
@@ -102,56 +102,56 @@ TEST_P(DecoderWorkerTest, for_given_backend_kinds_and_allowed_backends_get_decod
 namespace {
 test_case_tuple_t test_cases[] = {
     //For given one CPU backend and allowed CPU backend, return index 0
-    {{NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
-     {{NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_CPU_ONLY, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
+    {{NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
+     {{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_CPU_ONLY, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
      0, 0
     },
     //For given one CPU backend and allowed all, return index 0
-    {{NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
+    {{NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
      {},//all backends allowed
      0, 0
     },
     //For given 3 backends in order HW, GPU, CPU and allowed all, return index 0
-    {{NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
+    {{NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
     {},//all backends allowed
      0, 0
     },
     ///For given 3 backends in order HW, GPU, CPU, and allowed only HW, return index 0
-    {{NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
-    {{NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
+    {{NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
+    {{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
      0, 0
     },
     //For given 3 backends in order HW, GPU, CPU, and allowed only GPU, return index 1
-    {{NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
-    {{NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
+    {{NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
+    {{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
      0, 1
     },
     //For given 3 backends in order HW,GPU,CPU and allowed CPU only, return decoder with index 2
-    {{NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
-    {{NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_CPU_ONLY, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
+    {{NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
+    {{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_CPU_ONLY, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
      0, 2
     },
     //For given 3 backends in order HW,GPU,CPU, and allowed only HYBRID (which is not present), return nullptr
-    {{NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
-    {{NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
+    {{NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
+    {{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}},
      0, -1 //nullptr 
     },
     //For given 3 backends in order HW,GPU,CPU, and all allowed backends and start index 1 (first fallback), return decoder with index 1
-    {{NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
+    {{NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
     {},
      1, 1
     },
     //For given 3 backends in order HW,GPU,CPU, and allowed GPU and CPU, return decoder with index 1 (GPU)
-    {{NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_CPU_ONLY}, 
-    {{NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_CPU_ONLY, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}},
-     {NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}
+    {{NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_CPU_ONLY}, 
+    {{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_CPU_ONLY, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}},
+     {NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}
     },
      0, 1
     },
     //For given 3 backends in order HW,CPU, GPU, and allowed GPU and CPU, return decoder with index 1 (CPU)
-    {{NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY, NVIMGCDCS_BACKEND_KIND_CPU_ONLY, NVIMGCDCS_BACKEND_KIND_GPU_ONLY}, 
-    {{NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_CPU_ONLY, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}},
-     {NVIMGCDCS_STRUCTURE_TYPE_BACKEND, 0, NVIMGCDCS_BACKEND_KIND_GPU_ONLY, {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}
+    {{NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY, NVIMGCODEC_BACKEND_KIND_CPU_ONLY, NVIMGCODEC_BACKEND_KIND_GPU_ONLY}, 
+    {{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_CPU_ONLY, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}},
+     {NVIMGCODEC_STRUCTURE_TYPE_BACKEND, 0, NVIMGCODEC_BACKEND_KIND_GPU_ONLY, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, 0, 50}}
     },
      0, 1
     },
@@ -162,4 +162,4 @@ test_case_tuple_t test_cases[] = {
 
 INSTANTIATE_TEST_SUITE_P(DECODER_WORKER_GET_DECODER_TEST, DecoderWorkerTest, ::testing::ValuesIn(test_cases));
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

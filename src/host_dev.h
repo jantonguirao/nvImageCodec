@@ -11,19 +11,19 @@
 #pragma once
 
 #if defined(__CUDACC__)
-#define NVIMGCDCS_HOST_DEV __host__ __device__
+#define NVIMGCODEC_HOST_DEV __host__ __device__
 #else
-#define NVIMGCDCS_HOST_DEV
+#define NVIMGCODEC_HOST_DEV
 #endif
 
 #if defined(__CUDACC__)
-#define NVIMGCDCS_HOST __host__
+#define NVIMGCODEC_HOST __host__
 #else
-#define NVIMGCDCS_HOST
+#define NVIMGCODEC_HOST
 #endif
 
 #if defined(__CUDACC__)
-#define NVIMGCDCS_DEVICE __device__
+#define NVIMGCODEC_DEVICE __device__
 #else
-#define NVIMGCDCS_DEVICE
+#define NVIMGCODEC_DEVICE
 #endif

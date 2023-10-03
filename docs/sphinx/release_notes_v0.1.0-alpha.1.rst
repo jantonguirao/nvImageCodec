@@ -19,12 +19,12 @@
 v0.1.0-alpha.1
 ==============
 
-NvImageCodecs-0.1.0-alpha.1 is the first release of nvImageCodecs. This release is for evaluation purposes only.
+NvImageCodecs-0.1.0-alpha.1 is the first release of nvImageCodec. This release is for evaluation purposes only.
 
 Release Highlights
 ------------------
 
-This nvImageCodecs release includes the following key features:
+This nvImageCodec release includes the following key features:
 
 * Batch processing
 * Python bindings
@@ -42,7 +42,7 @@ This nvImageCodecs release includes the following key features:
 
 Compatibility
 -------------
-This section highlights the compute stack nvImageCodecs has been tested on
+This section highlights the compute stack nvImageCodec has been tested on
 
 * Ubuntu x86 >= 20.04
 * CUDA driver >= 11.8

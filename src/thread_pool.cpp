@@ -15,13 +15,13 @@
 #include "device_guard.h"
 #include "log.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 ThreadPool::ThreadPool(int num_thread, int device_id, bool set_affinity, const char* name)
     : threads_(num_thread), running_(true), work_complete_(true), started_(false)
     , active_threads_(0) {
   if (num_thread == 0) {
-    NVIMGCDCS_LOG_FATAL(Logger::get(), "Thread pool must have non-zero size");
+    NVIMGCODEC_LOG_FATAL(Logger::get(), "Thread pool must have non-zero size");
   }
 #if NVML_ENABLED
   // only for the CPU pipeline
@@ -32,7 +32,7 @@ ThreadPool::ThreadPool(int num_thread, int device_id, bool set_affinity, const c
   // Start the threads in the main loop
   for (int i = 0; i < num_thread; ++i) {
     std::stringstream ss;
-    ss << "[NVIMGCODECS][TP"<< i<< "]"<< name;
+    ss << "[NVIMGCODEC][TP"<< i<< "]"<< name;
     threads_[i] =
         std::thread(std::bind(&ThreadPool::threadMain, this, i, device_id, set_affinity, ss.str()));
   }
@@ -124,15 +124,15 @@ void ThreadPool::threadMain(int thread_id, int device_id, bool set_affinity,
   try {
 #if NVML_ENABLED
     if (set_affinity) {
-      const char *env_affinity = std::getenv("NVIMGCODECS_AFFINITY_MASK");
+      const char *env_affinity = std::getenv("NVIMGCODEC_AFFINITY_MASK");
       int core = -1;
       if (env_affinity) {
         const auto &vec = string_split(env_affinity, ',');
         if ((size_t)thread_id < vec.size()) {
           core = std::stoi(vec[thread_id]);
         } else {
-          NVIMGCDCS_LOG_WARNING(Logger::get(), 
-              "NVIMGCODECS environment variable is set, "
+          NVIMGCODEC_LOG_WARNING(Logger::get(), 
+              "NVIMGCODEC environment variable is set, "
               "but does not have enough entries: thread_id (",
               thread_id, ") vs #entries (", vec.size(), "). Ignoring...");
         }
@@ -188,4 +188,4 @@ void ThreadPool::threadMain(int thread_id, int device_id, bool set_affinity,
   }
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -14,7 +14,7 @@
 #include <string>
 #include "ienvironment.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class Environment : public IEnvironment
 {
@@ -27,4 +27,4 @@ class Environment : public IEnvironment
     };
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

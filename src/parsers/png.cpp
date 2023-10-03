@@ -9,7 +9,7 @@
  */
 
 #include "parsers/png.h"
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <string.h>
 #include <vector>
 
@@ -19,7 +19,7 @@
 #include "parsers/byte_io.h"
 #include "parsers/exif.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace {
 
@@ -67,10 +67,10 @@ static constexpr chunk_type_field_t IEND_TAG{'I', 'E', 'N', 'D'};
 using png_signature_t = std::array<uint8_t, 8>;
 static constexpr png_signature_t PNG_SIGNATURE = {137, 80, 78, 71, 13, 10, 26, 10};
 
-nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcodecStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, nvimgcodecImageInfo_t* image_info, nvimgcodecCodeStreamDesc_t* code_stream)
 {
 
-    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+    nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t io_stream_length;
     io_stream->size(io_stream->instance, &io_stream_length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -79,8 +79,8 @@ nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFramewo
     png_signature_t signature;
     io_stream->read(io_stream->instance, &read_nbytes, &signature[0], signature.size());
     if (read_nbytes != sizeof(png_signature_t) || signature != PNG_SIGNATURE) {
-        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected signature");
-        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected signature");
+        return NVIMGCODEC_STATUS_BAD_CODESTREAM;
     }
 
     // IHDR Chunk:
@@ -93,39 +93,39 @@ nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFramewo
 
     uint32_t length = ReadValueBE<uint32_t>(io_stream);
     if (length != (4 + 4 + 5)) {
-        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected length");
-        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected length");
+        return NVIMGCODEC_STATUS_BAD_CODESTREAM;
     }
 
     auto chunk_type = ReadValue<chunk_type_field_t>(io_stream);
     if (chunk_type != IHDR_TAG) {
-        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Missing IHDR tag");
-        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Missing IHDR tag");
+        return NVIMGCODEC_STATUS_BAD_CODESTREAM;
     }
 
-    if (image_info->type != NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO) {
-        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected structure type");
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    if (image_info->type != NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO) {
+        NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected structure type");
+        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
     strcpy(image_info->codec_name, "png");
-    image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+    image_info->chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
     image_info->plane_info[0].width = ReadValueBE<uint32_t>(io_stream);
     image_info->plane_info[0].height = ReadValueBE<uint32_t>(io_stream);
     uint8_t bitdepth = ReadValueBE<uint8_t>(io_stream);
-    nvimgcdcsSampleDataType_t sample_format;
+    nvimgcodecSampleDataType_t sample_format;
     switch (bitdepth) {
     case 1:
     case 2:
     case 4:
     case 8:
-        sample_format = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+        sample_format = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
         break;
     case 16:
-        sample_format = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+        sample_format = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16;
         break;
     default:
-        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth: " << bitdepth);
-        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth: " << bitdepth);
+        return NVIMGCODEC_STATUS_BAD_CODESTREAM;
     }
     // see Table 11.1
     auto color_type = static_cast<ColorType>(ReadValueBE<uint8_t>(io_stream));
@@ -136,37 +136,37 @@ nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFramewo
     case PNG_COLOR_TYPE_RGB:
         image_info->num_planes = 3;
         if (bitdepth != 8 && bitdepth != 16) {
-            NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth for RGB color type: " << bitdepth);
-            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+            NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth for RGB color type: " << bitdepth);
+            return NVIMGCODEC_STATUS_BAD_CODESTREAM;
         }
         break;
     case PNG_COLOR_TYPE_PALETTE:
         image_info->num_planes = 3;
         if (bitdepth == 16) {
-            NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth for palette color type: " << bitdepth);
-            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+            NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth for palette color type: " << bitdepth);
+            return NVIMGCODEC_STATUS_BAD_CODESTREAM;
         }
         break;
     case PNG_COLOR_TYPE_GRAY_ALPHA:
         image_info->num_planes = 2;
         if (bitdepth != 8 && bitdepth != 16) {
-            NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth for Gray with alpha color type: " << bitdepth);
-            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+            NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth for Gray with alpha color type: " << bitdepth);
+            return NVIMGCODEC_STATUS_BAD_CODESTREAM;
         }
         break;
     case PNG_COLOR_TYPE_RGBA:
         image_info->num_planes = 4;
         if (bitdepth != 8 && bitdepth != 16) {
-            NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth for RGBA color type: " << bitdepth);
-            return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+            NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected bitdepth for RGBA color type: " << bitdepth);
+            return NVIMGCODEC_STATUS_BAD_CODESTREAM;
         }
         break;
     default:
-        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected color type: " << color_type);
-        return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+        NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected color type: " << color_type);
+        return NVIMGCODEC_STATUS_BAD_CODESTREAM;
     }
-    image_info->sample_format = image_info->num_planes >= 3 ? NVIMGCDCS_SAMPLEFORMAT_P_RGB : NVIMGCDCS_SAMPLEFORMAT_P_Y;
-    image_info->color_spec = image_info->num_planes >= 3 ? NVIMGCDCS_COLORSPEC_SRGB : NVIMGCDCS_COLORSPEC_GRAY;
+    image_info->sample_format = image_info->num_planes >= 3 ? NVIMGCODEC_SAMPLEFORMAT_P_RGB : NVIMGCODEC_SAMPLEFORMAT_P_Y;
+    image_info->color_spec = image_info->num_planes >= 3 ? NVIMGCODEC_COLORSPEC_SRGB : NVIMGCODEC_COLORSPEC_GRAY;
 
     for (size_t p = 0; p < image_info->num_planes; p++) {
         image_info->plane_info[p].height = image_info->plane_info[0].height;
@@ -176,7 +176,7 @@ nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFramewo
     }
 
     io_stream->skip(io_stream->instance, 3 + 4); // Skip the other fields and the CRC checksum.
-    image_info->orientation = {NVIMGCDCS_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+    image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
     while (true) {
         uint32_t chunk_length = ReadValueBE<uint32_t>(io_stream);
         auto chunk_type = ReadValue<chunk_type_field_t>(io_stream);
@@ -189,8 +189,8 @@ nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFramewo
             size_t read_chunk_nbytes;
             io_stream->read(io_stream->instance, &read_chunk_nbytes, &chunk[0], chunk_length);
             if (read_chunk_nbytes != chunk_length) {
-                NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unexpected end of stream");
-                return NVIMGCDCS_STATUS_BAD_CODESTREAM;
+                NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected end of stream");
+                return NVIMGCODEC_STATUS_BAD_CODESTREAM;
             }
 
             cv::ExifReader reader;
@@ -205,30 +205,30 @@ nvimgcdcsStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcdcsFramewo
             io_stream->skip(io_stream->instance, chunk_length + 4); // + 4 bytes of CRC
         }
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
 } // end namespace
 
-PNGParserPlugin::PNGParserPlugin(const nvimgcdcsFrameworkDesc_t* framework)
+PNGParserPlugin::PNGParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCDCS_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "png", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "png", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }
 
-nvimgcdcsParserDesc_t* PNGParserPlugin::getParserDesc()
+nvimgcodecParserDesc_t* PNGParserPlugin::getParserDesc()
 {
     return &parser_desc_;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcodecStatus_t PNGParserPlugin::canParse(int* result, nvimgcodecCodeStreamDesc_t* code_stream)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "png_parser_can_parse");
+        NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "png_parser_can_parse");
         CHECK_NULL(result);
         CHECK_NULL(code_stream);
-    nvimgcdcsIoStreamDesc_t* io_stream = code_stream->io_stream;
+    nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;
     size_t read_nbytes = 0;
     png_signature_t signature;
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
@@ -239,165 +239,165 @@ nvimgcdcsStatus_t PNGParserPlugin::canParse(int* result, nvimgcdcsCodeStreamDesc
         *result = 0;
     }
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
-        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not check if code stream can be parsed - " << e.what());
+        return NVIMGCODEC_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::static_can_parse(void* instance, int* result, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcodecStatus_t PNGParserPlugin::static_can_parse(void* instance, int* result, nvimgcodecCodeStreamDesc_t* code_stream)
 {
     try {
         CHECK_NULL(instance);
         auto handle = reinterpret_cast<PNGParserPlugin*>(instance);
         return handle->canParse(result, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
-PNGParserPlugin::Parser::Parser(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework)
+PNGParserPlugin::Parser::Parser(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework)
     : plugin_id_(plugin_id)
     , framework_(framework)
 {
-    NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "png_parser_destroy");
+    NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "png_parser_destroy");
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::create(nvimgcdcsParser_t* parser)
+nvimgcodecStatus_t PNGParserPlugin::create(nvimgcodecParser_t* parser)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "png_parser_create");
+        NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "png_parser_create");
         CHECK_NULL(parser);
-        *parser = reinterpret_cast<nvimgcdcsParser_t>(new PNGParserPlugin::Parser(plugin_id_, framework_));
+        *parser = reinterpret_cast<nvimgcodecParser_t>(new PNGParserPlugin::Parser(plugin_id_, framework_));
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create png parser - " << e.what());
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create png parser - " << e.what());
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::static_create(void* instance, nvimgcdcsParser_t* parser)
+nvimgcodecStatus_t PNGParserPlugin::static_create(void* instance, nvimgcodecParser_t* parser)
 {
     try {
         CHECK_NULL(instance);
         auto handle = reinterpret_cast<PNGParserPlugin*>(instance);
         handle->create(parser);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::Parser::static_destroy(nvimgcdcsParser_t parser)
+nvimgcodecStatus_t PNGParserPlugin::Parser::static_destroy(nvimgcodecParser_t parser)
 {
     try {
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<PNGParserPlugin::Parser*>(parser);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcodecStatus_t PNGParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_t* image_info, nvimgcodecCodeStreamDesc_t* code_stream)
 {
-    NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "png_parser_get_image_info");
+    NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "png_parser_get_image_info");
     try {
         CHECK_NULL(code_stream);
         CHECK_NULL(image_info);
         return GetImageInfoImpl(plugin_id_, framework_, image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from png stream - " << e.what());
-        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not retrieve image info from png stream - " << e.what());
+        return NVIMGCODEC_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t PNGParserPlugin::Parser::static_get_image_info(
-    nvimgcdcsParser_t parser, nvimgcdcsImageInfo_t* image_info, nvimgcdcsCodeStreamDesc_t* code_stream)
+nvimgcodecStatus_t PNGParserPlugin::Parser::static_get_image_info(
+    nvimgcodecParser_t parser, nvimgcodecImageInfo_t* image_info, nvimgcodecCodeStreamDesc_t* code_stream)
 {
     try {
         CHECK_NULL(parser);
         auto handle = reinterpret_cast<PNGParserPlugin::Parser*>(parser);
         return handle->getImageInfo(image_info, code_stream);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
 class PngParserExtension
 {
   public:
-    explicit PngParserExtension(const nvimgcdcsFrameworkDesc_t* framework)
+    explicit PngParserExtension(const nvimgcodecFrameworkDesc_t* framework)
         : framework_(framework)
         , png_parser_plugin_(framework)
     {
-        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+        framework->registerParser(framework->instance, png_parser_plugin_.getParserDesc(), NVIMGCODEC_PRIORITY_NORMAL);
     }
     ~PngParserExtension() { framework_->unregisterParser(framework_->instance, png_parser_plugin_.getParserDesc()); }
 
-    static nvimgcdcsStatus_t png_parser_extension_create(
-        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+    static nvimgcodecStatus_t png_parser_extension_create(
+        void* instance, nvimgcodecExtension_t* extension, const nvimgcodecFrameworkDesc_t* framework)
 {
     try {
         CHECK_NULL(framework)
-            NVIMGCDCS_LOG_TRACE(framework, "png_parser_ext", "png_parser_extension_create");
+            NVIMGCODEC_LOG_TRACE(framework, "png_parser_ext", "png_parser_extension_create");
         CHECK_NULL(extension)
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new PngParserExtension(framework));
+        *extension = reinterpret_cast<nvimgcodecExtension_t>(new PngParserExtension(framework));
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-    static nvimgcdcsStatus_t png_parser_extension_destroy(nvimgcdcsExtension_t extension)
+    static nvimgcodecStatus_t png_parser_extension_destroy(nvimgcodecExtension_t extension)
 {
     try {
         CHECK_NULL(extension)
-        auto ext_handle = reinterpret_cast<nvimgcdcs::PngParserExtension*>(extension);
-            NVIMGCDCS_LOG_TRACE(ext_handle->framework_, "png_parser_ext", "png_parser_extension_destroy");
+        auto ext_handle = reinterpret_cast<nvimgcodec::PngParserExtension*>(extension);
+            NVIMGCODEC_LOG_TRACE(ext_handle->framework_, "png_parser_ext", "png_parser_extension_destroy");
         delete ext_handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
   private:
-    const nvimgcdcsFrameworkDesc_t* framework_;
+    const nvimgcodecFrameworkDesc_t* framework_;
     PNGParserPlugin png_parser_plugin_;
 };
 
 // clang-format off
-nvimgcdcsExtensionDesc_t png_parser_extension = {
-    NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC,
+nvimgcodecExtensionDesc_t png_parser_extension = {
+    NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC,
     NULL,
 
     NULL,
     "png_parser_extension",
-    NVIMGCDCS_VER,
-    NVIMGCDCS_EXT_API_VER,
+    NVIMGCODEC_VER,
+    NVIMGCODEC_EXT_API_VER,
 
     PngParserExtension::png_parser_extension_create,
     PngParserExtension::png_parser_extension_destroy
 };
 // clang-format on
 
-nvimgcdcsStatus_t get_png_parser_extension_desc(nvimgcdcsExtensionDesc_t* ext_desc)
+nvimgcodecStatus_t get_png_parser_extension_desc(nvimgcodecExtensionDesc_t* ext_desc)
 {
     if (ext_desc == nullptr) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
-    if (ext_desc->type != NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC) {
-        return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+    if (ext_desc->type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
+        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
     *ext_desc = png_parser_extension;
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

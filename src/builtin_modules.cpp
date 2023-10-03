@@ -13,17 +13,17 @@
 #include "exception.h"
 #include <vector>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-const std::vector<nvimgcdcsExtensionDesc_t>& get_builtin_modules() {
-    static std::vector<nvimgcdcsExtensionDesc_t> builtin_modules_vec;
+const std::vector<nvimgcodecExtensionDesc_t>& get_builtin_modules() {
+    static std::vector<nvimgcodecExtensionDesc_t> builtin_modules_vec;
     if (builtin_modules_vec.empty()) {
-        builtin_modules_vec.push_back({NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr});
-        nvimgcdcsStatus_t ret = get_parsers_extension_desc(&builtin_modules_vec.back());
-        if (ret != NVIMGCDCS_STATUS_SUCCESS)
+        builtin_modules_vec.push_back({NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr});
+        nvimgcodecStatus_t ret = get_parsers_extension_desc(&builtin_modules_vec.back());
+        if (ret != NVIMGCODEC_STATUS_SUCCESS)
             throw Exception(INTERNAL_ERROR, "Failed to load parsers extension");
     }
     return builtin_modules_vec;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

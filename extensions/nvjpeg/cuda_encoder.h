@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <nvjpeg.h>
 #include <future>
 #include <vector>
@@ -20,14 +20,14 @@ namespace nvjpeg {
 class NvJpegCudaEncoderPlugin
 {
   public:
-    explicit NvJpegCudaEncoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
-    nvimgcdcsEncoderDesc_t* getEncoderDesc();
+    explicit NvJpegCudaEncoderPlugin(const nvimgcodecFrameworkDesc_t* framework);
+    nvimgcodecEncoderDesc_t* getEncoderDesc();
 
   private:
     struct Encoder;
     struct EncodeState
     {
-        explicit EncodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvjpegHandle_t handle, int num_threads);
+        explicit EncodeState(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, nvjpegHandle_t handle, int num_threads);
         ~EncodeState();
 
         struct PerThreadResources
@@ -40,13 +40,13 @@ class NvJpegCudaEncoderPlugin
 
         struct Sample
         {
-            nvimgcdcsCodeStreamDesc_t* code_stream_;
-            nvimgcdcsImageDesc_t* image_;
-            const nvimgcdcsEncodeParams_t* params;
+            nvimgcodecCodeStreamDesc_t* code_stream_;
+            nvimgcodecImageDesc_t* image_;
+            const nvimgcodecEncodeParams_t* params;
         };
         
         const char* plugin_id_;
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         nvjpegHandle_t handle_;
         std::vector<PerThreadResources> per_thread_;
         std::vector<Sample> samples_;
@@ -54,40 +54,40 @@ class NvJpegCudaEncoderPlugin
 
     struct Encoder
     {
-        Encoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+        Encoder(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, const nvimgcodecExecutionParams_t* exec_params, const char* options);
         ~Encoder();
 
         
-        nvimgcdcsStatus_t canEncode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsImageDesc_t** images,
-            nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
-        nvimgcdcsStatus_t encode(int sample_idx);
-        nvimgcdcsStatus_t encodeBatch(
-            nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
+        nvimgcodecStatus_t canEncode(nvimgcodecProcessingStatus_t* status, nvimgcodecImageDesc_t** images,
+            nvimgcodecCodeStreamDesc_t** code_streams, int batch_size, const nvimgcodecEncodeParams_t* params);
+        nvimgcodecStatus_t encode(int sample_idx);
+        nvimgcodecStatus_t encodeBatch(
+            nvimgcodecImageDesc_t** images, nvimgcodecCodeStreamDesc_t** code_streams, int batch_size, const nvimgcodecEncodeParams_t* params);
 
-        static nvimgcdcsStatus_t static_destroy(nvimgcdcsEncoder_t encoder);
-        static nvimgcdcsStatus_t static_can_encode(nvimgcdcsEncoder_t encoder, nvimgcdcsProcessingStatus_t* status,
-            nvimgcdcsImageDesc_t** images, nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
-        static nvimgcdcsStatus_t static_encode_batch(nvimgcdcsEncoder_t encoder, nvimgcdcsImageDesc_t** images,
-            nvimgcdcsCodeStreamDesc_t** code_streams, int batch_size, const nvimgcdcsEncodeParams_t* params);
+        static nvimgcodecStatus_t static_destroy(nvimgcodecEncoder_t encoder);
+        static nvimgcodecStatus_t static_can_encode(nvimgcodecEncoder_t encoder, nvimgcodecProcessingStatus_t* status,
+            nvimgcodecImageDesc_t** images, nvimgcodecCodeStreamDesc_t** code_streams, int batch_size, const nvimgcodecEncodeParams_t* params);
+        static nvimgcodecStatus_t static_encode_batch(nvimgcodecEncoder_t encoder, nvimgcodecImageDesc_t** images,
+            nvimgcodecCodeStreamDesc_t** code_streams, int batch_size, const nvimgcodecEncodeParams_t* params);
 
         const char* plugin_id_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t device_allocator_;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         std::unique_ptr<EncodeState> encode_state_batch_;
-        const nvimgcdcsExecutionParams_t* exec_params_;
+        const nvimgcodecExecutionParams_t* exec_params_;
         std::string options_;
     };
 
-    nvimgcdcsStatus_t create(
-        nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
-    static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsEncoder_t* encoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    nvimgcodecStatus_t create(
+        nvimgcodecEncoder_t* encoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
+    static nvimgcodecStatus_t static_create(
+        void* instance, nvimgcodecEncoder_t* encoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "nvjpeg_cuda_encoder";
-    nvimgcdcsEncoderDesc_t encoder_desc_;
-    const nvimgcdcsFrameworkDesc_t* framework_;
+    nvimgcodecEncoderDesc_t encoder_desc_;
+    const nvimgcodecFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg

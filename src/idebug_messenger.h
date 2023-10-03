@@ -10,15 +10,15 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IDebugMessenger
 {
   public:
     virtual ~IDebugMessenger() = default;
-    virtual const nvimgcdcsDebugMessengerDesc_t* getDesc() = 0;
+    virtual const nvimgcodecDebugMessengerDesc_t* getDesc() = 0;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

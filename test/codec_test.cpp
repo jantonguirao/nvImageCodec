@@ -18,7 +18,7 @@
 #include "mock_image_parser_factory.h"
 #include "mock_logger.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_123)
 {
@@ -37,7 +37,7 @@ TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_12
     codec.registerParserFactory(std::move(factory2), 2);
     codec.registerParserFactory(std::move(factory3), 3);
 
-    nvimgcdcsCodeStreamDesc_t* code_stream = nullptr;
+    nvimgcodecCodeStreamDesc_t* code_stream = nullptr;
     std::unique_ptr<IImageParser> parser  = codec.createParser(code_stream);
 }
 
@@ -58,7 +58,7 @@ TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_23
     codec.registerParserFactory(std::move(factory3), 3);
     codec.registerParserFactory(std::move(factory1), 1);
 
-    nvimgcdcsCodeStreamDesc_t* code_stream = nullptr;
+    nvimgcodecCodeStreamDesc_t* code_stream = nullptr;
     std::unique_ptr<IImageParser> parser  = codec.createParser(code_stream);
 }
 
@@ -79,8 +79,8 @@ TEST(CodecTest, parsers_are_probet_in_priority_order_when_registered_in_order_32
     codec.registerParserFactory(std::move(factory2), 2);
     codec.registerParserFactory(std::move(factory1), 1);
 
-    nvimgcdcsCodeStreamDesc_t* code_stream = nullptr;
+    nvimgcodecCodeStreamDesc_t* code_stream = nullptr;
     std::unique_ptr<IImageParser> parser  = codec.createParser(code_stream);
 }
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

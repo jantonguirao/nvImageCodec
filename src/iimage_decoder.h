@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 #include <vector>
 #include "processing_results.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 class IDecodeState;
 class IImage;
 class ICodeStream;
@@ -26,14 +26,14 @@ class IImageDecoder
 {
   public:
     virtual ~IImageDecoder() = default;
-    virtual nvimgcdcsBackendKind_t getBackendKind() const = 0;
+    virtual nvimgcodecBackendKind_t getBackendKind() const = 0;
     virtual std::unique_ptr<IDecodeState> createDecodeStateBatch() const = 0;
     virtual void canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
-        const nvimgcdcsDecodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const = 0;
+        const nvimgcodecDecodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcodecProcessingStatus_t>* status) const = 0;
     virtual std::unique_ptr<ProcessingResultsFuture> decode(IDecodeState* decode_state_batch,
         const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
-        const nvimgcdcsDecodeParams_t* params) = 0;
+        const nvimgcodecDecodeParams_t* params) = 0;
     virtual const char* decoderId() const = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

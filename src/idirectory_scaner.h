@@ -12,7 +12,7 @@
 
 #include <filesystem>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace fs = std::filesystem;
 
@@ -27,4 +27,4 @@ class IDirectoryScaner
     virtual bool exists(const fs::path& p) = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

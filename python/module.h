@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -28,9 +28,9 @@ class Module
     Module();
     ~Module();
 
-    static void exportToPython(py::module& m, nvimgcdcsInstance_t instance);
+    static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
 
-    nvimgcdcsInstance_t instance_;
+    nvimgcodecInstance_t instance_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

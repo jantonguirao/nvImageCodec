@@ -13,11 +13,11 @@
 #include <string>
 #include <vector>
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/pybind11.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -28,16 +28,16 @@ class DecodeParams
     DecodeParams();
     bool getEnableOrientation() {return decode_params_.apply_exif_orientation;}
     void setEnableOrientation(bool enable){decode_params_.apply_exif_orientation = enable;};
-    nvimgcdcsColorSpec_t getColorSpec() {return color_spec_;}
-    void setColorSpec(nvimgcdcsColorSpec_t color_spec){color_spec_ = color_spec;};
+    nvimgcodecColorSpec_t getColorSpec() {return color_spec_;}
+    void setColorSpec(nvimgcodecColorSpec_t color_spec){color_spec_ = color_spec;};
     bool getAllowAnyDepth() {return allow_any_depth_;}
     void setAllowAnyDepth(bool allow_any_depth){allow_any_depth_ = allow_any_depth;};
 
     static void exportToPython(py::module& m);
 
-    nvimgcdcsDecodeParams_t decode_params_;
-    nvimgcdcsColorSpec_t color_spec_;
+    nvimgcodecDecodeParams_t decode_params_;
+    nvimgcodecColorSpec_t color_spec_;
     bool allow_any_depth_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -19,14 +19,14 @@
 Getting Started
 ===============
 
-This section guides you step-by-step how to decode and encode images on the GPU using the nvImageCodecs APIs. Before getting started, please review the :ref:`pre-requisites <prerequisites>`. Once reviewed, head over to the :ref:`samples <samples>`' section which showcases various nvImageCodecs samples.
+This section guides you step-by-step how to decode and encode images on the GPU using the nvImageCodec APIs. Before getting started, please review the :ref:`pre-requisites <prerequisites>`. Once reviewed, head over to the :ref:`samples <samples>`' section which showcases various nvImageCodec samples.
 
 .. _prerequisites:
 
 Pre-requisites
 --------------
 
-Following are the required dependencies to compile nvImageCodecs samples.
+Following are the required dependencies to compile nvImageCodec samples.
 
 * Ubuntu >= 20.04
 * CUDA driver >= 11.8
@@ -54,7 +54,7 @@ Python Samples' Dependencies:
 Samples
 -------
 
-The next section documents the samples showing various use cases across two different types APIs available to consume nvImageCodecs functionality:
+The next section documents the samples showing various use cases across two different types APIs available to consume nvImageCodec functionality:
 
 .. toctree::
    :maxdepth: 2

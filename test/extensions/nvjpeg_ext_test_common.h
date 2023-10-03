@@ -20,7 +20,7 @@
 #include "common.h"
 #include "parsers/jpeg.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class NvJpegExtTestBase : public ExtensionTestBase
 {
@@ -30,32 +30,32 @@ class NvJpegExtTestBase : public ExtensionTestBase
     virtual void SetUp()
     {
         ExtensionTestBase::SetUp();
-        nvjpeg_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvjpeg_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
         nvjpeg_extension_desc_.next = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvjpeg_extension_desc(&nvjpeg_extension_desc_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &nvjpeg_extension_, &nvjpeg_extension_desc_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_nvjpeg_extension_desc(&nvjpeg_extension_desc_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &nvjpeg_extension_, &nvjpeg_extension_desc_));
 
-        nvimgcdcsExtensionDesc_t jpeg_parser_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_jpeg_parser_extension_desc(&jpeg_parser_extension_desc));
-        nvimgcdcsExtensionCreate(instance_, &jpeg_parser_extension_, &jpeg_parser_extension_desc);
+        nvimgcodecExtensionDesc_t jpeg_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, 0};
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_jpeg_parser_extension_desc(&jpeg_parser_extension_desc));
+        nvimgcodecExtensionCreate(instance_, &jpeg_parser_extension_, &jpeg_parser_extension_desc);
 
-        image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        jpeg_info_ = {NVIMGCDCS_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        jpeg_info_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
         image_info_.next = &jpeg_info_;
     }
 
     virtual void TearDown()
     {
         TearDownCodecResources();
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(jpeg_parser_extension_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(nvjpeg_extension_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionDestroy(jpeg_parser_extension_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionDestroy(nvjpeg_extension_));
         ExtensionTestBase::TearDown();
     }
 
-    nvimgcdcsExtensionDesc_t nvjpeg_extension_desc_{};
-    nvimgcdcsExtension_t nvjpeg_extension_;
-    nvimgcdcsExtension_t jpeg_parser_extension_;
-    nvimgcdcsJpegImageInfo_t jpeg_info_;
+    nvimgcodecExtensionDesc_t nvjpeg_extension_desc_{};
+    nvimgcodecExtension_t nvjpeg_extension_;
+    nvimgcodecExtension_t jpeg_parser_extension_;
+    nvimgcodecJpegImageInfo_t jpeg_info_;
 };
 
 constexpr bool is_interleaved(nvjpegOutputFormat_t format)
@@ -147,34 +147,34 @@ class NvJpegTestBase
         }
     };
 
-    virtual void DecodeReference(const std::string& resources_dir, const std::string& file_name, nvimgcdcsSampleFormat_t output_format,
-        bool allow_cmyk, nvimgcdcsImageInfo_t* cs_image_info = nullptr)
+    virtual void DecodeReference(const std::string& resources_dir, const std::string& file_name, nvimgcodecSampleFormat_t output_format,
+        bool allow_cmyk, nvimgcodecImageInfo_t* cs_image_info = nullptr)
     {
         std::string file_path(resources_dir + '/' + file_name);
-        auto nvimgcdcs_to_nvjpeg_format = [](nvimgcdcsSampleFormat_t nvimgcdcs_format) -> nvjpegOutputFormat_t {
-            switch (nvimgcdcs_format) {
-            case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
+        auto nvimgcodec_to_nvjpeg_format = [](nvimgcodecSampleFormat_t nvimgcodec_format) -> nvjpegOutputFormat_t {
+            switch (nvimgcodec_format) {
+            case NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED:
                 return NVJPEG_OUTPUT_UNCHANGED;
-            case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
+            case NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED:
                 return NVJPEG_OUTPUT_UNCHANGED;
-            case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+            case NVIMGCODEC_SAMPLEFORMAT_P_RGB:
                 return NVJPEG_OUTPUT_RGB;
-            case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+            case NVIMGCODEC_SAMPLEFORMAT_I_RGB:
                 return NVJPEG_OUTPUT_RGBI;
-            case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+            case NVIMGCODEC_SAMPLEFORMAT_P_BGR:
                 return NVJPEG_OUTPUT_BGR;
-            case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+            case NVIMGCODEC_SAMPLEFORMAT_I_BGR:
                 return NVJPEG_OUTPUT_BGRI;
-            case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+            case NVIMGCODEC_SAMPLEFORMAT_P_Y:
                 return NVJPEG_OUTPUT_Y;
-            case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
+            case NVIMGCODEC_SAMPLEFORMAT_P_YUV:
                 return NVJPEG_OUTPUT_YUV;
             default:
                 return NVJPEG_OUTPUT_UNCHANGED;
             }
         };
 
-        nvjpegOutputFormat_t jpeg_output_format = nvimgcdcs_to_nvjpeg_format(output_format);
+        nvjpegOutputFormat_t jpeg_output_format = nvimgcodec_to_nvjpeg_format(output_format);
         std::ifstream input_stream(file_path.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
         ASSERT_EQ(true, input_stream.is_open());
         std::streamsize file_size = input_stream.tellg();
@@ -240,57 +240,57 @@ class NvJpegTestBase
         cudaFree(pBuffer);
     }
 
-    virtual void EncodeReference(const nvimgcdcsImageInfo_t& input_image_info, const nvimgcdcsEncodeParams_t& params,
-        const nvimgcdcsJpegEncodeParams_t& jpeg_enc_params, const nvimgcdcsImageInfo_t& output_image_info,
-        const nvimgcdcsJpegImageInfo_t& out_jpeg_image_info, std::vector<unsigned char>* out_buffer)
+    virtual void EncodeReference(const nvimgcodecImageInfo_t& input_image_info, const nvimgcodecEncodeParams_t& params,
+        const nvimgcodecJpegEncodeParams_t& jpeg_enc_params, const nvimgcodecImageInfo_t& output_image_info,
+        const nvimgcodecJpegImageInfo_t& out_jpeg_image_info, std::vector<unsigned char>* out_buffer)
     {
-        auto nvimgcdcs2nvjpeg_css = [](nvimgcdcsChromaSubsampling_t nvimgcdcs_css) -> nvjpegChromaSubsampling_t {
-            switch (nvimgcdcs_css) {
-            case NVIMGCDCS_SAMPLING_UNSUPPORTED:
+        auto nvimgcodec2nvjpeg_css = [](nvimgcodecChromaSubsampling_t nvimgcodec_css) -> nvjpegChromaSubsampling_t {
+            switch (nvimgcodec_css) {
+            case NVIMGCODEC_SAMPLING_UNSUPPORTED:
                 return NVJPEG_CSS_UNKNOWN;
-            case NVIMGCDCS_SAMPLING_444:
+            case NVIMGCODEC_SAMPLING_444:
                 return NVJPEG_CSS_444;
-            case NVIMGCDCS_SAMPLING_422:
+            case NVIMGCODEC_SAMPLING_422:
                 return NVJPEG_CSS_422;
-            case NVIMGCDCS_SAMPLING_420:
+            case NVIMGCODEC_SAMPLING_420:
                 return NVJPEG_CSS_420;
-            case NVIMGCDCS_SAMPLING_440:
+            case NVIMGCODEC_SAMPLING_440:
                 return NVJPEG_CSS_440;
-            case NVIMGCDCS_SAMPLING_411:
+            case NVIMGCODEC_SAMPLING_411:
                 return NVJPEG_CSS_411;
-            case NVIMGCDCS_SAMPLING_410:
+            case NVIMGCODEC_SAMPLING_410:
                 return NVJPEG_CSS_410;
-            case NVIMGCDCS_SAMPLING_GRAY:
+            case NVIMGCODEC_SAMPLING_GRAY:
                 return NVJPEG_CSS_GRAY;
-            case NVIMGCDCS_SAMPLING_410V:
+            case NVIMGCODEC_SAMPLING_410V:
                 return NVJPEG_CSS_410V;
             default:
                 return NVJPEG_CSS_UNKNOWN;
             }
         };
 
-        auto nvimgcdcs2nvjpeg_encoding = [](nvimgcdcsJpegEncoding_t nvimgcdcs_encoding) -> nvjpegJpegEncoding_t {
-            switch (nvimgcdcs_encoding) {
-            case NVIMGCDCS_JPEG_ENCODING_BASELINE_DCT:
+        auto nvimgcodec2nvjpeg_encoding = [](nvimgcodecJpegEncoding_t nvimgcodec_encoding) -> nvjpegJpegEncoding_t {
+            switch (nvimgcodec_encoding) {
+            case NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT:
                 return NVJPEG_ENCODING_BASELINE_DCT;
-            case NVIMGCDCS_JPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN:
+            case NVIMGCODEC_JPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN:
                 return NVJPEG_ENCODING_EXTENDED_SEQUENTIAL_DCT_HUFFMAN;
-            case NVIMGCDCS_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN:
+            case NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN:
                 return NVJPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
             default:
                 return NVJPEG_ENCODING_UNKNOWN;
             }
         };
 
-        auto nvimgcdcs2nvjpeg_format = [](nvimgcdcsSampleFormat_t nvimgcdcs_format) -> nvjpegInputFormat_t {
-            switch (nvimgcdcs_format) {
-            case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
+        auto nvimgcodec2nvjpeg_format = [](nvimgcodecSampleFormat_t nvimgcodec_format) -> nvjpegInputFormat_t {
+            switch (nvimgcodec_format) {
+            case NVIMGCODEC_SAMPLEFORMAT_P_RGB:
                 return NVJPEG_INPUT_RGB;
-            case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+            case NVIMGCODEC_SAMPLEFORMAT_I_RGB:
                 return NVJPEG_INPUT_RGBI;
-            case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
+            case NVIMGCODEC_SAMPLEFORMAT_P_BGR:
                 return NVJPEG_INPUT_BGR;
-            case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+            case NVIMGCODEC_SAMPLEFORMAT_I_BGR:
                 return NVJPEG_INPUT_BGRI;
             default:
                 return NVJPEG_INPUT_RGB;
@@ -305,11 +305,11 @@ class NvJpegTestBase
         ASSERT_EQ(
             NVJPEG_STATUS_SUCCESS, nvjpegEncoderParamsSetOptimizedHuffman(nvjpeg_encode_params_, jpeg_enc_params.optimized_huffman, NULL));
         ASSERT_EQ(NVJPEG_STATUS_SUCCESS,
-            nvjpegEncoderParamsSetSamplingFactors(nvjpeg_encode_params_, nvimgcdcs2nvjpeg_css(output_image_info.chroma_subsampling), NULL));
+            nvjpegEncoderParamsSetSamplingFactors(nvjpeg_encode_params_, nvimgcodec2nvjpeg_css(output_image_info.chroma_subsampling), NULL));
         ASSERT_EQ(NVJPEG_STATUS_SUCCESS,
-            nvjpegEncoderParamsSetEncoding(nvjpeg_encode_params_, nvimgcdcs2nvjpeg_encoding(out_jpeg_image_info.encoding), NULL));
+            nvjpegEncoderParamsSetEncoding(nvjpeg_encode_params_, nvimgcodec2nvjpeg_encoding(out_jpeg_image_info.encoding), NULL));
 
-        auto input_format = nvimgcdcs2nvjpeg_format(input_image_info.sample_format);
+        auto input_format = nvimgcodec2nvjpeg_format(input_image_info.sample_format);
 
         unsigned char* dev_buffer = nullptr;
         ASSERT_EQ(cudaSuccess, cudaMalloc((void**)&dev_buffer, input_image_info.buffer_size));
@@ -321,9 +321,9 @@ class NvJpegTestBase
             {(unsigned int)(is_interleaved(input_format) ? input_image_info.plane_info[0].width * 3 : input_image_info.plane_info[0].width),
                 (unsigned int)input_image_info.plane_info[0].width, (unsigned int)input_image_info.plane_info[0].width,
                 (unsigned int)input_image_info.plane_info[0].width}};
-        if (NVIMGCDCS_SAMPLEFORMAT_P_Y == input_image_info.sample_format || NVIMGCDCS_SAMPLEFORMAT_P_YUV == input_image_info.sample_format) {
+        if (NVIMGCODEC_SAMPLEFORMAT_P_Y == input_image_info.sample_format || NVIMGCODEC_SAMPLEFORMAT_P_YUV == input_image_info.sample_format) {
             ASSERT_EQ(NVJPEG_STATUS_SUCCESS, nvjpegEncodeYUV(nvjpeg_handle_, nvjpeg_encode_state_, nvjpeg_encode_params_, &img_desc,
-                                                 nvimgcdcs2nvjpeg_css(input_image_info.chroma_subsampling),
+                                                 nvimgcodec2nvjpeg_css(input_image_info.chroma_subsampling),
                                                  input_image_info.plane_info[0].width, input_image_info.plane_info[0].height, NULL));
         } else {
             ASSERT_EQ(NVJPEG_STATUS_SUCCESS,
@@ -353,4 +353,4 @@ class NvJpegTestBase
     nvjpegEncoderState_t nvjpeg_encode_state_ = nullptr;
     nvjpegEncoderParams_t nvjpeg_encode_params_ = nullptr;
 };
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

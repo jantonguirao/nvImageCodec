@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <condition_variable>
 #include <memory>
 #include <mutex>
@@ -23,7 +23,7 @@
 #include "iwork_manager.h"
 #include "work.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class ICodec;
 class ILogger;
@@ -48,13 +48,13 @@ class EncoderWorker
    * @param work_manager   - creates and recycles work
    * @param codec   - the factory that constructs the encoder for this worker
    */
-    EncoderWorker(ILogger* logger, IWorkManager<nvimgcdcsEncodeParams_t>* work_manager, const nvimgcdcsExecutionParams_t* exec_params,
+    EncoderWorker(ILogger* logger, IWorkManager<nvimgcodecEncodeParams_t>* work_manager, const nvimgcodecExecutionParams_t* exec_params,
         const std::string& options, const ICodec* codec, int index);
     ~EncoderWorker();
 
     void start();
     void stop();
-    void addWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work);
+    void addWork(std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work);
 
     EncoderWorker* getFallback();
     IImageEncoder* getEncoder();
@@ -66,7 +66,7 @@ class EncoderWorker
    * The work is scheduled and the results are waited for. Any failed samples will be added
    * to a fallback work, if a fallback encoder is present.
    */
-    void processBatch(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work) noexcept;
+    void processBatch(std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work) noexcept;
 
     /**
    * @brief The main loop of the worker thread.
@@ -74,16 +74,16 @@ class EncoderWorker
     void run();
 
     ILogger* logger_;
-    IWorkManager<nvimgcdcsEncodeParams_t>* work_manager_ = nullptr;
+    IWorkManager<nvimgcodecEncodeParams_t>* work_manager_ = nullptr;
     const ICodec* codec_ = nullptr;
     int index_ = 0;
-    const nvimgcdcsExecutionParams_t* exec_params_;
+    const nvimgcodecExecutionParams_t* exec_params_;
     const std::string& options_;
 
     std::mutex mtx_;
     std::condition_variable cv_;
 
-    std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work_;
+    std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work_;
     std::thread worker_;
     bool stop_requested_ = false;
     std::once_flag started_;
@@ -95,4 +95,4 @@ class EncoderWorker
 };
 
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

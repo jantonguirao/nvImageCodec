@@ -5,7 +5,7 @@ add_custom_target(docs)
 
 add_subdirectory(doxygen)
 add_subdirectory(sphinx)
-add_dependencies(docs nvimagecodecs_doxygen_docs)
-add_dependencies(docs nvimagecodecs_sphinx_docs)
-add_dependencies(nvimagecodecs_sphinx_docs nvimagecodecs_doxygen_docs)
+add_dependencies(docs nvimagecodec_doxygen_docs)
+add_dependencies(docs nvimagecodec_sphinx_docs)
+add_dependencies(nvimagecodec_sphinx_docs nvimagecodec_doxygen_docs)
 

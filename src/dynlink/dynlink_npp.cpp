@@ -60,10 +60,10 @@ namespace {
   #endif
 #endif
 
-nvimgcdcs::ILibraryLoader::LibraryHandle loadNppcLibrary()
+nvimgcodec::ILibraryLoader::LibraryHandle loadNppcLibrary()
 {
-    nvimgcdcs::LibraryLoader lib_loader;
-    nvimgcdcs::ILibraryLoader::LibraryHandle ret = nullptr;
+    nvimgcodec::LibraryLoader lib_loader;
+    nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
     ret = lib_loader.loadLibrary(__NppcLibNameCuVer);
     if (!ret) {
         ret = lib_loader.loadLibrary(__NppcLibName);
@@ -78,10 +78,10 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNppcLibrary()
     return ret;
 }
 
-nvimgcdcs::ILibraryLoader::LibraryHandle loadNppideiLibrary()
+nvimgcodec::ILibraryLoader::LibraryHandle loadNppideiLibrary()
 {
-    nvimgcdcs::LibraryLoader lib_loader;
-    nvimgcdcs::ILibraryLoader::LibraryHandle ret = nullptr;
+    nvimgcodec::LibraryLoader lib_loader;
+    nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
     ret = lib_loader.loadLibrary(__NppideiLibNameCuVer);
     if (!ret) {
         ret = lib_loader.loadLibrary(__NppideiLibName);
@@ -96,10 +96,10 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNppideiLibrary()
     return ret;
 }
 
-nvimgcdcs::ILibraryLoader::LibraryHandle loadNppiccLibrary()
+nvimgcodec::ILibraryLoader::LibraryHandle loadNppiccLibrary()
 {
-    nvimgcdcs::LibraryLoader lib_loader;
-    nvimgcdcs::ILibraryLoader::LibraryHandle ret = nullptr;
+    nvimgcodec::LibraryLoader lib_loader;
+    nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
     ret = lib_loader.loadLibrary(__NppiccLibNameCuVer);
     if (!ret) {
         ret = lib_loader.loadLibrary(__NppiccLibName);
@@ -118,9 +118,9 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNppiccLibrary()
 
 
 void *NppLoadSymbol(const char *name) {
-  nvimgcdcs::LibraryLoader lib_loader;
+  nvimgcodec::LibraryLoader lib_loader;
   // check libraries in order: processing library, color conversion, then core
-  static nvimgcdcs::ILibraryLoader::LibraryHandle libs[] = {loadNppideiLibrary(), loadNppiccLibrary(), loadNppcLibrary()};
+  static nvimgcodec::ILibraryLoader::LibraryHandle libs[] = {loadNppideiLibrary(), loadNppiccLibrary(), loadNppcLibrary()};
   for (auto &lib : libs) {
     try {
       void *ret = lib ? lib_loader.getFuncAddress(lib, name) : nullptr;

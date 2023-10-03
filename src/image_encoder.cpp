@@ -14,13 +14,13 @@
 #include "icode_stream.h"
 #include "iimage.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-ImageEncoder::ImageEncoder(const nvimgcdcsEncoderDesc_t* desc, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+ImageEncoder::ImageEncoder(const nvimgcodecEncoderDesc_t* desc, const nvimgcodecExecutionParams_t* exec_params, const char* options)
     : encoder_desc_(desc)
 {
     auto ret = encoder_desc_->create(encoder_desc_->instance, &encoder_, exec_params, options);
-    if (ret != NVIMGCDCS_STATUS_SUCCESS) {
+    if (ret != NVIMGCODEC_STATUS_SUCCESS) {
         encoder_ = nullptr;
     }
 }
@@ -31,7 +31,7 @@ ImageEncoder::~ImageEncoder()
         encoder_desc_->destroy(encoder_);
 }
 
-nvimgcdcsBackendKind_t ImageEncoder::getBackendKind() const 
+nvimgcodecBackendKind_t ImageEncoder::getBackendKind() const 
 {
     return encoder_desc_->backend_kind;
 }
@@ -42,7 +42,7 @@ std::unique_ptr<IEncodeState> ImageEncoder::createEncodeStateBatch() const
 }
 
 void ImageEncoder::canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
-    const nvimgcdcsEncodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const
+    const nvimgcodecEncodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcodecProcessingStatus_t>* status) const
 {
     assert(result->size() == code_streams.size());
     assert(status->size() == code_streams.size());
@@ -55,20 +55,20 @@ void ImageEncoder::canEncode(const std::vector<IImage*>& images, const std::vect
         return;
     }
 
-    std::vector<nvimgcdcsCodeStreamDesc_t*> cs_descs(code_streams.size());
-    std::vector<nvimgcdcsImageDesc_t*> im_descs(code_streams.size());
+    std::vector<nvimgcodecCodeStreamDesc_t*> cs_descs(code_streams.size());
+    std::vector<nvimgcodecImageDesc_t*> im_descs(code_streams.size());
     for (size_t i = 0; i < code_streams.size(); ++i) {
         cs_descs[i] = code_streams[i]->getCodeStreamDesc();
         im_descs[i] = images[i]->getImageDesc();
     }
     encoder_desc_->canEncode(encoder_, &(*status)[0], &im_descs[0], & cs_descs[0], code_streams.size(), params);
     for (size_t i = 0; i < code_streams.size(); ++i) {
-        (*result)[i] = (*status)[i] == NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        (*result)[i] = (*status)[i] == NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
     }
 }
 
 std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(IEncodeState* encode_state_batch, const std::vector<IImage*>& images,
-    const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params)
+    const std::vector<ICodeStream*>& code_streams, const nvimgcodecEncodeParams_t* params)
 {
     assert(code_streams.size() == images.size());
 
@@ -79,8 +79,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(IEncodeState* enco
     auto future = results.getFuture();
     encode_state_batch->setPromise(std::move(results));
 
-    std::vector<nvimgcdcsCodeStreamDesc_t*> code_stream_descs;
-    std::vector<nvimgcdcsImageDesc_t*> image_descs;
+    std::vector<nvimgcodecCodeStreamDesc_t*> code_stream_descs;
+    std::vector<nvimgcodecImageDesc_t*> image_descs;
 
     for (size_t i = 0; i < code_streams.size(); ++i) {
 
@@ -96,4 +96,4 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(IEncodeState* enco
     return future;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

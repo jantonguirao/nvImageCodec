@@ -12,7 +12,7 @@
 
 #include "io_stream.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class FileIoStream : public IoStream
 {
@@ -87,4 +87,4 @@ class FileIoStream : public IoStream
     std::string path_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -20,7 +20,7 @@
 
 #include "icodec.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IImageParser;
 class IImageEncoder;
@@ -32,7 +32,7 @@ class Codec : public ICodec
   public:
     explicit Codec(ILogger* logger, const char* name);
     const std::string& name() const override;
-    std::unique_ptr<IImageParser> createParser(nvimgcdcsCodeStreamDesc_t* code_stream) const override;
+    std::unique_ptr<IImageParser> createParser(nvimgcodecCodeStreamDesc_t* code_stream) const override;
     int getDecodersNum() const override;
     IImageDecoderFactory* getDecoderFactory(int index) const override;
     int getEncodersNum() const override;
@@ -51,4 +51,4 @@ class Codec : public ICodec
     std::multimap<float, std::unique_ptr<IImageEncoderFactory>> encoders_;
     std::multimap<float, std::unique_ptr<IImageDecoderFactory>> decoders_;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

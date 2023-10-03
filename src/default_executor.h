@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <map>
 #include "iexecutor.h"
 #include "thread_pool.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
  class ILogger; 
 
@@ -24,22 +24,22 @@ class DefaultExecutor : public IExecutor
   public:
     explicit DefaultExecutor(ILogger* logger, int num_threads);
     ~DefaultExecutor() override;
-    nvimgcdcsExecutorDesc_t* getExecutorDesc() override;
+    nvimgcodecExecutorDesc_t* getExecutorDesc() override;
 
   private:
-    nvimgcdcsStatus_t launch(int device_id, int sample_idx, void* task_context,
+    nvimgcodecStatus_t launch(int device_id, int sample_idx, void* task_context,
         void (*task)(int thread_id, int sample_idx, void* task_context));
     int get_num_threads() const;
 
-    static nvimgcdcsStatus_t static_launch(
+    static nvimgcodecStatus_t static_launch(
         void* instance, int device_id, int sample_idx, void* task_context,
         void (*task)(int thread_id, int sample_idx, void* task_context));
     static int static_get_num_threads(void* instance);
 
     ILogger* logger_;
-    nvimgcdcsExecutorDesc_t desc_;
+    nvimgcodecExecutorDesc_t desc_;
     int num_threads_;
     std::map<int, ThreadPool> device_id2thread_pool_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

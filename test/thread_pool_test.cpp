@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 #include <atomic>
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 TEST(ThreadPool, AddWork) {
   ThreadPool tp(16, 0, false, "ThreadPool test");
@@ -65,4 +65,4 @@ TEST(ThreadPool, AddWorkWithPriority) {
 
 }  // namespace test
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

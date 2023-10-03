@@ -1,6 +1,6 @@
 
 set(SRCS
-    nvimgcodecs_tests.cpp
+    nvimgcodec_tests.cpp
     test_utils.cpp
     codec_test.cpp
     code_stream_test.cpp
@@ -50,10 +50,10 @@ if (BUILD_NVBMP_EXT)
     list(APPEND SRCS extensions/nvbmp_ext_decoder_test.cpp)
 endif()
 
-set(FILESTOPACK nvimgcodecs_tests)
+set(FILESTOPACK nvimgcodec_tests)
 
-add_executable(nvimgcodecs_tests ${SRCS})
-foreach(testapp nvimgcodecs_tests)
+add_executable(nvimgcodec_tests ${SRCS})
+foreach(testapp nvimgcodec_tests)
     target_include_directories(${testapp} SYSTEM BEFORE
         PRIVATE
         ${GTEST_INCLUDE_DIRS}
@@ -63,7 +63,7 @@ foreach(testapp nvimgcodecs_tests)
         set(PTHREAD pthread)
     endif()
 
-    set(TARGET_LIBS nvimgcodecs_static)
+    set(TARGET_LIBS nvimgcodec_static)
 
     if (BUILD_NVJPEG_EXT)
         list(APPEND TARGET_LIBS nvjpeg_ext_static)
@@ -145,7 +145,7 @@ install(DIRECTORY
 
 
 
-add_test(NAME nvImageCodecsTest-L0 COMMAND nvimgcodecs_tests --gtest_filter=-*Parser*:*Ext* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_test(NAME nvImageCodecsTest-L1-Builtin_Parsers COMMAND nvimgcodecs_tests --gtest_filter=*Parser* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_test(NAME nvImageCodecsTest-L1-Extensions COMMAND nvimgcodecs_tests --gtest_filter=*Ext* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-#TODO add_test(NAME nvImageCodecsTest-L2-Transcoding COMMAND ${PYTHON_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME nvImageCodecTest-L0 COMMAND nvimgcodec_tests --gtest_filter=-*Parser*:*Ext* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME nvImageCodecTest-L1-Builtin_Parsers COMMAND nvimgcodec_tests --gtest_filter=*Parser* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME nvImageCodecTest-L1-Extensions COMMAND nvimgcodec_tests --gtest_filter=*Ext* --resources_dir ../resources WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+#TODO add_test(NAME nvImageCodecTest-L2-Transcoding COMMAND ${PYTHON_EXECUTABLE} -m pytest ${CMAKE_CURRENT_SOURCE_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

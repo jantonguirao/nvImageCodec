@@ -9,10 +9,10 @@
  */
 
 #pragma once
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include "idecode_state.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class DecodeStateBatch : public IDecodeState
 {
@@ -24,4 +24,4 @@ class DecodeStateBatch : public IDecodeState
   private:
     std::unique_ptr<ProcessingResultsPromise> promise_;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

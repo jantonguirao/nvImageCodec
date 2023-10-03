@@ -14,9 +14,9 @@
 #include "image.h"
 #include "image_decoder.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-ImageDecoderFactory::ImageDecoderFactory(const nvimgcdcsDecoderDesc_t* desc)
+ImageDecoderFactory::ImageDecoderFactory(const nvimgcodecDecoderDesc_t* desc)
     : decoder_desc_(desc)
 {
 }
@@ -31,15 +31,15 @@ std::string ImageDecoderFactory::getCodecName() const
     return decoder_desc_->codec;
 }
 
-nvimgcdcsBackendKind_t ImageDecoderFactory::getBackendKind() const
+nvimgcodecBackendKind_t ImageDecoderFactory::getBackendKind() const
 {
     return decoder_desc_->backend_kind;
 }
 
 std::unique_ptr<IImageDecoder> ImageDecoderFactory::createDecoder(
-    const nvimgcdcsExecutionParams_t* exec_params, const char* options) const
+    const nvimgcodecExecutionParams_t* exec_params, const char* options) const
 {
     return std::make_unique<ImageDecoder>(decoder_desc_, exec_params, options);
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

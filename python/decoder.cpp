@@ -17,19 +17,19 @@
 #include "error_handling.h"
 #include "type_utils.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 struct Decoder::DecoderDeleter
 {
-    void operator()(nvimgcdcsDecoder_t decoder) { nvimgcdcsDecoderDestroy(decoder); }
+    void operator()(nvimgcodecDecoder_t decoder) { nvimgcodecDecoderDestroy(decoder); }
 };
 
-Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends, const std::string& options)
+Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends, const std::string& options)
     : decoder_(nullptr)
     , instance_(instance)
 {
-    nvimgcdcsDecoder_t decoder;
-    std::vector<nvimgcdcsBackend_t> nvimgcds_backends(backends.has_value() ? backends.value().size() : 0);
+    nvimgcodecDecoder_t decoder;
+    std::vector<nvimgcodecBackend_t> nvimgcds_backends(backends.has_value() ? backends.value().size() : 0);
     if (backends.has_value()) {
         for (size_t i = 0; i < backends.value().size(); ++i) {
             nvimgcds_backends[i] = backends.value()[i].backend_;
@@ -37,39 +37,39 @@ Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_th
     }
 
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
-    nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
     exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
-    nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, options.c_str());
+    nvimgcodecDecoderCreate(instance, &decoder, &exec_params, options.c_str());
 
-    decoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsDecoder_t>::type>(decoder, DecoderDeleter{});
+    decoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type>(decoder, DecoderDeleter{});
 }
 
-Decoder::Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
+Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds,
     const std::string& options)
     : decoder_(nullptr)
     , instance_(instance)
 {
-    nvimgcdcsDecoder_t decoder;
-    std::vector<nvimgcdcsBackend_t> nvimgcds_backends(backend_kinds.has_value() ? backend_kinds.value().size() : 0);
+    nvimgcodecDecoder_t decoder;
+    std::vector<nvimgcodecBackend_t> nvimgcds_backends(backend_kinds.has_value() ? backend_kinds.value().size() : 0);
     if (backend_kinds.has_value()) {
         for (size_t i = 0; i < backend_kinds.value().size(); ++i) {
             nvimgcds_backends[i].kind = backend_kinds.value()[i];
-            nvimgcds_backends[i].params = {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f};
+            nvimgcds_backends[i].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f};
         }
     }
 
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
-    nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
     exec_params.device_id = device_id;
     exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
-    nvimgcdcsDecoderCreate(instance, &decoder, &exec_params, options.c_str());
+    nvimgcodecDecoderCreate(instance, &decoder, &exec_params, options.c_str());
 
-    decoder_ = std::shared_ptr<std::remove_pointer<nvimgcdcsDecoder_t>::type>(decoder, DecoderDeleter{});
+    decoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type>(decoder, DecoderDeleter{});
 }
 
 Decoder::~Decoder()
@@ -78,47 +78,47 @@ Decoder::~Decoder()
 
 py::object Decoder::decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<nvimgcdcsCodeStream_t> code_streams(1);
-    CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromFile(instance_, &code_streams[0], file_name.c_str()));
+    std::vector<nvimgcodecCodeStream_t> code_streams(1);
+    CHECK_NVIMGCODEC(nvimgcodecCodeStreamCreateFromFile(instance_, &code_streams[0], file_name.c_str()));
     std::vector<py::object> images = decode(code_streams, params, cuda_stream);
     return images.size() == 1 ? images[0] : py ::none();
 }
 
 py::object Decoder::decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<nvimgcdcsCodeStream_t> code_streams(1);
+    std::vector<nvimgcodecCodeStream_t> code_streams(1);
     auto str_view = static_cast<std::string_view>(data);
-    CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[0], (unsigned char*)str_view.data(), str_view.size()));
+    CHECK_NVIMGCODEC(nvimgcodecCodeStreamCreateFromHostMem(instance_, &code_streams[0], (unsigned char*)str_view.data(), str_view.size()));
     std::vector<py::object> images = decode(code_streams, params, cuda_stream);
     return images.size() == 1 ? images[0] : py ::none();
 }
 
 py::object Decoder::decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<nvimgcdcsCodeStream_t> code_streams(1);
+    std::vector<nvimgcodecCodeStream_t> code_streams(1);
     auto img_data = data.unchecked<1>();
-    CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[0], img_data.data(0), img_data.size()));
+    CHECK_NVIMGCODEC(nvimgcodecCodeStreamCreateFromHostMem(instance_, &code_streams[0], img_data.data(0), img_data.size()));
     std::vector<py::object> images = decode(code_streams, params, cuda_stream);
     return images.size() == 1 ? images[0] : py::none();
 }
 
 std::vector<py::object> Decoder::decode(const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<nvimgcdcsCodeStream_t> code_streams(file_names.size());
+    std::vector<nvimgcodecCodeStream_t> code_streams(file_names.size());
     for (uint32_t i = 0; i < file_names.size(); i++) {
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromFile(instance_, &code_streams[i], file_names[i].c_str()));
+        CHECK_NVIMGCODEC(nvimgcodecCodeStreamCreateFromFile(instance_, &code_streams[i], file_names[i].c_str()));
     }
     return decode(code_streams, params, cuda_stream);
 }
 
 std::vector<py::object> Decoder::decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<nvimgcdcsCodeStream_t> code_streams(data_list.size());
+    std::vector<nvimgcodecCodeStream_t> code_streams(data_list.size());
     for (uint32_t i = 0; i < data_list.size(); i++) {
         auto str_view = static_cast<std::string_view>(data_list[i]);
 
-        CHECK_NVIMGCDCS(
-            nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[i], (unsigned char*)str_view.data(), str_view.size()));
+        CHECK_NVIMGCODEC(
+            nvimgcodecCodeStreamCreateFromHostMem(instance_, &code_streams[i], (unsigned char*)str_view.data(), str_view.size()));
     }
     return decode(code_streams, params, cuda_stream);
 }
@@ -126,57 +126,57 @@ std::vector<py::object> Decoder::decode(const std::vector<py::bytes>& data_list,
 std::vector<py::object> Decoder::decode(
     const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<nvimgcdcsCodeStream_t> code_streams(data_list.size());
+    std::vector<nvimgcodecCodeStream_t> code_streams(data_list.size());
     for (uint32_t i = 0; i < data_list.size(); i++) {
         auto img_data = data_list[i].unchecked<1>();
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamCreateFromHostMem(instance_, &code_streams[i], img_data.data(0), img_data.size()));
+        CHECK_NVIMGCODEC(nvimgcodecCodeStreamCreateFromHostMem(instance_, &code_streams[i], img_data.data(0), img_data.size()));
     }
     return decode(code_streams, params, cuda_stream);
 }
 
 std::vector<py::object> Decoder::decode(
-    std::vector<nvimgcdcsCodeStream_t>& code_streams, std::optional<DecodeParams> params_opt, intptr_t cuda_stream)
+    std::vector<nvimgcodecCodeStream_t>& code_streams, std::optional<DecodeParams> params_opt, intptr_t cuda_stream)
 {
-    std::vector<nvimgcdcsImage_t> images(code_streams.size());
+    std::vector<nvimgcodecImage_t> images(code_streams.size());
     std::vector<py::object> py_images;
     py_images.reserve(code_streams.size());
     DecodeParams params = params_opt.has_value() ? params_opt.value() : DecodeParams();
 
     size_t skip_samples = 0;
     for (uint32_t i = 0; i < code_streams.size(); i++) {
-        nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        CHECK_NVIMGCDCS(nvimgcdcsCodeStreamGetImageInfo(code_streams[i], &image_info));
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        CHECK_NVIMGCODEC(nvimgcodecCodeStreamGetImageInfo(code_streams[i], &image_info));
 
-        if (image_info.num_planes > NVIMGCDCS_MAX_NUM_PLANES) {
-            std::cerr << "Warning: Num Components > " << NVIMGCDCS_MAX_NUM_PLANES << "not supported.  It will not be included in output"
+        if (image_info.num_planes > NVIMGCODEC_MAX_NUM_PLANES) {
+            std::cerr << "Warning: Num Components > " << NVIMGCODEC_MAX_NUM_PLANES << "not supported.  It will not be included in output"
                       << std::endl;
 
             skip_samples++;
             continue;
         }
 
-        auto sample_type = params.allow_any_depth_ ? image_info.plane_info[0].sample_type : NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+        auto sample_type = params.allow_any_depth_ ? image_info.plane_info[0].sample_type : NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
         int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
 
         image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
 
         //Decode to format
         bool decode_to_interleaved = true;
-        image_info.chroma_subsampling = NVIMGCDCS_SAMPLING_NONE;
+        image_info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
 
-        if (params.color_spec_ == NVIMGCDCS_COLORSPEC_SRGB) {
-            image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-            image_info.color_spec = NVIMGCDCS_COLORSPEC_SRGB;
+        if (params.color_spec_ == NVIMGCODEC_COLORSPEC_SRGB) {
+            image_info.sample_format = decode_to_interleaved ? NVIMGCODEC_SAMPLEFORMAT_I_RGB : NVIMGCODEC_SAMPLEFORMAT_P_RGB;
+            image_info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
             image_info.plane_info[0].num_channels = decode_to_interleaved ? 3 /*I_RGB*/ : 1 /*P_RGB*/;
             image_info.num_planes = decode_to_interleaved ? 1 : image_info.num_planes;
-        } else if (params.color_spec_ == NVIMGCDCS_COLORSPEC_GRAY) {
-            image_info.sample_format = NVIMGCDCS_SAMPLEFORMAT_P_Y;
-            image_info.color_spec = NVIMGCDCS_COLORSPEC_GRAY;
+        } else if (params.color_spec_ == NVIMGCODEC_COLORSPEC_GRAY) {
+            image_info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_Y;
+            image_info.color_spec = NVIMGCODEC_COLORSPEC_GRAY;
             image_info.plane_info[0].num_channels = 1;
             image_info.num_planes = 1;
-        } else if (params.color_spec_ == NVIMGCDCS_COLORSPEC_UNCHANGED) {
-            image_info.sample_format = decode_to_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED : NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED;
-            image_info.color_spec = NVIMGCDCS_COLORSPEC_UNCHANGED;
+        } else if (params.color_spec_ == NVIMGCODEC_COLORSPEC_UNCHANGED) {
+            image_info.sample_format = decode_to_interleaved ? NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED : NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED;
+            image_info.color_spec = NVIMGCODEC_COLORSPEC_UNCHANGED;
             uint32_t num_channels = std::max(image_info.num_planes, image_info.plane_info[0].num_channels);
             image_info.plane_info[0].num_channels = decode_to_interleaved ? num_channels : 1;
             image_info.num_planes = decode_to_interleaved ? 1 : num_channels;
@@ -202,37 +202,37 @@ std::vector<py::object> Decoder::decode(
         }
         image_info.buffer = nullptr;
         image_info.buffer_size = buffer_size;
-        image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+        image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
         Image img(instance_, &image_info);
         images[i - skip_samples] = img.getNvImgCdcsImage();
         py_images.push_back(py::cast(std::move(img)));
     }
-    nvimgcdcsFuture_t decode_future;
-    CHECK_NVIMGCDCS(nvimgcdcsDecoderDecode(
+    nvimgcodecFuture_t decode_future;
+    CHECK_NVIMGCODEC(nvimgcodecDecoderDecode(
         decoder_.get(), code_streams.data(), images.data(), code_streams.size(), &params.decode_params_, &decode_future));
-    nvimgcdcsFutureWaitForAll(decode_future);
+    nvimgcodecFutureWaitForAll(decode_future);
     size_t status_size;
-    nvimgcdcsFutureGetProcessingStatus(decode_future, nullptr, &status_size);
-    std::vector<nvimgcdcsProcessingStatus_t> decode_status(status_size);
-    nvimgcdcsFutureGetProcessingStatus(decode_future, &decode_status[0], &status_size);
+    nvimgcodecFutureGetProcessingStatus(decode_future, nullptr, &status_size);
+    std::vector<nvimgcodecProcessingStatus_t> decode_status(status_size);
+    nvimgcodecFutureGetProcessingStatus(decode_future, &decode_status[0], &status_size);
     skip_samples = 0;
     for (size_t i = 0; i < decode_status.size(); ++i) {
-        if (decode_status[i] != NVIMGCDCS_PROCESSING_STATUS_SUCCESS) {
+        if (decode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
             std::cerr << "Error: Something went wrong during decoding image #" << i << " it will not be included in output" << std::endl;
             py_images.erase(py_images.begin() + i - skip_samples);
             skip_samples++;
         }
     }
-    nvimgcdcsFutureDestroy(decode_future);
+    nvimgcodecFutureDestroy(decode_future);
     for (auto& cs : code_streams) {
-        nvimgcdcsCodeStreamDestroy(cs);
+        nvimgcodecCodeStreamDestroy(cs);
     }
 
     return py_images;
 }
 
-void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
+void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
 {
     py::class_<Decoder>(m, "Decoder")
         .def(py::init<>(
@@ -251,10 +251,10 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 options: Decoder specific options e.g.: "nvjpeg:fancy_upsampling=1"
 
             )pbdoc",
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backends"_a = py::none(),
+            "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backends"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
         .def(py::init<>(
-                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds,
+                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds,
                      const std::string& options) { return new Decoder(instance, device_id, max_num_cpu_threads, backend_kinds, options); }),
             R"pbdoc(
             Initialize decoder.
@@ -269,7 +269,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 options: Decoder specific options e.g.: "nvjpeg:fancy_upsampling=1"
 
             )pbdoc",
-            "device_id"_a = NVIMGCDCS_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
+            "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
         .def("decode", py::overload_cast<py::bytes, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
             R"pbdoc(
@@ -283,7 +283,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
 
             Returns:
-                nvimgcodecs.Image or None if the image cannot be decoded because of any reason. 
+                nvimgcodec.Image or None if the image cannot be decoded because of any reason. 
 
             )pbdoc",
             "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
@@ -300,7 +300,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
            
             Returns:
-                nvimgcodecs.Image or None if the image cannot be decoded because of any reason.
+                nvimgcodec.Image or None if the image cannot be decoded because of any reason.
 
             )pbdoc",
             "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
@@ -316,7 +316,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
             
             Returns:
-                nvimgcodecs.Image or None if the image cannot be decoded because of any reason.
+                nvimgcodec.Image or None if the image cannot be decoded because of any reason.
         )pbdoc",
             "file_name"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
 
@@ -332,7 +332,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
 
             Returns:
-                List of decoded nvimgcodecs.Image's
+                List of decoded nvimgcodec.Image's
             )pbdoc",
             "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
 
@@ -348,7 +348,7 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
             
             Returns:
-                List of decoded nvimgcodecs.Image's
+                List of decoded nvimgcodec.Image's
 
             )pbdoc",
             "file_names"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
@@ -364,10 +364,10 @@ void Decoder::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
 
             Returns:
-                List of decoded nvimgcodecs.Image's
+                List of decoded nvimgcodec.Image's
 
             )pbdoc",
             "data_list"_a, "params"_a = py::none(), "cuda_stream"_a = 0);
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

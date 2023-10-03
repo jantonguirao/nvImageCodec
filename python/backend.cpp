@@ -13,11 +13,11 @@
 
 #include "error_handling.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 Backend::Backend()
-    : backend_{NVIMGCDCS_STRUCTURE_TYPE_BACKEND, nullptr, NVIMGCDCS_BACKEND_KIND_GPU_ONLY,
-          {NVIMGCDCS_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f}}
+    : backend_{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, nullptr, NVIMGCODEC_BACKEND_KIND_GPU_ONLY,
+          {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f}}
 {
 }
 
@@ -25,14 +25,14 @@ void Backend::exportToPython(py::module& m)
 {
     py::class_<Backend>(m, "Backend")
         .def(py::init([]() { return Backend{}; }), "Default constructor")
-        .def(py::init([](nvimgcdcsBackendKind_t backend_kind, float load_hint) {
+        .def(py::init([](nvimgcodecBackendKind_t backend_kind, float load_hint) {
             Backend p;
             p.backend_.kind = backend_kind;
             p.backend_.params.load_hint = load_hint;
             return p;
         }),
             "backend_kind"_a, "load_hint"_a = 1.0f, "Constructor with parameters")
-        .def(py::init([](nvimgcdcsBackendKind_t backend_kind, BackendParams backend_params) {
+        .def(py::init([](nvimgcodecBackendKind_t backend_kind, BackendParams backend_params) {
             Backend p;
             p.backend_.kind = backend_kind;
             p.backend_.params = backend_params.backend_params_;
@@ -46,4 +46,4 @@ void Backend::exportToPython(py::module& m)
         .def_property("backend_params", &Backend::getBackendParams, &Backend::setBackendParams, "Backend parameters.");
 }
  
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <vector>
 #include <string>
 #include "ilogger.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IDebugMessenger;
 class Logger : public ILogger
@@ -24,10 +24,10 @@ class Logger : public ILogger
     Logger() = default;
     Logger(IDebugMessenger* messenger);
     static ILogger* get();
-    void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageCategory_t message_category, const std::string& message) override ;
-    void log(const nvimgcdcsDebugMessageSeverity_t message_severity,
-        const nvimgcdcsDebugMessageCategory_t message_category, const nvimgcdcsDebugMessageData_t* data) override;
+    void log(const nvimgcodecDebugMessageSeverity_t message_severity,
+        const nvimgcodecDebugMessageCategory_t message_category, const std::string& message) override ;
+    void log(const nvimgcodecDebugMessageSeverity_t message_severity,
+        const nvimgcodecDebugMessageCategory_t message_category, const nvimgcodecDebugMessageData_t* data) override;
     void registerDebugMessenger(IDebugMessenger* messenger) override;
     void unregisterDebugMessenger(IDebugMessenger* messenger) override;
 
@@ -35,4 +35,4 @@ class Logger : public ILogger
     std::vector<IDebugMessenger*> messengers_;
 };
 
-} //namespace nvimgcdcs
+} //namespace nvimgcodec

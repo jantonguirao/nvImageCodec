@@ -10,20 +10,20 @@
 
 #include "jpeg2k_prog_order.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 void Jpeg2kProgOrder::exportToPython(py::module& m)
 {
     // clang-format off
-    py::enum_<nvimgcdcsJpeg2kProgOrder_t>(m, "Jpeg2kProgOrder")
-        .value("LRCP", NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP)
-        .value("RLCP", NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP)
-        .value("RPCL", NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL)
-        .value("PCRL", NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL)
-        .value("CPRL", NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL)
+    py::enum_<nvimgcodecJpeg2kProgOrder_t>(m, "Jpeg2kProgOrder")
+        .value("LRCP", NVIMGCODEC_JPEG2K_PROG_ORDER_LRCP)
+        .value("RLCP", NVIMGCODEC_JPEG2K_PROG_ORDER_RLCP)
+        .value("RPCL", NVIMGCODEC_JPEG2K_PROG_ORDER_RPCL)
+        .value("PCRL", NVIMGCODEC_JPEG2K_PROG_ORDER_PCRL)
+        .value("CPRL", NVIMGCODEC_JPEG2K_PROG_ORDER_CPRL)
         .export_values();
     // clang-format on
 } ;
 
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include "processing_results.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IEncodeState
 {
@@ -24,4 +24,4 @@ class IEncodeState
     virtual const ProcessingResultsPromise& getPromise() = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
+#include <nvimgcodec.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 class IDecodeState;
 class IEncodeState;
 class ProcessingResultsPromise;
@@ -23,9 +23,9 @@ class IImage
   public:
     virtual ~IImage() = default;
     virtual void setIndex(int index) = 0;
-    virtual void setImageInfo(const nvimgcdcsImageInfo_t* image_info) = 0;
-    virtual void getImageInfo(nvimgcdcsImageInfo_t* image_info) = 0;
-    virtual nvimgcdcsImageDesc_t* getImageDesc() = 0;
+    virtual void setImageInfo(const nvimgcodecImageInfo_t* image_info) = 0;
+    virtual void getImageInfo(nvimgcodecImageInfo_t* image_info) = 0;
+    virtual nvimgcodecImageDesc_t* getImageDesc() = 0;
     virtual void setPromise(const ProcessingResultsPromise& promise) = 0;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

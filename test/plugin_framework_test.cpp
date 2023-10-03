@@ -22,7 +22,7 @@
 #include "mock_library_loader.h"
 #include "mock_logger.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 using ::testing::_;
 using ::testing::ByMove;
@@ -36,21 +36,21 @@ uint32_t testExtModuleGetVersion()
     return 1;
 }
 
-nvimgcdcsStatus_t testExtModuleCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+nvimgcodecStatus_t testExtModuleCreate(void* instance, nvimgcodecExtension_t* extension, const nvimgcodecFrameworkDesc_t* framework)
 {
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t testExtModuleDestroy(nvimgcdcsExtension_t extension)
+nvimgcodecStatus_t testExtModuleDestroy(nvimgcodecExtension_t extension)
 {
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t testExtModuleEntry(nvimgcdcsExtensionDesc_t* ext_desc)
+nvimgcodecStatus_t testExtModuleEntry(nvimgcodecExtensionDesc_t* ext_desc)
 {
     ext_desc->create = &testExtModuleCreate;
     ext_desc->destroy = &testExtModuleDestroy;
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
 TEST(PluginFrameworkTest, test_ext_module_discovery)
@@ -58,7 +58,7 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
     MockCodecRegistry codec_registry;
 
     std::unique_ptr<MockEnvironment> env = std::make_unique<MockEnvironment>();
-    EXPECT_CALL(*env.get(), getVariable("NVIMGCODECS_EXTENSIONS_PATH")).Times(1).WillOnce(Return(""));
+    EXPECT_CALL(*env.get(), getVariable("NVIMGCODEC_EXTENSIONS_PATH")).Times(1).WillOnce(Return(""));
 
     std::unique_ptr<MockDirectoryScaner> directory_scaner = std::make_unique<MockDirectoryScaner>();
     EXPECT_CALL(*directory_scaner.get(), start(_)).Times(1);
@@ -86,7 +86,7 @@ TEST(PluginFrameworkTest, test_ext_module_discovery)
 
     std::unique_ptr<MockLibraryLoader> library_loader = std::make_unique<MockLibraryLoader>();
     EXPECT_CALL(*library_loader.get(), loadLibrary(_)).Times(2);
-    EXPECT_CALL(*library_loader.get(), getFuncAddress(_, Eq("nvimgcdcsExtensionModuleEntry")))
+    EXPECT_CALL(*library_loader.get(), getFuncAddress(_, Eq("nvimgcodecExtensionModuleEntry")))
         .WillRepeatedly(Return((ILibraryLoader::LibraryHandle)&testExtModuleEntry));
     EXPECT_CALL(*library_loader.get(), unloadLibrary(_)).Times(2);
 
@@ -114,7 +114,7 @@ class PluginFrameworkExtensionsPathTest : public ::testing::Test
 
     void TestExtensionsOnePath(const std::string& env_test_path, const std::string& soft_test_path, const std::string& expected_test_path)
     {
-        EXPECT_CALL(*env_.get(), getVariable("NVIMGCODECS_EXTENSIONS_PATH")).WillRepeatedly(Return(env_test_path));
+        EXPECT_CALL(*env_.get(), getVariable("NVIMGCODEC_EXTENSIONS_PATH")).WillRepeatedly(Return(env_test_path));
         EXPECT_CALL(*directory_scaner_.get(), start(fs::path(expected_test_path))).Times(1);
 
         PluginFramework framework(
@@ -125,7 +125,7 @@ class PluginFrameworkExtensionsPathTest : public ::testing::Test
     void TestExtensionsMultiplePaths(
         const std::string& env_test_path, const std::string& soft_test_path, const std::vector<std::string>& expected_paths)
     {
-        EXPECT_CALL(*env_.get(), getVariable("NVIMGCODECS_EXTENSIONS_PATH")).WillRepeatedly(Return(env_test_path));
+        EXPECT_CALL(*env_.get(), getVariable("NVIMGCODEC_EXTENSIONS_PATH")).WillRepeatedly(Return(env_test_path));
         for (auto p : expected_paths) {
             EXPECT_CALL(*directory_scaner_.get(), start(fs::path(p))).Times(1);
         }
@@ -200,7 +200,7 @@ class PluginFrameworkExtensionsVersionTest : public ::testing::Test
     void SetUp() override
     {
         env_ = std::make_unique<MockEnvironment>();
-        EXPECT_CALL(*env_.get(), getVariable("NVIMGCODECS_EXTENSIONS_PATH")).WillRepeatedly(Return(""));
+        EXPECT_CALL(*env_.get(), getVariable("NVIMGCODEC_EXTENSIONS_PATH")).WillRepeatedly(Return(""));
         directory_scaner_ = std::make_unique<MockDirectoryScaner>();
         EXPECT_CALL(*directory_scaner_.get(), exists(_)).WillRepeatedly(Return(true));
         EXPECT_CALL(*directory_scaner_.get(), hasMore()).WillRepeatedly(Return(false));
@@ -212,12 +212,12 @@ class PluginFrameworkExtensionsVersionTest : public ::testing::Test
 
     void TearDown() override {}
 
-    static nvimgcdcsStatus_t ExtCreate(void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+    static nvimgcodecStatus_t ExtCreate(void* instance, nvimgcodecExtension_t* extension, const nvimgcodecFrameworkDesc_t* framework)
     {
-        return NVIMGCDCS_STATUS_SUCCESS;
+        return NVIMGCODEC_STATUS_SUCCESS;
     }
 
-    static nvimgcdcsStatus_t ExtDestroy(nvimgcdcsExtension_t extension) { return NVIMGCDCS_STATUS_SUCCESS; }
+    static nvimgcodecStatus_t ExtDestroy(nvimgcodecExtension_t extension) { return NVIMGCODEC_STATUS_SUCCESS; }
 
     MockLogger logger_;
     MockCodecRegistry codec_registry_;
@@ -230,51 +230,51 @@ class PluginFrameworkExtensionsVersionTest : public ::testing::Test
 
 TEST_F(PluginFrameworkExtensionsVersionTest, test_when_there_is_already_ext_with_the_same_ver_register_returns_invalid)
 {
-    nvimgcdcsExtension_t ext1;
-    nvimgcdcsExtensionDesc_t ext1_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, NVIMGCDCS_EXT_API_VER,
+    nvimgcodecExtension_t ext1;
+    nvimgcodecExtensionDesc_t ext1_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, NVIMGCODEC_EXT_API_VER,
         &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->registerExtension(&ext1, &ext1_desc));
-    ASSERT_EQ(NVIMGCDCS_STATUS_INVALID_PARAMETER, framework_->registerExtension(&ext1, &ext1_desc));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->unregisterExtension(ext1));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, framework_->registerExtension(&ext1, &ext1_desc));
+    ASSERT_EQ(NVIMGCODEC_STATUS_INVALID_PARAMETER, framework_->registerExtension(&ext1, &ext1_desc));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, framework_->unregisterExtension(ext1));
 }
 
 TEST_F(PluginFrameworkExtensionsVersionTest, test_when_there_is_already_ext_with_the_newer_ver_register_returns_invalid)
 {
-    nvimgcdcsExtension_t ext1;
-    nvimgcdcsExtensionDesc_t ext1_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, NVIMGCDCS_EXT_API_VER,
+    nvimgcodecExtension_t ext1;
+    nvimgcodecExtensionDesc_t ext1_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, NVIMGCODEC_EXT_API_VER,
         &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
-    nvimgcdcsExtension_t ext2;
+    nvimgcodecExtension_t ext2;
 
-    nvimgcdcsExtensionDesc_t ext2_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 0100, NVIMGCDCS_EXT_API_VER,
+    nvimgcodecExtensionDesc_t ext2_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 0100, NVIMGCODEC_EXT_API_VER,
         &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->registerExtension(&ext1, &ext1_desc));
-    ASSERT_EQ(NVIMGCDCS_STATUS_INVALID_PARAMETER, framework_->registerExtension(&ext2, &ext2_desc));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->unregisterExtension(ext1));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, framework_->registerExtension(&ext1, &ext1_desc));
+    ASSERT_EQ(NVIMGCODEC_STATUS_INVALID_PARAMETER, framework_->registerExtension(&ext2, &ext2_desc));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, framework_->unregisterExtension(ext1));
 }
 
 TEST_F(PluginFrameworkExtensionsVersionTest, test_when_there_is_already_ext_with_the_older_ver_register_returns_success)
 {
-    nvimgcdcsExtension_t ext1;
-    nvimgcdcsExtensionDesc_t ext1_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, NVIMGCDCS_EXT_API_VER,
+    nvimgcodecExtension_t ext1;
+    nvimgcodecExtensionDesc_t ext1_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000, NVIMGCODEC_EXT_API_VER,
         &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
-    nvimgcdcsExtension_t ext2;
-    nvimgcdcsExtensionDesc_t ext2_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 2000, NVIMGCDCS_EXT_API_VER,
+    nvimgcodecExtension_t ext2;
+    nvimgcodecExtensionDesc_t ext2_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 2000, NVIMGCODEC_EXT_API_VER,
         &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->registerExtension(&ext1, &ext1_desc));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->registerExtension(&ext2, &ext2_desc));
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, framework_->unregisterExtension(ext1));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, framework_->registerExtension(&ext1, &ext1_desc));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, framework_->registerExtension(&ext2, &ext2_desc));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, framework_->unregisterExtension(ext1));
 }
 
 TEST_F(PluginFrameworkExtensionsVersionTest, test_when_registering_ext_with_newer_api_ver_register_returns_unsupported)
 {
-    nvimgcdcsExtension_t ext1;
-    nvimgcdcsExtensionDesc_t ext1_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000,
-        NVIMGCDCS_EXT_API_VER + 1, &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
+    nvimgcodecExtension_t ext1;
+    nvimgcodecExtensionDesc_t ext1_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, nullptr, "test_ext", 1000,
+        NVIMGCODEC_EXT_API_VER + 1, &PluginFrameworkExtensionsVersionTest::ExtCreate, &PluginFrameworkExtensionsVersionTest::ExtDestroy};
 
-    ASSERT_EQ(NVIMGCDCS_STATUS_IMPLEMENTATION_UNSUPPORTED, framework_->registerExtension(&ext1, &ext1_desc));
+    ASSERT_EQ(NVIMGCODEC_STATUS_IMPLEMENTATION_UNSUPPORTED, framework_->registerExtension(&ext1, &ext1_desc));
 }
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

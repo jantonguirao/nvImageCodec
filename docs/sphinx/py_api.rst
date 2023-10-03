@@ -19,9 +19,9 @@
 Python API
 ==========
  
-.. This is the Python API reference for the NVIDIA® nvImageCodecs library.
+.. This is the Python API reference for the NVIDIA® nvImageCodec library.
 
-.. automodule:: nvidia.nvimgcodecs
+.. automodule:: nvidia.nvimgcodec
    :members:
 
 Backend

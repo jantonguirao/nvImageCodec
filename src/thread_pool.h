@@ -20,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 // arbitrary value for the CPU device ID
 constexpr int CPU_ONLY_DEVICE_ID = -99999;
@@ -98,4 +98,4 @@ class ThreadPool
     std::vector<std::queue<std::string>> tl_errors_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

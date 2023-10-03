@@ -15,7 +15,7 @@
 
 #include "io_stream.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 template <typename T>
 class MemIoStream : public IoStream
@@ -125,4 +125,4 @@ class MemIoStream : public IoStream
     std::function<unsigned char*(void*, size_t)> resize_buffer_func_ = nullptr;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

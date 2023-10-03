@@ -153,7 +153,7 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
         cinfo.out_color_space = JCS_GRAYSCALE;
         break;
     case 3:
-        cinfo.out_color_space = sample_format == NVIMGCDCS_SAMPLEFORMAT_I_BGR ? JCS_EXT_BGR : JCS_RGB;
+        cinfo.out_color_space = sample_format == NVIMGCODEC_SAMPLEFORMAT_I_BGR ? JCS_EXT_BGR : JCS_RGB;
         break;
     default: {
         std::stringstream ss{};
@@ -312,17 +312,17 @@ std::unique_ptr<uint8_t[]> UncompressLow(const void* srcdata, FewerArgsForCompil
                     }
 
                     switch (sample_format) {
-                    case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
+                    case NVIMGCODEC_SAMPLEFORMAT_I_RGB:
                         output_line[3 * i + 0] = r;
                         output_line[3 * i + 1] = g;
                         output_line[3 * i + 2] = b;
                         break;
-                    case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
+                    case NVIMGCODEC_SAMPLEFORMAT_I_BGR:
                         output_line[3 * i + 0] = b;
                         output_line[3 * i + 1] = g;
                         output_line[3 * i + 2] = r;
                         break;
-                    case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+                    case NVIMGCODEC_SAMPLEFORMAT_P_Y:
                         output_line[i] = 0.299f * r + 0.587f * g + 0.114f * b;
                         break;
                     default: {

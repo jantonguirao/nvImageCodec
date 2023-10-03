@@ -17,7 +17,7 @@
 #include "../src/processing_results.h"
 #include "../src/thread_pool.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 TEST(FutureProcessingResultsTest, WaitNew)
 {
@@ -75,4 +75,4 @@ TEST(FutureProcessingResultsTest, Benchmark)
     std::cout << time.count() / num_iter << " us/iter" << std::endl;
 }
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

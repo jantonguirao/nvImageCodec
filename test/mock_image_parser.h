@@ -12,19 +12,19 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include "../src/iimage_parser.h"
 #include <memory>
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class MockImageParser : public IImageParser
 {
   public:
     MOCK_METHOD(std::string, getParserId,(), (const, override));
     MOCK_METHOD(std::string, getCodecName,(), (const, override));
-    MOCK_METHOD(nvimgcdcsStatus_t, getImageInfo,(
-        nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageInfo_t* image_info) ,(override));
+    MOCK_METHOD(nvimgcodecStatus_t, getImageInfo,(
+        nvimgcodecCodeStreamDesc_t* code_stream, nvimgcodecImageInfo_t* image_info) ,(override));
 };
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

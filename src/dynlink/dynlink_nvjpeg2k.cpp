@@ -29,10 +29,10 @@ namespace {
 #endif
 
 
-nvimgcdcs::ILibraryLoader::LibraryHandle loadNvjpeg2kLibrary()
+nvimgcodec::ILibraryLoader::LibraryHandle loadNvjpeg2kLibrary()
 {
-    nvimgcdcs::LibraryLoader lib_loader;
-    nvimgcdcs::ILibraryLoader::LibraryHandle ret = nullptr;
+    nvimgcodec::LibraryLoader lib_loader;
+    nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
     ret = lib_loader.loadLibrary(__Nvjpeg2kLibName);
     if (!ret) {
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
@@ -49,8 +49,8 @@ nvimgcdcs::ILibraryLoader::LibraryHandle loadNvjpeg2kLibrary()
 }  // namespace
 
 void *Nvjpeg2kLoadSymbol(const char *name) {
-  nvimgcdcs::LibraryLoader lib_loader;
-  static nvimgcdcs::ILibraryLoader::LibraryHandle nvjpeg2kDrvLib = loadNvjpeg2kLibrary();
+  nvimgcodec::LibraryLoader lib_loader;
+  static nvimgcodec::ILibraryLoader::LibraryHandle nvjpeg2kDrvLib = loadNvjpeg2kLibrary();
   // check processing library, core later if symbol not found
   try {
     void *ret = nvjpeg2kDrvLib ? lib_loader.getFuncAddress(nvjpeg2kDrvLib, name) : nullptr;

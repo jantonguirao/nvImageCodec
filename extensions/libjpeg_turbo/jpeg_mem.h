@@ -25,7 +25,7 @@ limitations under the License.
 #include <functional>
 #include <memory>
 #include <string>
-#include "nvimgcodecs.h"
+#include "nvimgcodec.h"
 #include "jpeg_utils.h"
 
 namespace libjpeg_turbo {
@@ -62,7 +62,7 @@ struct UncompressFlags {
   J_DCT_METHOD dct_method = JDCT_DEFAULT;
 
   // Output color space
-  nvimgcdcsSampleFormat_t sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
+  nvimgcodecSampleFormat_t sample_format = NVIMGCODEC_SAMPLEFORMAT_I_RGB;
 
   // Settings of crop window before decompression.
   bool crop = false;

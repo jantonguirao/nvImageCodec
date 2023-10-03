@@ -8,7 +8,7 @@
  * license agreement from NVIDIA CORPORATION is strictly prohibited.
  */
 
-#include "nvimgcodecs_director.h"
+#include "nvimgcodec_director.h"
 #include "builtin_modules.h"
 #include "code_stream.h"
 #include "directory_scaner.h"
@@ -18,9 +18,9 @@
 #include "iostream_factory.h"
 #include "library_loader.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-NvImgCodecsDirector::NvImgCodecsDirector(const nvimgcdcsInstanceCreateInfo_t* create_info)
+NvImgCodecsDirector::NvImgCodecsDirector(const nvimgcodecInstanceCreateInfo_t* create_info)
     : logger_()
     , default_debug_messenger_manager_(
           &logger_, create_info->message_severity, create_info->message_category, create_info->default_debug_messenger)
@@ -48,13 +48,13 @@ std::unique_ptr<CodeStream> NvImgCodecsDirector::createCodeStream()
 }
 
 std::unique_ptr<ImageGenericDecoder> NvImgCodecsDirector::createGenericDecoder(
-    const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+    const nvimgcodecExecutionParams_t* exec_params, const char* options)
 {
     return std::make_unique<ImageGenericDecoder>(&logger_, &codec_registry_, exec_params, options);
 }
 
 std::unique_ptr<ImageGenericEncoder> NvImgCodecsDirector::createGenericEncoder(
-    const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+    const nvimgcodecExecutionParams_t* exec_params, const char* options)
 {
     return std::make_unique<ImageGenericEncoder>(&logger_, &codec_registry_, exec_params, options);
 }
@@ -69,4 +69,4 @@ void NvImgCodecsDirector::unregisterDebugMessenger(IDebugMessenger* messenger)
     logger_.unregisterDebugMessenger(messenger);
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

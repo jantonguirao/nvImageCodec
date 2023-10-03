@@ -13,24 +13,24 @@
 
 #include <pybind11/stl_bind.h>
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include "image.h"
 #include "module.h"
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 uint32_t verbosity2severity(int verbose)
 {
     uint32_t result = 0;
     if (verbose >= 1)
-        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_FATAL | NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_ERROR;
+        result |= NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_FATAL | NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_ERROR;
     if (verbose >= 2)
-        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_WARNING;
+        result |= NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_WARNING;
     if (verbose >= 3)
-        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_INFO;
+        result |= NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_INFO;
     if (verbose >= 4)
-        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_DEBUG;
+        result |= NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEBUG;
     if (verbose >= 5)
-        result |= NVIMGCDCS_DEBUG_MESSAGE_SEVERITY_TRACE;
+        result |= NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_TRACE;
 
     return result;
 }
@@ -38,32 +38,32 @@ uint32_t verbosity2severity(int verbose)
 Module::Module()
 {
     int verbosity = 1;
-    char* v = std::getenv("PYNVIMGCODECS_VERBOSITY");
+    char* v = std::getenv("PYNVIMGCODEC_VERBOSITY");
     try {
         if (v) {
             verbosity = std::stoi(v);
         }
     } catch (std::invalid_argument const& ex) {
-        std::cerr << "Warning: PYNVIMGCODECS_VERBOSITY has wrong value " << std::endl;
+        std::cerr << "Warning: PYNVIMGCODEC_VERBOSITY has wrong value " << std::endl;
     } catch (std::out_of_range const& ex) {
-        std::cerr << "Warning: PYNVIMGCODECS_VERBOSITY has out of range value " << std::endl;
+        std::cerr << "Warning: PYNVIMGCODEC_VERBOSITY has out of range value " << std::endl;
     }
 
-    nvimgcdcsInstanceCreateInfo_t instance_create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+    nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
     instance_create_info.load_builtin_modules = 1;
     instance_create_info.load_extension_modules = 1;
     instance_create_info.default_debug_messenger = verbosity > 0 ? 1 : 0;
     instance_create_info.message_severity = verbosity2severity(verbosity);
-    instance_create_info.message_category = NVIMGCDCS_DEBUG_MESSAGE_CATEGORY_ALL;
-    nvimgcdcsInstanceCreate(&instance_, &instance_create_info);
+    instance_create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
+    nvimgcodecInstanceCreate(&instance_, &instance_create_info);
 }
 
 Module ::~Module()
 {
-    nvimgcdcsInstanceDestroy(instance_);
+    nvimgcodecInstanceDestroy(instance_);
 }
 
-void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
+void Module::exportToPython(py::module& m, nvimgcodecInstance_t instance)
 {
     m.def(
         "as_image", [instance](py::handle source, intptr_t cuda_stream) -> Image { return Image(instance, source.ptr(), cuda_stream); },
@@ -77,7 +77,7 @@ void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
             cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in the created Image.
 
         Returns:
-            nvimgcodecs.Image
+            nvimgcodec.Image
 
         )pbdoc",
         "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>())
@@ -104,7 +104,7 @@ void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
 
             Returns:
-                List of nvimgcodecs.Image's
+                List of nvimgcodec.Image's
             )pbdoc",
             "sources"_a, "cuda_stream"_a = 0)
         .def(
@@ -120,10 +120,10 @@ void Module::exportToPython(py::module& m, nvimgcdcsInstance_t instance)
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place in created Image.
             
             Returns:
-                nvimgcodecs.Image
+                nvimgcodec.Image
 
             )pbdoc",
             "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>());
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

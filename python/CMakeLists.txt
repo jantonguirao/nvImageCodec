@@ -17,7 +17,7 @@ if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
 endif()
 
-set(PY_NVIMGCDCS_SRCS
+set(PY_NVIMGCODEC_SRCS
     main.cpp
     module.cpp
     image.cpp
@@ -38,24 +38,24 @@ set(PY_NVIMGCDCS_SRCS
     dlpack_utils.cpp
     image_buffer_kind.cpp)
 
-build_per_python_lib(nvimgcodecs_python
-    OUTPUT_NAME nvimgcodecs_impl
-    OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs
-    PUBLIC_LIBS nvimgcodecs
+build_per_python_lib(nvimgcodec_python
+    OUTPUT_NAME nvimgcodec_impl
+    OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec
+    PUBLIC_LIBS nvimgcodec
     PRIV_LIBS CUDA::cudart_static -static-libstdc++
-    SRC ${PY_NVIMGCDCS_SRCS})
+    SRC ${PY_NVIMGCODEC_SRCS})
 
 # TODO(janton)
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/nvidia" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")
-make_directory("${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions")
-configure_file("__init__.py.in" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/__init__.py")
+make_directory("${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec/extensions")
+configure_file("__init__.py.in" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec/__init__.py")
 configure_file("setup.py.in" "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(COPY "${PROJECT_SOURCE_DIR}/LICENSE.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
-add_custom_target(copy_libs_to_python_dir ALL DEPENDS nvimgcodecs_python)
+add_custom_target(copy_libs_to_python_dir ALL DEPENDS nvimgcodec_python)
 add_dependencies(copy_libs_to_python_dir
-    nvimgcodecs
+    nvimgcodec
     nvbmp_ext
     nvpnm_ext)
 
@@ -82,9 +82,9 @@ endif()
 if(UNIX)
     add_custom_command(
         TARGET copy_libs_to_python_dir
-        COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodecs.so.0" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs" &&
-        cp "${PROJECT_BINARY_DIR}/extensions/*/*.so*" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs/extensions" &&
-        cp -r "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodecs"
+        COMMAND cp "${PROJECT_BINARY_DIR}/src/libnvimgcodec.so.0" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec" &&
+        cp "${PROJECT_BINARY_DIR}/extensions/*/*.so*" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec/extensions" &&
+        cp -r "${PROJECT_SOURCE_DIR}/include" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec"
     )
 else()
     add_custom_command(
@@ -93,7 +93,7 @@ else()
 endif()
 
 if(BUILD_WHEEL)
-    set(WHEEL_FILENAME "nvidia_nvimgcodecs_cuda${CUDA_VERSION_MAJOR}0-${NVIMGCODECS_VERSION}-py3-none-${NVIMGCODECS_WHL_PLATFORM_NAME}.whl")
+    set(WHEEL_FILENAME "nvidia_nvimgcodec_cuda${CUDA_VERSION_MAJOR}0-${NVIMGCODEC_VERSION}-py3-none-${NVIMGCODEC_WHL_PLATFORM_NAME}.whl")
     set(WHEEL_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     set(WHEEL_FILEPATH "${WHEEL_DIR}/${WHEEL_FILENAME}")
 
@@ -103,7 +103,7 @@ if(BUILD_WHEEL)
     if(UNIX)
         add_custom_command(
             TARGET wheel
-            COMMAND ${PYTHON_EXECUTABLE} -m pip wheel --build-option --verbose --build-option --compression=stored --build-option --python-tag=py3 --build-option --plat-name=${NVIMGCODECS_WHL_PLATFORM_NAME} ${CMAKE_CURRENT_BINARY_DIR} &&
+            COMMAND ${PYTHON_EXECUTABLE} -m pip wheel --build-option --verbose --build-option --compression=stored --build-option --python-tag=py3 --build-option --plat-name=${NVIMGCODEC_WHL_PLATFORM_NAME} ${CMAKE_CURRENT_BINARY_DIR} &&
             ${CMAKE_CURRENT_SOURCE_DIR}/bundle-wheel.sh ${WHEEL_FILEPATH} NO NO ${WHEEL_FILENAME} /usr/local ${WHEEL_DIR} YES)
 
     else()

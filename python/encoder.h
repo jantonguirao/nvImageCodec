@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/pybind11.h>
 
@@ -23,7 +23,7 @@
 #include "encode_params.h"
 #include "image.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -31,10 +31,10 @@ using namespace py::literals;
 class Encoder
 {
   public:
-    Encoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+    Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
         const std::string& options);
-    Encoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads,
-        std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options);
+    Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads,
+        std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options);
     ~Encoder();
 
     py::object encode(py::handle image, const std::string& codec, std::optional<EncodeParams> params, intptr_t cuda_stream);
@@ -44,7 +44,7 @@ class Encoder
     void encode(const std::vector<std::string>& file_names, const std::vector<py::handle>& images, const std::string& codec,
         std::optional<EncodeParams> params, intptr_t cuda_stream);
 
-    static void exportToPython(py::module& m, nvimgcdcsInstance_t instance);
+    static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
 
   private:
     void convertPyImagesToImages(const std::vector<py::handle>& py_images, std::vector<Image*>* images, intptr_t cuda_stream);
@@ -52,16 +52,16 @@ class Encoder
         const std::vector<py::handle>& images, const std::string& codec, std::optional<EncodeParams> params, intptr_t cuda_stream);
 
     void encode(const std::vector<Image*>& images, std::optional<EncodeParams> params, intptr_t cuda_stream,
-        std::function<void(size_t i, nvimgcdcsImageInfo_t& out_image_info, nvimgcdcsCodeStream_t* code_stream)> create_code_stream,
-        std::function<void(size_t i, bool skip_item, nvimgcdcsCodeStream_t code_stream)> post_encode_call_back);
+        std::function<void(size_t i, nvimgcodecImageInfo_t& out_image_info, nvimgcodecCodeStream_t* code_stream)> create_code_stream,
+        std::function<void(size_t i, bool skip_item, nvimgcodecCodeStream_t code_stream)> post_encode_call_back);
 
     std::vector<py::bytes> encode(
         const std::vector<Image*>& images, const std::string& codec, std::optional<EncodeParams> params, intptr_t cuda_stream);
     void encode(const std::vector<std::string>& file_names, const std::vector<Image*>& images, const std::string& codec, std::optional<EncodeParams> params, intptr_t cuda_stream);
 
     struct EncoderDeleter;
-    std::shared_ptr<std::remove_pointer<nvimgcdcsEncoder_t>::type> encoder_;
-    nvimgcdcsInstance_t instance_;
+    std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type> encoder_;
+    nvimgcodecInstance_t instance_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

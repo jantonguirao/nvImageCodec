@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 #include <vector>
 #include "processing_results.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IEncodeState;
 class IImage;
@@ -26,13 +26,13 @@ class IImageEncoder
 {
   public:
     virtual ~IImageEncoder() = default;
-    virtual nvimgcdcsBackendKind_t getBackendKind() const = 0;
+    virtual nvimgcodecBackendKind_t getBackendKind() const = 0;
     virtual std::unique_ptr<IEncodeState> createEncodeStateBatch() const = 0;
     virtual void canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
-        const nvimgcdcsEncodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const = 0;
+        const nvimgcodecEncodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcodecProcessingStatus_t>* status) const = 0;
     virtual std::unique_ptr<ProcessingResultsFuture> encode(IEncodeState* encode_state_batch,
         const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
-        const nvimgcdcsEncodeParams_t* params) = 0;
+        const nvimgcodecEncodeParams_t* params) = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

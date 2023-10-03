@@ -10,12 +10,12 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <map>
 #include <memory>
 #include <string>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class ICodec;
 class IImageParser;
@@ -26,9 +26,9 @@ class ICodecRegistry
     virtual ~ICodecRegistry() = default;
     virtual void registerCodec(std::unique_ptr<ICodec> codec) = 0;
     virtual std::unique_ptr<IImageParser> getParser(
-        nvimgcdcsCodeStreamDesc_t* code_stream) const = 0;
+        nvimgcodecCodeStreamDesc_t* code_stream) const = 0;
     virtual ICodec* getCodecByName(const char* name) = 0;
     virtual size_t getCodecsCount() const = 0;
     virtual ICodec* getCodecByIndex(size_t i) = 0;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

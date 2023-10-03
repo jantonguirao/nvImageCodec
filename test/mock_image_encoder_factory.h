@@ -10,14 +10,14 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include "../src/iimage_encoder.h"
 #include "../src/iimage_encoder_factory.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 namespace test {
 
 class MockImageEncoderFactory : public IImageEncoderFactory
@@ -25,9 +25,9 @@ class MockImageEncoderFactory : public IImageEncoderFactory
   public:
     MOCK_METHOD(std::string, getEncoderId, (), (const, override));
     MOCK_METHOD(std::string, getCodecName, (), (const, override));
-    MOCK_METHOD(nvimgcdcsBackendKind_t, getBackendKind, (), (const, override));
+    MOCK_METHOD(nvimgcodecBackendKind_t, getBackendKind, (), (const, override));
     MOCK_METHOD(std::unique_ptr<IImageEncoder>, createEncoder,
-        (const nvimgcdcsExecutionParams_t*, const char*), (const, override));
+        (const nvimgcodecExecutionParams_t*, const char*), (const, override));
 };
 
 }}

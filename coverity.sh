@@ -1,7 +1,7 @@
 #!/bin/bash
 
 URL="https://sccovlind.nvidia.com:8443"
-STREAM="nvImageCodecs"
+STREAM="nvImageCodec"
 
 if ! type cov-configure >/dev/null 2>&1; then
     echo "[WARNING] Coverity is not installed!!!"

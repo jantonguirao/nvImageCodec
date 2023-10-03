@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import cupy as cp
 import pytest as t
-from nvidia import nvimgcodecs
+from nvidia import nvimgcodec
 import torch
 import sys
 
@@ -19,7 +19,7 @@ img_dir_path = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "../resources"))
 
 def is_fancy_upsampling_available():
-    return nvimgcodecs.__cuda_version__ >= 12010
+    return nvimgcodec.__cuda_version__ >= 12010
 
 def get_default_decoder_options():
     return ":fancy_upsampling=1" if is_fancy_upsampling_available() else ":fancy_upsampling=0"
@@ -77,10 +77,10 @@ def load_batch(file_paths: list[str], load_mode: str = None):
 
 def decode_single_image_test(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads):
     if backends:
-        decoder = nvimgcodecs.Decoder(max_num_cpu_threads=max_num_cpu_threads,
+        decoder = nvimgcodec.Decoder(max_num_cpu_threads=max_num_cpu_threads,
             backends=backends, options=get_default_decoder_options())
     else:
-        decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+        decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
 
     input_img_path = os.path.join(img_dir_path, input_img_file)
 
@@ -98,9 +98,9 @@ def decode_single_image_test(tmp_path, input_img_file, input_format, backends, m
 
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
-                                 [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
-                                     nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
-                                 [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
+                                 [nvimgcodec.Backend(nvimgcodec.GPU_ONLY, load_hint=0.5), nvimgcodec.Backend(
+                                     nvimgcodec.HYBRID_CPU_GPU), nvimgcodec.Backend(nvimgcodec.CPU_ONLY)],
+                                 [nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]])
 @t.mark.parametrize("input_format", ["numpy", "python", "path"])
 @t.mark.parametrize(
     "input_img_file",
@@ -141,9 +141,9 @@ def test_decode_single_image_common(tmp_path, input_img_file, input_format, back
 
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
-                                 [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
-                                     nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
-                                 [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
+                                 [nvimgcodec.Backend(nvimgcodec.GPU_ONLY, load_hint=0.5), nvimgcodec.Backend(
+                                     nvimgcodec.HYBRID_CPU_GPU), nvimgcodec.Backend(nvimgcodec.CPU_ONLY)],
+                                 [nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]])
 @t.mark.parametrize("input_format", ["numpy", "python", "path"])
 @t.mark.parametrize(
     "input_img_file",
@@ -151,7 +151,7 @@ def test_decode_single_image_common(tmp_path, input_img_file, input_format, back
      "jpeg/cmyk.jpg",
     ]
 )
-@t.mark.skipif(nvimgcodecs.__cuda_version__ < 12010,  reason="requires CUDA >= 12.1")
+@t.mark.skipif(nvimgcodec.__cuda_version__ < 12010,  reason="requires CUDA >= 12.1")
 def test_decode_single_image_cuda12_only(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads):
     decode_single_image_test(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads)
 
@@ -161,9 +161,9 @@ def test_decode_single_image_cuda12_only(tmp_path, input_img_file, input_format,
     ["jpeg2k/tiled-cat-1046544_640_gray.jp2",])
 def test_decode_single_image_unchanged(input_img_file):
     input_img_path = os.path.join(img_dir_path, input_img_file)
-    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
-    test_img = decoder.read(input_img_path, params=nvimgcodecs.DecodeParams(
-        color_spec=nvimgcodecs.ColorSpec.UNCHANGED, allow_any_depth=True))
+    decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
+    test_img = decoder.read(input_img_path, params=nvimgcodec.DecodeParams(
+        color_spec=nvimgcodec.ColorSpec.UNCHANGED, allow_any_depth=True))
     ref_img = cv2.imread(input_img_path, cv2.IMREAD_UNCHANGED)
 
     test_img = np.asarray(test_img.cpu())
@@ -174,9 +174,9 @@ def test_decode_single_image_unchanged(input_img_file):
 
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
-                                 [nvimgcodecs.Backend(nvimgcodecs.GPU_ONLY, load_hint=0.5), nvimgcodecs.Backend(
-                                     nvimgcodecs.HYBRID_CPU_GPU), nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)],
-                                 [nvimgcodecs.Backend(nvimgcodecs.CPU_ONLY)]])
+                                 [nvimgcodec.Backend(nvimgcodec.GPU_ONLY, load_hint=0.5), nvimgcodec.Backend(
+                                     nvimgcodec.HYBRID_CPU_GPU), nvimgcodec.Backend(nvimgcodec.CPU_ONLY)],
+                                 [nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]])
 @t.mark.parametrize("cuda_stream", [None, cp.cuda.Stream(non_blocking=True), cp.cuda.Stream(non_blocking=False)])
 @t.mark.parametrize("input_format", ["numpy", "python", "path"])
 @t.mark.parametrize(
@@ -220,10 +220,10 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
                     for img in input_images_batch]
     ref_images = [cv2.imread(img, cv2.IMREAD_COLOR) for img in input_images]
     if backends:
-        decoder = nvimgcodecs.Decoder(
+        decoder = nvimgcodec.Decoder(
             max_num_cpu_threads=max_num_cpu_threads, backends=backends, options=get_default_decoder_options())
     else:
-        decoder = nvimgcodecs.Decoder(
+        decoder = nvimgcodec.Decoder(
             max_num_cpu_threads=max_num_cpu_threads, options=get_default_decoder_options())
 
     encoded_images = load_batch(input_images, input_format)
@@ -275,7 +275,7 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
     ]
 )
 def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stream, max_num_cpu_threads):
-    encoder = nvimgcodecs.Encoder(max_num_cpu_threads=max_num_cpu_threads)
+    encoder = nvimgcodec.Encoder(max_num_cpu_threads=max_num_cpu_threads)
 
     input_img_path = os.path.join(img_dir_path, input_img_file)
     ref_img = cv2.imread(input_img_path, cv2.IMREAD_COLOR)
@@ -283,8 +283,8 @@ def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stre
 
     cp_ref_img = cp.asarray(ref_img)
 
-    nv_ref_img = nvimgcodecs.as_image(cp_ref_img)
-    encode_params = nvimgcodecs.EncodeParams(jpeg2k_encode_params=nvimgcodecs.Jpeg2kEncodeParams(reversible=True))
+    nv_ref_img = nvimgcodec.as_image(cp_ref_img)
+    encode_params = nvimgcodec.EncodeParams(jpeg2k_encode_params=nvimgcodec.Jpeg2kEncodeParams(reversible=True))
     
     if encode_to_data:
         if cuda_stream:
@@ -353,15 +353,15 @@ def test_encode_single_image(tmp_path, input_img_file, encode_to_data, cuda_stre
     ]
 )
 def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_stream, max_num_cpu_threads):
-    encoder = nvimgcodecs.Encoder(max_num_cpu_threads=max_num_cpu_threads)
+    encoder = nvimgcodec.Encoder(max_num_cpu_threads=max_num_cpu_threads)
 
     input_images = [os.path.join(img_dir_path, img)
                     for img in input_images_batch]
     ref_images = [cv2.cvtColor(cv2.imread(img, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB) for img in input_images]
     cp_ref_images = [cp.asarray(ref_img) for ref_img in ref_images]
-    nv_ref_images = [nvimgcodecs.as_image(cp_ref_img) for cp_ref_img in cp_ref_images]
+    nv_ref_images = [nvimgcodec.as_image(cp_ref_img) for cp_ref_img in cp_ref_images]
 
-    encode_params = nvimgcodecs.EncodeParams(jpeg2k_encode_params=nvimgcodecs.Jpeg2kEncodeParams(reversible=True))
+    encode_params = nvimgcodec.EncodeParams(jpeg2k_encode_params=nvimgcodec.Jpeg2kEncodeParams(reversible=True))
 
     if encode_to_data:
         if cuda_stream:
@@ -401,7 +401,7 @@ def test_dlpack_import_from_torch(shape, dtype):
     host_array = rng.integers(0, 128, shape, dtype)
     dev_array = torch.as_tensor(host_array, device="cuda")
 
-    # Since nvimgcodecs.as_image can understand both dlpack and cuda_array_interface,
+    # Since nvimgcodec.as_image can understand both dlpack and cuda_array_interface,
     # and we don't know a priori which interfaces it'll use (torch provides both),
     # let's create one object with only the dlpack interface.
     class DLPackObject:
@@ -411,7 +411,7 @@ def test_dlpack_import_from_torch(shape, dtype):
     o.__dlpack__ = dev_array.__dlpack__
     o.__dlpack_device__ = dev_array.__dlpack_device__
 
-    img = nvimgcodecs.as_image(o)
+    img = nvimgcodec.as_image(o)
     assert img.shape == shape
     assert img.dtype == dtype
     assert img.ndim == len(shape)
@@ -430,7 +430,7 @@ def test_dlpack_export_to_torch(shape, dtype):
     host_array = rng.integers(0, 128, shape, dtype)
     dev_array = torch.as_tensor(host_array, device="cuda")
 
-    img = nvimgcodecs.as_image(dev_array)
+    img = nvimgcodec.as_image(dev_array)
 
     cap = img.to_dlpack()
     
@@ -452,7 +452,7 @@ def test_dlpack_import_from_cupy(shape, dtype, src_cuda_stream, dst_cuda_stream)
         host_array = rng.integers(0, 128, shape, dtype)
         cp_img = cp.asarray(host_array)
     
-        # Since nvimgcodecs.as_image can understand both dlpack and cuda_array_interface,
+        # Since nvimgcodec.as_image can understand both dlpack and cuda_array_interface,
         # and we don't know a priori which interfaces it'll use (cupy provides both),
         # let's create one object with only the dlpack interface.
         class DLPackObject:
@@ -462,7 +462,7 @@ def test_dlpack_import_from_cupy(shape, dtype, src_cuda_stream, dst_cuda_stream)
         o.__dlpack__ = cp_img.__dlpack__
         o.__dlpack_device__ = cp_img.__dlpack_device__
 
-        nv_img = nvimgcodecs.as_image(o, dst_cuda_stream.ptr)
+        nv_img = nvimgcodec.as_image(o, dst_cuda_stream.ptr)
 
         assert (host_array ==
                 torch.from_dlpack(nv_img.to_dlpack()).cpu().numpy()).all()
@@ -480,7 +480,7 @@ def test_dlpack_export_to_cupy(shape, dtype):
     host_array = rng.integers(0, 128, shape, dtype)
     dev_array = torch.as_tensor(host_array, device="cuda")
 
-    img = nvimgcodecs.as_image(dev_array)
+    img = nvimgcodec.as_image(dev_array)
     
     cap = img.to_dlpack()
     cp_img = cp.from_dlpack(cap)
@@ -510,7 +510,7 @@ def test_dlpack_import_from_tensorflow(shape, dtype):
     
 
     cap = tf.experimental.dlpack.to_dlpack(a)
-    img = nvimgcodecs.from_dlpack(cap)
+    img = nvimgcodec.from_dlpack(cap)
     
     assert (np.asarray(img.cpu()) ==  ref).all()
 
@@ -527,7 +527,7 @@ def test_dlpack_export_to_tensorflow(shape, dtype):
     host_array = rng.integers(0, 128, shape, dtype)
     dev_array = torch.as_tensor(host_array, device="cuda")
     ref = dev_array
-    img = nvimgcodecs.as_image(dev_array)
+    img = nvimgcodec.as_image(dev_array)
 
     cap = img.to_dlpack()
     tf_tensor = tf.experimental.dlpack.from_dlpack(cap)
@@ -537,7 +537,7 @@ def test_dlpack_export_to_tensorflow(shape, dtype):
     
 
 def test_image_cpu_exports_to_host():
-    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
     input_img_file = "jpeg/padlock-406986_640_410.jpg"
     input_img_path = os.path.join(img_dir_path, input_img_file)
 
@@ -551,7 +551,7 @@ def test_image_cpu_exports_to_host():
     compare_host_images([host_image], [ref_img])
 
 def test_image_cpu_when_image_is_in_host_mem_returns_the_same_object():
-    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
     input_img_file = "jpeg/padlock-406986_640_410.jpg"
     input_img_path = os.path.join(img_dir_path, input_img_file)
     test_image = decoder.read(input_img_path)
@@ -570,7 +570,7 @@ def test_image_cuda_exports_to_device():
     ref_img = cv2.imread(
         input_img_path, cv2.IMREAD_COLOR)
     test_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
-    host_img = nvimgcodecs.as_image(test_img)
+    host_img = nvimgcodec.as_image(test_img)
 
     device_img = host_img.cuda()
 
@@ -578,7 +578,7 @@ def test_image_cuda_exports_to_device():
     
 
 def test_image_cuda_when_image_is_in_device_mem_returns_the_same_object():
-    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
     input_img_file = "jpeg/padlock-406986_640_410.jpg"
     input_img_path = os.path.join(img_dir_path, input_img_file)
     device_img = decoder.read(input_img_path)
@@ -605,7 +605,7 @@ def test_array_interface_export(input_img_file, shape):
         input_img_path, cv2.IMREAD_COLOR)
     ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
 
-    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
     device_img = decoder.read(input_img_path)
     
     host_img = device_img.cpu()
@@ -631,7 +631,7 @@ def test_array_interface_import(input_img_file):
         input_img_path, cv2.IMREAD_COLOR)
     ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)  
     
-    host_img = nvimgcodecs.as_image(ref_img)
+    host_img = nvimgcodec.as_image(ref_img)
     
     assert (host_img.__array_interface__['strides'] == ref_img.__array_interface__['strides'])
     assert (host_img.__array_interface__['shape'] == ref_img.__array_interface__['shape'])
@@ -647,15 +647,15 @@ def test_image_buffer_kind():
         input_img_path, cv2.IMREAD_COLOR)
     ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)  
     
-    host_img = nvimgcodecs.as_image(ref_img)
-    assert (host_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_HOST)
+    host_img = nvimgcodec.as_image(ref_img)
+    assert (host_img.buffer_kind == nvimgcodec.ImageBufferKind.STRIDED_HOST)
     
     device_img = host_img.cuda()
-    assert (device_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_DEVICE)
+    assert (device_img.buffer_kind == nvimgcodec.ImageBufferKind.STRIDED_DEVICE)
     
-    decoder = nvimgcodecs.Decoder(options=get_default_decoder_options())
+    decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
     dec_device_img = decoder.read(input_img_path)
-    assert (dec_device_img.buffer_kind == nvimgcodecs.ImageBufferKind.STRIDED_DEVICE)
+    assert (dec_device_img.buffer_kind == nvimgcodec.ImageBufferKind.STRIDED_DEVICE)
 
 
 @t.mark.parametrize(
@@ -698,9 +698,9 @@ def test_as_images_with_cuda_array_interface(tmp_path, input_images_batch):
     input_images = [os.path.join(img_dir_path, img) for img in input_images_batch]
     ref_images = [cv2.imread(img, cv2.IMREAD_COLOR) for img in input_images]
     cp_ref_images = [cp.asarray(ref_img) for ref_img in ref_images]
-    nv_ref_images = nvimgcodecs.as_images(cp_ref_images)
-    encoder = nvimgcodecs.Encoder()
-    encode_params = nvimgcodecs.EncodeParams(jpeg2k_encode_params=nvimgcodecs.Jpeg2kEncodeParams(reversible=True))
+    nv_ref_images = nvimgcodec.as_images(cp_ref_images)
+    encoder = nvimgcodec.Encoder()
+    encode_params = nvimgcodec.EncodeParams(jpeg2k_encode_params=nvimgcodec.Jpeg2kEncodeParams(reversible=True))
     test_encoded_images = encoder.encode(nv_ref_images, codec="jpeg2k", params=encode_params)
     test_decoded_images = [cv2.cvtColor(cv2.imdecode(
         np.asarray(bytearray(img)), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB) for img in test_encoded_images]

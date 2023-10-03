@@ -10,16 +10,16 @@
 
 #include "jpeg2k_bitstream_type.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 void Jpeg2kBitstreamType::exportToPython(py::module& m)
 {
     // clang-format off
-    py::enum_<nvimgcdcsJpeg2kBitstreamType_t>(m, "Jpeg2kBitstreamType")
-        .value("J2K", NVIMGCDCS_JPEG2K_STREAM_J2K)
-        .value("JP2", NVIMGCDCS_JPEG2K_STREAM_JP2)
+    py::enum_<nvimgcodecJpeg2kBitstreamType_t>(m, "Jpeg2kBitstreamType")
+        .value("J2K", NVIMGCODEC_JPEG2K_STREAM_J2K)
+        .value("JP2", NVIMGCODEC_JPEG2K_STREAM_JP2)
         .export_values();
     // clang-format on
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

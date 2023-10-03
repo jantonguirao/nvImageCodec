@@ -13,13 +13,13 @@
 #include <gmock/gmock.h>
 #include "../src/iexecutor.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 
 class MockExecutor : public IExecutor
 {
   public:
-    MOCK_METHOD(nvimgcdcsExecutorDesc_t*, getExecutorDesc, (), (override));
+    MOCK_METHOD(nvimgcodecExecutorDesc_t*, getExecutorDesc, (), (override));
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

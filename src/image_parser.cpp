@@ -11,9 +11,9 @@
 #include <cassert>
 #include <iostream>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-ImageParser::ImageParser(const nvimgcdcsParserDesc_t* desc)
+ImageParser::ImageParser(const nvimgcodecParserDesc_t* desc)
     : parser_desc_(desc)
 {
     parser_desc_->create(parser_desc_->instance, &parser_);
@@ -33,12 +33,12 @@ std::string ImageParser::getCodecName() const
     return parser_desc_->codec;
 }
 
-nvimgcdcsStatus_t ImageParser::getImageInfo(
-    nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageInfo_t* image_info)
+nvimgcodecStatus_t ImageParser::getImageInfo(
+    nvimgcodecCodeStreamDesc_t* code_stream, nvimgcodecImageInfo_t* image_info)
 {
     assert(code_stream);
     assert(parser_desc_->getImageInfo);
     return parser_desc_->getImageInfo(parser_, image_info, code_stream);
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -9,8 +9,8 @@
  */
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 
-#include <nvimgcdcs_version.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec_version.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -38,24 +38,24 @@
 namespace py = pybind11;
 using namespace py::literals;
 
-PYBIND11_MODULE(nvimgcodecs_impl, m)
+PYBIND11_MODULE(nvimgcodec_impl, m)
 {
-    using namespace nvimgcdcs;
+    using namespace nvimgcodec;
 
     static Module module;
 
     m.doc() = R"pbdoc(
 
-        nvImageCodecs Python API reference
+        nvImageCodec Python API reference
 
-        This is the Python API reference for the NVIDIA® nvImageCodecs library.
+        This is the Python API reference for the NVIDIA® nvImageCodec library.
     )pbdoc";
 
 
-    nvimgcdcsProperties_t properties{NVIMGCDCS_STRUCTURE_TYPE_PROPERTIES, 0};
-    nvimgcdcsGetProperties(&properties);
+    nvimgcodecProperties_t properties{NVIMGCODEC_STRUCTURE_TYPE_PROPERTIES, 0};
+    nvimgcodecGetProperties(&properties);
     std::stringstream ver_ss{};
-    ver_ss << NVIMGCDCS_STREAM_VER(properties.version);
+    ver_ss << NVIMGCODEC_STREAM_VER(properties.version);
     m.attr("__version__") = ver_ss.str();
     m.attr("__cuda_version__") = properties.cudart_version;
 

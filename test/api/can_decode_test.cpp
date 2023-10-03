@@ -15,7 +15,7 @@
 #include <vector>
 
 #include <gtest/gtest.h>
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include "can_de_en_code_common.h"
 #include "parsers/bmp.h"
@@ -26,75 +26,75 @@ using ::testing::Combine;
 using ::testing::TestWithParam;
 using ::testing::Values;
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 namespace {
 static unsigned char small_bmp[] = {0x42, 0x4D, 0x1E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1A, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00,
     0x00, 0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0xFF, 0x00};
 
 using test_case_tuple_t =
-    std::tuple<const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>*, bool, const std::vector<nvimgcdcsProcessingStatus_t>*>;
+    std::tuple<const std::vector<std::vector<nvimgcodecProcessingStatus_t>>*, bool, const std::vector<nvimgcodecProcessingStatus_t>*>;
 
 class MockDecoderPlugin
 {
   public:
-    explicit MockDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework, const std::vector<nvimgcdcsProcessingStatus_t>& return_status)
+    explicit MockDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework, const std::vector<nvimgcodecProcessingStatus_t>& return_status)
         : return_status_(return_status)
-        , decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL,
+        , decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, NULL,
               this,                // instance
               "mock_test_decoder", // id
               "bmp",               // codec_type
-              NVIMGCDCS_BACKEND_KIND_CPU_ONLY,
+              NVIMGCODEC_BACKEND_KIND_CPU_ONLY,
               static_create, static_destroy, static_can_decode, static_decode_batch}
     {
     }
-    nvimgcdcsDecoderDesc_t* getDecoderDesc() { return &decoder_desc_; }
+    nvimgcodecDecoderDesc_t* getDecoderDesc() { return &decoder_desc_; }
 
   private:
-    static nvimgcdcsStatus_t static_create(
-        void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+    static nvimgcodecStatus_t static_create(
+        void* instance, nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options)
     {
-        *decoder = static_cast<nvimgcdcsDecoder_t>(instance);
-        return NVIMGCDCS_STATUS_SUCCESS;
+        *decoder = static_cast<nvimgcodecDecoder_t>(instance);
+        return NVIMGCODEC_STATUS_SUCCESS;
     }
-    static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder) { return NVIMGCDCS_STATUS_SUCCESS; }
-    static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    static nvimgcodecStatus_t static_destroy(nvimgcodecDecoder_t decoder) { return NVIMGCODEC_STATUS_SUCCESS; }
+    static nvimgcodecStatus_t static_can_decode(nvimgcodecDecoder_t decoder, nvimgcodecProcessingStatus_t* status,
+        nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
     {
         auto handle = reinterpret_cast<MockDecoderPlugin*>(decoder);
-        nvimgcdcsProcessingStatus_t* s = status;
+        nvimgcodecProcessingStatus_t* s = status;
         for (int i = 0; i < batch_size; ++i) {
             *s = handle->return_status_[i];
             s++;
         }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        return NVIMGCODEC_STATUS_SUCCESS;
     }
-    static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
-        nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+    static nvimgcodecStatus_t static_decode_batch(nvimgcodecDecoder_t decoder, nvimgcodecCodeStreamDesc_t** code_streams,
+        nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
     {
-        return NVIMGCDCS_STATUS_SUCCESS;
+        return NVIMGCODEC_STATUS_SUCCESS;
     }
 
-    nvimgcdcsDecoderDesc_t decoder_desc_;
-    const std::vector<nvimgcdcsProcessingStatus_t>& return_status_;
+    nvimgcodecDecoderDesc_t decoder_desc_;
+    const std::vector<nvimgcodecProcessingStatus_t>& return_status_;
 };
 
 struct MockCodecExtensionFactory
 {
   public:
-    explicit MockCodecExtensionFactory(const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses)
-        : desc_{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, this, "test_extension", NVIMGCDCS_VER, NVIMGCDCS_EXT_API_VER, static_extension_create,
+    explicit MockCodecExtensionFactory(const std::vector<std::vector<nvimgcodecProcessingStatus_t>>* statuses)
+        : desc_{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr, this, "test_extension", NVIMGCODEC_VER, NVIMGCODEC_EXT_API_VER, static_extension_create,
               static_extension_destroy}
         , statuses_(statuses)
 
     {
     }
 
-    nvimgcdcsExtensionDesc_t* getExtensionDesc() { return &desc_; };
+    nvimgcodecExtensionDesc_t* getExtensionDesc() { return &desc_; };
 
     struct Extension
     {
-        explicit Extension(const nvimgcdcsFrameworkDesc_t* framework, const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses)
+        explicit Extension(const nvimgcodecFrameworkDesc_t* framework, const std::vector<std::vector<nvimgcodecProcessingStatus_t>>* statuses)
             : framework_(framework)
             , statuses_(statuses)
         {
@@ -102,7 +102,7 @@ struct MockCodecExtensionFactory
             for (auto& item : *statuses_)
             {
                 decoders_.emplace_back(framework, item);
-                framework->registerDecoder(framework->instance, decoders_.back().getDecoderDesc(), NVIMGCDCS_PRIORITY_NORMAL);
+                framework->registerDecoder(framework->instance, decoders_.back().getDecoderDesc(), NVIMGCODEC_PRIORITY_NORMAL);
             }
         }
         ~Extension()
@@ -112,29 +112,29 @@ struct MockCodecExtensionFactory
             }
         }
 
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         std::vector<MockDecoderPlugin> decoders_;
-        const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses_;
+        const std::vector<std::vector<nvimgcodecProcessingStatus_t>>* statuses_;
     };
 
-    static nvimgcdcsStatus_t static_extension_create(
-        void* instance, nvimgcdcsExtension_t* extension, const nvimgcdcsFrameworkDesc_t* framework)
+    static nvimgcodecStatus_t static_extension_create(
+        void* instance, nvimgcodecExtension_t* extension, const nvimgcodecFrameworkDesc_t* framework)
     {
         auto handle = reinterpret_cast<MockCodecExtensionFactory*>(instance);
-        *extension = reinterpret_cast<nvimgcdcsExtension_t>(new Extension(framework, handle->statuses_));
-        return NVIMGCDCS_STATUS_SUCCESS;
+        *extension = reinterpret_cast<nvimgcodecExtension_t>(new Extension(framework, handle->statuses_));
+        return NVIMGCODEC_STATUS_SUCCESS;
     }
 
-    static nvimgcdcsStatus_t static_extension_destroy(nvimgcdcsExtension_t extension)
+    static nvimgcodecStatus_t static_extension_destroy(nvimgcodecExtension_t extension)
     {
         auto ext_handle = reinterpret_cast<Extension*>(extension);
         delete ext_handle;
-        return NVIMGCDCS_STATUS_SUCCESS;
+        return NVIMGCODEC_STATUS_SUCCESS;
     }
 
   private:
-    nvimgcdcsExtensionDesc_t desc_;
-    const std::vector<std::vector<nvimgcdcsProcessingStatus_t>>* statuses_;
+    nvimgcodecExtensionDesc_t desc_;
+    const std::vector<std::vector<nvimgcodecProcessingStatus_t>>* statuses_;
 };
 
 } // namespace
@@ -154,22 +154,22 @@ class NvImageCodecsCanDecodeApiTest : public TestWithParam < std::tuple<test_cas
         expected_statuses_ = std::get<2>(test_case);
         register_extension_ =  std::get<1>(GetParam());
 
-        nvimgcdcsInstanceCreateInfo_t create_info{NVIMGCDCS_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
         create_info.load_builtin_modules= 1;
 
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceCreate(&instance_, &create_info));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecInstanceCreate(&instance_, &create_info));
 
         if (register_extension_) {
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &extension_, mock_extension_->getExtensionDesc()));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &extension_, mock_extension_->getExtensionDesc()));
         }
 
-        nvimgcdcsExecutionParams_t exec_params{NVIMGCDCS_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
-        exec_params.device_id = NVIMGCDCS_DEVICE_CURRENT;
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
         exec_params.max_num_cpu_threads = 1;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCreate(instance_, &decoder_, &exec_params, nullptr));
-        params_ = {NVIMGCDCS_STRUCTURE_TYPE_DECODE_PARAMS, 0};
-        image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
-        image_info_.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderCreate(instance_, &decoder_, &exec_params, nullptr));
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, 0};
+        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image_info_.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST;
         out_buffer_.resize(1);
         image_info_.buffer = out_buffer_.data();
         image_info_.buffer_size = 1;
@@ -178,11 +178,11 @@ class NvImageCodecsCanDecodeApiTest : public TestWithParam < std::tuple<test_cas
         streams_.clear();
 
         for (size_t i = 0; i < expected_statuses_->size(); ++i) {
-            nvimgcdcsCodeStream_t code_stream = nullptr;
+            nvimgcodecCodeStream_t code_stream = nullptr;
             LoadImageFromHostMemory(instance_, code_stream, small_bmp, sizeof(small_bmp));
             streams_.push_back(code_stream);
-            nvimgcdcsImage_t image;
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageCreate(instance_, &image, &image_info_));
+            nvimgcodecImage_t image;
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageCreate(instance_, &image, &image_info_));
             images_.push_back(image);
         }
     }
@@ -190,43 +190,43 @@ class NvImageCodecsCanDecodeApiTest : public TestWithParam < std::tuple<test_cas
     void TearDown() override
     {
         for (auto im : images_) {
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsImageDestroy(im));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageDestroy(im));
         }
         for (auto cs : streams_) {
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsCodeStreamDestroy(cs));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamDestroy(cs));
         }
         if (decoder_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderDestroy(decoder_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderDestroy(decoder_));
         if (extension_)
-            ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(extension_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsInstanceDestroy(instance_));
+            ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionDestroy(extension_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecInstanceDestroy(instance_));
         mock_extension_.reset();
     }
 
-    nvimgcdcsInstance_t instance_;
-    nvimgcdcsExtension_t extension_ = nullptr;
+    nvimgcodecInstance_t instance_;
+    nvimgcodecExtension_t extension_ = nullptr;
     std::unique_ptr<MockCodecExtensionFactory> mock_extension_;
     std::vector<unsigned char> out_buffer_;
-    nvimgcdcsImageInfo_t image_info_;
-    nvimgcdcsDecoder_t decoder_;
-    nvimgcdcsDecodeParams_t params_;
-    std::vector<nvimgcdcsImage_t> images_;
-    std::vector<nvimgcdcsCodeStream_t> streams_;
+    nvimgcodecImageInfo_t image_info_;
+    nvimgcodecDecoder_t decoder_;
+    nvimgcodecDecodeParams_t params_;
+    std::vector<nvimgcodecImage_t> images_;
+    std::vector<nvimgcodecCodeStream_t> streams_;
     bool force_format_ = true;
     bool register_extension_ = true;
-    const std::vector<nvimgcdcsProcessingStatus_t>* expected_statuses_;
+    const std::vector<nvimgcodecProcessingStatus_t>* expected_statuses_;
 };
 
 TEST_P(NvImageCodecsCanDecodeApiTest, CanDecode)
 {
-    std::vector<nvimgcdcsProcessingStatus_t> processing_statuses(expected_statuses_->size());
-    ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsDecoderCanDecode(
+    std::vector<nvimgcodecProcessingStatus_t> processing_statuses(expected_statuses_->size());
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderCanDecode(
         decoder_, streams_.data(), images_.data(), streams_.size(), &params_, processing_statuses.data(), force_format_));
     for (size_t i = 0; i < streams_.size(); ++i) {
         if (register_extension_) {
             EXPECT_EQ((*expected_statuses_)[i], processing_statuses[i]);
         } else {
-            EXPECT_EQ(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED, processing_statuses[i]);
+            EXPECT_EQ(NVIMGCODEC_PROCESSING_STATUS_CODEC_UNSUPPORTED, processing_statuses[i]);
         }
     }
 }
@@ -244,4 +244,4 @@ test_case_tuple_t can_decode_test_cases[] = {
 
 INSTANTIATE_TEST_SUITE_P(API_CAN_DECODE, NvImageCodecsCanDecodeApiTest, Combine(::testing::ValuesIn(can_decode_test_cases), ::testing::Values(true, false)));
 
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

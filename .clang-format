@@ -52,8 +52,8 @@ SpacesInSquareBrackets: false
 ReflowComments: false
 FixNamespaceComments: true
 # SpacesBeforeTrailingComments: true
-MacroBlockBegin: "^NVIMGCDCSAPI_TRY"
-MacroBlockEnd: "^NVIMGCDCSAPI_CATCH.*$"
+MacroBlockBegin: "^NVIMGCODECAPI_TRY"
+MacroBlockEnd: "^NVIMGCODECAPI_CATCH.*$"
 TypenameMacros: ['CHECK_NULL']
 ...
 

@@ -11,9 +11,9 @@
 
 #pragma once
 
-#include "nvimgcodecs.h"
+#include "nvimgcodec.h"
 
-inline size_t sample_type_to_bytes_per_element(nvimgcdcsSampleDataType_t sample_type)
+inline size_t sample_type_to_bytes_per_element(nvimgcodecSampleDataType_t sample_type)
 {
     return static_cast<unsigned int>(sample_type)>> (8+3);
 }

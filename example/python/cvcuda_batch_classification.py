@@ -26,8 +26,8 @@ import argparse
 # tag: Import CVCUDA module
 import cvcuda
 
-# tag: Import nvImageCodecs module
-from nvidia import nvimgcodecs
+# tag: Import nvImageCodec module
+from nvidia import nvimgcodec
 
 # tag: Classification Sample
 
@@ -116,7 +116,7 @@ class ClassificationSample:
             for i in range(0, len(self.data), self.batch_size)
         ]
         batch_idx = 0
-        decoder = nvimgcodecs.Decoder()
+        decoder = nvimgcodec.Decoder()
         cvcuda_stream = cvcuda.Stream()
         torch_stream = torch.cuda.ExternalStream(cvcuda_stream.handle)
         with cvcuda_stream:
@@ -126,7 +126,7 @@ class ClassificationSample:
                     batch_idx += 1
                     print("Processing batch %d of %d" % (batch_idx, len(file_name_batches)))
                 
-                    # Decode in batch using nvImageCodecs decoder on the GPU.
+                    # Decode in batch using nvImageCodec decoder on the GPU.
 
                     images = decoder.decode(data_batch, cuda_stream = cvcuda_stream.handle)
                     image_tensor_list = [torch.as_tensor(img, device='cuda') for img in images]

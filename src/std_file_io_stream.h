@@ -12,7 +12,7 @@
 
 #include "file_io_stream.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class StdFileIoStream : public FileIoStream
 {
@@ -32,4 +32,4 @@ class StdFileIoStream : public FileIoStream
   private:
     FILE* fp_;
 };
-} //nvimgcdcs
+} //nvimgcodec

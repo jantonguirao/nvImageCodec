@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/pybind11.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -23,5 +23,5 @@ struct ColorSpec {
     static void exportToPython(py::module& m);
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec
 

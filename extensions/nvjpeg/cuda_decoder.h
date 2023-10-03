@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <nvjpeg.h>
 #include <future>
 #include <vector>
@@ -23,8 +23,8 @@ namespace nvjpeg {
 class NvJpegCudaDecoderPlugin
 {
   public:
-    explicit NvJpegCudaDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework);
-    nvimgcdcsDecoderDesc_t* getDecoderDesc();
+    explicit NvJpegCudaDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework);
+    nvimgcodecDecoderDesc_t* getDecoderDesc();
 
   private:
     struct ParseState
@@ -35,7 +35,7 @@ class NvJpegCudaDecoderPlugin
 
     struct DecodeState
     {
-        DecodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, nvjpegHandle_t handle,
+        DecodeState(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, nvjpegHandle_t handle,
             nvjpegDevAllocatorV2_t* device_allocator, size_t device_mem_padding, nvjpegPinnedAllocatorV2_t* pinned_allocator,
             size_t pinned_mem_padding, int num_threads, size_t gpu_hybrid_huffman_threshold);
         ~DecodeState();
@@ -69,9 +69,9 @@ class NvJpegCudaDecoderPlugin
 
         struct Sample
         {
-            nvimgcdcsCodeStreamDesc_t* code_stream;
-            nvimgcdcsImageDesc_t* image;
-            const nvimgcdcsDecodeParams_t* params;
+            nvimgcodecCodeStreamDesc_t* code_stream;
+            nvimgcodecImageDesc_t* image;
+            const nvimgcodecDecodeParams_t* params;
         };
 
         struct DecoderData
@@ -81,7 +81,7 @@ class NvJpegCudaDecoderPlugin
         };
 
         const char* plugin_id_;
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         nvjpegHandle_t handle_;
         nvjpegDevAllocatorV2_t* device_allocator_;
         size_t device_mem_padding_ = 0;
@@ -96,23 +96,23 @@ class NvJpegCudaDecoderPlugin
 
     struct Decoder
     {
-        Decoder(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params,
+        Decoder(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, const nvimgcodecExecutionParams_t* exec_params,
             const char* options = nullptr);
         ~Decoder();
 
-        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
-            nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params);
-        nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
-            nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-        nvimgcdcsStatus_t decode(int sample_idx, bool immediate);
-        nvimgcdcsStatus_t decodeBatch(
-            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t* code_stream,
+            nvimgcodecImageDesc_t* image, const nvimgcodecDecodeParams_t* params);
+        nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
+            nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
+        nvimgcodecStatus_t decode(int sample_idx, bool immediate);
+        nvimgcodecStatus_t decodeBatch(
+            nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
-        static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
-        static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-            nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-        static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
-            nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+        static nvimgcodecStatus_t static_destroy(nvimgcodecDecoder_t decoder);
+        static nvimgcodecStatus_t static_can_decode(nvimgcodecDecoder_t decoder, nvimgcodecProcessingStatus_t* status,
+            nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
+        static nvimgcodecStatus_t static_decode_batch(nvimgcodecDecoder_t decoder, nvimgcodecCodeStreamDesc_t** code_streams,
+            nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
         ParseState* getSampleParseState(int sample_idx);
 
@@ -124,17 +124,17 @@ class NvJpegCudaDecoderPlugin
         size_t device_mem_padding_ = 0;
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
         size_t pinned_mem_padding_ = 0;
-        const nvimgcdcsFrameworkDesc_t* framework_;
+        const nvimgcodecFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
-        const nvimgcdcsExecutionParams_t* exec_params_;
+        const nvimgcodecExecutionParams_t* exec_params_;
         size_t gpu_hybrid_huffman_threshold_ = DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD;
 
         struct CanDecodeCtx {
             Decoder *this_ptr;
-            nvimgcdcsProcessingStatus_t* status;
-            nvimgcdcsCodeStreamDesc_t** code_streams;
-            nvimgcdcsImageDesc_t** images;
-            const nvimgcdcsDecodeParams_t* params;
+            nvimgcodecProcessingStatus_t* status;
+            nvimgcodecCodeStreamDesc_t** code_streams;
+            nvimgcodecImageDesc_t** images;
+            const nvimgcodecDecodeParams_t* params;
             int num_samples;
             int num_blocks;
             std::vector<std::promise<void>> promise;
@@ -142,13 +142,13 @@ class NvJpegCudaDecoderPlugin
 
     };
 
-    nvimgcdcsStatus_t create(nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    nvimgcodecStatus_t create(nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
 
-    static nvimgcdcsStatus_t static_create(void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options);
+    static nvimgcodecStatus_t static_create(void* instance, nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options);
 
     static constexpr const char* plugin_id_ = "nvjpeg_cuda_decoder";
-    nvimgcdcsDecoderDesc_t decoder_desc_;
-    const nvimgcdcsFrameworkDesc_t* framework_;
+    nvimgcodecDecoderDesc_t decoder_desc_;
+    const nvimgcodecFrameworkDesc_t* framework_;
 };
 
 } // namespace nvjpeg

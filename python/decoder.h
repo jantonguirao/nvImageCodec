@@ -14,7 +14,7 @@
 #include <vector>
 #include <optional>
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
@@ -23,7 +23,7 @@
 #include "decode_params.h"
 #include "backend.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -31,10 +31,10 @@ using namespace py::literals;
 class Decoder
 {
   public:
-    Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+    Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
         const std::string& options);
-    Decoder(nvimgcdcsInstance_t instance, int device_id, int max_num_cpu_threads,
-        std::optional<std::vector<nvimgcdcsBackendKind_t>> backend_kinds, const std::string& options);
+    Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads,
+        std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options);
     ~Decoder();
 
     py::object decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream);
@@ -45,13 +45,13 @@ class Decoder
     std::vector<py::object> decode(const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
     std::vector<py::object> decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
 
-    static void exportToPython(py::module& m, nvimgcdcsInstance_t instance);
+    static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
   private:
-    std::vector<py::object> decode(std::vector<nvimgcdcsCodeStream_t>& code_streams, std::optional<DecodeParams> params, intptr_t cuda_stream);
+    std::vector<py::object> decode(std::vector<nvimgcodecCodeStream_t>& code_streams, std::optional<DecodeParams> params, intptr_t cuda_stream);
 
     struct DecoderDeleter;
-    std::shared_ptr<std::remove_pointer<nvimgcdcsDecoder_t>::type> decoder_;
-    nvimgcdcsInstance_t instance_;
+    std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type> decoder_;
+    nvimgcodecInstance_t instance_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

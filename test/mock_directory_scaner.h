@@ -15,7 +15,7 @@
 
 #include <filesystem>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace fs = std::filesystem;
 
@@ -29,4 +29,4 @@ class MockDirectoryScaner : public IDirectoryScaner
     MOCK_METHOD(bool, exists, (const fs::path& p), (override));
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

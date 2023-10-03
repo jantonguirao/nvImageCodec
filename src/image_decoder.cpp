@@ -17,13 +17,13 @@
 #include "processing_results.h"
 #include <nvtx3/nvtx3.hpp>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-ImageDecoder::ImageDecoder(const nvimgcdcsDecoderDesc_t* desc, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+ImageDecoder::ImageDecoder(const nvimgcodecDecoderDesc_t* desc, const nvimgcodecExecutionParams_t* exec_params, const char* options)
     : decoder_desc_(desc)
 {
     auto ret = decoder_desc_->create(decoder_desc_->instance, &decoder_, exec_params, options);
-    if (NVIMGCDCS_STATUS_SUCCESS != ret) {
+    if (NVIMGCODEC_STATUS_SUCCESS != ret) {
         decoder_ = nullptr;
     }
 }
@@ -34,7 +34,7 @@ ImageDecoder::~ImageDecoder()
         decoder_desc_->destroy(decoder_);
 }
 
-nvimgcdcsBackendKind_t ImageDecoder::getBackendKind() const
+nvimgcodecBackendKind_t ImageDecoder::getBackendKind() const
 {
     return decoder_desc_->backend_kind;
 }
@@ -46,7 +46,7 @@ std::unique_ptr<IDecodeState> ImageDecoder::createDecodeStateBatch() const
 }
 
 void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images,
-    const nvimgcdcsDecodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcdcsProcessingStatus_t>* status) const
+    const nvimgcodecDecodeParams_t* params, std::vector<bool>* result, std::vector<nvimgcodecProcessingStatus_t>* status) const
 {
     nvtx3::scoped_range marker{"ImageDecoder::canDecode"};
     assert(result->size() == code_streams.size());
@@ -60,20 +60,20 @@ void ImageDecoder::canDecode(const std::vector<ICodeStream*>& code_streams, cons
         return;
     }
 
-    std::vector<nvimgcdcsCodeStreamDesc_t*> cs_descs(code_streams.size());
-    std::vector<nvimgcdcsImageDesc_t*> im_descs(code_streams.size());
+    std::vector<nvimgcodecCodeStreamDesc_t*> cs_descs(code_streams.size());
+    std::vector<nvimgcodecImageDesc_t*> im_descs(code_streams.size());
     for (size_t i = 0; i < code_streams.size(); ++i) {
         cs_descs[i] = code_streams[i]->getCodeStreamDesc();
         im_descs[i] = images[i]->getImageDesc();
     }
     decoder_desc_->canDecode(decoder_, &(*status)[0], &cs_descs[0], &im_descs[0], code_streams.size(), params);
     for (size_t i = 0; i < code_streams.size(); ++i) {
-        (*result)[i] = (*status)[i] == NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+        (*result)[i] = (*status)[i] == NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
     }
 }
 
 std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* decode_state_batch,
-    const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcdcsDecodeParams_t* params)
+    const std::vector<ICodeStream*>& code_streams, const std::vector<IImage*>& images, const nvimgcodecDecodeParams_t* params)
 {
     nvtx3::scoped_range marker{"ImageDecoder::decode"};
     assert(code_streams.size() == images.size());
@@ -84,8 +84,8 @@ std::unique_ptr<ProcessingResultsFuture> ImageDecoder::decode(IDecodeState* deco
     ProcessingResultsPromise results(N);
     auto future = results.getFuture();
     decode_state_batch->setPromise(std::move(results));
-    std::vector<nvimgcdcsCodeStreamDesc_t*> code_stream_descs(code_streams.size());
-    std::vector<nvimgcdcsImageDesc_t*> image_descs(code_streams.size());
+    std::vector<nvimgcodecCodeStreamDesc_t*> code_stream_descs(code_streams.size());
+    std::vector<nvimgcodecImageDesc_t*> image_descs(code_streams.size());
 
     for (size_t i = 0; i < code_streams.size(); ++i) {
         code_stream_descs[i] = code_streams[i]->getCodeStreamDesc();
@@ -104,4 +104,4 @@ const char* ImageDecoder::decoderId() const {
     return decoder_desc_->id;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

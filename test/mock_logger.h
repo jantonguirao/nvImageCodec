@@ -13,21 +13,21 @@
 #include <gmock/gmock.h>
 #include "../src/ilogger.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class MockLogger : public ILogger
 {
   public:
     MOCK_METHOD(void, log,
-        (const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_type,
+        (const nvimgcodecDebugMessageSeverity_t message_severity, const nvimgcodecDebugMessageCategory_t message_type,
             const std::string& message),
         (override));
     MOCK_METHOD(void, log,
-        (const nvimgcdcsDebugMessageSeverity_t message_severity, const nvimgcdcsDebugMessageCategory_t message_type,
-            const nvimgcdcsDebugMessageData_t* data),
+        (const nvimgcodecDebugMessageSeverity_t message_severity, const nvimgcodecDebugMessageCategory_t message_type,
+            const nvimgcodecDebugMessageData_t* data),
         (override));
     MOCK_METHOD(void, registerDebugMessenger, (IDebugMessenger * messenger), (override));
     MOCK_METHOD(void, unregisterDebugMessenger, (IDebugMessenger * messenger), (override));
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

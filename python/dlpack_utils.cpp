@@ -11,7 +11,7 @@
 #include "dlpack_utils.h"
 #include "type_utils.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 bool is_cuda_accessible(DLDeviceType devType)
 {
@@ -25,53 +25,53 @@ bool is_cuda_accessible(DLDeviceType devType)
     }
 }
 
-nvimgcdcsSampleDataType_t type_from_dlpack(const DLDataType& dtype)
+nvimgcodecSampleDataType_t type_from_dlpack(const DLDataType& dtype)
 {
-    nvimgcdcsSampleDataType_t data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UNSUPPORTED;
+    nvimgcodecSampleDataType_t data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UNSUPPORTED;
     switch (dtype.code) {
     case kDLBool:
     case kDLInt:
         switch (dtype.bits) {
         case 8:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_INT8;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_INT8;
             break;
         case 16:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_INT16;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_INT16;
             break;
         case 32:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_INT32;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_INT32;
             break;
         case 64:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_INT64;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_INT64;
             break;
         }
         break;
     case kDLUInt:
         switch (dtype.bits) {
         case 8:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
             break;
         case 16:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16;
             break;
         case 32:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT32;
             break;
         case 64:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT64;
             break;
         }
         break;
     case kDLFloat:
         switch (dtype.bits) {
         case 16:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_FLOAT16;
             break;
         case 32:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_FLOAT32;
             break;
         case 64:
-            data_type = NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64;
+            data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_FLOAT64;
             break;
         }
         break;
@@ -83,55 +83,55 @@ nvimgcdcsSampleDataType_t type_from_dlpack(const DLDataType& dtype)
     return data_type;
 }
 
-DLDataType type_to_dlpack(nvimgcdcsSampleDataType_t data_type)
+DLDataType type_to_dlpack(nvimgcodecSampleDataType_t data_type)
 {
     DLDataType dt = {};
     dt.lanes = 1;
 
     switch (data_type) {
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT8:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_INT8:
         dt.code = kDLInt;
         dt.bits = 8;
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8:
         dt.code = kDLUInt;
         dt.bits = 8;
         break;
 
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT16:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_INT16:
         dt.code = kDLInt;
         dt.bits = 16;
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT16:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16:
         dt.code = kDLUInt;
         dt.bits = 16;
 
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT32:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_INT32:
         dt.code = kDLInt;
         dt.bits = 32;
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT32:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_UINT32:
         dt.code = kDLUInt;
         dt.bits = 32;
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_INT64:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_INT64:
         dt.code = kDLInt;
         dt.bits = 64;
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_UINT64:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_UINT64:
         dt.code = kDLUInt;
         dt.bits = 64;
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT16:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_FLOAT16:
         dt.code = kDLFloat;
         dt.bits = 16;
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT32:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_FLOAT32:
         dt.code = kDLFloat;
         dt.bits = 32;
         break;
-    case NVIMGCDCS_SAMPLE_DATA_TYPE_FLOAT64:
+    case NVIMGCODEC_SAMPLE_DATA_TYPE_FLOAT64:
         dt.code = kDLFloat;
         dt.bits = 64;
         break;
@@ -158,7 +158,7 @@ DLPackTensor::DLPackTensor(DLManagedTensor* dl_managed_tensor)
 {
 }
 
-DLPackTensor::DLPackTensor(const nvimgcdcsImageInfo_t& image_info, std::shared_ptr<unsigned char> image_buffer)
+DLPackTensor::DLPackTensor(const nvimgcodecImageInfo_t& image_info, std::shared_ptr<unsigned char> image_buffer)
     : internal_dl_managed_tensor_{}
     , dl_managed_tensor_ptr_{&internal_dl_managed_tensor_}
     , image_buffer_(image_buffer)
@@ -173,7 +173,7 @@ DLPackTensor::DLPackTensor(const nvimgcdcsImageInfo_t& image_info, std::shared_p
         DLTensor& tensor = internal_dl_managed_tensor_.dl_tensor;
 
         // Set up device
-        if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+        if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
             tensor.device.device_type = kDLCUDA;
             if (image_info.buffer == nullptr) {
                 throw std::runtime_error("NULL CUDA buffer not accepted");
@@ -186,7 +186,7 @@ DLPackTensor::DLPackTensor(const nvimgcdcsImageInfo_t& image_info, std::shared_p
                 throw std::runtime_error("Buffer is not CUDA-accessible");
             }
             tensor.device.device_id = attrs.device;
-            } else if (image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+            } else if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
                 tensor.device.device_type = kDLCPU;
                 if (image_info.buffer == nullptr) {
                     throw std::runtime_error("NULL host buffer not accepted");
@@ -262,11 +262,11 @@ DLTensor& DLPackTensor::operator*()
     return internal_dl_managed_tensor_.dl_tensor;
 }
 
-void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
+void DLPackTensor::getImageInfo(nvimgcodecImageInfo_t* image_info)
 {
-    constexpr int NVIMGCDCS_MAXDIMS = 3; //The maximum number of dimensions allowed in arrays.
+    constexpr int NVIMGCODEC_MAXDIMS = 3; //The maximum number of dimensions allowed in arrays.
     const int ndim = dl_managed_tensor_ptr_->dl_tensor.ndim;
-    if (ndim > NVIMGCDCS_MAXDIMS) {
+    if (ndim > NVIMGCODEC_MAXDIMS) {
         throw std::runtime_error("DLPack tensor number of dimensions is higher than the supported maxdims=3");
     }
     if (ndim < 3) {
@@ -298,9 +298,9 @@ void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
         image_info->plane_info[0].num_channels = 1;
     }
 
-    image_info->color_spec = NVIMGCDCS_COLORSPEC_SRGB;
-    image_info->sample_format = is_interleaved ? NVIMGCDCS_SAMPLEFORMAT_I_RGB : NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-    image_info->chroma_subsampling = NVIMGCDCS_SAMPLING_444;
+    image_info->color_spec = NVIMGCODEC_COLORSPEC_SRGB;
+    image_info->sample_format = is_interleaved ? NVIMGCODEC_SAMPLEFORMAT_I_RGB : NVIMGCODEC_SAMPLEFORMAT_P_RGB;
+    image_info->chroma_subsampling = NVIMGCODEC_SAMPLING_444;
 
     int pitch_in_bytes = dl_managed_tensor_ptr_->dl_tensor.strides != NULL && dl_managed_tensor_ptr_->dl_tensor.strides
                              ?
@@ -320,7 +320,7 @@ void DLPackTensor::getImageInfo(nvimgcdcsImageInfo_t* image_info)
     }
     image_info->buffer = buffer;
     image_info->buffer_size = buffer_size;
-    image_info->buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+    image_info->buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 }
 
 py::capsule DLPackTensor::getPyCapsule()
@@ -346,4 +346,4 @@ py::capsule DLPackTensor::getPyCapsule()
     return cap;
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

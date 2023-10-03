@@ -10,17 +10,17 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include "processing_results.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class IExecutor
 {
   public:
     virtual ~IExecutor() = default;
-    virtual nvimgcdcsExecutorDesc_t* getExecutorDesc() = 0;
+    virtual nvimgcodecExecutorDesc_t* getExecutorDesc() = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <memory>
 #include <string>
 
@@ -20,7 +20,7 @@
     #include <Windows.h>
 #endif
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class ILibraryLoader
 {
@@ -38,4 +38,4 @@ class ILibraryLoader
         LibraryHandle library_handle, const std::string& func_name) = 0;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

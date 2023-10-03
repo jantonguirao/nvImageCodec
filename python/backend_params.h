@@ -10,11 +10,11 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 
 #include <pybind11/pybind11.h>
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
@@ -28,7 +28,7 @@ class BackendParams
 
     static void exportToPython(py::module& m);
 
-    nvimgcdcsBackendParams_t backend_params_;
+    nvimgcodecBackendParams_t backend_params_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

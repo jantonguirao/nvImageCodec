@@ -21,7 +21,7 @@
 #include "common.h"
 #include "parsers/jpeg2k.h"
 
-namespace nvimgcdcs { namespace test {
+namespace nvimgcodec { namespace test {
 
 class NvJpeg2kExtTestBase : public ExtensionTestBase
 {
@@ -31,29 +31,29 @@ class NvJpeg2kExtTestBase : public ExtensionTestBase
     virtual void SetUp()
     {
         ExtensionTestBase::SetUp();
-        nvjpeg2k_extension_desc_.type = NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvjpeg2k_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
         nvjpeg2k_extension_desc_.next = nullptr;
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_nvjpeg2k_extension_desc(&nvjpeg2k_extension_desc_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionCreate(instance_, &nvjpeg2k_extension_, &nvjpeg2k_extension_desc_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_nvjpeg2k_extension_desc(&nvjpeg2k_extension_desc_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &nvjpeg2k_extension_, &nvjpeg2k_extension_desc_));
 
-        nvimgcdcsExtensionDesc_t jpeg2k_parser_extension_desc{NVIMGCDCS_STRUCTURE_TYPE_EXTENSION_DESC, 0};
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, get_jpeg2k_parser_extension_desc(&jpeg2k_parser_extension_desc));
-        nvimgcdcsExtensionCreate(instance_, &jpeg2k_parser_extension_, &jpeg2k_parser_extension_desc);
+        nvimgcodecExtensionDesc_t jpeg2k_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, 0};
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_jpeg2k_parser_extension_desc(&jpeg2k_parser_extension_desc));
+        nvimgcodecExtensionCreate(instance_, &jpeg2k_parser_extension_, &jpeg2k_parser_extension_desc);
 
-        image_info_ = {NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
     }
 
     virtual void TearDown()
     {
         TearDownCodecResources();
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(jpeg2k_parser_extension_));
-        ASSERT_EQ(NVIMGCDCS_STATUS_SUCCESS, nvimgcdcsExtensionDestroy(nvjpeg2k_extension_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionDestroy(jpeg2k_parser_extension_));
+        ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionDestroy(nvjpeg2k_extension_));
         ExtensionTestBase::TearDown();
     }
 
-    nvimgcdcsExtensionDesc_t nvjpeg2k_extension_desc_{};
-    nvimgcdcsExtension_t nvjpeg2k_extension_;
-    nvimgcdcsExtension_t jpeg2k_parser_extension_;
+    nvimgcodecExtensionDesc_t nvjpeg2k_extension_desc_{};
+    nvimgcodecExtension_t nvjpeg2k_extension_;
+    nvimgcodecExtension_t jpeg2k_parser_extension_;
 };
 
 class NvJpeg2kTestBase
@@ -105,8 +105,8 @@ class NvJpeg2kTestBase
         }
     };
 
-    virtual void DecodeReference(const std::string& resources_dir, const std::string& file_name, nvimgcdcsSampleFormat_t output_format,
-        bool enable_color_convert, nvimgcdcsImageInfo_t* cs_image_info = nullptr)
+    virtual void DecodeReference(const std::string& resources_dir, const std::string& file_name, nvimgcodecSampleFormat_t output_format,
+        bool enable_color_convert, nvimgcodecImageInfo_t* cs_image_info = nullptr)
     {
         std::string file_path(resources_dir + '/' + file_name);
         std::ifstream input_stream(file_path.c_str(), std::ios::in | std::ios::binary | std::ios::ate);
@@ -170,40 +170,40 @@ class NvJpeg2kTestBase
         cudaFree(pBuffer);
     }
 
-    virtual void EncodeReference(const nvimgcdcsImageInfo_t& input_image_info, const nvimgcdcsEncodeParams_t& params,
-        const nvimgcdcsJpeg2kEncodeParams_t& jpeg2k_enc_params, const nvimgcdcsImageInfo_t& output_image_info,
+    virtual void EncodeReference(const nvimgcodecImageInfo_t& input_image_info, const nvimgcodecEncodeParams_t& params,
+        const nvimgcodecJpeg2kEncodeParams_t& jpeg2k_enc_params, const nvimgcodecImageInfo_t& output_image_info,
         std::vector<unsigned char>* out_buffer)
     {
-        constexpr auto nvimgcdcs2nvjpeg2k_prog_order = [](nvimgcdcsJpeg2kProgOrder_t nvimgcdcs_prog_order) -> nvjpeg2kProgOrder {
-            switch (nvimgcdcs_prog_order) {
-            case NVIMGCDCS_JPEG2K_PROG_ORDER_LRCP:
+        constexpr auto nvimgcodec2nvjpeg2k_prog_order = [](nvimgcodecJpeg2kProgOrder_t nvimgcodec_prog_order) -> nvjpeg2kProgOrder {
+            switch (nvimgcodec_prog_order) {
+            case NVIMGCODEC_JPEG2K_PROG_ORDER_LRCP:
                 return NVJPEG2K_LRCP;
-            case NVIMGCDCS_JPEG2K_PROG_ORDER_RLCP:
+            case NVIMGCODEC_JPEG2K_PROG_ORDER_RLCP:
                 return NVJPEG2K_RLCP;
-            case NVIMGCDCS_JPEG2K_PROG_ORDER_RPCL:
+            case NVIMGCODEC_JPEG2K_PROG_ORDER_RPCL:
                 return NVJPEG2K_RPCL;
-            case NVIMGCDCS_JPEG2K_PROG_ORDER_PCRL:
+            case NVIMGCODEC_JPEG2K_PROG_ORDER_PCRL:
                 return NVJPEG2K_PCRL;
-            case NVIMGCDCS_JPEG2K_PROG_ORDER_CPRL:
+            case NVIMGCODEC_JPEG2K_PROG_ORDER_CPRL:
                 return NVJPEG2K_CPRL;
             default:
                 return NVJPEG2K_LRCP;
             }
         };
 
-        constexpr auto nvimgcdcs2nvjpeg2k_color_spec = [](nvimgcdcsColorSpec_t color_spec) -> nvjpeg2kColorSpace_t {
+        constexpr auto nvimgcodec2nvjpeg2k_color_spec = [](nvimgcodecColorSpec_t color_spec) -> nvjpeg2kColorSpace_t {
             switch (color_spec) {
-            case NVIMGCDCS_COLORSPEC_UNKNOWN:
+            case NVIMGCODEC_COLORSPEC_UNKNOWN:
                 return NVJPEG2K_COLORSPACE_UNKNOWN;
-            case NVIMGCDCS_COLORSPEC_SRGB:
+            case NVIMGCODEC_COLORSPEC_SRGB:
                 return NVJPEG2K_COLORSPACE_SRGB;
-            case NVIMGCDCS_COLORSPEC_GRAY:
+            case NVIMGCODEC_COLORSPEC_GRAY:
                 return NVJPEG2K_COLORSPACE_GRAY;
-            case NVIMGCDCS_COLORSPEC_SYCC:
+            case NVIMGCODEC_COLORSPEC_SYCC:
                 return NVJPEG2K_COLORSPACE_SYCC;
-            case NVIMGCDCS_COLORSPEC_CMYK:
+            case NVIMGCODEC_COLORSPEC_CMYK:
                 return NVJPEG2K_COLORSPACE_NOT_SUPPORTED;
-            case NVIMGCDCS_COLORSPEC_YCCK:
+            case NVIMGCODEC_COLORSPEC_YCCK:
                 return NVJPEG2K_COLORSPACE_NOT_SUPPORTED;
             default:
                 return NVJPEG2K_COLORSPACE_UNKNOWN;
@@ -229,18 +229,18 @@ class NvJpeg2kTestBase
         enc_config.image_width = input_image_info.plane_info[0].width;
         enc_config.image_height = input_image_info.plane_info[0].height;
         enc_config.num_components = input_image_info.num_planes;
-        enc_config.stream_type = jpeg2k_enc_params.stream_type == NVIMGCDCS_JPEG2K_STREAM_JP2 ? NVJPEG2K_STREAM_JP2 : NVJPEG2K_STREAM_J2K;
-        enc_config.color_space = nvimgcdcs2nvjpeg2k_color_spec(input_image_info.color_spec);
+        enc_config.stream_type = jpeg2k_enc_params.stream_type == NVIMGCODEC_JPEG2K_STREAM_JP2 ? NVJPEG2K_STREAM_JP2 : NVJPEG2K_STREAM_J2K;
+        enc_config.color_space = nvimgcodec2nvjpeg2k_color_spec(input_image_info.color_spec);
         enc_config.tile_width = 0;
         enc_config.tile_height = 0;
         enc_config.code_block_w = jpeg2k_enc_params.code_block_w;
         enc_config.code_block_h = jpeg2k_enc_params.code_block_h;
         enc_config.irreversible = jpeg2k_enc_params.irreversible;
         enc_config.mct_mode =
-            ((output_image_info.color_spec == NVIMGCDCS_COLORSPEC_SYCC) || (output_image_info.color_spec == NVIMGCDCS_COLORSPEC_GRAY)) &&
-            (input_image_info.color_spec != NVIMGCDCS_COLORSPEC_SYCC) && (input_image_info.color_spec != NVIMGCDCS_COLORSPEC_GRAY);
+            ((output_image_info.color_spec == NVIMGCODEC_COLORSPEC_SYCC) || (output_image_info.color_spec == NVIMGCODEC_COLORSPEC_GRAY)) &&
+            (input_image_info.color_spec != NVIMGCODEC_COLORSPEC_SYCC) && (input_image_info.color_spec != NVIMGCODEC_COLORSPEC_GRAY);
 
-        enc_config.prog_order = nvimgcdcs2nvjpeg2k_prog_order(jpeg2k_enc_params.prog_order);
+        enc_config.prog_order = nvimgcodec2nvjpeg2k_prog_order(jpeg2k_enc_params.prog_order);
         enc_config.num_resolutions = jpeg2k_enc_params.num_resolutions;
         enc_config.image_comp_info = image_comp_info.data();
 
@@ -296,4 +296,4 @@ class NvJpeg2kTestBase
     nvjpeg2kEncodeState_t nvjpeg2k_encode_state_ = nullptr;
     nvjpeg2kEncodeParams_t nvjpeg2k_encode_params_ = nullptr;
 };
-}} // namespace nvimgcdcs::test
+}} // namespace nvimgcodec::test

@@ -27,9 +27,9 @@
 #include "user_executor.h"
 #include "default_executor.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
-static std::unique_ptr<IExecutor> GetExecutor(const nvimgcdcsExecutionParams_t* exec_params, ILogger* logger)
+static std::unique_ptr<IExecutor> GetExecutor(const nvimgcodecExecutionParams_t* exec_params, ILogger* logger)
 {
     std::unique_ptr<IExecutor> exec;
     if (exec_params->executor)
@@ -39,7 +39,7 @@ static std::unique_ptr<IExecutor> GetExecutor(const nvimgcdcsExecutionParams_t* 
     return exec;
 }
 
-ImageGenericEncoder::ImageGenericEncoder(ILogger* logger, ICodecRegistry* codec_registry, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+ImageGenericEncoder::ImageGenericEncoder(ILogger* logger, ICodecRegistry* codec_registry, const nvimgcodecExecutionParams_t* exec_params, const char* options)
     : logger_(logger)
     , codec_registry_(codec_registry)
     , exec_params_(*exec_params)
@@ -47,7 +47,7 @@ ImageGenericEncoder::ImageGenericEncoder(ILogger* logger, ICodecRegistry* codec_
     , options_(options ? options : "")
     , executor_(std::move(GetExecutor(exec_params, logger)))
 {
-    if (exec_params_.device_id == NVIMGCDCS_DEVICE_CURRENT)
+    if (exec_params_.device_id == NVIMGCODEC_DEVICE_CURRENT)
         CHECK_CUDA(cudaGetDevice(&exec_params_.device_id));
     auto backend = exec_params->backends;
     for (int i = 0; i < exec_params_.num_backends; ++i) {
@@ -70,13 +70,13 @@ ImageGenericEncoder::~ImageGenericEncoder()
 }
 
 void ImageGenericEncoder::canEncode(const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
-    const nvimgcdcsEncodeParams_t* params, nvimgcdcsProcessingStatus_t* processing_status, int force_format)
+    const nvimgcodecEncodeParams_t* params, nvimgcodecProcessingStatus_t* processing_status, int force_format)
 {
     std::map<const ICodec*, std::vector<int>> codec2indices;
     for (size_t i = 0; i < code_streams.size(); i++) {
         ICodec* codec = code_streams[i]->getCodec();
         if (!codec || codec->getEncodersNum() == 0) {
-            processing_status[i] = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            processing_status[i] = NVIMGCODEC_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             continue;
         }
         auto it = codec2indices.find(codec);
@@ -98,14 +98,14 @@ void ImageGenericEncoder::canEncode(const std::vector<IImage*>& images, const st
         while (worker && codec_code_streams.size() != 0) {
             auto encoder = worker->getEncoder();
             std::vector<bool> mask(codec_code_streams.size());
-            std::vector<nvimgcdcsProcessingStatus_t> status(codec_code_streams.size());
+            std::vector<nvimgcodecProcessingStatus_t> status(codec_code_streams.size());
             encoder->canEncode(codec_images, codec_code_streams, params, &mask, &status);
             //filter out ready items
             int removed = 0;
             for (size_t i = 0; i < codec_code_streams.size() + removed; ++i) {
                 processing_status[org_idx[i - removed]] = status[i];
                 bool can_decode_with_other_format_or_params = (static_cast<unsigned int>(status[i]) & 0b11) == 0b01;
-                if (status[i] == NVIMGCDCS_PROCESSING_STATUS_SUCCESS || (!force_format && can_decode_with_other_format_or_params)) {
+                if (status[i] == NVIMGCODEC_PROCESSING_STATUS_SUCCESS || (!force_format && can_decode_with_other_format_or_params)) {
                     codec_code_streams.erase(codec_code_streams.begin() + i - removed);
                     codec_images.erase(codec_images.begin() + i - removed);
                     org_idx.erase(org_idx.begin() + i - removed);
@@ -118,7 +118,7 @@ void ImageGenericEncoder::canEncode(const std::vector<IImage*>& images, const st
 }
 
 std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(
-    const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcdcsEncodeParams_t* params)
+    const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams, const nvimgcodecEncodeParams_t* params)
 {
     int N = images.size();
     assert(static_cast<int>(code_streams.size()) == N);
@@ -134,7 +134,7 @@ std::unique_ptr<ProcessingResultsFuture> ImageGenericEncoder::encode(
     return future;
 }
 
-std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> ImageGenericEncoder::createNewWork(
+std::unique_ptr<Work<nvimgcodecEncodeParams_t>> ImageGenericEncoder::createNewWork(
     const ProcessingResultsPromise& results, const void* params)
 {
     if (free_work_items_) {
@@ -143,15 +143,15 @@ std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> ImageGenericEncoder::createNewWor
             auto ptr = std::move(free_work_items_);
             free_work_items_ = std::move(ptr->next_);
             ptr->results_ = std::move(results);
-            ptr->params_ = reinterpret_cast<const nvimgcdcsEncodeParams_t*>(params);
+            ptr->params_ = reinterpret_cast<const nvimgcodecEncodeParams_t*>(params);
             return ptr;
         }
     }
 
-    return std::make_unique<Work<nvimgcdcsEncodeParams_t>>(std::move(results), reinterpret_cast<const nvimgcdcsEncodeParams_t*>(params));
+    return std::make_unique<Work<nvimgcodecEncodeParams_t>>(std::move(results), reinterpret_cast<const nvimgcodecEncodeParams_t*>(params));
 }
 
-void ImageGenericEncoder::recycleWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
+void ImageGenericEncoder::recycleWork(std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work)
 {
     std::lock_guard<std::mutex> g(work_mutex_);
     work->clear();
@@ -159,7 +159,7 @@ void ImageGenericEncoder::recycleWork(std::unique_ptr<Work<nvimgcdcsEncodeParams
     free_work_items_ = std::move(work);
 }
 
-void ImageGenericEncoder::combineWork(Work<nvimgcdcsEncodeParams_t>* target, std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> source)
+void ImageGenericEncoder::combineWork(Work<nvimgcodecEncodeParams_t>* target, std::unique_ptr<Work<nvimgcodecEncodeParams_t>> source)
 {
     //if only one has temporary CPU  storage, allocate it in the other
     if (target->host_temp_buffers_.empty() && !source->host_temp_buffers_.empty())
@@ -198,14 +198,14 @@ EncoderWorker* ImageGenericEncoder::getWorker(const ICodec* codec)
     return it->second.get();
 }
 
-void ImageGenericEncoder::distributeWork(std::unique_ptr<Work<nvimgcdcsEncodeParams_t>> work)
+void ImageGenericEncoder::distributeWork(std::unique_ptr<Work<nvimgcodecEncodeParams_t>> work)
 {
-    NVIMGCDCS_LOG_TRACE(logger_, "distributeWork");
-    std::map<const ICodec*, std::unique_ptr<Work<nvimgcdcsEncodeParams_t>>> dist;
+    NVIMGCODEC_LOG_TRACE(logger_, "distributeWork");
+    std::map<const ICodec*, std::unique_ptr<Work<nvimgcodecEncodeParams_t>>> dist;
     for (int i = 0; i < work->getSamplesNum(); i++) {
         ICodec* codec = work->code_streams_[i]->getCodec();
         if (!codec) {
-            work->results_.set(i, ProcessingResult::failure(NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED));
+            work->results_.set(i, ProcessingResult::failure(NVIMGCODEC_PROCESSING_STATUS_CODEC_UNSUPPORTED));
             continue;
         }
         auto& w = dist[codec];
@@ -220,4 +220,4 @@ void ImageGenericEncoder::distributeWork(std::unique_ptr<Work<nvimgcdcsEncodePar
     }
 }
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <nvimgcodecs.h>
+#include <nvimgcodec.h>
 #include <cassert>
 #include <map>
 #include <vector>
@@ -19,7 +19,7 @@
 #include "iimage.h"
 #include "processing_results.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 /**
  * @brief Describes a sub-batch of work to be processed
@@ -112,7 +112,7 @@ struct Work
     {
         host_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
             void* h_pinned = nullptr;
             CHECK_CUDA(cudaMallocHost(&h_pinned, image_info.buffer_size));
@@ -125,7 +125,7 @@ struct Work
     {
         device_temp_buffers_.clear();
         for (int i = 0, n = indices_.size(); i < n; i++) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
             void* device_buffer = nullptr;
             CHECK_CUDA(cudaMalloc(&device_buffer, image_info.buffer_size));
@@ -137,24 +137,24 @@ struct Work
     void ensure_expected_buffer_for_decode_each_image(bool is_device_output)
     {
         for (size_t i = 0; i < images_.size(); ++i) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
 
-            if (!is_device_output && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+            if (!is_device_output && image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
                 if (host_temp_buffers_.empty()) {
                     alloc_host_temps();
                 }
                 idx2orig_buffer_[i] = image_info.buffer;
-                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
+                image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST;
                 image_info.buffer = host_temp_buffers_[i].get();
                 images_[i]->setImageInfo(&image_info);
             }
-            if (is_device_output && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+            if (is_device_output && image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
                 if (device_temp_buffers_.empty()) {
                     alloc_device_temps();
                 }
                 idx2orig_buffer_[i] = image_info.buffer;
-                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+                image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                 image_info.buffer = device_temp_buffers_[i].get();
                 images_[i]->setImageInfo(&image_info);
             }
@@ -166,14 +166,14 @@ struct Work
         auto it = idx2orig_buffer_.find(sub_idx);
         try {
             if (it != idx2orig_buffer_.end()) {
-                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+                nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 images_[sub_idx]->getImageInfo(&image_info);
                 auto copy_direction = is_device_output ? cudaMemcpyDeviceToHost : cudaMemcpyHostToDevice;
                 CHECK_CUDA(cudaMemcpyAsync(it->second, image_info.buffer, image_info.buffer_size, copy_direction, image_info.cuda_stream));
                 image_info.buffer = it->second;
-                image_info.buffer_kind = image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE
-                                             ? NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST
-                                             : NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+                image_info.buffer_kind = image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE
+                                             ? NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST
+                                             : NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                 images_[sub_idx]->setImageInfo(&image_info);
                 idx2orig_buffer_.erase(it);
             }
@@ -188,29 +188,29 @@ struct Work
         CHECK_CUDA(cudaEventCreate(&event));
 
         for (size_t i = 0; i < images_.size(); ++i) {
-            nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
             images_[i]->getImageInfo(&image_info);
 
-            if (!is_input_expected_in_device && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
+            if (!is_input_expected_in_device && image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
                 if (host_temp_buffers_.empty()) {
                     this->alloc_host_temps();
                 }
                 idx2orig_buffer_[i] = image_info.buffer;
                 image_info.buffer = host_temp_buffers_[i].get();
-                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST;
+                image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST;
                 images_[i]->setImageInfo(&image_info);
 
                 CHECK_CUDA(cudaMemcpyAsync(
                     image_info.buffer, idx2orig_buffer_[i], image_info.buffer_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
                 CHECK_CUDA(cudaEventRecord(event, image_info.cuda_stream));
             }
-            if (is_input_expected_in_device && image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+            if (is_input_expected_in_device && image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
                 if (device_temp_buffers_.empty()) {
                     this->alloc_device_temps();
                 }
                 idx2orig_buffer_[i] = image_info.buffer;
                 image_info.buffer = device_temp_buffers_[i].get();
-                image_info.buffer_kind = NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+                image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                 images_[i]->setImageInfo(&image_info);
 
                 CHECK_CUDA(cudaMemcpyAsync(
@@ -229,12 +229,12 @@ struct Work
         auto it = idx2orig_buffer_.find(sub_idx);
         if (it != idx2orig_buffer_.end()) {
             try {
-                nvimgcdcsImageInfo_t image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+                nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
                 images_[sub_idx]->getImageInfo(&image_info);
                 image_info.buffer = it->second;
-                image_info.buffer_kind = image_info.buffer_kind == NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE
-                                             ? NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST
-                                             : NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+                image_info.buffer_kind = image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE
+                                             ? NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST
+                                             : NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                 images_[sub_idx]->setImageInfo(&image_info);
                 idx2orig_buffer_.erase(it);
             } catch (...) {
@@ -256,4 +256,4 @@ struct Work
     std::unique_ptr<Work> next_;
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

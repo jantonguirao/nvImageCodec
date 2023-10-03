@@ -10,18 +10,18 @@
 
 #include "backend_kind.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 void BackendKind::exportToPython(py::module& m)
 {
     // clang-format off
-    py::enum_<nvimgcdcsBackendKind_t>(m, "BackendKind")
-        .value("CPU_ONLY", NVIMGCDCS_BACKEND_KIND_CPU_ONLY)
-        .value("GPU_ONLY", NVIMGCDCS_BACKEND_KIND_GPU_ONLY)
-        .value("HYBRID_CPU_GPU", NVIMGCDCS_BACKEND_KIND_HYBRID_CPU_GPU)
-        .value("HW_GPU_ONLY", NVIMGCDCS_BACKEND_KIND_HW_GPU_ONLY)
+    py::enum_<nvimgcodecBackendKind_t>(m, "BackendKind")
+        .value("CPU_ONLY", NVIMGCODEC_BACKEND_KIND_CPU_ONLY)
+        .value("GPU_ONLY", NVIMGCODEC_BACKEND_KIND_GPU_ONLY)
+        .value("HYBRID_CPU_GPU", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU)
+        .value("HW_GPU_ONLY", NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY)
         .export_values();
     // clang-format on
 };
 
-} // namespace nvimgcdcs
+} // namespace nvimgcodec

@@ -1,5 +1,5 @@
 #include "libjpeg_turbo_decoder.h"
-#include "nvimgcodecs.h"
+#include "nvimgcodec.h"
 
 #include <cstring>
 #include <future>
@@ -14,7 +14,7 @@ namespace libjpeg_turbo {
 
 struct DecodeState
 {
-    DecodeState(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, int num_threads)
+    DecodeState(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, int num_threads)
         : plugin_id_(plugin_id)
         , framework_(framework)
         , per_thread_(num_threads)
@@ -29,13 +29,13 @@ struct DecodeState
 
     struct Sample
     {
-        nvimgcdcsCodeStreamDesc_t* code_stream;
-        nvimgcdcsImageDesc_t* image;
-        const nvimgcdcsDecodeParams_t* params;
+        nvimgcodecCodeStreamDesc_t* code_stream;
+        nvimgcodecImageDesc_t* image;
+        const nvimgcodecDecodeParams_t* params;
     };
 
     const char* plugin_id_;
-    const nvimgcdcsFrameworkDesc_t* framework_;
+    const nvimgcodecFrameworkDesc_t* framework_;
     std::vector<PerThreadResources> per_thread_;
     std::vector<Sample> samples_;
 
@@ -46,120 +46,120 @@ struct DecodeState
 
 struct DecoderImpl
 {
-    DecoderImpl(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params,
+    DecoderImpl(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, const nvimgcodecExecutionParams_t* exec_params,
         std::string options);
     ~DecoderImpl();
 
-    nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageDesc_t* image,
-        const nvimgcdcsDecodeParams_t* params);
-    nvimgcdcsStatus_t canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
-        nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-    static nvimgcdcsProcessingStatus_t decode(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework,
-        nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params,
+    nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t* code_stream, nvimgcodecImageDesc_t* image,
+        const nvimgcodecDecodeParams_t* params);
+    nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
+        nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
+    static nvimgcodecProcessingStatus_t decode(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework,
+        nvimgcodecCodeStreamDesc_t* code_stream, nvimgcodecImageDesc_t* image, const nvimgcodecDecodeParams_t* params,
         std::vector<uint8_t>& buffer, bool fancy_upsampling = true, bool fast_idct = false);
-    nvimgcdcsStatus_t decodeBatch(
-        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+    nvimgcodecStatus_t decodeBatch(
+        nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
-    static nvimgcdcsStatus_t static_destroy(nvimgcdcsDecoder_t decoder);
-    static nvimgcdcsStatus_t static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-        nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
-    static nvimgcdcsStatus_t static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
-        nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params);
+    static nvimgcodecStatus_t static_destroy(nvimgcodecDecoder_t decoder);
+    static nvimgcodecStatus_t static_can_decode(nvimgcodecDecoder_t decoder, nvimgcodecProcessingStatus_t* status,
+        nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
+    static nvimgcodecStatus_t static_decode_batch(nvimgcodecDecoder_t decoder, nvimgcodecCodeStreamDesc_t** code_streams,
+        nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
     void parseOptions(std::string options);
 
     const char* plugin_id_;
-    const nvimgcdcsFrameworkDesc_t* framework_;
-    const nvimgcdcsExecutionParams_t* exec_params_;
+    const nvimgcodecFrameworkDesc_t* framework_;
+    const nvimgcodecExecutionParams_t* exec_params_;
     std::unique_ptr<DecodeState> decode_state_batch_;
 
     struct CanDecodeCtx
     {
         DecoderImpl* this_ptr;
-        nvimgcdcsProcessingStatus_t* status;
-        nvimgcdcsCodeStreamDesc_t** code_streams;
-        nvimgcdcsImageDesc_t** images;
-        const nvimgcdcsDecodeParams_t* params;
+        nvimgcodecProcessingStatus_t* status;
+        nvimgcodecCodeStreamDesc_t** code_streams;
+        nvimgcodecImageDesc_t** images;
+        const nvimgcodecDecodeParams_t* params;
         int num_samples;
         int num_blocks;
         std::vector<std::promise<void>> promise;
     };
 };
 
-LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcdcsFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCDCS_STRUCTURE_TYPE_DECODER_DESC, NULL, this, plugin_id_, "jpeg", NVIMGCDCS_BACKEND_KIND_CPU_ONLY, static_create,
+LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
           DecoderImpl::static_destroy, DecoderImpl::static_can_decode, DecoderImpl::static_decode_batch}
     , framework_(framework)
 {
 }
 
-nvimgcdcsDecoderDesc_t* LibjpegTurboDecoderPlugin::getDecoderDesc()
+nvimgcodecDecoderDesc_t* LibjpegTurboDecoderPlugin::getDecoderDesc()
 {
     return &decoder_desc_;
 }
 
-nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t* code_stream,
-    nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params)
+nvimgcodecStatus_t DecoderImpl::canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t* code_stream,
+    nvimgcodecImageDesc_t* image, const nvimgcodecDecodeParams_t* params)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_can_decode");
+        NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_can_decode");
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(code_stream);
         XM_CHECK_NULL(image);
         XM_CHECK_NULL(params);
-        *status = NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
-        nvimgcdcsImageInfo_t cs_image_info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        *status = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
+        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
         code_stream->getImageInfo(code_stream->instance, &cs_image_info);
 
         if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
-            *status = NVIMGCDCS_PROCESSING_STATUS_CODEC_UNSUPPORTED;
-            return NVIMGCDCS_STATUS_SUCCESS;
+            *status = NVIMGCODEC_PROCESSING_STATUS_CODEC_UNSUPPORTED;
+            return NVIMGCODEC_STATUS_SUCCESS;
         }
 
-        nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
         image->getImageInfo(image->instance, &info);
 
         switch (info.sample_format) {
-        case NVIMGCDCS_SAMPLEFORMAT_P_YUV:
-            *status |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+        case NVIMGCODEC_SAMPLEFORMAT_P_YUV:
+            *status |= NVIMGCODEC_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
             break;
-        case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
-        case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
-        case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
-        case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
-        case NVIMGCDCS_SAMPLEFORMAT_P_Y:
-        case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
-        case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
+        case NVIMGCODEC_SAMPLEFORMAT_I_BGR:
+        case NVIMGCODEC_SAMPLEFORMAT_I_RGB:
+        case NVIMGCODEC_SAMPLEFORMAT_P_BGR:
+        case NVIMGCODEC_SAMPLEFORMAT_P_RGB:
+        case NVIMGCODEC_SAMPLEFORMAT_P_Y:
+        case NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED:
+        case NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED:
         default:
             break; // supported
         }
 
         if (info.num_planes != 1 && info.num_planes != 3) {
-            *status |= NVIMGCDCS_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
+            *status |= NVIMGCODEC_PROCESSING_STATUS_NUM_PLANES_UNSUPPORTED;
         }
-        if (info.plane_info[0].sample_type != NVIMGCDCS_SAMPLE_DATA_TYPE_UINT8) {
-            *status |= NVIMGCDCS_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+        if (info.plane_info[0].sample_type != NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8) {
+            *status |= NVIMGCODEC_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
         }
         if (info.plane_info[0].num_channels != 3 && info.plane_info[0].num_channels != 1) {
-            *status |= NVIMGCDCS_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
+            *status |= NVIMGCODEC_PROCESSING_STATUS_NUM_CHANNELS_UNSUPPORTED;
         }
 
         // This codec doesn't apply EXIF orientation
         if (params->apply_exif_orientation && (info.orientation.flip_x || info.orientation.flip_y || info.orientation.rotated != 0)) {
-            *status |= NVIMGCDCS_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
+            *status |= NVIMGCODEC_PROCESSING_STATUS_ORIENTATION_UNSUPPORTED;
         }
-        return NVIMGCDCS_STATUS_SUCCESS;
+        return NVIMGCODEC_STATUS_SUCCESS;
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if libjpeg_turbo can decode - " << e.what());
-        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not check if libjpeg_turbo can decode - " << e.what());
+        return NVIMGCODEC_STATUS_EXTENSION_INTERNAL_ERROR;
     }
 }
 
-nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nvimgcdcsCodeStreamDesc_t** code_streams,
-    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcodecStatus_t DecoderImpl::canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
+    nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_can_decode");
+        NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_can_decode");
         nvtx3::scoped_range marker{"libjpeg_turbo_can_decode"};
         XM_CHECK_NULL(status);
         XM_CHECK_NULL(code_streams);
@@ -200,26 +200,26 @@ nvimgcdcsStatus_t DecoderImpl::canDecode(nvimgcdcsProcessingStatus_t* status, nv
                 f.wait();
         }
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not check if libjpeg_turbo can decode - " << e.what());
-        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not check if libjpeg_turbo can decode - " << e.what());
+        return NVIMGCODEC_STATUS_EXTENSION_INTERNAL_ERROR;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t DecoderImpl::static_can_decode(nvimgcdcsDecoder_t decoder, nvimgcdcsProcessingStatus_t* status,
-    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcodecStatus_t DecoderImpl::static_can_decode(nvimgcodecDecoder_t decoder, nvimgcodecProcessingStatus_t* status,
+    nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
 {
     try {
         XM_CHECK_NULL(decoder);
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         return handle->canDecode(status, code_streams, images, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 
 DecoderImpl::DecoderImpl(
-    const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework, const nvimgcdcsExecutionParams_t* exec_params, std::string options)
+    const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, const nvimgcodecExecutionParams_t* exec_params, std::string options)
     : plugin_id_(plugin_id)
     , framework_(framework)
     , exec_params_(exec_params)
@@ -258,86 +258,86 @@ void DecoderImpl::parseOptions(std::string options)
     }
 }
 
-nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::create(
-    nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+nvimgcodecStatus_t LibjpegTurboDecoderPlugin::create(
+    nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_create");
+        NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_create");
         XM_CHECK_NULL(decoder);
         XM_CHECK_NULL(exec_params);
-        *decoder = reinterpret_cast<nvimgcdcsDecoder_t>(new DecoderImpl(plugin_id_, framework_, exec_params, options));
+        *decoder = reinterpret_cast<nvimgcodecDecoder_t>(new DecoderImpl(plugin_id_, framework_, exec_params, options));
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not create libjpeg_turbo decoder - " << e.what());
-        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create libjpeg_turbo decoder - " << e.what());
+        return NVIMGCODEC_STATUS_EXTENSION_INTERNAL_ERROR;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t LibjpegTurboDecoderPlugin::static_create(
-    void* instance, nvimgcdcsDecoder_t* decoder, const nvimgcdcsExecutionParams_t* exec_params, const char* options)
+nvimgcodecStatus_t LibjpegTurboDecoderPlugin::static_create(
+    void* instance, nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);
         auto handle = reinterpret_cast<LibjpegTurboDecoderPlugin*>(instance);
         handle->create(decoder, exec_params, options);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
 DecoderImpl::~DecoderImpl()
 {
-    NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_destroy");
+    NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_destroy");
 }
 
-nvimgcdcsStatus_t DecoderImpl::static_destroy(nvimgcdcsDecoder_t decoder)
+nvimgcodecStatus_t DecoderImpl::static_destroy(nvimgcodecDecoder_t decoder)
 {
     try {
         XM_CHECK_NULL(decoder)
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         delete handle;
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvimgcdcsFrameworkDesc_t* framework,
-    nvimgcdcsCodeStreamDesc_t* code_stream, nvimgcdcsImageDesc_t* image, const nvimgcdcsDecodeParams_t* params,
+nvimgcodecProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework,
+    nvimgcodecCodeStreamDesc_t* code_stream, nvimgcodecImageDesc_t* image, const nvimgcodecDecodeParams_t* params,
     std::vector<uint8_t>& buffer, bool fancy_upsampling, bool fast_idct)
 {
     try {
         libjpeg_turbo::UncompressFlags flags;
-        nvimgcdcsImageInfo_t info{NVIMGCDCS_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
         auto ret = image->getImageInfo(image->instance, &info);
-        if (ret != NVIMGCDCS_STATUS_SUCCESS)
-            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
+        if (ret != NVIMGCODEC_STATUS_SUCCESS)
+            return NVIMGCODEC_PROCESSING_STATUS_FAIL;
 
         flags.sample_format = info.sample_format;
         switch (flags.sample_format) {
-        case NVIMGCDCS_SAMPLEFORMAT_I_RGB:
-        case NVIMGCDCS_SAMPLEFORMAT_I_BGR:
-        case NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED:
-        case NVIMGCDCS_SAMPLEFORMAT_P_RGB:
-        case NVIMGCDCS_SAMPLEFORMAT_P_BGR:
-        case NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED:
+        case NVIMGCODEC_SAMPLEFORMAT_I_RGB:
+        case NVIMGCODEC_SAMPLEFORMAT_I_BGR:
+        case NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED:
+        case NVIMGCODEC_SAMPLEFORMAT_P_RGB:
+        case NVIMGCODEC_SAMPLEFORMAT_P_BGR:
+        case NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED:
             flags.components = 3;
             break;
-        case NVIMGCDCS_SAMPLEFORMAT_P_Y:
+        case NVIMGCODEC_SAMPLEFORMAT_P_Y:
             flags.components = 1;
             break;
         default:
-            NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Unsupported sample_format: " << flags.sample_format);
-            return NVIMGCDCS_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
+            NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unsupported sample_format: " << flags.sample_format);
+            return NVIMGCODEC_PROCESSING_STATUS_SAMPLE_FORMAT_UNSUPPORTED;
         }
         flags.dct_method = fast_idct ? JDCT_FASTEST : JDCT_DEFAULT;
         flags.fancy_upscaling = fancy_upsampling;
 
         if (info.region.ndim != 0 && info.region.ndim != 2) {
-            NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Invalid region of interest");
-            return NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED;
+            NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Invalid region of interest");
+            return NVIMGCODEC_PROCESSING_STATUS_ROI_UNSUPPORTED;
         }
         if (info.region.ndim == 2) {
             flags.crop = true;
@@ -348,22 +348,22 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
 
             if (flags.crop_x < 0 || flags.crop_y < 0 || flags.crop_height != static_cast<int>(info.plane_info[0].height) ||
                 flags.crop_width != static_cast<int>(info.plane_info[0].width)) {
-                NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Region of interest is out of bounds");
-                return NVIMGCDCS_PROCESSING_STATUS_ROI_UNSUPPORTED;
+                NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Region of interest is out of bounds");
+                return NVIMGCODEC_PROCESSING_STATUS_ROI_UNSUPPORTED;
             }
         }
 
         auto io_stream = code_stream->io_stream;
         size_t data_size;
         ret = io_stream->size(io_stream->instance, &data_size);
-        if (ret != NVIMGCDCS_STATUS_SUCCESS) {
-            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
+        if (ret != NVIMGCODEC_STATUS_SUCCESS) {
+            return NVIMGCODEC_PROCESSING_STATUS_FAIL;
         }
 
         void* ptr;
         ret = io_stream->map(io_stream->instance, &ptr, 0, data_size);
-        if (ret != NVIMGCDCS_STATUS_SUCCESS) {
-            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
+        if (ret != NVIMGCODEC_STATUS_SUCCESS) {
+            return NVIMGCODEC_PROCESSING_STATUS_FAIL;
         }
         auto auto_unmap =
             std::shared_ptr<void>(ptr, [io_stream, data_size](void* addr) { io_stream->unmap(io_stream->instance, addr, data_size); });
@@ -374,36 +374,36 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
             size_t read_nbytes = 0;
             io_stream->seek(io_stream->instance, 0, SEEK_SET);
             ret = io_stream->read(io_stream->instance, &read_nbytes, buffer.data(), buffer.size());
-            if (ret != NVIMGCDCS_STATUS_SUCCESS)
-                return NVIMGCDCS_PROCESSING_STATUS_FAIL;
+            if (ret != NVIMGCODEC_STATUS_SUCCESS)
+                return NVIMGCODEC_PROCESSING_STATUS_FAIL;
             if (read_nbytes != buffer.size()) {
-                return NVIMGCDCS_PROCESSING_STATUS_IMAGE_CORRUPTED;
+                return NVIMGCODEC_PROCESSING_STATUS_IMAGE_CORRUPTED;
             }
             encoded_data = buffer.data();
         }
 
         auto orig_sample_format = flags.sample_format;
-        if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_UNCHANGED) {
-            orig_sample_format = NVIMGCDCS_SAMPLEFORMAT_P_RGB;
-        } else if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_I_UNCHANGED) {
-            orig_sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
+        if (orig_sample_format == NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED) {
+            orig_sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
+        } else if (orig_sample_format == NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED) {
+            orig_sample_format = NVIMGCODEC_SAMPLEFORMAT_I_RGB;
         }
 
-        if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB) {
-            flags.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_RGB;
-        } else if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR) {
-            flags.sample_format = NVIMGCDCS_SAMPLEFORMAT_I_BGR;
+        if (orig_sample_format == NVIMGCODEC_SAMPLEFORMAT_P_RGB) {
+            flags.sample_format = NVIMGCODEC_SAMPLEFORMAT_I_RGB;
+        } else if (orig_sample_format == NVIMGCODEC_SAMPLEFORMAT_P_BGR) {
+            flags.sample_format = NVIMGCODEC_SAMPLEFORMAT_I_BGR;
         }
         auto decoded_image = libjpeg_turbo::Uncompress(encoded_data, data_size, flags);
         if (decoded_image == nullptr) {
-            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
-        } else if (info.buffer_kind != NVIMGCDCS_IMAGE_BUFFER_KIND_STRIDED_HOST) {
-            return NVIMGCDCS_PROCESSING_STATUS_FAIL;
+            return NVIMGCODEC_PROCESSING_STATUS_FAIL;
+        } else if (info.buffer_kind != NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
+            return NVIMGCODEC_PROCESSING_STATUS_FAIL;
         }
 
         const uint8_t* src = decoded_image.get();
         uint8_t* dst = reinterpret_cast<uint8_t*>(info.buffer);
-        if (orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_RGB || orig_sample_format == NVIMGCDCS_SAMPLEFORMAT_P_BGR) {
+        if (orig_sample_format == NVIMGCODEC_SAMPLEFORMAT_P_RGB || orig_sample_format == NVIMGCODEC_SAMPLEFORMAT_P_BGR) {
             const int num_channels = 3;
             uint32_t plane_size = info.plane_info[0].height * info.plane_info[0].width;
             for (uint32_t i = 0; i < info.plane_info[0].height * info.plane_info[0].width; i++) {
@@ -418,23 +418,23 @@ nvimgcdcsProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nvi
             }
         }
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(framework, plugin_id, "Could not decode jpeg code stream - " << e.what());
-        return NVIMGCDCS_PROCESSING_STATUS_FAIL;
+        NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Could not decode jpeg code stream - " << e.what());
+        return NVIMGCODEC_PROCESSING_STATUS_FAIL;
     }
-    return NVIMGCDCS_PROCESSING_STATUS_SUCCESS;
+    return NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t DecoderImpl::decodeBatch(
-    nvimgcdcsCodeStreamDesc_t** code_streams, nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcodecStatus_t DecoderImpl::decodeBatch(
+    nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
 {
     try {
-        NVIMGCDCS_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_decode_batch");
+        NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "libjpeg_turbo_decode_batch");
         XM_CHECK_NULL(code_streams);
         XM_CHECK_NULL(images)
         XM_CHECK_NULL(params)
         if (batch_size < 1) {
-            NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Batch size lower than 1");
-            return NVIMGCDCS_STATUS_INVALID_PARAMETER;
+            NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Batch size lower than 1");
+            return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         }
         decode_state_batch_->samples_.resize(batch_size);
         for (int i = 0; i < batch_size; i++) {
@@ -459,28 +459,28 @@ nvimgcdcsStatus_t DecoderImpl::decodeBatch(
         } else {
             auto executor = exec_params_->executor;
             for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-                executor->launch(executor->instance, NVIMGCDCS_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(), task);
+                executor->launch(executor->instance, NVIMGCODEC_DEVICE_CPU_ONLY, sample_idx, decode_state_batch_.get(), task);
             }
         }
     } catch (const std::runtime_error& e) {
-        NVIMGCDCS_LOG_ERROR(framework_, plugin_id_, "Could not decode jpeg batch - " << e.what());
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not decode jpeg batch - " << e.what());
         for (int i = 0; i < batch_size; ++i) {
-            images[i]->imageReady(images[i]->instance, NVIMGCDCS_PROCESSING_STATUS_FAIL);
+            images[i]->imageReady(images[i]->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
         }
-        return NVIMGCDCS_STATUS_EXTENSION_INTERNAL_ERROR;
+        return NVIMGCODEC_STATUS_EXTENSION_INTERNAL_ERROR;
     }
-    return NVIMGCDCS_STATUS_SUCCESS;
+    return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcdcsStatus_t DecoderImpl::static_decode_batch(nvimgcdcsDecoder_t decoder, nvimgcdcsCodeStreamDesc_t** code_streams,
-    nvimgcdcsImageDesc_t** images, int batch_size, const nvimgcdcsDecodeParams_t* params)
+nvimgcodecStatus_t DecoderImpl::static_decode_batch(nvimgcodecDecoder_t decoder, nvimgcodecCodeStreamDesc_t** code_streams,
+    nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
 {
     try {
         XM_CHECK_NULL(decoder);
         auto handle = reinterpret_cast<DecoderImpl*>(decoder);
         return handle->decodeBatch(code_streams, images, batch_size, params);
     } catch (const std::runtime_error& e) {
-        return NVIMGCDCS_STATUS_EXTENSION_INVALID_PARAMETER;
+        return NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER;
     }
 }
 

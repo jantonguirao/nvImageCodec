@@ -12,7 +12,7 @@
 
 #include "file_io_stream.h"
 
-namespace nvimgcdcs {
+namespace nvimgcodec {
 
 class MmapedFileIoStream : public FileIoStream
 {
@@ -35,4 +35,4 @@ class MmapedFileIoStream : public FileIoStream
     std::size_t pos_;
     bool read_ahead_whole_file_;
 };
-} // namespace nvimgcdcs
+} // namespace nvimgcodec
