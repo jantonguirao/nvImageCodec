@@ -290,7 +290,14 @@ int Image::getHeight() const
 
 int Image::getNdim() const
 {
-    return 3;
+    py::tuple shape_tuple;
+    if (cuda_array_interface_.contains("shape")) {
+        shape_tuple = cuda_array_interface_["shape"];
+    } else if (array_interface_.contains("shape")) {
+        shape_tuple = array_interface_["shape"];
+    } 
+
+    return shape_tuple.size();
 }
 
 
@@ -314,6 +321,13 @@ py::object Image::dtype() const
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
     return py::dtype(format);
+}
+
+int Image::precision() const
+{
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    return image_info.plane_info[0].precision;
 }
 
 nvimgcodecImageBufferKind_t Image::getBufferKind() const
@@ -426,6 +440,8 @@ void Image::exportToPython(py::module& m)
         .def_property_readonly("height", &Image::getHeight)
         .def_property_readonly("ndim", &Image::getNdim)
         .def_property_readonly("dtype", &Image::dtype)
+        .def_property_readonly("precision", &Image::precision, R"pbdoc(Maximum number of significant bits in data type. Value 0 
+        means that precision is equal to data type bit depth)pbdoc")
         .def_property_readonly("buffer_kind", &Image::getBufferKind, R"pbdoc(Buffer kind in which image data is stored.)pbdoc")
         .def("__dlpack__", &Image::dlpack, "stream"_a = py::none(), "Export the image as a DLPack tensor")
         .def("__dlpack_device__", &Image::getDlpackDevice, "Get the device associated with the buffer")

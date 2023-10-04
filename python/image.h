@@ -43,6 +43,7 @@ class Image
 
     py::object shape() const;
     py::object dtype() const;
+    int precision() const;
 
     py::capsule dlpack(py::object stream) const;
     const py::tuple getDlpackDevice() const;
