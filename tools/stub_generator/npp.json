@@ -2,7 +2,8 @@
    "extra_include":[
       "<npp.h>",
       "<nppdefs.h>",
-      "<nppi_color_conversion.h>"
+      "<nppi_color_conversion.h>",
+      "<nppi_data_exchange_and_initialization.h>"
    ],
    "return_type":"NppStatus",
    "calling_conv":"",
@@ -29,6 +30,8 @@
          "nppiCopy_16s_C4P4R_Ctx": {},
          "nppiRGBToGray_8u_C3C1R_Ctx": {},
          "nppiRGBToGray_16u_C3C1R_Ctx": {},
-         "nppiRGBToGray_16s_C3C1R_Ctx": {}
+         "nppiRGBToGray_16s_C3C1R_Ctx": {},
+         "nppiScale_16u8u_C1R_Ctx": {},
+         "nppiScale_16s8u_C1R_Ctx": {}
    }
 }
