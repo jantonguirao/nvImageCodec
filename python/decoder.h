@@ -45,11 +45,15 @@ class Decoder
     std::vector<py::object> decode(const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
     std::vector<py::object> decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
 
+    py::object enter();
+    void exit(const std::optional<pybind11::type>& exc_type, const std::optional<pybind11::object>& exc_value,
+        const std::optional<pybind11::object>& traceback);
+
     static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
+
   private:
     std::vector<py::object> decode(std::vector<nvimgcodecCodeStream_t>& code_streams, std::optional<DecodeParams> params, intptr_t cuda_stream);
 
-    struct DecoderDeleter;
     std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type> decoder_;
     nvimgcodecInstance_t instance_;
 };

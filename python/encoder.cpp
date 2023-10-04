@@ -21,11 +21,6 @@ namespace fs = std::filesystem;
 
 namespace nvimgcodec {
 
-struct Encoder::EncoderDeleter
-{
-    void operator()(nvimgcodecEncoder_t encoder) { nvimgcodecEncoderDestroy(encoder); }
-};
-
 Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
     const std::string& options)
     : encoder_(nullptr)
@@ -47,7 +42,8 @@ Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_t
     exec_params.backends = backends_ptr;
 
     nvimgcodecEncoderCreate(instance, &encoder, &exec_params, options.c_str());
-    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type>(encoder, EncoderDeleter{});
+    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type>(
+        encoder, [](nvimgcodecEncoder_t encoder) { nvimgcodecEncoderDestroy(encoder); });
 }
 
 Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads,
@@ -70,7 +66,8 @@ Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_t
     exec_params.num_backends = nvimgcds_backends.size();
     exec_params.backends = backends_ptr;
     nvimgcodecEncoderCreate(instance, &encoder, &exec_params, options.c_str());
-    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type>(encoder, EncoderDeleter{});
+    encoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type>(
+        encoder, [](nvimgcodecEncoder_t encoder) { nvimgcodecEncoderDestroy(encoder); });
 }
 
 Encoder::~Encoder()
@@ -266,6 +263,17 @@ void Encoder::encode(const std::vector<std::string>& file_names, const std::vect
     encode(images, params, cuda_stream, create_code_stream, post_encode_callback);
 }
 
+py::object Encoder::enter()
+{
+    return py::cast(*this);
+}
+
+void Encoder::exit(const std::optional<pybind11::type>& exc_type, const std::optional<pybind11::object>& exc_value,
+    const std::optional<pybind11::object>& traceback)
+{
+    encoder_.reset();
+}
+
 void Encoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
 {
     py::class_<Encoder>(m, "Encoder")
@@ -366,7 +374,12 @@ void Encoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
             Returns:
                 List of buffers with compressed code streams.
             )pbdoc",
-            "file_names"_a, "images"_a, "codec"_a = "", "params"_a = py::none(), "cuda_stream"_a = 0);
+            "file_names"_a, "images"_a, "codec"_a = "", "params"_a = py::none(), "cuda_stream"_a = 0)
+        .def("__enter__", &Encoder::enter, "Enter the runtime context related to this encoder.")
+        .def("__exit__", &Encoder::exit,
+            "Exit the runtime context related to this encoder and releases allocated resources."
+            "exc_type"_a = py::none(),
+            "exc_value"_a = py::none(), "traceback"_a = py::none());
 }
 
 } // namespace nvimgcodec
