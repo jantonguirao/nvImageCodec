@@ -32,6 +32,8 @@
          "nppiRGBToGray_16u_C3C1R_Ctx": {},
          "nppiRGBToGray_16s_C3C1R_Ctx": {},
          "nppiScale_16u8u_C1R_Ctx": {},
-         "nppiScale_16s8u_C1R_Ctx": {}
+         "nppiScale_16s8u_C1R_Ctx": {},
+         "nppiAddC_16u_C1IRSfs_Ctx": {},
+         "nppiAddC_16s_C1IRSfs_Ctx": {}
    }
 }

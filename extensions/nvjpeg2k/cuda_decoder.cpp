@@ -713,6 +713,11 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
             NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)};
 
             if (convert_dtype) {
+#define NPP_APPLY_SCALE_FACTOR(NPP_FUNC, DTYPE, SCALE_FACTOR)                                                                                         \
+    auto status = NPP_FUNC(DTYPE(0), reinterpret_cast<DTYPE*>(current_buffer), row_nbytes, flattened_planes_dims, SCALE_FACTOR, t.npp_ctx_);  \
+    if (NPP_SUCCESS != status)                                                                                                                       \
+        FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED, "Scale factor conversion failed");
+
 #define NPP_CONVERT_DTYPE(NPP_FUNC, IN_DTYPE, OUT_DTYPE)                                                                                             \
     auto status = NPP_FUNC(reinterpret_cast<const IN_DTYPE*>(current_buffer), row_nbytes,                                                            \
                            reinterpret_cast<OUT_DTYPE*>(out_convert_dtype), out_row_nbytes, flattened_planes_dims, NPP_ALG_HINT_NONE, t.npp_ctx_);   \
@@ -720,9 +725,17 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
         FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED, "Data type conversion failed");
 
                 if (orig_data_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16 && out_data_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8) {
+                    if (bpp > 0 && bpp < 16) {
+                        nvtx3::scoped_range marker{"nppiAddC_16u_C1IRSfs_Ctx"};
+                        NPP_APPLY_SCALE_FACTOR(nppiAddC_16u_C1IRSfs_Ctx, uint16_t, bpp - 16);
+                    }
                     nvtx3::scoped_range marker{"nppiScale_16u8u_C1R_Ctx"};
                     NPP_CONVERT_DTYPE(nppiScale_16u8u_C1R_Ctx, uint16_t, uint8_t);
                 } else if (orig_data_type == NVIMGCODEC_SAMPLE_DATA_TYPE_INT16 && out_data_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8) {
+                    if (bpp > 0 && bpp < 15) {
+                        nvtx3::scoped_range marker{"nppiAddC_16s_C1IRSfs_Ctx"};
+                        NPP_APPLY_SCALE_FACTOR(nppiAddC_16s_C1IRSfs_Ctx, int16_t, bpp - 15);
+                    }
                     nvtx3::scoped_range marker{"nppiScale_16s8u_C1R_Ctx"};
                     NPP_CONVERT_DTYPE(nppiScale_16s8u_C1R_Ctx, int16_t, uint8_t);
                 } else {

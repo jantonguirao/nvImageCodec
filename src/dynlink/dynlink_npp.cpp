@@ -25,38 +25,46 @@ namespace {
   static const char __NppcLibName[] = "libnppc.so";
   static const char __NppideiLibName[] = "libnppidei.so";
   static const char __NppiccLibName[] = "libnppicc.so";
+  static const char __NppialLibName[] = "libnppial.so";
 
   #if CUDA_VERSION_MAJOR >= 12
     static const char __NppcLibNameCuVer[] = "libnppc.so.12";
     static const char __NppideiLibNameCuVer[] = "libnppidei.so.12";
     static const char __NppiccLibNameCuVer[] = "libnppicc.so.12";
+    static const char __NppialLibNameCuVer[] = "libnppial.so.12";
   #elif CUDA_VERSION_MAJOR >= 11
     static const char __NppcLibNameCuVer[] = "libnppc.so.11";
     static const char __NppideiLibNameCuVer[] = "libnppidei.so.11";
     static const char __NppiccLibNameCuVer[] = "libnppicc.so.11";
+    static const char __NppialLibNameCuVer[] = "libnppial.so.11";
   #else
     static const char __NppcLibNameCuVer[] = "libnppc.so.10";
     static const char __NppideiLibNameCuVer[] = "libnppidei.so.10";
     static const char __NppiccLibNameCuVer[] = "libnppicc.so.10";
+    static const char __NppialLibNameCuVer[] = "libnppial.so.10";
   #endif
 
 #elif defined(_WIN32) || defined(_WIN64)
   static const char __NppcLibName[] = "nppc.dll";
   static const char __NppideiLibName[] = "nppidei.dll";
   static const char __NppiccLibName[] = "nppicc.dll";
+  static const char __NppialLibName[] = "nppial.so";
 
   #if CUDA_VERSION_MAJOR >= 12
     static const char __NppcLibNameCuVer[] = "nppc64_12.dll";
     static const char __NppideiLibNameCuVer[] = "nppidei64_12.dll";
     static const char __NppiccLibNameCuVer[] = "nppicc64_12.dll";
+    static const char __NppialLibNameCuVer[] = "nppial64_12.dll";
   #elif CUDA_VERSION_MAJOR >= 11
     static const char __NppcLibNameCuVer[] = "nppc64_11.dll";
     static const char __NppideiLibNameCuVer[] = "nppidei64_11.dll";
-    static const char __NppiccLibNameCuVer[] = "nppicc64_12.dll";
+    static const char __NppiccLibNameCuVer[] = "nppicc64_11.dll";
+    static const char __NppialLibNameCuVer[] = "nppial64_11.dll";
   #else
     static const char __NppcLibNameCuVer[] = "nppc64_10.dll";
     static const char __NppideiLibNameCuVer[] = "nppidei64_10.dll";
-    static const char __NppiccLibNameCuVer[] = "nppicc64_12.dll";
+    static const char __NppiccLibNameCuVer[] = "nppicc64_10.dll";
+    static const char __NppialLibNameCuVer[] = "nppial64_10.dll";
   #endif
 #endif
 
@@ -114,13 +122,31 @@ nvimgcodec::ILibraryLoader::LibraryHandle loadNppiccLibrary()
     return ret;
 }
 
+nvimgcodec::ILibraryLoader::LibraryHandle loadNppialLibrary()
+{
+    nvimgcodec::LibraryLoader lib_loader;
+    nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
+    ret = lib_loader.loadLibrary(__NppialLibNameCuVer);
+    if (!ret) {
+        ret = lib_loader.loadLibrary(__NppialLibName);
+        if (!ret) {
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
+            fprintf(stderr, "dlopen libnppial.so failed!. Please install CUDA toolkit or NPP python wheel.");
+#elif defined(_WIN32) || defined(_WIN64)
+            fprintf(stderr, "LoadLibrary nppial.dll failed!. Please install CUDA toolkit or NPP python wheel.");
+#endif
+        }
+    }
+    return ret;
+}
+
 }  // namespace
 
 
 void *NppLoadSymbol(const char *name) {
   nvimgcodec::LibraryLoader lib_loader;
   // check libraries in order: processing library, color conversion, then core
-  static nvimgcodec::ILibraryLoader::LibraryHandle libs[] = {loadNppideiLibrary(), loadNppiccLibrary(), loadNppcLibrary()};
+  static nvimgcodec::ILibraryLoader::LibraryHandle libs[] = {loadNppideiLibrary(), loadNppiccLibrary(), loadNppcLibrary(), loadNppialLibrary()};
   for (auto &lib : libs) {
     try {
       void *ret = lib ? lib_loader.getFuncAddress(lib, name) : nullptr;
