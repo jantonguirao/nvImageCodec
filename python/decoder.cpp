@@ -19,11 +19,6 @@
 
 namespace nvimgcodec {
 
-struct Decoder::DecoderDeleter
-{
-    void operator()(nvimgcodecDecoder_t decoder) { nvimgcodecDecoderDestroy(decoder); }
-};
-
 Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends, const std::string& options)
     : decoder_(nullptr)
     , instance_(instance)
@@ -44,7 +39,8 @@ Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_t
     exec_params.backends = backends_ptr;
     nvimgcodecDecoderCreate(instance, &decoder, &exec_params, options.c_str());
 
-    decoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type>(decoder, DecoderDeleter{});
+    decoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type>(
+        decoder, [](nvimgcodecDecoder_t decoder) { nvimgcodecDecoderDestroy(decoder); });
 }
 
 Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds,
@@ -69,7 +65,8 @@ Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_t
     exec_params.backends = backends_ptr;
     nvimgcodecDecoderCreate(instance, &decoder, &exec_params, options.c_str());
 
-    decoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type>(decoder, DecoderDeleter{});
+    decoder_ = std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type>(
+        decoder, [](nvimgcodecDecoder_t decoder) { nvimgcodecDecoderDestroy(decoder); });
 }
 
 Decoder::~Decoder()
@@ -232,6 +229,17 @@ std::vector<py::object> Decoder::decode(
     return py_images;
 }
 
+py::object Decoder::enter()
+{
+    return py::cast(*this);
+}
+
+void Decoder::exit(const std::optional<pybind11::type>& exc_type, const std::optional<pybind11::object>& exc_value,
+    const std::optional<pybind11::object>& traceback)
+{
+    decoder_.reset();
+}
+
 void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
 {
     py::class_<Decoder>(m, "Decoder")
@@ -367,7 +375,10 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
                 List of decoded nvimgcodec.Image's
 
             )pbdoc",
-            "data_list"_a, "params"_a = py::none(), "cuda_stream"_a = 0);
+            "data_list"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
+        .def("__enter__", &Decoder::enter, "Enter the runtime context related to this decoder.")
+        .def("__exit__", &Decoder::exit, "Exit the runtime context related to this decoder and releases allocated resources.",
+            "exc_type"_a = py::none(), "exc_value"_a = py::none(), "traceback"_a = py::none());
 }
 
 } // namespace nvimgcodec

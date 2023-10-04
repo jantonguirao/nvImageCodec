@@ -44,6 +44,10 @@ class Encoder
     void encode(const std::vector<std::string>& file_names, const std::vector<py::handle>& images, const std::string& codec,
         std::optional<EncodeParams> params, intptr_t cuda_stream);
 
+    py::object enter();
+    void exit(const std::optional<pybind11::type>& exc_type, const std::optional<pybind11::object>& exc_value,
+        const std::optional<pybind11::object>& traceback);
+
     static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
 
   private:
@@ -59,7 +63,6 @@ class Encoder
         const std::vector<Image*>& images, const std::string& codec, std::optional<EncodeParams> params, intptr_t cuda_stream);
     void encode(const std::vector<std::string>& file_names, const std::vector<Image*>& images, const std::string& codec, std::optional<EncodeParams> params, intptr_t cuda_stream);
 
-    struct EncoderDeleter;
     std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type> encoder_;
     nvimgcodecInstance_t instance_;
 };
