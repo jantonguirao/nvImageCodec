@@ -706,3 +706,17 @@ def test_as_images_with_cuda_array_interface(tmp_path, input_images_batch):
         np.asarray(bytearray(img)), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
     compare_host_images(test_decoded_images, ref_images)
+
+
+@t.mark.parametrize(
+    "input_img_file, precision",
+    [("jpeg2k/tiled-cat-1046544_640_gray.jp2", 0),
+     ("jpeg2k/cat-111793_640-16bit.jp2", 0),
+     ("jpeg2k/cat-1245673_640-12bit.jp2", 12)])
+def test_image_precision(input_img_file, precision):
+    input_img_path = os.path.join(img_dir_path, input_img_file)
+    decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
+    test_img = decoder.read(input_img_path, params=nvimgcodec.DecodeParams(
+        color_spec=nvimgcodec.ColorSpec.UNCHANGED, allow_any_depth=True))
+
+    assert test_img.precision == precision
