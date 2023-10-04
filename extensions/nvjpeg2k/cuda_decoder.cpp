@@ -453,8 +453,8 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
 
             nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
             code_stream->getImageInfo(code_stream->instance, &cs_image_info);
-            bool interleaved =
-                image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB || image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED;
+            bool interleaved = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB ||
+                               (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED && num_components > 1);
             bool gray =
                 (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_P_Y) && (cs_image_info.sample_format != NVIMGCODEC_SAMPLEFORMAT_P_Y);
 
@@ -463,7 +463,9 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
             std::unique_ptr<std::remove_pointer<nvjpeg2kDecodeParams_t>::type, decltype(&nvjpeg2kDecodeParamsDestroy)> decode_params_raii(
                 decode_params, &nvjpeg2kDecodeParamsDestroy);
 
-            int rgb_output = image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB;
+            int rgb_output =
+                image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB ||
+                (image_info.color_spec == NVIMGCODEC_COLORSPEC_UNCHANGED && cs_image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB);
             XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, rgb_output));
             size_t row_nbytes;
             size_t component_nbytes;
