@@ -17,7 +17,7 @@
 #include <npp.h>
 #include <nppdefs.h>
 #include <nppi_color_conversion.h>
-#include <nppi_data_exchange_and_initialization.h>
+#include "process/convert_kernel_gpu.h"
 
 namespace nvjpeg2k {
 
@@ -458,6 +458,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                 }
             }
             size_t bytes_per_sample = static_cast<unsigned int>(orig_data_type) >> (8 + 3);
+            size_t bits_per_sample = bytes_per_sample << 3;
 
             nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
             code_stream->getImageInfo(code_stream->instance, &cs_image_info);
@@ -465,7 +466,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                                (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED && num_components > 1);
             bool convert_gray =
                 (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_P_Y) && (cs_image_info.sample_format != NVIMGCODEC_SAMPLEFORMAT_P_Y);
-            bool convert_dtype = image_info.plane_info[0].sample_type != orig_data_type;
+            bool convert_dtype = image_info.plane_info[0].sample_type != orig_data_type || (bpp != bits_per_sample && image_info.plane_info[0].precision != bpp);
             if (convert_dtype && out_data_type != NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8) {
                 NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Only original dtype or conversion to uint8 is allowed");
                 image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
@@ -709,43 +710,12 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
             }
 
             uint8_t* current_buffer = decode_buffer;
-            NppiSize flattened_planes_dims = {static_cast<int>(image_info.plane_info[0].width),  static_cast<int>(num_components * image_info.plane_info[0].height)};
             NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)};
+            int64_t num_elements = static_cast<int64_t>(num_components) * image_info.plane_info[0].width * image_info.plane_info[0].height;
 
             if (convert_dtype) {
-#define NPP_APPLY_SCALE_FACTOR(NPP_FUNC, DTYPE, SCALE_FACTOR)                                                                                         \
-    auto status = NPP_FUNC(DTYPE(0), reinterpret_cast<DTYPE*>(current_buffer), row_nbytes, flattened_planes_dims, SCALE_FACTOR, t.npp_ctx_);  \
-    if (NPP_SUCCESS != status)                                                                                                                       \
-        FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED, "Scale factor conversion failed");
-
-#define NPP_CONVERT_DTYPE(NPP_FUNC, IN_DTYPE, OUT_DTYPE)                                                                                             \
-    auto status = NPP_FUNC(reinterpret_cast<const IN_DTYPE*>(current_buffer), row_nbytes,                                                            \
-                           reinterpret_cast<OUT_DTYPE*>(out_convert_dtype), out_row_nbytes, flattened_planes_dims, NPP_ALG_HINT_NONE, t.npp_ctx_);   \
-    if (NPP_SUCCESS != status)                                                                                                                       \
-        FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED, "Data type conversion failed");
-
-                if (orig_data_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16 && out_data_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8) {
-                    if (bpp > 0 && bpp < 16) {
-                        nvtx3::scoped_range marker{"nppiAddC_16u_C1IRSfs_Ctx"};
-                        NPP_APPLY_SCALE_FACTOR(nppiAddC_16u_C1IRSfs_Ctx, uint16_t, bpp - 16);
-                    }
-                    nvtx3::scoped_range marker{"nppiScale_16u8u_C1R_Ctx"};
-                    NPP_CONVERT_DTYPE(nppiScale_16u8u_C1R_Ctx, uint16_t, uint8_t);
-                } else if (orig_data_type == NVIMGCODEC_SAMPLE_DATA_TYPE_INT16 && out_data_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8) {
-                    if (bpp > 0 && bpp < 15) {
-                        nvtx3::scoped_range marker{"nppiAddC_16s_C1IRSfs_Ctx"};
-                        NPP_APPLY_SCALE_FACTOR(nppiAddC_16s_C1IRSfs_Ctx, int16_t, bpp - 15);
-                    }
-                    nvtx3::scoped_range marker{"nppiScale_16s8u_C1R_Ctx"};
-                    NPP_CONVERT_DTYPE(nppiScale_16s8u_C1R_Ctx, int16_t, uint8_t);
-                } else {
-                    FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED,
-                        "Data type conversion not supported from=" + std::to_string(orig_data_type) +
-                            " to=" + std::to_string(out_data_type));
-
-                }
+                nvimgcodec::LaunchConvertNormKernel(out_convert_dtype, out_data_type, current_buffer, orig_data_type, num_elements, t.stream_, bpp);
                 current_buffer = out_convert_dtype;
-#undef NPP_CONVERT_DTYPE
             }
 
             if (convert_gray || convert_interleaved) {

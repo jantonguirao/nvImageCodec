@@ -152,7 +152,12 @@ std::vector<py::object> Decoder::decode(
             continue;
         }
 
-        auto sample_type = params.allow_any_depth_ ? image_info.plane_info[0].sample_type : NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
+        auto sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
+        int precision = 0;  // full dynamic range of the type
+        if (params.allow_any_depth_) {
+            sample_type = image_info.plane_info[0].sample_type;
+            precision = image_info.plane_info[0].precision;
+        }
         int bytes_per_element = sample_type_to_bytes_per_element(sample_type);
 
         image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
@@ -194,6 +199,7 @@ std::vector<py::object> Decoder::decode(
             image_info.plane_info[c].width = image_info.plane_info[0].width;
             image_info.plane_info[c].row_stride = device_pitch_in_bytes;
             image_info.plane_info[c].sample_type = sample_type;
+            image_info.plane_info[c].precision = precision;
             image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
             buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[c].height;
         }

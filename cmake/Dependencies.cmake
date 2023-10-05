@@ -94,3 +94,8 @@ if (NOT DEFINED OpenCV_VERSION)
         include_directories(SYSTEM ${OpenCV_INCLUDE_DIRS})
     endif()
 endif()
+
+##################################################################
+# Boost preprocessor
+##################################################################
+include_directories(${PROJECT_SOURCE_DIR}/external/boost/preprocessor/include)
