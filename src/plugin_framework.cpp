@@ -80,8 +80,8 @@ PluginFramework::PluginFramework(ILogger* logger, ICodecRegistry* codec_registry
     , directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
     , framework_desc_{NVIMGCODEC_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, this, "nvImageCodec", NVIMGCODEC_VER, NVIMGCODEC_EXT_API_VER,
-          CUDART_VERSION, &static_log, &static_register_encoder, &static_unregister_encoder,
-          &static_register_decoder, &static_unregister_decoder, &static_register_parser, &static_unregister_parser}
+          CUDART_VERSION, &static_log, &static_register_encoder, &static_unregister_encoder, &static_register_decoder,
+          &static_unregister_decoder, &static_register_parser, &static_unregister_parser}
     , codec_registry_(codec_registry)
     , extension_paths_{}
 {
@@ -172,28 +172,31 @@ nvimgcodecStatus_t PluginFramework::registerExtension(
 
     if (extension_desc->ext_api_version > NVIMGCODEC_EXT_API_VER) {
         NVIMGCODEC_LOG_WARNING(logger_, "Could not register extension "
-                                           << extension_desc->id << " version:" << NVIMGCODEC_STREAM_VER(extension_desc->version)
-                                           << " Extension API version: " << NVIMGCODEC_STREAM_VER(extension_desc->ext_api_version)
-                                           << " newer than framework API version: " << NVIMGCODEC_EXT_API_VER);
+                                            << extension_desc->id << " version:" << NVIMGCODEC_STREAM_VER(extension_desc->version)
+                                            << " Extension API version: " << NVIMGCODEC_STREAM_VER(extension_desc->ext_api_version)
+                                            << " newer than framework API version: " << NVIMGCODEC_EXT_API_VER);
         return NVIMGCODEC_STATUS_IMPLEMENTATION_UNSUPPORTED;
     }
     auto it = extensions_.find(extension_desc->id);
     if (it != extensions_.end()) {
+        std::string reg_ext_path = !it->second.module_.path_.empty() ? " (" + it->second.module_.path_ + ")" : " (API)";
         if (it->second.desc_.version == extension_desc->version) {
-            NVIMGCODEC_LOG_WARNING(logger_, "Could not register extension " << extension_desc->id
-                                                                           << " version:" << NVIMGCODEC_STREAM_VER(extension_desc->version)
-                                                                           << " Extension with the same id and version already registered");
+            NVIMGCODEC_LOG_WARNING(logger_, "Could not register extension "
+                                                << extension_desc->id << " version:" << NVIMGCODEC_STREAM_VER(extension_desc->version)
+                                                << " Extension with the same id and version already registered" << reg_ext_path);
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         } else if (it->second.desc_.version > extension_desc->version) {
-            NVIMGCODEC_LOG_WARNING(logger_, "Could not register extension "
-                                               << extension_desc->id << " version:" << NVIMGCODEC_STREAM_VER(extension_desc->version)
-                                               << " Extension with the same id and newer version: "
-                                               << NVIMGCODEC_STREAM_VER(it->second.desc_.version) << " already registered");
+            NVIMGCODEC_LOG_WARNING(
+                logger_, "Could not register extension "
+                             << extension_desc->id << " version:" << NVIMGCODEC_STREAM_VER(extension_desc->version)
+                             << " Extension with the same id and newer version: " << NVIMGCODEC_STREAM_VER(it->second.desc_.version)
+                             << " already registered" << reg_ext_path);
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         } else if (it->second.desc_.version < extension_desc->version) {
-            NVIMGCODEC_LOG_WARNING(logger_, "Extension with the same id:" << extension_desc->id << " and older version: "
-                                                                         << NVIMGCODEC_STREAM_VER(it->second.desc_.version)
-                                                                         << " already registered and will be unregistered");
+            NVIMGCODEC_LOG_WARNING(
+                logger_, "Extension with the same id:" << extension_desc->id
+                                                       << " and older version: " << NVIMGCODEC_STREAM_VER(it->second.desc_.version)
+                                                       << " already registered and will be unregistered" << reg_ext_path);
             unregisterExtension(it);
         }
     }
