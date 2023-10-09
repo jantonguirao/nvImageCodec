@@ -18,7 +18,8 @@
 
 namespace nvimgcodec {
 
-EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcodecEncodeParams_t>* work_manager, const nvimgcodecExecutionParams_t* exec_params, const std::string& options, const ICodec* codec, int index)
+EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcodecEncodeParams_t>* work_manager,
+    const nvimgcodecExecutionParams_t* exec_params, const std::string& options, const ICodec* codec, int index)
     : logger_(logger)
     , work_manager_(work_manager)
     , codec_(codec)
@@ -29,7 +30,7 @@ EncoderWorker::EncoderWorker(ILogger* logger, IWorkManager<nvimgcodecEncodeParam
     if (exec_params_->pre_init) {
         EncoderWorker* current = this;
         do {
-            current->getEncoder();  // initializes the encoder
+            current->getEncoder(); // initializes the encoder
             current = current->getFallback();
         } while (current);
     }
@@ -193,8 +194,13 @@ void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcodecEncodeParams_t>>
     if (fallback_worker) {
         fallback_work = work_manager_->createNewWork(work->results_, work->params_);
         move_work_to_fallback(fallback_work.get(), work.get(), mask);
-        if (!fallback_work->empty())
+        if (!fallback_work->empty()) {
+            for (auto idx : fallback_work->indices_) {
+                NVIMGCODEC_LOG_WARNING(logger_, "[" << encoder_->encoderId() << "]"
+                                                 << " encode #" << idx << " fallback");
+            }
             fallback_worker->addWork(std::move(fallback_work));
+        }
     } else {
         filter_work(work.get(), mask);
         for (size_t i = 0; i < mask.size(); i++) {
@@ -221,6 +227,8 @@ void EncoderWorker::processBatch(std::unique_ptr<Work<nvimgcodecEncodeParams_t>>
                 } else { // failed to encode
                     if (fallback_worker) {
                         // if there's fallback, we don't set the result, but try to use the fallback first
+                        NVIMGCODEC_LOG_WARNING(logger_, "[" << encoder_->encoderId() << "]"
+                                                         << " encode #" << sub_idx << " fallback");
                         if (!fallback_work)
                             fallback_work = work_manager_->createNewWork(work->results_, work->params_);
                         fallback_work->moveEntry(work.get(), sub_idx);

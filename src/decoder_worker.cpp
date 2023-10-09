@@ -11,11 +11,11 @@
 
 #include <cassert>
 
+#include <nvtx3/nvtx3.hpp>
 #include "device_guard.h"
 #include "icodec.h"
 #include "iimage_decoder_factory.h"
 #include "log.h"
-#include <nvtx3/nvtx3.hpp>
 
 namespace nvimgcodec {
 
@@ -31,7 +31,7 @@ DecoderWorker::DecoderWorker(ILogger* logger, IWorkManager<nvimgcodecDecodeParam
     if (exec_params_->pre_init) {
         DecoderWorker* current = this;
         do {
-            current->getDecoder();  // initializes the decoder
+            current->getDecoder(); // initializes the decoder
             current = current->getFallback();
         } while (current);
     }
@@ -164,14 +164,18 @@ void DecoderWorker::processCurrentResults(
             int sub_idx = indices.first[i];
             ProcessingResult r = curr_results->getOne(sub_idx);
             if (r.isSuccess()) {
-                NVIMGCODEC_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " success");
+                NVIMGCODEC_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]"
+                                                 << " decode #" << sub_idx << " success");
                 curr_work->copy_buffer_if_necessary(is_device_output_, sub_idx, &r);
                 curr_work->results_.set(curr_work->indices_[sub_idx], r);
             } else { // failed to decode
-                NVIMGCODEC_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]" << " decode #" << sub_idx << " failure with code " << r.status_);
+                NVIMGCODEC_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]"
+                                                 << " decode #" << sub_idx << " failure with code " << r.status_);
                 if (fallback_worker) {
                     // if there's fallback, we don't set the result, but try to use the fallback first
-                    if (!fallback_work)
+                    NVIMGCODEC_LOG_WARNING(logger_, "[" << decoder_->decoderId() << "]"
+                                                     << " decode #" << sub_idx << " fallback");
+                    if (!fallback_work) 
                         fallback_work = work_manager_->createNewWork(curr_work->results_, curr_work->params_);
                     fallback_work->moveEntry(curr_work.get(), sub_idx);
                 } else {
@@ -252,7 +256,8 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcodecDecodeParams_t>>
         decoder->canDecode(work->code_streams_, work->images_, work->params_, &mask, &status);
 #ifndef NDEBUG
         for (size_t i = 0; i < work->code_streams_.size(); i++) {
-            NVIMGCODEC_LOG_DEBUG(logger_, "[" << decoder->decoderId() << "]" << " canDecode status sample #" << i << " : " << status[i]);
+            NVIMGCODEC_LOG_DEBUG(logger_, "[" << decoder->decoderId() << "]"
+                                              << " canDecode status sample #" << i << " : " << status[i]);
         }
 #endif
     } else {
@@ -266,6 +271,10 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcodecDecodeParams_t>>
         fallback_work = work_manager_->createNewWork(work->results_, work->params_);
         move_work_to_fallback(fallback_work.get(), work.get(), mask);
         if (!fallback_work->empty()) {
+            for (auto idx : fallback_work->indices_) {
+                NVIMGCODEC_LOG_WARNING(logger_, "[" << decoder_->decoderId() << "]"
+                                                 << " decode #" << idx << " fallback");
+            }
             // if all samples go to the fallback, we can afford using the current thread
             bool fallback_immediate = immediate && work->code_streams_.empty();
             fallback_worker->addWork(std::move(fallback_work), fallback_immediate);

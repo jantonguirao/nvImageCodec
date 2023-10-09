@@ -35,6 +35,7 @@ class MockImageEncoder : public IImageEncoder
         (const, override));
     MOCK_METHOD(std::unique_ptr<ProcessingResultsFuture>, encode,
         (IEncodeState*, const std::vector<IImage*>&, const std::vector<ICodeStream*>&, const nvimgcodecEncodeParams_t*), (override));
+    MOCK_METHOD(const char*, encoderId, (), (const, override));
 };
 
 }} // namespace nvimgcodec::test
