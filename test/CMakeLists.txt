@@ -133,6 +133,7 @@ install(TARGETS ${FILESTOPACK}
 install(FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/test_python.py
     ${CMAKE_CURRENT_SOURCE_DIR}/test_transcode.py
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_decode_multichannel.py
     DESTINATION test
     COMPONENT tests
 )
