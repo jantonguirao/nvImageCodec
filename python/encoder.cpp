@@ -13,6 +13,10 @@
 #include <string.h>
 #include <filesystem>
 #include <iostream>
+
+#include <ilogger.h>
+#include <log.h>
+
 #include "../src/file_ext_codec.h"
 #include "backend.h"
 #include "error_handling.h"
@@ -21,10 +25,11 @@ namespace fs = std::filesystem;
 
 namespace nvimgcodec {
 
-Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
-    const std::string& options)
+Encoder::Encoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, int max_num_cpu_threads,
+    std::optional<std::vector<Backend>> backends, const std::string& options)
     : encoder_(nullptr)
     , instance_(instance)
+    , logger_(logger)
 {
     std::vector<nvimgcodecBackend_t> nvimgcds_backends(backends.has_value() ? backends.value().size() : 0);
     if (backends.has_value()) {
@@ -46,10 +51,11 @@ Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_t
         encoder, [](nvimgcodecEncoder_t encoder) { nvimgcodecEncoderDestroy(encoder); });
 }
 
-Encoder::Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads,
+Encoder::Encoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, int max_num_cpu_threads,
     std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options)
     : encoder_(nullptr)
     , instance_(instance)
+    , logger_(logger)
 {
     std::vector<nvimgcodecBackend_t> nvimgcds_backends(backend_kinds.has_value() ? backend_kinds.value().size() : 0);
     if (backend_kinds.has_value()) {
@@ -88,8 +94,7 @@ void Encoder::convertPyImagesToImages(const std::vector<py::handle>& py_images, 
         if (image) {
             images->push_back(image);
         } else {
-            std::cerr << "Warning: Input object #" << i << " cannot be interpreted as Image.  It will not be included in output"
-                      << std::endl;
+            NVIMGCODEC_LOG_WARNING(logger_, "Input object #" << i << " cannot be interpreted as Image.  It will not be included in output");
         }
         i++;
     }
@@ -156,7 +161,7 @@ void Encoder::encode(const std::vector<Image*>& images, std::optional<EncodePara
     nvimgcodecFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
     for (size_t i = 0; i < encode_status.size(); ++i) {
         if (encode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
-            std::cerr << "Error: Something went wrong during encoding image #" << i << " it will not be included in output" << std::endl;
+             NVIMGCODEC_LOG_WARNING(logger_,"Something went wrong during encoding image #" << i << " it will not be included in output");
         }
         post_encode_call_back(i, encode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS, code_streams[i]);
     }
@@ -187,12 +192,12 @@ std::vector<py::bytes> Encoder::encode(
 {
     std::vector<py::bytes> data_list;
     if (codec.empty()) {
-        std::cerr << "Error: Unspecified codec." << std::endl;
+        NVIMGCODEC_LOG_ERROR(logger_, "Unspecified codec.");
         return data_list;
     }
     std::string codec_name = codec[0] == '.' ? file_ext_to_codec(codec) : codec;
     if (codec_name.empty()) {
-        std::cerr << "Error: Unsupported codec." << std::endl;
+        NVIMGCODEC_LOG_ERROR(logger_, "Unsupported codec.");
         return data_list;
     }
 
@@ -246,13 +251,13 @@ void Encoder::encode(const std::vector<std::string>& file_names, const std::vect
             auto file_extension = fs::path(file_names[i]).extension();
             codec_name = file_ext_to_codec(file_extension);
             if (codec_name.empty()) {
-                std::cerr << "Warning: File '" << file_names[i] << "' without extension. As default choosing jpeg codec" << std::endl;
+                NVIMGCODEC_LOG_WARNING(logger_, "File '" << file_names[i] << "' without extension. As default choosing jpeg codec");
                 codec_name = "jpeg";
             }
         } else {
             codec_name = codec[0] == '.' ? file_ext_to_codec(codec) : codec;
             if (codec_name.empty()) {
-                std::cerr << "Warning: Unsupported codec.  As default choosing jpeg codec" << std::endl;
+                NVIMGCODEC_LOG_WARNING(logger_, "Unsupported codec.  As default choosing jpeg codec");
                 codec_name = "jpeg";
             }
         }
@@ -274,12 +279,12 @@ void Encoder::exit(const std::optional<pybind11::type>& exc_type, const std::opt
     encoder_.reset();
 }
 
-void Encoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
+void Encoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogger* logger)
 {
     py::class_<Encoder>(m, "Encoder")
         .def(py::init<>(
-                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
-                     const std::string& options) { return new Encoder(instance, device_id, max_num_cpu_threads, backends, options); }),
+                 [instance, logger](int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+                     const std::string& options) { return new Encoder(instance, logger, device_id, max_num_cpu_threads, backends, options); }),
             R"pbdoc(
             Initialize encoder.
 
@@ -296,8 +301,8 @@ void Encoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
 
             "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backends"_a = py::none(), "options"_a = "")
         .def(py::init<>(
-                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds,
-                     const std::string& options) { return new Encoder(instance, device_id, max_num_cpu_threads, backend_kinds, options); }),
+                 [instance, logger](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds,
+                     const std::string& options) { return new Encoder(instance, logger, device_id, max_num_cpu_threads, backend_kinds, options); }),
             R"pbdoc(
             Initialize encoder.
 

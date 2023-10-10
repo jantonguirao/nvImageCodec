@@ -21,7 +21,7 @@
 namespace nvimgcodec {
 
 NvImgCodecsDirector::NvImgCodecsDirector(const nvimgcodecInstanceCreateInfo_t* create_info)
-    : logger_()
+    : logger_("nvimgcodec")
     , default_debug_messenger_manager_(
           &logger_, create_info->message_severity, create_info->message_category, create_info->default_debug_messenger)
     , codec_registry_(&logger_)

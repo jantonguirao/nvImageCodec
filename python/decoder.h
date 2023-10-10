@@ -28,12 +28,14 @@ namespace nvimgcodec {
 namespace py = pybind11;
 using namespace py::literals;
 
+class ILogger;
+
 class Decoder
 {
   public:
-    Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+    Decoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
         const std::string& options);
-    Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads,
+    Decoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, int max_num_cpu_threads,
         std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options);
     ~Decoder();
 
@@ -49,13 +51,14 @@ class Decoder
     void exit(const std::optional<pybind11::type>& exc_type, const std::optional<pybind11::object>& exc_value,
         const std::optional<pybind11::object>& traceback);
 
-    static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
+    static void exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogger* logger);
 
   private:
     std::vector<py::object> decode(std::vector<nvimgcodecCodeStream_t>& code_streams, std::optional<DecodeParams> params, intptr_t cuda_stream);
 
     std::shared_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type> decoder_;
     nvimgcodecInstance_t instance_;
+    ILogger* logger_;
 };
 
 } // namespace nvimgcodec

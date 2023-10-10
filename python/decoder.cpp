@@ -13,15 +13,20 @@
 #include <iostream>
 #include <string_view>
 
+#include <ilogger.h>
+#include <log.h>
+
 #include "backend.h"
 #include "error_handling.h"
 #include "type_utils.h"
 
 namespace nvimgcodec {
 
-Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends, const std::string& options)
+Decoder::Decoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, int max_num_cpu_threads,
+    std::optional<std::vector<Backend>> backends, const std::string& options)
     : decoder_(nullptr)
     , instance_(instance)
+    , logger_(logger)
 {
     nvimgcodecDecoder_t decoder;
     std::vector<nvimgcodecBackend_t> nvimgcds_backends(backends.has_value() ? backends.value().size() : 0);
@@ -43,10 +48,11 @@ Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_t
         decoder, [](nvimgcodecDecoder_t decoder) { nvimgcodecDecoderDestroy(decoder); });
 }
 
-Decoder::Decoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds,
-    const std::string& options)
+Decoder::Decoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, int max_num_cpu_threads,
+    std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options)
     : decoder_(nullptr)
     , instance_(instance)
+    , logger_(logger)
 {
     nvimgcodecDecoder_t decoder;
     std::vector<nvimgcodecBackend_t> nvimgcds_backends(backend_kinds.has_value() ? backend_kinds.value().size() : 0);
@@ -99,7 +105,8 @@ py::object Decoder::decode(py::array_t<uint8_t> data, std::optional<DecodeParams
     return images.size() == 1 ? images[0] : py::none();
 }
 
-std::vector<py::object> Decoder::decode(const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream)
+std::vector<py::object> Decoder::decode(
+    const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
     std::vector<nvimgcodecCodeStream_t> code_streams(file_names.size());
     for (uint32_t i = 0; i < file_names.size(); i++) {
@@ -145,8 +152,7 @@ std::vector<py::object> Decoder::decode(
         CHECK_NVIMGCODEC(nvimgcodecCodeStreamGetImageInfo(code_streams[i], &image_info));
 
         if (image_info.num_planes > NVIMGCODEC_MAX_NUM_PLANES) {
-            std::cerr << "Warning: Num Components > " << NVIMGCODEC_MAX_NUM_PLANES << "not supported.  It will not be included in output"
-                      << std::endl;
+            NVIMGCODEC_LOG_WARNING(logger_, "Num Components > " << NVIMGCODEC_MAX_NUM_PLANES << "not supported.  It will not be included in output");
 
             skip_samples++;
             continue;
@@ -222,7 +228,7 @@ std::vector<py::object> Decoder::decode(
     skip_samples = 0;
     for (size_t i = 0; i < decode_status.size(); ++i) {
         if (decode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
-            std::cerr << "Error: Something went wrong during decoding image #" << i << " it will not be included in output" << std::endl;
+            NVIMGCODEC_LOG_WARNING(logger_, "Something went wrong during decoding image #" << i << " it will not be included in output");
             py_images.erase(py_images.begin() + i - skip_samples);
             skip_samples++;
         }
@@ -246,12 +252,13 @@ void Decoder::exit(const std::optional<pybind11::type>& exc_type, const std::opt
     decoder_.reset();
 }
 
-void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
+void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogger* logger)
 {
     py::class_<Decoder>(m, "Decoder")
-        .def(py::init<>(
-                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
-                     const std::string& options) { return new Decoder(instance, device_id, max_num_cpu_threads, backends, options); }),
+        .def(py::init<>([instance, logger](int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+                            const std::string& options) {
+            return new Decoder(instance, logger, device_id, max_num_cpu_threads, backends, options);
+        }),
             R"pbdoc(
             Initialize decoder.
 
@@ -267,9 +274,10 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance)
             )pbdoc",
             "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backends"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
-        .def(py::init<>(
-                 [instance](int device_id, int max_num_cpu_threads, std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds,
-                     const std::string& options) { return new Decoder(instance, device_id, max_num_cpu_threads, backend_kinds, options); }),
+        .def(py::init<>([instance, logger](int device_id, int max_num_cpu_threads,
+                            std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options) {
+            return new Decoder(instance, logger, device_id, max_num_cpu_threads, backend_kinds, options);
+        }),
             R"pbdoc(
             Initialize decoder.
 

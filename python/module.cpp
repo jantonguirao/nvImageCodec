@@ -13,6 +13,8 @@
 
 #include <pybind11/stl_bind.h>
 
+#include <log.h>
+
 #include <nvimgcodec.h>
 #include "image.h"
 #include "module.h"
@@ -36,38 +38,54 @@ uint32_t verbosity2severity(int verbose)
 }
 
 Module::Module()
+    : dbg_messenger_handle_(nullptr)
 {
     int verbosity = 1;
+    std::string verbosity_warning;
     char* v = std::getenv("PYNVIMGCODEC_VERBOSITY");
     try {
         if (v) {
             verbosity = std::stoi(v);
         }
     } catch (std::invalid_argument const& ex) {
-        std::cerr << "Warning: PYNVIMGCODEC_VERBOSITY has wrong value " << std::endl;
+        verbosity_warning = "PYNVIMGCODEC_VERBOSITY has wrong value";
     } catch (std::out_of_range const& ex) {
-        std::cerr << "Warning: PYNVIMGCODEC_VERBOSITY has out of range value " << std::endl;
+        verbosity_warning = "PYNVIMGCODEC_VERBOSITY has out of range value";
     }
 
     nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
     instance_create_info.load_builtin_modules = 1;
     instance_create_info.load_extension_modules = 1;
-    instance_create_info.default_debug_messenger = verbosity > 0 ? 1 : 0;
-    instance_create_info.message_severity = verbosity2severity(verbosity);
-    instance_create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
+
     nvimgcodecInstanceCreate(&instance_, &instance_create_info);
+
+    if (verbosity > 0) {
+        dbg_messenger_ = std::make_unique<DefaultDebugMessenger>(verbosity2severity(verbosity), NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL);
+        logger_ = std::make_unique<Logger>("pynvimgcodec", dbg_messenger_.get());
+
+        const nvimgcodecDebugMessengerDesc_t* dbg_messenger_desc = dbg_messenger_->getDesc();
+        nvimgcodecDebugMessengerCreate(instance_, &dbg_messenger_handle_, dbg_messenger_desc);
+
+        if (!verbosity_warning.empty()) {
+            NVIMGCODEC_LOG_WARNING(logger_.get(), verbosity_warning);
+        }
+    } else {
+        logger_ = std::make_unique<Logger>("pynvimgcodec");
+    }
 }
 
 Module ::~Module()
 {
+    if (dbg_messenger_handle_)
+        nvimgcodecDebugMessengerDestroy(dbg_messenger_handle_);
     nvimgcodecInstanceDestroy(instance_);
 }
 
 void Module::exportToPython(py::module& m, nvimgcodecInstance_t instance)
 {
     m.def(
-        "as_image", [instance](py::handle source, intptr_t cuda_stream) -> Image { return Image(instance, source.ptr(), cuda_stream); },
-        R"pbdoc(
+         "as_image", [instance](py::handle source, intptr_t cuda_stream) -> Image { return Image(instance, source.ptr(), cuda_stream); },
+         R"pbdoc(
         Wraps an external buffer as an image and ties the buffer lifetime to the image
 
         Args:
@@ -80,7 +98,7 @@ void Module::exportToPython(py::module& m, nvimgcodecInstance_t instance)
             nvimgcodec.Image
 
         )pbdoc",
-        "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>())
+         "source"_a, "cuda_stream"_a = 0, py::keep_alive<0, 1>())
         .def(
             "as_images",
             [instance](const std::vector<py::handle>& sources, intptr_t cuda_stream) -> std::vector<py::object> {
