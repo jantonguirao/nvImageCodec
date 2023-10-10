@@ -613,11 +613,11 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
             } else {
                 uint32_t p = 0;
                 decode_buffer = device_buffer;
-                for (p = 0; p < image_info.num_planes; ++p) {
+                for (; p < image_info.num_planes; ++p) {
                     decode_output[p] = device_buffer + p * component_nbytes;
                     pitch_in_bytes[p] = row_nbytes;
                 }
-                for (p = 0; p < num_components; ++p) {
+                for (; p < num_components; ++p) {
                     decode_output[p] = reinterpret_cast<uint8_t*>(decode_tmp_buffer) + (p - image_info.num_planes) * component_nbytes;
                     pitch_in_bytes[p] = row_nbytes;
                 }
