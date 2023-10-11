@@ -33,6 +33,7 @@ class ImageEncoder : public IImageEncoder
     std::unique_ptr<ProcessingResultsFuture> encode(IEncodeState* encode_state_batch,
         const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
         const nvimgcodecEncodeParams_t* params) override;
+    const char* encoderId() const override;
 
   private:
     const nvimgcodecEncoderDesc_t* encoder_desc_;

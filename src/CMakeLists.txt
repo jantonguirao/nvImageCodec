@@ -16,8 +16,6 @@ set(NVIMGCODEC_SRCS
     file_io_stream.cpp
     std_file_io_stream.cpp
     image.cpp
-    logger.cpp
-    default_debug_messenger.cpp
     image_parser_factory.cpp
     image_encoder_factory.cpp
     image_decoder_factory.cpp

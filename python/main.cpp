@@ -72,7 +72,7 @@ PYBIND11_MODULE(nvimgcodec_impl, m)
     Jpeg2kEncodeParams::exportToPython(m);
     EncodeParams::exportToPython(m);
     Image::exportToPython(m);
-    Decoder::exportToPython(m, module.instance_);
-    Encoder::exportToPython(m, module.instance_);
+    Decoder::exportToPython(m, module.instance_, module.logger_.get());
+    Encoder::exportToPython(m, module.instance_, module.logger_.get());
     Module::exportToPython(m, module.instance_);
 }

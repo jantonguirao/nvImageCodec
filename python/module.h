@@ -16,6 +16,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <default_debug_messenger.h>
+#include <logger.h>
+
 namespace nvimgcodec {
 
 namespace py = pybind11;
@@ -31,6 +34,9 @@ class Module
     static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
 
     nvimgcodecInstance_t instance_;
+    std::unique_ptr<DefaultDebugMessenger> dbg_messenger_;
+    std::unique_ptr<Logger> logger_;
+    nvimgcodecDebugMessenger_t dbg_messenger_handle_;
 };
 
 } // namespace nvimgcodec

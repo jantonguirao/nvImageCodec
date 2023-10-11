@@ -33,6 +33,7 @@ class IImageEncoder
     virtual std::unique_ptr<ProcessingResultsFuture> encode(IEncodeState* encode_state_batch,
         const std::vector<IImage*>& images, const std::vector<ICodeStream*>& code_streams,
         const nvimgcodecEncodeParams_t* params) = 0;
+    virtual const char* encoderId() const = 0;
 };
 
 } // namespace nvimgcodec

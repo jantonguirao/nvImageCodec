@@ -27,7 +27,7 @@ namespace nvimgcodec {
 
 class IDebugMessenger;
 
-class NvImgCodecsDirector
+class NvImgCodecDirector
 {
   public:
     struct DefaultDebugMessengerManager
@@ -50,8 +50,8 @@ class NvImgCodecsDirector
         std::unique_ptr<DefaultDebugMessenger> dbg_messenger_;
     };
 
-    explicit NvImgCodecsDirector(const nvimgcodecInstanceCreateInfo_t* create_info);
-    ~NvImgCodecsDirector();
+    explicit NvImgCodecDirector(const nvimgcodecInstanceCreateInfo_t* create_info);
+    ~NvImgCodecDirector();
 
     std::unique_ptr<CodeStream> createCodeStream();
     std::unique_ptr<ImageGenericDecoder> createGenericDecoder(const nvimgcodecExecutionParams_t* exec_params, const char* options);

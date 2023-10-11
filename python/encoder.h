@@ -28,12 +28,14 @@ namespace nvimgcodec {
 namespace py = pybind11;
 using namespace py::literals;
 
+class ILogger;
+
 class Encoder
 {
   public:
-    Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
+    Encoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, int max_num_cpu_threads, std::optional<std::vector<Backend>> backends,
         const std::string& options);
-    Encoder(nvimgcodecInstance_t instance, int device_id, int max_num_cpu_threads,
+    Encoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, int max_num_cpu_threads,
         std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options);
     ~Encoder();
 
@@ -48,7 +50,7 @@ class Encoder
     void exit(const std::optional<pybind11::type>& exc_type, const std::optional<pybind11::object>& exc_value,
         const std::optional<pybind11::object>& traceback);
 
-    static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
+    static void exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogger* logger);
 
   private:
     void convertPyImagesToImages(const std::vector<py::handle>& py_images, std::vector<Image*>* images, intptr_t cuda_stream);
@@ -65,6 +67,7 @@ class Encoder
 
     std::shared_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type> encoder_;
     nvimgcodecInstance_t instance_;
+    ILogger* logger_;
 };
 
 } // namespace nvimgcodec

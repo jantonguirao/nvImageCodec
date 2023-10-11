@@ -96,4 +96,9 @@ std::unique_ptr<ProcessingResultsFuture> ImageEncoder::encode(IEncodeState* enco
     return future;
 }
 
+const char* ImageEncoder::encoderId() const
+{
+    return encoder_desc_->id;
+}
+
 } // namespace nvimgcodec

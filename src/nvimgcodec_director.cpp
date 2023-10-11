@@ -20,8 +20,8 @@
 
 namespace nvimgcodec {
 
-NvImgCodecsDirector::NvImgCodecsDirector(const nvimgcodecInstanceCreateInfo_t* create_info)
-    : logger_()
+NvImgCodecDirector::NvImgCodecDirector(const nvimgcodecInstanceCreateInfo_t* create_info)
+    : logger_("nvimgcodec")
     , default_debug_messenger_manager_(
           &logger_, create_info->message_severity, create_info->message_category, create_info->default_debug_messenger)
     , codec_registry_(&logger_)
@@ -38,33 +38,33 @@ NvImgCodecsDirector::NvImgCodecsDirector(const nvimgcodecInstanceCreateInfo_t* c
     }
 }
 
-NvImgCodecsDirector::~NvImgCodecsDirector()
+NvImgCodecDirector::~NvImgCodecDirector()
 {
 }
 
-std::unique_ptr<CodeStream> NvImgCodecsDirector::createCodeStream()
+std::unique_ptr<CodeStream> NvImgCodecDirector::createCodeStream()
 {
     return std::make_unique<CodeStream>(&codec_registry_, std::make_unique<IoStreamFactory>());
 }
 
-std::unique_ptr<ImageGenericDecoder> NvImgCodecsDirector::createGenericDecoder(
+std::unique_ptr<ImageGenericDecoder> NvImgCodecDirector::createGenericDecoder(
     const nvimgcodecExecutionParams_t* exec_params, const char* options)
 {
     return std::make_unique<ImageGenericDecoder>(&logger_, &codec_registry_, exec_params, options);
 }
 
-std::unique_ptr<ImageGenericEncoder> NvImgCodecsDirector::createGenericEncoder(
+std::unique_ptr<ImageGenericEncoder> NvImgCodecDirector::createGenericEncoder(
     const nvimgcodecExecutionParams_t* exec_params, const char* options)
 {
     return std::make_unique<ImageGenericEncoder>(&logger_, &codec_registry_, exec_params, options);
 }
 
-void NvImgCodecsDirector::registerDebugMessenger(IDebugMessenger* messenger)
+void NvImgCodecDirector::registerDebugMessenger(IDebugMessenger* messenger)
 {
     logger_.registerDebugMessenger(messenger);
 }
 
-void NvImgCodecsDirector::unregisterDebugMessenger(IDebugMessenger* messenger)
+void NvImgCodecDirector::unregisterDebugMessenger(IDebugMessenger* messenger)
 {
     logger_.unregisterDebugMessenger(messenger);
 }
