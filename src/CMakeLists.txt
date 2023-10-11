@@ -151,19 +151,21 @@ install(
 )
 
 # Config
-#   * <prefix>/lib/cmake/nvimgcodec/nvimgcodecConfig.cmake
-#   * <prefix>/lib/cmake/nvimgcodec/nvimgcodecConfigVersion.cmake
+#   * <prefix>/cmake/nvimgcodec/nvimgcodecConfig.cmake
+#   * <prefix>/cmake/nvimgcodec/nvimgcodecConfigVersion.cmake
 install(
     FILES "${project_config}" "${version_config}"
-    DESTINATION "${config_install_dir}"
+    DESTINATION "cmake/nvimgcodec"
+    COMPONENT lib
 )
 
 # Config
-#   * <prefix>/lib/cmake/nvimgcodec/nvimgcodecTargets.cmake
+#   * <prefix>/cmake/nvimgcodec/nvimgcodecTargets.cmake
 install(
     EXPORT "${TARGETS_EXPORT_NAME}"
     NAMESPACE "${namespace}"
-    DESTINATION "${config_install_dir}"
+    DESTINATION "cmake/nvimgcodec"
+    COMPONENT lib
 )
 
 # }
