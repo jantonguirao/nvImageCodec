@@ -19,19 +19,22 @@ def file_md5(file_name):
 @t.mark.parametrize(
     "input_img_file,codec,output_img_file,params,check_sum",
     [
-    ("base/4k_lossless.bmp", "bmp", "4k_lossless-bmp.bmp", "", "22f22e349eb022199a66eaf4d09a2642"),
-    ("base/4k_lossless.bmp", "jpeg",  "4k_lossless-bmp.jpg","", "546f0d10710f4357a9d1c6070487c28f"),
-    ("base/4k_lossless.bmp", "jpeg2k", "4k_lossless-bmp.jp2", "--enc_color_trans true", "69e3a367c872603a8fbc784dcaf10931"),
-    ("base/4k_lossless.jp2", "bmp", "4k_lossless-jp2.bmp","", "22f22e349eb022199a66eaf4d09a2642"),
-    ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2.jpg","", "546f0d10710f4357a9d1c6070487c28f"),
-    ("base/4k_lossless.jp2", "jpeg2k", "4k_lossless-jp2.jp2", "--enc_color_trans true", "69e3a367c872603a8fbc784dcaf10931"),
-    ("base/4k_lossless_q95_444.jpg", "bmp", "4k_lossless-jpg.bmp","", "bc661957135a90af7a74702b06c4b633"),
-    ("base/4k_lossless_q95_444.jpg", "jpeg", "4k_lossless-jpg.jpg","", "34e667ecd9df74f8be165bedbac72bb0"),
-    ("base/4k_lossless_q95_444.jpg", "jpeg2k", "4k_lossless-jpg.jp2", "--enc_color_trans true", "f34e26bdcddd718428a5494b609a1c56"),
+    ("bmp/cat-111793_640.bmp", "bmp", "cat-111793_640-bmp.bmp", "", "af0f5318093b040bcef8184925444ca1"),
+    ("bmp/cat-111793_640.bmp", "jpeg",  "cat-111793_640-bmp.jpg","", "2b9b14c674aa3a5d9384a5dffcddd1e5"),
+    ("bmp/cat-111793_640.bmp", "jpeg2k", "cat-111793_640-bmp.jp2", "--enc_color_trans true", "c5c1d9400c095ae5b56284c777063e4f"),
+    
+    ("jpeg2k/cat-1046544_640.jp2", "bmp", "cat-1046544_640-jp2.bmp","", "d71ed0034f242ee163420629d26a8f64"),
+    ("jpeg2k/cat-1046544_640.jp2", "jpeg", "cat-1046544_640-jp2.jpg","", "4d283fb05a2edf443fdf8fa6481da8a8"),
+    ("jpeg2k/cat-1046544_640.jp2", "jpeg2k", "cat-1046544_640-jp2.jp2", "--enc_color_trans true", "150e1eb7929680a3d0c2e1647e51e525"),
+    
+    ("jpeg/padlock-406986_640_444.jpg", "bmp", "padlock-406986_640_444-jpg.bmp","", "0b5846e30997034867d08843e527b951"),
+    ("jpeg/padlock-406986_640_444.jpg", "jpeg", "padlock-406986_640_444-jpg.jpg","", "8d7e0c2b8a458f6ec4b6af03cc1c9f16"),
+    ("jpeg/padlock-406986_640_444.jpg", "jpeg2k", "padlock-406986_640_444-jpg.jp2", "--enc_color_trans true", "7c6a2375a8b1387036bd7a02c19e8f8e"),
 
-    ("base/4k_lossless.bmp", "jpeg",  "4k_lossless-bmp-420.jpg","--chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
-    ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-420.jpg","--chroma_subsampling 420", "cba05a2ab83cf6a702f2d273dfbbae50"),
-    ("base/4k_lossless.jp2", "jpeg", "4k_lossless-jp2-422.jpg","--chroma_subsampling 422", "288ea71d08e74876d90c89c33284c56f"),
+    #encoding with chroma subsampling
+    ("bmp/cat-111793_640.bmp", "jpeg",  "cat-111793_640-bmp-420.jpg","--chroma_subsampling 420", "68dad28a9c8dcd3b28f426441ab229ab"),
+    ("jpeg2k/cat-1046544_640.jp2", "jpeg", "cat-1046544_640-jp2-420.jpg","--chroma_subsampling 420", "a682802dabbeebffbbed9e74f9756ec2"),
+    ("jpeg2k/cat-1046544_640.jp2", "jpeg", "cat-1046544_640-jp2-422.jpg","--chroma_subsampling 422", "1d587d174b5ce5640c74bd549e3a7145"),
     
     #jpeg various input chroma subsampling
     ("jpeg/padlock-406986_640_410.jpg", "bmp",    "padlock-406986_640_410-jpg.bmp", "", "01d3488f82c6422a76db5ab0e89e8a86"),
@@ -59,9 +62,9 @@ def file_md5(file_name):
     ("jpeg/padlock-406986_640_444.jpg", "jpeg2k", "padlock-406986_640_444-jpg.jp2", "--enc_color_trans true", "7c6a2375a8b1387036bd7a02c19e8f8e"),
 
     #test pnm
-    ("base/4k_lossless.bmp", "pnm", "4k_lossless-bmp.ppm","", "0a26f98671a4eba8e2092d2777fc701d"),
-    ("base/4k_lossless_q95_444.jpg", "pnm", "4k_lossless-jpg.ppm","", "78521addd2e1d4838faf525ce8704ad2"),
-    ("base/4k_lossless.jp2", "pnm", "4k_lossless-jp2.ppm", "", "0a26f98671a4eba8e2092d2777fc701d"),
+    ("bmp/cat-111793_640.bmp", "pnm", "cat-111793_640-bmp.ppm","", "71eaeeb40e303a19ac3d7ada7535dae0"),
+    ("jpeg/padlock-406986_640_444.jpg", "pnm", "padlock-406986_640_444-jpg.ppm","", "ca6fd0ebdf493dfa3a4d87225862b17b"),
+    ("jpeg2k/cat-1046544_640.jp2", "pnm", "cat-1046544_640-jp2.ppm", "", "1b9f1f5283a44cbfae56b5ec72089fd1"),
     
     #test orientation
     ("jpeg/exif/padlock-406986_640_rotate_270.jpg", "bmp", "padlock-406986_640_rotate_270-exif_orientation_enabled.bmp", "", "70c64d06465f26100d7bcbb6a193404a"),
