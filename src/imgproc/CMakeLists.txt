@@ -1,0 +1,3 @@
+
+add_library(nvimgcodec_imgproc_static OBJECT convert_kernel_gpu.cu)
+set_property(TARGET nvimgcodec_imgproc_static PROPERTY POSITION_INDEPENDENT_CODE ON)

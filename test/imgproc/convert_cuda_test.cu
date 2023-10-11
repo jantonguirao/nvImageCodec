@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include <gtest/gtest.h>
-#include "process/convert.h"
-#include "process/math_util.h"
+#include "imgproc/convert.h"
+#include "imgproc/math_util.h"
 #include "convert_test_static.h"
 #include "device_test.h"
 

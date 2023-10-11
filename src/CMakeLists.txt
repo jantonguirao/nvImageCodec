@@ -1,6 +1,6 @@
 set(NVIMGCODEC_LIBRARY_NAME nvimgcodec)
 
-add_subdirectory(process)
+add_subdirectory(imgproc)
 
 set(NVIMGCODEC_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodec.h

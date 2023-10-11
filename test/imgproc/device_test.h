@@ -16,7 +16,7 @@
 
 #include <gtest/gtest.h>
 #include <cuda_runtime.h>
-#include "process/dev_string.h"
+#include "imgproc/dev_string.h"
 
 #define MAX_DEVICE_ERROR_MESSAGES 100
 
