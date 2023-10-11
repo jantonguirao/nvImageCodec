@@ -20,8 +20,8 @@ set(SRCS
     parsers/webp_test.cpp
     api/can_decode_test.cpp
     api/can_encode_test.cpp
-    process/convert_cuda_test.cu
-    process/convert_test.cc
+    imgproc/convert_cuda_test.cu
+    imgproc/convert_test.cc
 )
 
 if (BUILD_NVJPEG_EXT)

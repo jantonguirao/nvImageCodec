@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "process/convert.h"
+#include "imgproc/convert.h"
 
 namespace nvimgcodec {
 

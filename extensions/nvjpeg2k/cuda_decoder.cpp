@@ -17,7 +17,7 @@
 #include <npp.h>
 #include <nppdefs.h>
 #include <nppi_color_conversion.h>
-#include "process/convert_kernel_gpu.h"
+#include "imgproc/convert_kernel_gpu.h"
 
 namespace nvjpeg2k {
 
