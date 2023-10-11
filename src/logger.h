@@ -30,10 +30,10 @@ class Logger : public ILogger
             messengers_.push_back(messenger);
     }
 
-    static ILogger* get()
+    static ILogger* get_default()
     {
-        static DefaultDebugMessenger default_debug_messanger;
-        static Logger instance("nvimgcodec", &default_debug_messanger);
+        static DefaultDebugMessenger default_debug_messenger;
+        static Logger instance("nvimgcodec", &default_debug_messenger);
 
         return &instance;
     }
@@ -58,8 +58,11 @@ class Logger : public ILogger
     }
 
     void registerDebugMessenger(IDebugMessenger* messenger) override
-    { 
-      messengers_.push_back(messenger); 
+    {
+        auto it = std::find(messengers_.begin(), messengers_.end(), messenger);
+        if (it == messengers_.end()) {
+            messengers_.push_back(messenger);
+        }
     }
 
     void unregisterDebugMessenger(IDebugMessenger* messenger) override

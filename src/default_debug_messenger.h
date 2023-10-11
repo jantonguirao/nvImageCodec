@@ -60,11 +60,11 @@ class DefaultDebugMessenger : public IDebugMessenger
         }
 
         switch (message_severity) {
-        case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_ERROR:
-            std::cerr << "[ERROR] ";
-            break;
         case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_FATAL:
             std::cerr << "[FATAL ERROR] ";
+            break;
+        case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_ERROR:
+            std::cerr << "[ERROR] ";
             break;
         case NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_WARNING:
             std::cerr << "[WARNING] ";

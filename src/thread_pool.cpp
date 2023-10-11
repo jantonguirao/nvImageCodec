@@ -21,7 +21,7 @@ ThreadPool::ThreadPool(int num_thread, int device_id, bool set_affinity, const c
     : threads_(num_thread), running_(true), work_complete_(true), started_(false)
     , active_threads_(0) {
   if (num_thread == 0) {
-    NVIMGCODEC_LOG_FATAL(Logger::get(), "Thread pool must have non-zero size");
+    NVIMGCODEC_LOG_FATAL(Logger::get_default(), "Thread pool must have non-zero size");
   }
 #if NVML_ENABLED
   // only for the CPU pipeline
@@ -131,7 +131,7 @@ void ThreadPool::threadMain(int thread_id, int device_id, bool set_affinity,
         if ((size_t)thread_id < vec.size()) {
           core = std::stoi(vec[thread_id]);
         } else {
-          NVIMGCODEC_LOG_WARNING(Logger::get(), 
+          NVIMGCODEC_LOG_WARNING(Logger::get_default(), 
               "NVIMGCODEC environment variable is set, "
               "but does not have enough entries: thread_id (",
               thread_id, ") vs #entries (", vec.size(), "). Ignoring...");

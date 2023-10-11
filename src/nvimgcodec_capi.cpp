@@ -85,25 +85,25 @@ __inline__ nvimgcodecStatus_t getCAPICode(Status status)
         }                                                                    \
         catch (...)                                                          \
         {                                                                    \
-            NVIMGCODEC_LOG_ERROR(Logger::get(),  "Unknown NVIMGCODEC error"); \
+            NVIMGCODEC_LOG_ERROR(Logger::get_default(),  "Unknown NVIMGCODEC error"); \
             a = NVIMGCODEC_STATUS_INTERNAL_ERROR;                             \
         }
 #else
     #define NVIMGCODECAPI_CATCH(a)                                                                                                   \
         catch (const Exception& e)                                                                                                  \
         {                                                                                                                           \
-            NVIMGCODEC_LOG_ERROR(Logger::get(),                                                                                       \
+            NVIMGCODEC_LOG_ERROR(Logger::get_default(),                                                                                       \
                 "Error status: " << e.status() << " Where: " << e.where() << " Message: " << e.message() << " What: " << e.what()); \
             a = getCAPICode(e.status());                                                                                            \
         }                                                                                                                           \
         catch (const std::runtime_error& e)                                                                                         \
         {                                                                                                                           \
-            NVIMGCODEC_LOG_ERROR(Logger::get(), e.what());                                                                                          \
+            NVIMGCODEC_LOG_ERROR(Logger::get_default(), e.what());                                                                                          \
             a = NVIMGCODEC_STATUS_INTERNAL_ERROR;                                                                                    \
         }                                                                                                                           \
         catch (...)                                                                                                                 \
         {                                                                                                                           \
-            NVIMGCODEC_LOG_ERROR(Logger::get(), "Unknown NVIMGCODEC error");                                                                       \
+            NVIMGCODEC_LOG_ERROR(Logger::get_default(), "Unknown NVIMGCODEC error");                                                                       \
             a = NVIMGCODEC_STATUS_INTERNAL_ERROR;                                                                                    \
         }
 #endif
@@ -114,7 +114,7 @@ struct nvimgcodecInstance
         : director_(create_info)
     {
     }
-    NvImgCodecsDirector director_;
+    NvImgCodecDirector director_;
 };
 
 struct nvimgcodecFuture
@@ -459,7 +459,7 @@ nvimgcodecStatus_t nvimgcodecImageCreate(nvimgcodecInstance_t instance, nvimgcod
             CHECK_NULL(image_info->buffer)
             if (image_info->buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_UNKNOWN ||
                 image_info->buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_UNSUPPORTED) {
-                NVIMGCODEC_LOG_ERROR(Logger::get(), "Unknown or unsupported buffer kind");
+                NVIMGCODEC_LOG_ERROR(Logger::get_default(), "Unknown or unsupported buffer kind");
                 return NVIMGCODEC_STATUS_INVALID_PARAMETER;
             }
 
