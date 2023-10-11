@@ -64,8 +64,8 @@ def file_md5(file_name):
     ("base/4k_lossless.jp2", "pnm", "4k_lossless-jp2.ppm", "", "0a26f98671a4eba8e2092d2777fc701d"),
     
     #test orientation
-    ("base/f8-exif.jpg", "bmp", "f8-exif_orientation_enabled.bmp", "", "02fa6fe20734b0463b6bed8623d405c4"),
-    ("base/f8-exif.jpg", "bmp", "f8-exif_orientation_disabled.bmp", "--ignore_orientation true", "e44b36cc1056cefb8df7473d96dd65e7"),
+    ("jpeg/exif/padlock-406986_640_rotate_270.jpg", "bmp", "padlock-406986_640_rotate_270-exif_orientation_enabled.bmp", "", "70c64d06465f26100d7bcbb6a193404a"),
+    ("jpeg/exif/padlock-406986_640_rotate_270.jpg", "bmp", "padlock-406986_640_rotate_270-exif_orientation_disabled.bmp", "--ignore_orientation true", "a04595f50cfbe8d9d5726a8eb3dc70f1"),
     ]
 )
 def test_imtrans(tmp_path, input_img_file, codec, output_img_file, params, check_sum):
