@@ -1,5 +1,7 @@
 set(NVIMGCODEC_LIBRARY_NAME nvimgcodec)
 
+add_subdirectory(process)
+
 set(NVIMGCODEC_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/../include/nvimgcodec.h
     nvimgcodec_capi.cpp

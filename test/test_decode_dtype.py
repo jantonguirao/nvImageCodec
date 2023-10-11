@@ -1,0 +1,43 @@
+from __future__ import annotations
+import os
+import numpy as np
+from nvidia import nvimgcodec
+
+img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
+
+def impl_decode_single_jpeg2k_dtype_with_precision(img_path, shape, dtype, precision):
+    input_img_path = os.path.join(img_dir_path, img_path)
+    decoder = nvimgcodec.Decoder()
+
+    type_precision = (dtype(0).nbytes * 8)
+
+    # First decode to the original bitdepth
+    img_any_depth = decoder.read(input_img_path, params=nvimgcodec.DecodeParams(allow_any_depth=True))
+    assert img_any_depth.shape == shape
+    assert img_any_depth.dtype == dtype
+    img_precision = img_any_depth.precision or type_precision
+    assert img_precision == precision
+    data_any_depth = np.array(img_any_depth.cpu())
+    # Scale it down, to compare later
+    data_any_depth_converted_u8 = (data_any_depth * (255 / ((2**precision)-1))).astype(np.uint8)
+    # nvimgcodec.Encoder().write("a.bmp", data_any_depth_converted_u8)
+
+    # Now decode without extra parameters, meaning we will decode to HWC RGB u8 always (scaling the 12 bit dynamic range to 8 bit dynamic range)
+    img_u8 = decoder.read(input_img_path, params=nvimgcodec.DecodeParams(allow_any_depth=False))
+    assert img_u8.shape == shape
+    assert img_u8.dtype == np.uint8
+    assert img_u8.precision == 0
+    data_u8 = np.array(img_u8.cpu())
+    # nvimgcodec.Encoder().write("b.bmp", data_u8)
+
+    atol = 1 if precision != 0 and precision != type_precision else 0
+    np.testing.assert_allclose(data_u8, data_any_depth_converted_u8, atol=atol)
+
+def test_decode_single_jpeg2k_16bit():
+    impl_decode_single_jpeg2k_dtype_with_precision("jpeg2k/cat-1046544_640-16bit.jp2", (475, 640, 3), np.uint16, 16)
+
+def test_decode_single_jpeg2k_12bit():
+    impl_decode_single_jpeg2k_dtype_with_precision("jpeg2k/cat-1245673_640-12bit.jp2", (423, 640, 3), np.uint16, 12)
+
+def test_decode_single_jpeg2k_5bit():
+    impl_decode_single_jpeg2k_dtype_with_precision("jpeg2k/cat-1245673_640-5bit.jp2", (423, 640, 3), np.uint8, 5)

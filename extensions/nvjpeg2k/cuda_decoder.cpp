@@ -17,6 +17,7 @@
 #include <npp.h>
 #include <nppdefs.h>
 #include <nppi_color_conversion.h>
+#include "process/convert_kernel_gpu.h"
 
 namespace nvjpeg2k {
 
@@ -347,7 +348,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
         nvtx3::scoped_range marker{"nvjpeg2k decode " + std::to_string(sample_idx)};
         auto* decode_state = reinterpret_cast<NvJpeg2kDecoderPlugin::DecodeState*>(context);
         auto& t = decode_state->per_thread_[tid];
-        auto &per_tile_res = decode_state->per_tile_res_;
+        auto& per_tile_res = decode_state->per_tile_res_;
         auto& framework_ = decode_state->framework_;
         auto& plugin_id_ = decode_state->plugin_id_;
         auto* parse_state = t.parse_state_.get();
@@ -423,13 +424,21 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
             std::vector<size_t> pitch_in_bytes(num_components);
             nvjpeg2kImage_t output_image;
 
-            size_t bytes_per_sample;
+            nvimgcodecSampleDataType_t out_data_type = image_info.plane_info[0].sample_type;
+            size_t out_bytes_per_sample = static_cast<unsigned int>(out_data_type) >> (8 + 3);
+            for (size_t p = 1; p < image_info.num_planes; p++) {
+                if (image_info.plane_info[p].sample_type != out_data_type) {
+                    NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "All components are expected to have the same data type");
+                    image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
+                    return;
+                }
+            }
+
             nvimgcodecSampleDataType_t orig_data_type;
             if (sgn) {
                 if ((bpp > 8) && (bpp <= 16)) {
                     output_image.pixel_type = NVJPEG2K_INT16;
                     orig_data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_INT16;
-                    bytes_per_sample = 2;
                 } else {
                     NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "unsupported bit depth for a signed type. It must be 8 > bpp <= 16");
                     image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
@@ -439,24 +448,30 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                 if (bpp <= 8) {
                     output_image.pixel_type = NVJPEG2K_UINT8;
                     orig_data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
-                    bytes_per_sample = 1;
                 } else if (bpp <= 16) {
                     output_image.pixel_type = NVJPEG2K_UINT16;
                     orig_data_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16;
-                    bytes_per_sample = 2;
                 } else {
                     NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "bit depth not supported");
                     image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
                     return;
                 }
             }
+            size_t bytes_per_sample = static_cast<unsigned int>(orig_data_type) >> (8 + 3);
+            size_t bits_per_sample = bytes_per_sample << 3;
 
             nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
             code_stream->getImageInfo(code_stream->instance, &cs_image_info);
-            bool interleaved = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB ||
+            bool convert_interleaved = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB ||
                                (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED && num_components > 1);
-            bool gray =
+            bool convert_gray =
                 (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_P_Y) && (cs_image_info.sample_format != NVIMGCODEC_SAMPLEFORMAT_P_Y);
+            bool convert_dtype = image_info.plane_info[0].sample_type != orig_data_type || (bpp != bits_per_sample && image_info.plane_info[0].precision != bpp);
+            if (convert_dtype && out_data_type != NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8) {
+                NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Only original dtype or conversion to uint8 is allowed");
+                image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
+                return;
+            }
 
             nvjpeg2kDecodeParams_t decode_params;
             nvjpeg2kDecodeParamsCreate(&decode_params);
@@ -467,20 +482,24 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                 image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB ||
                 (image_info.color_spec == NVIMGCODEC_COLORSPEC_UNCHANGED && cs_image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB);
             XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, rgb_output));
+            // original dtype nbytes
             size_t row_nbytes;
             size_t component_nbytes;
-            if (!interleaved && num_components < image_info.num_planes) {
+            // output dtype nbytes
+            size_t out_row_nbytes;
+            size_t out_component_nbytes;
+            if (!convert_interleaved && num_components < image_info.num_planes) {
                 NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected number of planes");
                 image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
                 return;
-            } else if (interleaved && num_components < image_info.plane_info[0].num_channels) {
+            } else if (convert_interleaved && num_components < image_info.plane_info[0].num_channels) {
                 NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected number of channels");
                 image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
                 return;
             }
-            for (size_t p = 0; p < image_info.num_planes; p++) {
-                if (image_info.plane_info[p].sample_type != orig_data_type) {
-                    NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected sample data type");
+            for (size_t p = 1; p < image_info.num_planes; p++) {
+                if (image_info.plane_info[p].sample_type != image_info.plane_info[0].sample_type) {
+                    NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "All components are expected to have the same data type");
                     image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
                     return;
                 }
@@ -502,6 +521,8 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                 }
                 row_nbytes = roi_width * bytes_per_sample;
                 component_nbytes = roi_height * row_nbytes;
+                out_row_nbytes = roi_width * out_bytes_per_sample;
+                out_component_nbytes = roi_height * out_row_nbytes;
             } else {
                 for (size_t p = 0; p < image_info.num_planes; p++) {
                     if (height != image_info.plane_info[p].height || width != image_info.plane_info[p].width) {
@@ -512,66 +533,95 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                 }
                 row_nbytes = width * bytes_per_sample;
                 component_nbytes = height * row_nbytes;
+                out_row_nbytes = width * out_bytes_per_sample;
+                out_component_nbytes = height * out_row_nbytes;
             }
 
-            if (image_info.buffer_size < component_nbytes * image_info.num_planes) {
+            if (image_info.buffer_size < out_component_nbytes * image_info.num_planes) {
                 NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "The provided buffer can't hold the decoded image : " << image_info.num_planes);
                 image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
                 return;
             }
 
-            unsigned char* decode_buffer = device_buffer;
-            if (gray) {
-                // we allocate memory for planar-to-interleaved first, then for RGB to gray conversion (therefore the x 2)
-                decode_tmp_buffer_sz = (num_components * 2) * component_nbytes;
+            uint8_t* decode_buffer = nullptr;
+            uint8_t* out_convert_dtype = nullptr;
+            uint8_t* out_convert_interleaved = nullptr;
+            uint8_t* out_convert_gray = nullptr;
+
+            bool needs_convert = convert_gray || convert_interleaved || convert_dtype;
+            bool planar_subset = image_info.num_planes > 1 && num_components > image_info.num_planes;
+            if (needs_convert || planar_subset) {
+                size_t current_offset = 0;
+                size_t out_convert_dtype_offset = 0;
+                size_t out_convert_interleaved_offset = 0;
+
+                if (needs_convert) {
+                    // If there are conversions needed, we decode to a temporary buffer first
+                    current_offset = num_components * component_nbytes;
+                } else if (planar_subset) {
+                    // If there are more components than we want, we allocate temp memory for the planes we don't need
+                    current_offset = (num_components - image_info.num_planes) * component_nbytes;
+                }
+
+                if (convert_dtype) {  // Do we need to convert dtype?
+                    if (convert_interleaved || convert_gray) {
+                        // If there are more conversions, allocate a temporary buffer for the output of dtype conversion
+                        out_convert_dtype_offset = current_offset;
+                        current_offset += num_components * out_component_nbytes;
+                    } else {
+                        // Otherwise, convert directly to the output buffer
+                        out_convert_dtype = device_buffer;
+                    }
+                }
+
+                if (convert_interleaved) {  // Do we need to convert to interleaved ?
+                    if (convert_gray) {
+                        // If there are more conversions, allocate a temporary buffer for the output of planar to interleaved conversion
+                        out_convert_interleaved_offset = current_offset;
+                        current_offset += num_components * out_component_nbytes;
+                    } else {
+                        // Otherwise, convert directly to the output buffer
+                        out_convert_interleaved = device_buffer;
+                    }
+                }
+
+                if (convert_gray) {  // Do we need to convert to gray ?
+                    // no more conversions so we can convert directly to the output buffer
+                    out_convert_gray = device_buffer;
+                }
+
+                decode_tmp_buffer_sz = current_offset;  // allocate a single chunk of memory for all the temporary buffers we need
                 if (decode_state->device_allocator_) {
                     decode_state->device_allocator_->device_malloc(
                         decode_state->device_allocator_->device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
                 } else {
                     XM_CHECK_CUDA(cudaMallocAsync(&decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_));
                 }
-                decode_buffer = reinterpret_cast<uint8_t*>(decode_tmp_buffer);
 
-                for (uint32_t p = 0; p < num_components; ++p) {
-                    decode_output[p] = decode_buffer + p * component_nbytes;
-                    pitch_in_bytes[p] = row_nbytes;
-                }
-            } else if (interleaved) {
-                decode_tmp_buffer_sz = num_components * component_nbytes;
-                if (decode_state->device_allocator_) {
-                    decode_state->device_allocator_->device_malloc(
-                        decode_state->device_allocator_->device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
-                } else {
-                    XM_CHECK_CUDA(cudaMallocAsync(&decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_));
-                }
-                decode_buffer = reinterpret_cast<uint8_t*>(decode_tmp_buffer);
+                if (!out_convert_dtype && convert_dtype)
+                    out_convert_dtype = reinterpret_cast<uint8_t*>(decode_tmp_buffer) + out_convert_dtype_offset;
+                if (!out_convert_interleaved && convert_interleaved)
+                    out_convert_interleaved = reinterpret_cast<uint8_t*>(decode_tmp_buffer) + out_convert_interleaved_offset;
+            }
 
+            if (needs_convert) {
+                decode_buffer = reinterpret_cast<uint8_t*>(decode_tmp_buffer);
                 for (uint32_t p = 0; p < num_components; ++p) {
                     decode_output[p] = decode_buffer + p * component_nbytes;
                     pitch_in_bytes[p] = row_nbytes;
                 }
             } else {
-                if (num_components > image_info.num_planes) {
-                    decode_tmp_buffer_sz = (num_components - image_info.num_planes) * component_nbytes;
-                    if (decode_state->device_allocator_) {
-                        decode_state->device_allocator_->device_malloc(
-                            decode_state->device_allocator_->device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
-                    } else {
-                        XM_CHECK_CUDA(cudaMallocAsync(&decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_));
-                    }
-                }
                 uint32_t p = 0;
-                for (p = 0; p < image_info.num_planes; ++p) {
-                    decode_output[p] = decode_buffer + p * component_nbytes;
+                decode_buffer = device_buffer;
+                for (; p < image_info.num_planes; ++p) {
+                    decode_output[p] = device_buffer + p * component_nbytes;
                     pitch_in_bytes[p] = row_nbytes;
                 }
-                // use the temp buffer for the planes we don't need
                 for (; p < num_components; ++p) {
                     decode_output[p] = reinterpret_cast<uint8_t*>(decode_tmp_buffer) + (p - image_info.num_planes) * component_nbytes;
                     pitch_in_bytes[p] = row_nbytes;
                 }
             }
-
             output_image.num_components = num_components;
             output_image.pixel_data = (void**)&decode_output[0];
             output_image.pitch_in_bytes = &pitch_in_bytes[0];
@@ -618,9 +668,24 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                         output_tile.pitch_in_bytes = output_image.pitch_in_bytes;
                         output_tile.num_components = output_image.num_components;
                         output_tile.pixel_data = reinterpret_cast<void**>(&tile_decode_output[0]);
-                        for (uint32_t c = 0; c < output_image.num_components; c++) {
-                            output_tile.pixel_data[c] =
-                                decode_buffer + c * component_nbytes + offset_y * row_nbytes + offset_x * bytes_per_sample;
+                        uint32_t c = 0;
+                        if (planar_subset) {
+                            // Decode subset of planes directly to the output
+                            for (; c < image_info.num_planes; c++) {
+                                output_tile.pixel_data[c] =
+                                    decode_buffer + c * component_nbytes + offset_y * row_nbytes + offset_x * bytes_per_sample;
+                            }
+                            // Decode remaining planes to a temp buffer
+                            for (; c < output_image.num_components; c++) {
+                                output_tile.pixel_data[c] = reinterpret_cast<uint8_t*>(decode_tmp_buffer) +
+                                                            (c - image_info.num_planes) * component_nbytes + offset_y * row_nbytes +
+                                                            offset_x * bytes_per_sample;
+                            }
+                        } else {
+                            for (uint32_t c = 0; c < output_image.num_components; c++) {
+                                output_tile.pixel_data[c] =
+                                    decode_buffer + c * component_nbytes + offset_y * row_nbytes + offset_x * bytes_per_sample;
+                            }
                         }
                         NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_,
                             "nvjpeg2kDecodeTile: y=[" << tile_y_begin << ", " << tile_y_end << "), x=[" << tile_x_begin << ", "
@@ -644,23 +709,28 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                     XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, *event));
             }
 
-            if (gray || interleaved) {
+            uint8_t* current_buffer = decode_buffer;
+            NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)};
+            int64_t num_elements = static_cast<int64_t>(num_components) * image_info.plane_info[0].width * image_info.plane_info[0].height;
+
+            if (convert_dtype) {
+                nvimgcodec::LaunchConvertNormKernel(out_convert_dtype, out_data_type, current_buffer, orig_data_type, num_elements, t.stream_, bpp);
+                current_buffer = out_convert_dtype;
+            }
+
+            if (convert_gray || convert_interleaved) {
 // TODO(janton): This is a workaround to transpose to interleaved layout. Ideally nvjpeg2k should be able to output interleaved
 // layout directly. To be removed when this is the case.
-#define NPP_CONVERT_PLANAR_TO_INTERLEAVED(NPP_FUNC, DTYPE, NUM_COMPONENTS)                                                                \
-    DTYPE* interleaved_buffer = reinterpret_cast<DTYPE*>(device_buffer);                                                                  \
-    if (gray) {                                                                                                                           \
-        interleaved_buffer = reinterpret_cast<DTYPE*>(reinterpret_cast<uint8_t*>(decode_tmp_buffer) + NUM_COMPONENTS * component_nbytes); \
-    }                                                                                                                                     \
-    const DTYPE* decoded_planes[NUM_COMPONENTS];                                                                                          \
-    for (uint32_t p = 0; p < NUM_COMPONENTS; ++p) {                                                                                       \
-        decoded_planes[p] = reinterpret_cast<const DTYPE*>(decode_tmp_buffer) + p * component_nbytes / sizeof(DTYPE);                     \
-    }                                                                                                                                     \
-    NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)};                \
-    auto status = NPP_FUNC(decoded_planes, row_nbytes, interleaved_buffer, row_nbytes * NUM_COMPONENTS, dims, t.npp_ctx_);                \
-    if (NPP_SUCCESS != status) {                                                                                                          \
-        FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED,                                                                                      \
-            "Failed to transpose the image from planar to interleaved layout " + std::to_string(status));                                 \
+#define NPP_CONVERT_PLANAR_TO_INTERLEAVED(NPP_FUNC, DTYPE, NUM_COMPONENTS)                                                                     \
+    const DTYPE* decoded_planes[NUM_COMPONENTS];                                                                                               \
+    for (uint32_t p = 0; p < NUM_COMPONENTS; ++p) {                                                                                            \
+        decoded_planes[p] = reinterpret_cast<const DTYPE*>(current_buffer) + p * out_component_nbytes / sizeof(DTYPE);                         \
+    }                                                                                                                                          \
+    auto status = NPP_FUNC(decoded_planes, out_row_nbytes, reinterpret_cast<DTYPE*>(out_convert_interleaved), out_row_nbytes * NUM_COMPONENTS, \
+                           dims, t.npp_ctx_);                                                                                                  \
+    if (NPP_SUCCESS != status) {                                                                                                               \
+        FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED,                                                                                           \
+            "Failed to transpose the image from planar to interleaved layout " + std::to_string(status));                                      \
     }
 
                 bool is_rgb = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB ||
@@ -669,13 +739,13 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                 bool is_u8 = image_info.plane_info[0].sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
                 bool is_u16 = image_info.plane_info[0].sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16;
                 bool is_s16 = image_info.plane_info[0].sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_INT16;
-                if ((is_rgb || gray) && is_u8) {
+                if ((is_rgb || convert_gray) && is_u8) {
                     nvtx3::scoped_range marker{"nppiCopy_8u_P3C3R_Ctx"};
                     NPP_CONVERT_PLANAR_TO_INTERLEAVED(nppiCopy_8u_P3C3R_Ctx, uint8_t, 3);
-                } else if ((is_rgb || gray) && is_u16) {
+                } else if ((is_rgb || convert_gray) && is_u16) {
                     nvtx3::scoped_range marker{"nppiCopy_16u_P3C3R_Ctx"};
                     NPP_CONVERT_PLANAR_TO_INTERLEAVED(nppiCopy_16u_P3C3R_Ctx, uint16_t, 3);
-                } else if ((is_rgb || gray) && is_s16) {
+                } else if ((is_rgb || convert_gray) && is_s16) {
                     nvtx3::scoped_range marker{"nppiCopy_16s_P3C3R_Ctx"};
                     NPP_CONVERT_PLANAR_TO_INTERLEAVED(nppiCopy_16s_P3C3R_Ctx, int16_t, 3);
                 } else if (is_rgba && is_u8) {
@@ -692,15 +762,16 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                         "Transposition not implemented for this combination of sample format and data type");
                 }
 
+                current_buffer = out_convert_interleaved;
+
 #undef NPP_CONVERT_PLANAR_TO_INTERLEAVED
 
-                if (gray) {
-#define NPP_CONVERT_RGB_TO_Y(NPP_FUNC, DTYPE)                                                                                          \
-    DTYPE* interleaved_buffer = reinterpret_cast<DTYPE*>(reinterpret_cast<uint8_t*>(decode_tmp_buffer) + 3 * component_nbytes);        \
-    NppiSize dims = {static_cast<int>(image_info.plane_info[0].width), static_cast<int>(image_info.plane_info[0].height)};             \
-    auto status = NPP_FUNC(interleaved_buffer, row_nbytes * 3, reinterpret_cast<DTYPE*>(device_buffer), row_nbytes, dims, t.npp_ctx_); \
-    if (NPP_SUCCESS != status) {                                                                                                       \
-        throw std::runtime_error("Failed to convert from RGB to Grayscale: " + std::to_string(status));                                \
+                if (convert_gray) {
+#define NPP_CONVERT_RGB_TO_Y(NPP_FUNC, DTYPE)                                                                 \
+    auto status = NPP_FUNC(reinterpret_cast<const DTYPE*>(current_buffer), out_row_nbytes * 3,                \
+                           reinterpret_cast<DTYPE*>(out_convert_gray), out_row_nbytes, dims, t.npp_ctx_);     \
+    if (NPP_SUCCESS != status) {                                                                              \
+        throw std::runtime_error("Failed to convert from RGB to Grayscale: " + std::to_string(status));       \
     }
 
                     if (is_u8) {
