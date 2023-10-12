@@ -62,6 +62,7 @@ export LD_LIBRARY_PATH="${PWD}:${LD_LIBRARY_PATH}"
 export Python_EXECUTABLE=$(which python)
 
 cmake ../                                                            \
+      -DBUILD_ID=${NVIDIA_BUILD_ID}                                  \
       -DARCH=${ARCH}                                                 \
       -DCUDA_TARGET_ARCHS=${CUDA_TARGET_ARCHS}                       \
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}                         \
