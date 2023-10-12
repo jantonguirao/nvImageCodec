@@ -14,8 +14,8 @@
 
 from setuptools import setup, find_packages
 
-setup(name='nvidia-nvimgcodec@NVIMGCODEC_FLAVOR_MINUS@-cuda@CUDA_VERSION_SHORT_DIGIT_ONLY@',
-      description='NVIDIA nvimgcodec @NVIMGCODEC_FLAVOR@ for CUDA @CUDA_VERSION_SHORT@. Git SHA: @GIT_SHA@',
+setup(name='nvidia-nvimgcodec@NVIMGCODEC_FLAVOR_MINUS@-cu@CUDA_VERSION_MAJOR@',
+      description='NVIDIA nvimgcodec @NVIMGCODEC_FLAVOR@ for CUDA @CUDA_VERSION_MAJOR@. Git SHA: @GIT_SHA@',
           long_description='''NVIDIA nvimgcodec
 ===========
 
@@ -23,7 +23,7 @@ nvImageCodec is a library of accelerated codec with unified interface. It is des
 ''',
       long_description_content_type="text/x-rst",
       url='https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec',
-      version='@NVIMGCODEC_VERSION@',
+      version='@NVIMGCODEC_VERSION_WITH_BUILD@',
       author='NVIDIA Corporation',
       license='Apache License 2.0',
       packages=find_packages(),

@@ -71,7 +71,7 @@ build:cuda11.8-gcc9:
     script:
         - nvidia-smi
         - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
-        - python3 -m pip install artifacts/nvidia_nvimgcodec_cuda${CUDA_VERSION_MAJOR}0-*.whl
+        - python3 -m pip install artifacts/nvidia_nvimgcodec_cu${CUDA_VERSION_MAJOR}-*.whl
         - pytest-3 -v test/test_python.py
         - pytest-3 -v test/test_decode_multichannel.py
         - pytest-3 -v test/test_decode_dtype.py
