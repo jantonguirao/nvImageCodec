@@ -20,6 +20,8 @@ backends_cpu_only=[nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]
                         ("jpeg2k/with_alpha/cat-111793_640-alpha.jp2", (426, 640, 4), np.uint8, backends_gpu_only),
                         ("jpeg2k/with_alpha_16bit/4ch16bpp.jp2", (497, 497, 4), np.uint16, backends_cpu_only),
                         ("jpeg2k/with_alpha_16bit/4ch16bpp.jp2", (497, 497, 4), np.uint16, backends_gpu_only),
+                        ("jpeg2k/tiled-cat-1046544_640_gray.jp2", (475, 640, 1), np.uint8, backends_cpu_only),
+                        ("jpeg2k/tiled-cat-1046544_640_gray.jp2", (475, 640, 1), np.uint8, backends_gpu_only),
                     ],
                     )
 def test_decode_single_multichannel(path, shape, dtype, backends):
