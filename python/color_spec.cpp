@@ -19,6 +19,7 @@ void ColorSpec::exportToPython(py::module& m)
         .value("UNCHANGED", NVIMGCODEC_COLORSPEC_UNCHANGED)
         .value("YCC", NVIMGCODEC_COLORSPEC_SYCC)
         .value("RGB", NVIMGCODEC_COLORSPEC_SRGB)
+        .value("GRAY", NVIMGCODEC_COLORSPEC_GRAY)
         .export_values();
     // clang-format on
 }
