@@ -49,8 +49,10 @@ sudo apt-get install -y ./nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
 ```
 #### Python WHL File Installation
 
+`x` in the below command is the build id. It will be 0 when the .whl is built locally.
+
 ```
-pip install nvidia_nvimgcodec_cuda120-0.1.0-py3-none-manylinux2014_x86_64.whl
+pip install nvidia_nvimgcodec_cu12-0.1.0.x-py3-none-manylinux2014_x86_64.whl
 ```
 
 ### Build
