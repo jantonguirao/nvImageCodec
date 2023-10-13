@@ -574,20 +574,16 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                     }
                 }
 
-                if (convert_interleaved) {  // Do we need to convert to interleaved ?
-                    if (convert_gray) {
-                        // If there are more conversions, allocate a temporary buffer for the output of planar to interleaved conversion
-                        out_convert_interleaved_offset = current_offset;
-                        current_offset += num_components * out_component_nbytes;
-                    } else {
-                        // Otherwise, convert directly to the output buffer
-                        out_convert_interleaved = device_buffer;
-                    }
-                }
-
                 if (convert_gray) {  // Do we need to convert to gray ?
+                    // allocate a temporary buffer for the output of planar to interleaved conversion
+                    out_convert_interleaved_offset = current_offset;
+                    current_offset += num_components * out_component_nbytes;
+
                     // no more conversions so we can convert directly to the output buffer
                     out_convert_gray = device_buffer;
+                } else if (convert_interleaved) {
+                    // Otherwise, convert directly to the output buffer
+                    out_convert_interleaved = device_buffer;
                 }
 
                 decode_tmp_buffer_sz = current_offset;  // allocate a single chunk of memory for all the temporary buffers we need
@@ -600,7 +596,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
 
                 if (!out_convert_dtype && convert_dtype)
                     out_convert_dtype = reinterpret_cast<uint8_t*>(decode_tmp_buffer) + out_convert_dtype_offset;
-                if (!out_convert_interleaved && convert_interleaved)
+                if (!out_convert_interleaved && convert_gray)
                     out_convert_interleaved = reinterpret_cast<uint8_t*>(decode_tmp_buffer) + out_convert_interleaved_offset;
             }
 
