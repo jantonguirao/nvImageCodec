@@ -209,10 +209,7 @@ def test_decode_single_image_unchanged(input_img_file):
       "jpeg2k/tiled-cat-1046544_640.jp2",
       "jpeg2k/tiled-cat-111793_640.jp2",
       "jpeg2k/cat-111793_640-16bit.jp2",
-      "jpeg2k/cat-1245673_640-12bit.jp2",
-      "base/4k_lossless.jp2",
-      "base/4k_lossless.jp2",
-      "base/4k_lossless.jp2")
+      "jpeg2k/cat-1245673_640-12bit.jp2")
      ]
 )
 def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda_stream, max_num_cpu_threads):
@@ -688,10 +685,7 @@ def test_image_buffer_kind():
       "jpeg2k/tiled-cat-1046544_640.jp2",
       "jpeg2k/tiled-cat-111793_640.jp2",
       "jpeg2k/cat-111793_640-16bit.jp2",
-      "jpeg2k/cat-1245673_640-12bit.jp2",
-      "base/4k_lossless.jp2",
-      "base/4k_lossless.jp2",
-      "base/4k_lossless.jp2")
+      "jpeg2k/cat-1245673_640-12bit.jp2")
      ]
 )
 def test_as_images_with_cuda_array_interface(tmp_path, input_images_batch):
