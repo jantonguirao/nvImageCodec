@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include <nppdefs.h>
 #include <nvimgcodec.h>
 #include <nvjpeg2k.h>
 #include <memory>
@@ -56,7 +55,6 @@ class NvJpeg2kDecoderPlugin
             cudaEvent_t event_;
             nvjpeg2kDecodeState_t state_;
             std::unique_ptr<ParseState> parse_state_;
-            NppStreamContext npp_ctx_;
         };
 
         struct PerTileResources {

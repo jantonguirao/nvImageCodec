@@ -40,14 +40,14 @@
  *
  * Code blocks (case, default) must be enclosed in parenthesis if they contain commas.
  *
- * Proposed usage in DALI pipeline:
+ * Proposed usage:
  * ```
  * #define NVIMGCODEC_TYPE_SWITCH(id, type, types, ...) \
- *    TYPE_SWITCH(id, type, types, DALITypeTag, (__VA_ARGS__), \
+ *    TYPE_SWITCH(id, type, types, TypeTag, (__VA_ARGS__), \
  *                (NVIMGCODEC_FAIL("Type id does not match any of " #types);)
  * ```
  *
- * DALITypeTag is a proposed name for mapping types to DALITypeId
+ * TypeTag is a proposed name for mapping types to TypeId
 */
 
 #include <boost/preprocessor/seq/for_each.hpp>

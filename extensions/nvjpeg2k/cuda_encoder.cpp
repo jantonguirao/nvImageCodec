@@ -1,7 +1,5 @@
 
 #include "cuda_encoder.h"
-#include <npp.h>
-#include <nppdefs.h>
 #include <nvimgcodec.h>
 #include <cstring>
 #include <future>
@@ -15,6 +13,7 @@
 #include "log.h"
 #include "nvimgcodec_type_utils.h"
 #include "nvjpeg2k.h"
+#include "imgproc/convert_kernel_gpu.h"
 
 namespace nvjpeg2k {
 
@@ -236,13 +235,6 @@ NvJpeg2kEncoderPlugin::EncodeState::EncodeState(const char* id, const nvimgcodec
         XM_CHECK_CUDA(cudaStreamCreateWithFlags(&res.stream_, cudaStreamNonBlocking));
         XM_CHECK_CUDA(cudaEventCreate(&res.event_));
         XM_CHECK_NVJPEG2K(nvjpeg2kEncodeStateCreate(handle_, &res.state_));
-
-        res.npp_ctx_.nCudaDeviceId = device_id_;
-        res.npp_ctx_.hStream = res.stream_;
-        res.npp_ctx_.nMultiProcessorCount = device_properties.multiProcessorCount;
-        res.npp_ctx_.nMaxThreadsPerMultiProcessor = device_properties.maxThreadsPerMultiProcessor;
-        res.npp_ctx_.nMaxThreadsPerBlock = device_properties.maxThreadsPerBlock;
-        res.npp_ctx_.nSharedMemPerBlock = device_properties.sharedMemPerBlock;
     }
 }
 
@@ -373,45 +365,22 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                         pitch_in_bytes[c] = row_nbytes;
                     }
 
-#define NPP_CONVERT_INTERLEAVED_TO_PLANAR(NPP_FUNC, DTYPE, NUM_COMPONENTS)                                   \
-    DTYPE* planes[NUM_COMPONENTS];                                                                           \
-    for (uint32_t p = 0; p < NUM_COMPONENTS; ++p) {                                                          \
-        planes[p] = reinterpret_cast<DTYPE*>(tmp_buffer) + p * component_nbytes / sizeof(DTYPE);             \
-    }                                                                                                        \
-    NppiSize dims = {static_cast<int>(width), static_cast<int>(height)};                                     \
-    const DTYPE* pSrc = reinterpret_cast<const DTYPE*>(image_info.buffer);                                   \
-    auto status = NPP_FUNC(pSrc, image_info.plane_info[0].row_stride, planes, row_nbytes, dims, t.npp_ctx_); \
-    if (NPP_SUCCESS != status) {                                                                             \
-        FatalError(NVJPEG2K_STATUS_EXECUTION_FAILED,                                                         \
-            "Failed to transpose the image from planar to interleaved layout " + std::to_string(status));    \
-    }
-
-                    bool is_rgb = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB ||
-                                  (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED && num_components == 3);
-                    bool is_rgba = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED && num_components == 4;
-                    bool is_u8 = sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
-                    bool is_u16 = sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16;
-                    bool is_s16 = sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_INT16;
-                    if (is_rgb && is_u8) {
-                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_8u_C3P3R_Ctx, uint8_t, 3);
-                    } else if (is_rgb && is_u16) {
-                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16u_C3P3R_Ctx, uint16_t, 3);
-                    } else if (is_rgb && is_s16) {
-                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16s_C3P3R_Ctx, int16_t, 3);
-                    } else if (is_rgba && is_u8) {
-                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_8u_C4P4R_Ctx, uint8_t, 4);
-                    } else if (is_rgba && is_u16) {
-                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16u_C4P4R_Ctx, uint16_t, 4);
-                    } else if (is_rgba && is_s16) {
-                        NPP_CONVERT_INTERLEAVED_TO_PLANAR(nppiCopy_16s_C4P4R_Ctx, int16_t, 4);
-                    } else {
-                        // throw NvJpeg2kException("Transposition not implemented for this combination of sample format and data type");
-                        FatalError(NVJPEG2K_STATUS_IMPLEMENTATION_NOT_SUPPORTED,
-                            "Transposition not implemented for this combination of sample format and data type");
+                    auto planar_info = image_info;
+                    planar_info.buffer = tmp_buffer;
+                    planar_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
+                    planar_info.buffer_size = component_nbytes * num_components;
+                    planar_info.num_planes = image_info.plane_info[0].num_channels;
+                    for (size_t p = 0; p < planar_info.num_planes; p++) {
+                        planar_info.plane_info[p].num_channels = 1;
+                        planar_info.plane_info[p].height = image_info.plane_info[0].height;
+                        planar_info.plane_info[p].width = image_info.plane_info[0].width;
+                        planar_info.plane_info[p].precision = image_info.plane_info[0].precision;
+                        planar_info.plane_info[p].row_stride = bytes_per_sample * image_info.plane_info[0].width;
+                        planar_info.plane_info[p].sample_type = image_info.plane_info[0].sample_type;
+                        planar_info.plane_info[p].type = image_info.plane_info[0].type;
+                        planar_info.plane_info[p].next = image_info.plane_info[0].next;
                     }
-
-#undef NPP_CONVERT_INTERLEAVED_TO_PLANAR
-
+                    nvimgcodec::LaunchConvertNormKernel(planar_info, image_info, t.stream_);
                 } else {
                     size_t plane_start = 0;
                     for (uint32_t c = 0; c < image_info.num_planes; ++c) {

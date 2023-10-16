@@ -22,6 +22,9 @@ set(SRCS
     api/can_encode_test.cpp
     imgproc/convert_cuda_test.cu
     imgproc/convert_test.cc
+    imgproc/geom_mat_test.cu
+    imgproc/geom_vec_test.cu
+    imgproc/math_util_test.cc
 )
 
 if (BUILD_NVJPEG_EXT)
@@ -84,14 +87,6 @@ foreach(testapp nvimgcodec_tests)
 
     if (WITH_DYNAMIC_NVJPEG2K)
         list(APPEND TARGET_LIBS dynlink_nvjpeg2k)
-    endif()
-
-    if (WITH_DYNAMIC_NPP)
-        list(APPEND TARGET_LIBS dynlink_npp)
-    else()
-        list(APPEND TARGET_LIBS CUDA::nppc_static)
-        list(APPEND TARGET_LIBS CUDA::nppidei_static)
-        list(APPEND TARGET_LIBS CUDA::nppicc_static)
     endif()
 
     if (BUILD_LIBJPEG_TURBO_EXT)

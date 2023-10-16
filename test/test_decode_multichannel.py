@@ -1,8 +1,10 @@
 from __future__ import annotations
 import os
+from typing import Literal
 import numpy as np
 from nvidia import nvimgcodec
 import pytest as t
+import cv2
 
 img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
 
@@ -24,7 +26,7 @@ backends_cpu_only=[nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]
                         ("jpeg2k/tiled-cat-1046544_640_gray.jp2", (475, 640, 1), np.uint8, backends_gpu_only),
                     ],
                     )
-def test_decode_single_multichannel(path, shape, dtype, backends):
+def test_decode_single_multichannel(path: Literal['jpeg2k/MG1.j2c'], shape: tuple[Literal[4774], Literal[3064], Literal[1]], dtype: uint16, backends: Any):
     input_img_path = os.path.join(img_dir_path, path)
 
     decoder = nvimgcodec.Decoder(backends=backends)

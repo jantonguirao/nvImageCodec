@@ -15,8 +15,6 @@
 #include <vector>
 #include "nvjpeg2k.h"
 
-#include <nppdefs.h>
-
 namespace nvjpeg2k {
 
 class NvJpeg2kEncoderPlugin
@@ -39,8 +37,6 @@ class NvJpeg2kEncoderPlugin
             cudaEvent_t event_;
             nvjpeg2kEncodeState_t state_;
             std::vector<unsigned char> compressed_data_; //TODO it should be created with pinned allocator
-
-            NppStreamContext npp_ctx_;
         };
 
         struct Sample
