@@ -248,7 +248,7 @@ nvimgcodecStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_t* 
 
         // sanity check
         if (palette_start != 0) { // this silences a warning about unused variable
-            assert(palette_start + (ncolors * palette_entry_size) <= length);
+            assert(palette_start + (ncolors * palette_entry_size) <= static_cast<int>(length));
         }
 
         image_info->num_planes = number_of_channels(io_stream, bpp, compression_type, ncolors, palette_entry_size);
