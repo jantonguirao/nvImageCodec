@@ -141,6 +141,20 @@ class NvJpeg2kTestBase
         if (cs_image_info) {
             cs_image_info->plane_info[0].width = image_info.image_width;
             cs_image_info->plane_info[0].height = image_info.image_height;
+            switch (decoded_image.pixel_type)
+            {
+            case NVJPEG2K_UINT16:
+                cs_image_info->plane_info[0].sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16;
+                break;
+            case NVJPEG2K_INT16:
+                cs_image_info->plane_info[0].sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_INT16;
+                break;
+            case NVJPEG2K_UINT8:  // fall-through
+            default:
+                cs_image_info->plane_info[0].sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
+                break;
+            }
+            cs_image_info->plane_info[0].precision = image_comp_info[0].precision;
         }
         unsigned char* pBuffer = NULL;
         size_t buffer_size = image_info.image_width * image_info.image_height * bytes_per_element * image_info.num_components;

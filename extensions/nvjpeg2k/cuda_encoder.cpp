@@ -366,6 +366,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     }
 
                     auto planar_info = image_info;
+                    planar_info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED;
                     planar_info.buffer = tmp_buffer;
                     planar_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                     planar_info.buffer_size = component_nbytes * num_components;
