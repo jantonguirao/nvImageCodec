@@ -53,18 +53,9 @@ Module::Module()
         verbosity_warning = "PYNVIMGCODEC_VERBOSITY has out of range value";
     }
 
-    nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
-    instance_create_info.load_builtin_modules = 1;
-    instance_create_info.load_extension_modules = 1;
-
-    nvimgcodecInstanceCreate(&instance_, &instance_create_info);
-
     if (verbosity > 0) {
         dbg_messenger_ = std::make_unique<DefaultDebugMessenger>(verbosity2severity(verbosity), NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL);
         logger_ = std::make_unique<Logger>("pynvimgcodec", dbg_messenger_.get());
-
-        const nvimgcodecDebugMessengerDesc_t* dbg_messenger_desc = dbg_messenger_->getDesc();
-        nvimgcodecDebugMessengerCreate(instance_, &dbg_messenger_handle_, dbg_messenger_desc);
 
         if (!verbosity_warning.empty()) {
             NVIMGCODEC_LOG_WARNING(logger_.get(), verbosity_warning);
@@ -72,12 +63,19 @@ Module::Module()
     } else {
         logger_ = std::make_unique<Logger>("pynvimgcodec");
     }
+
+    nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+    instance_create_info.load_builtin_modules = 1;
+    instance_create_info.load_extension_modules = 1;
+    instance_create_info.create_debug_messenger = verbosity > 0 ? 1 : 0;
+    instance_create_info.debug_messenger_desc = verbosity > 0 ? dbg_messenger_->getDesc() : nullptr;
+
+    nvimgcodecInstanceCreate(&instance_, &instance_create_info);
+
 }
 
 Module ::~Module()
 {
-    if (dbg_messenger_handle_)
-        nvimgcodecDebugMessengerDestroy(dbg_messenger_handle_);
     nvimgcodecInstanceDestroy(instance_);
 }
 
