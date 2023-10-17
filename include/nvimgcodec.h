@@ -205,11 +205,11 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        uint32_t version;              /**< The nvImageCodec library version. */
-        uint32_t ext_api_version;      /**< The nvImageCodec extension API version. */
-        uint32_t cudart_version;       /**< The version of CUDA Runtime with which nvImageCodec library was built. */
+        uint32_t version;         /**< The nvImageCodec library version. */
+        uint32_t ext_api_version; /**< The nvImageCodec extension API version. */
+        uint32_t cudart_version;  /**< The version of CUDA Runtime with which nvImageCodec library was built. */
 
     } nvimgcodecProperties_t;
 
@@ -264,14 +264,14 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;         /**< Is the type of this structure. */
-        void* next;                            /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecDeviceMalloc_t device_malloc; /**< Allocate memory on the device. */
         nvimgcodecDeviceFree_t device_free;     /**< Frees memory on the device.*/
-        void* device_ctx;                      /**< When invoking the allocators, this context will 
+        void* device_ctx;                       /**< When invoking the allocators, this context will 
                                                     be pass as input to allocator functions.*/
-        size_t device_mem_padding;             /**< Any device memory allocation 
+        size_t device_mem_padding;              /**< Any device memory allocation 
                                                     would be padded to the multiple of specified number of bytes */
     } nvimgcodecDeviceAllocator_t;
 
@@ -280,15 +280,15 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;         /**< Is the type of this structure. */
-        void* next;                            /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecPinnedMalloc_t pinned_malloc; /**< Allocate host pinned memory: memory directly 
                                                     accessible by both CPU and cuda-enabled GPU. */
         nvimgcodecPinnedFree_t pinned_free;     /**< Frees host pinned memory.*/
-        void* pinned_ctx;                      /**< When invoking the allocators, this context will
+        void* pinned_ctx;                       /**< When invoking the allocators, this context will
                                                     be pass as input to allocator functions.*/
-        size_t pinned_mem_padding;             /**< Any pinned host memory allocation
+        size_t pinned_mem_padding;              /**< Any pinned host memory allocation
                                                     would be padded to the multiple of specified number of bytes */
     } nvimgcodecPinnedAllocator_t;
 
@@ -407,11 +407,11 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        int rotated;                   /**< Rotation angle in degrees (clockwise). Only multiples of 90 are allowed. */
-        int flip_x;                    /**< Flip horizontal 0 or 1*/
-        int flip_y;                    /**< Flip vertical 0 or 1*/
+        int rotated; /**< Rotation angle in degrees (clockwise). Only multiples of 90 are allowed. */
+        int flip_x;  /**< Flip horizontal 0 or 1*/
+        int flip_y;  /**< Flip vertical 0 or 1*/
     } nvimgcodecOrientation_t;
 
     /**
@@ -419,16 +419,16 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;         /**< Is the type of this structure. */
-        void* next;                            /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        uint32_t width;                        /**< Plane width. First plane defines width of image. */
-        uint32_t height;                       /**< Plane height. First plane defines height of image.*/
-        size_t row_stride;                     /**< Number of bytes need to offset to next row of plane. */
-        uint32_t num_channels;                 /**< Number of channels. Color components, are always first
+        uint32_t width;                         /**< Plane width. First plane defines width of image. */
+        uint32_t height;                        /**< Plane height. First plane defines height of image.*/
+        size_t row_stride;                      /**< Number of bytes need to offset to next row of plane. */
+        uint32_t num_channels;                  /**< Number of channels. Color components, are always first
                                                     but there can be more channels than color components.*/
         nvimgcodecSampleDataType_t sample_type; /**< Sample data type. @see  nvimgcodecSampleDataType_t */
-        uint8_t precision;                     /**< Value 0 means that precision is equal to sample type bitdepth */
+        uint8_t precision;                      /**< Value 0 means that precision is equal to sample type bitdepth */
     } nvimgcodecImagePlaneInfo_t;
 
     /**
@@ -436,10 +436,10 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;    /**< Is the type of this structure. */
-        void* next;                       /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        int ndim;                         /**< Number of dimensions, 0 value means no region. */
+        int ndim;                          /**< Number of dimensions, 0 value means no region. */
         int start[NVIMGCODEC_MAX_NUM_DIM]; /**< Region start position at the particular dimension. */
         int end[NVIMGCODEC_MAX_NUM_DIM];   /**< Region end position at the particular dimension. */
     } nvimgcodecRegion_t;
@@ -461,10 +461,10 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type;                   /**< Is the type of this structure. */
-        void* next;                                      /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        char codec_name[NVIMGCODEC_MAX_CODEC_NAME_SIZE];  /**< Information about codec used. Only valid when used with code stream. */
+        char codec_name[NVIMGCODEC_MAX_CODEC_NAME_SIZE]; /**< Information about codec used. Only valid when used with code stream. */
 
         nvimgcodecColorSpec_t color_spec;                 /**< Image color specification. */
         nvimgcodecChromaSubsampling_t chroma_subsampling; /**< Image chroma subsampling. Only valid with chroma components. */
@@ -473,14 +473,14 @@ extern "C"
         nvimgcodecOrientation_t orientation;    /**< Image orientation. */
         nvimgcodecRegion_t region;              /**< Region of interest. */
 
-        uint32_t num_planes;                   /**< Number of image planes. */
+        uint32_t num_planes;                                              /**< Number of image planes. */
         nvimgcodecImagePlaneInfo_t plane_info[NVIMGCODEC_MAX_NUM_PLANES]; /**< Array with information about image planes. */
 
-        void* buffer;                                                   /**< Pointer to buffer in which image data is stored. */
-        size_t buffer_size;                                             /**< Size of buffer in which image data is stored. */
-        nvimgcodecImageBufferKind_t buffer_kind;                         /**< Buffer kind in which image data is stored.*/
+        void* buffer;                            /**< Pointer to buffer in which image data is stored. */
+        size_t buffer_size;                      /**< Size of buffer in which image data is stored. */
+        nvimgcodecImageBufferKind_t buffer_kind; /**< Buffer kind in which image data is stored.*/
 
-        cudaStream_t cuda_stream;                                       /**< CUDA stream to synchronize with */
+        cudaStream_t cuda_stream; /**< CUDA stream to synchronize with */
     } nvimgcodecImageInfo_t;
 
     /** 
@@ -517,8 +517,8 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type;    /**< Is the type of this structure. */
-        void* next;                       /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecJpegEncoding_t encoding; /**< JPEG encoding type. */
     } nvimgcodecJpegImageInfo_t;
@@ -540,7 +540,7 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         /** 
          * Fraction of the batch items that will be picked by this backend.
@@ -554,8 +554,8 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type;   /**< Is the type of this structure. */
-        void* next;                      /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecBackendKind_t kind;     /**< Decoding/encoding backend kind. */
         nvimgcodecBackendParams_t params; /**< Decoding/encoding backend parameters. */
@@ -567,8 +567,8 @@ extern "C"
     typedef enum
     {
         NVIMGCODEC_PROCESSING_STATUS_UNKNOWN = 0x0,
-        NVIMGCODEC_PROCESSING_STATUS_SUCCESS = 0x1,                 /**< Processing finished with success. */
-        NVIMGCODEC_PROCESSING_STATUS_SATURATED = 0x2,               /**< Decoder/encoder could potentially process 
+        NVIMGCODEC_PROCESSING_STATUS_SUCCESS = 0x1,   /**< Processing finished with success. */
+        NVIMGCODEC_PROCESSING_STATUS_SATURATED = 0x2, /**< Decoder/encoder could potentially process 
                                                                           image but is saturated. 
                                                                           @see nvimgcodecBackendParams_t load_hint. */
 
@@ -606,10 +606,10 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        int apply_exif_orientation;    /**<  Apply exif orientation if available. Valid values 0 or 1. */
-        int enable_roi;                /**<  Enables region of interest. Valid values 0 or 1. */
+        int apply_exif_orientation; /**<  Apply exif orientation if available. Valid values 0 or 1. */
+        int enable_roi;             /**<  Enables region of interest. Valid values 0 or 1. */
 
     } nvimgcodecDecodeParams_t;
 
@@ -619,7 +619,7 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         /** 
          * Float value of quality which interpretation depends of particular codec.
@@ -666,15 +666,15 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;              /**< Is the type of this structure. */
-        void* next;                                 /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecJpeg2kBitstreamType_t stream_type; /**< JPEG2000 code stream type. */
         nvimgcodecJpeg2kProgOrder_t prog_order;      /**< JPEG2000 progression order. */
-        uint32_t num_resolutions;                   /**< Number of resolutions. */
-        uint32_t code_block_w;                      /**< Code block width. Allowed values 32, 64 */
-        uint32_t code_block_h;                      /**< Code block height. Allowed values 32, 64 */
-        int irreversible;                           /**< Sets whether or not to use irreversible encoding. Valid values 0 or 1. */
+        uint32_t num_resolutions;                    /**< Number of resolutions. */
+        uint32_t code_block_w;                       /**< Code block width. Allowed values 32, 64 */
+        uint32_t code_block_h;                       /**< Code block height. Allowed values 32, 64 */
+        int irreversible;                            /**< Sets whether or not to use irreversible encoding. Valid values 0 or 1. */
     } nvimgcodecJpeg2kEncodeParams_t;
 
     /**
@@ -683,7 +683,7 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         /**
          * Sets whether or not to use optimized Huffman. Valid values 0 or 1.
@@ -735,13 +735,13 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        const char* message;           /**< Null-terminated string detailing the trigger conditions */
-        uint32_t internal_status_id;   /**< It is internal codec status id */
-        const char* codec;             /**< Codec name if codec is rising message or NULL otherwise (e.g framework) */
-        const char* codec_id;          /**< Codec id if codec is rising message or NULL otherwise */
-        uint32_t codec_version;        /**< Codec version if codec is rising message or 0 otherwise */
+        const char* message;         /**< Null-terminated string detailing the trigger conditions */
+        uint32_t internal_status_id; /**< It is internal codec status id */
+        const char* codec;           /**< Codec name if codec is rising message or NULL otherwise (e.g framework) */
+        const char* codec_id;        /**< Codec id if codec is rising message or NULL otherwise */
+        uint32_t codec_version;      /**< Codec version if codec is rising message or 0 otherwise */
     } nvimgcodecDebugMessageData_t;
 
     /**
@@ -761,13 +761,13 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type;          /**< Is the type of this structure. */
-        void* next;                             /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        uint32_t message_severity;              /**< Bitmask of message severity to listen for e.g. error or warning.  */
-        uint32_t message_category;              /**< Bitmask of message category to listen for e.g. general or performance related. */
+        uint32_t message_severity;               /**< Bitmask of message severity to listen for e.g. error or warning.  */
+        uint32_t message_category;               /**< Bitmask of message category to listen for e.g. general or performance related. */
         nvimgcodecDebugCallback_t user_callback; /**< Debug callback function */
-        void* user_data;                        /**< Pointer to user data which will be passed back to debug callback function. */
+        void* user_data;                         /**< Pointer to user data which will be passed back to debug callback function. */
     } nvimgcodecDebugMessengerDesc_t;
 
     /** 
@@ -778,9 +778,9 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;              /**< Is NULL or a pointer to an extension structure type. */
+        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                /**< Executor instance pointer which will be passed back in functions */
+        void* instance; /**< Executor instance pointer which will be passed back in functions */
 
         /**
          * @brief Schedule execution of asynchronous task.
@@ -809,19 +809,19 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;                /**< Is the type of this structure. */
-        void* next;                                   /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecDeviceAllocator_t* device_allocator; /**< Custom allocator for device memory */
         nvimgcodecPinnedAllocator_t* pinned_allocator; /**< Custom allocator for pinned memory */
-        int max_num_cpu_threads;                      /**< Max number of CPU threads in default executor 
+        int max_num_cpu_threads;                       /**< Max number of CPU threads in default executor 
                                                            (0 means default value equal to number of cpu cores) */
         nvimgcodecExecutorDesc_t* executor;            /**< Points an executor. If NULL default executor will be used. 
                                                            @note At plugin level API it always points to executor, either custom or default. */
-        int device_id;                                /**< Device id to process decoding on. It can be also specified 
+        int device_id;                                 /**< Device id to process decoding on. It can be also specified 
                                                            using defines NVIMGCODEC_DEVICE_CURRENT or NVIMGCODEC_DEVICE_CPU_ONLY. */
-        int pre_init;                                 /**< If true, all relevant resources are initialized at creation of the instance */
-        int num_backends;                             /**< Number of allowed backends passed (if any) 
+        int pre_init;                                  /**< If true, all relevant resources are initialized at creation of the instance */
+        int num_backends;                              /**< Number of allowed backends passed (if any) 
                                                            in backends parameter. For 0, all backends are allowed.*/
         const nvimgcodecBackend_t* backends;           /**< Points a nvimgcodecBackend_t array with defined allowed backends.
                                                            For nullptr, all backends are allowed. */
@@ -836,9 +836,9 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                /**< I/O stream description instance pointer which will be passed back in functions */
+        void* instance; /**< I/O stream description instance pointer which will be passed back in functions */
 
         /**
          * @brief Reads all requested data from the stream.
@@ -955,10 +955,10 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;      /**< Is the type of this structure. */
-        const void* next;                   /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                     /**< Code stream description instance pointer which will be passed back in functions */
+        void* instance; /**< Code stream description instance pointer which will be passed back in functions */
 
         nvimgcodecIoStreamDesc_t* io_stream; /**< I/O stream which works as a source or sink of code stream bytes */
 
@@ -978,9 +978,9 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;              /**< Is NULL or a pointer to an extension structure type. */
+        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                /**< Image instance pointer which will be passed back in functions */
+        void* instance; /**< Image instance pointer which will be passed back in functions */
 
         /**
          * @brief Retrieves image info information.
@@ -1007,11 +1007,11 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;              /**< Is NULL or a pointer to an extension structure type. */
+        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                /**< Parser description instance pointer which will be passed back in functions */
-        const char* id;                /**< Codec named identifier e.g. nvJpeg2000 */
-        const char* codec;             /**< Codec name e.g. jpeg2000 */
+        void* instance;    /**< Parser description instance pointer which will be passed back in functions */
+        const char* id;    /**< Codec named identifier e.g. nvJpeg2000 */
+        const char* codec; /**< Codec name e.g. jpeg2000 */
 
         /** 
          * @brief Checks whether parser can parse given code stream.
@@ -1057,12 +1057,12 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;       /**< Is the type of this structure. */
-        const void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                      /**< Encoder description instance pointer which will be passed back in functions */
-        const char* id;                      /**< Codec named identifier e.g. nvJpeg2000 */
-        const char* codec;                   /**< Codec name e.g. jpeg2000 */
+        void* instance;                       /**< Encoder description instance pointer which will be passed back in functions */
+        const char* id;                       /**< Codec named identifier e.g. nvJpeg2000 */
+        const char* codec;                    /**< Codec name e.g. jpeg2000 */
         nvimgcodecBackendKind_t backend_kind; /**< What kind of backend this encoder is using */
 
         /**
@@ -1119,12 +1119,12 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type;       /**< Is the type of this structure. */
-        const void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                      /**< Decoder description instance pointer which will be passed back in functions */
-        const char* id;                      /**< Codec named identifier e.g. nvJpeg2000 */
-        const char* codec;                   /**< Codec name e.g. jpeg2000 */
+        void* instance;                       /**< Decoder description instance pointer which will be passed back in functions */
+        const char* id;                       /**< Codec named identifier e.g. nvJpeg2000 */
+        const char* codec;                    /**< Codec name e.g. jpeg2000 */
         nvimgcodecBackendKind_t backend_kind; /**< Backend kind */
 
         /**
@@ -1160,7 +1160,8 @@ extern "C"
          * @return nvimgcodecStatus_t - An error code as specified in {@link nvimgcodecStatus_t API Return Status Codes}
          */
         nvimgcodecStatus_t (*canDecode)(nvimgcodecDecoder_t decoder, nvimgcodecProcessingStatus_t* status,
-            nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
+            nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size,
+            const nvimgcodecDecodeParams_t* params);
 
         /**
          * @brief Decode given batch of code streams to images with provided parameters.
@@ -1213,14 +1214,14 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;              /**< Is NULL or a pointer to an extension structure type. */
+        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                /**< Plugin framework instance pointer which will be passed back in functions */
-        const char* id;                /**< Plugin framework named identifier e.g. nvImageCodec */
-        uint32_t version;              /**< Plugin framework version. */
-        uint32_t ext_api_version;      /**< The nvImageCodec extension API version. */
-        uint32_t cudart_version;       /**< The version of CUDA Runtime with which plugin framework was built. */
-        nvimgcodecLogFunc_t log;        /**< Pointer to logging function. @see nvimgcodecLogFunc_t */
+        void* instance;           /**< Plugin framework instance pointer which will be passed back in functions */
+        const char* id;           /**< Plugin framework named identifier e.g. nvImageCodec */
+        uint32_t version;         /**< Plugin framework version. */
+        uint32_t ext_api_version; /**< The nvImageCodec extension API version. */
+        uint32_t cudart_version;  /**< The version of CUDA Runtime with which plugin framework was built. */
+        nvimgcodecLogFunc_t log;  /**< Pointer to logging function. @see nvimgcodecLogFunc_t */
 
         /**
          * @brief Registers encoder plugin.
@@ -1287,12 +1288,12 @@ extern "C"
     typedef struct
     {
         nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                    /**< Is NULL or a pointer to an extension structure type. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;                /**< Extension instance pointer which will be passed back in functions */
-        const char* id;                /**< Extension named identifier e.g. nvjpeg_ext */
-        uint32_t version;              /**< Extension version. Used when registering extension to check if there are newer.*/
-        uint32_t ext_api_version;      /**< The version of nvImageCodec extension API with which the extension was built. */
+        void* instance;           /**< Extension instance pointer which will be passed back in functions */
+        const char* id;           /**< Extension named identifier e.g. nvjpeg_ext */
+        uint32_t version;         /**< Extension version. Used when registering extension to check if there are newer.*/
+        uint32_t ext_api_version; /**< The version of nvImageCodec extension API with which the extension was built. */
 
         /**
          * @brief Creates extension.
@@ -1342,15 +1343,18 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type;      /**< Is the type of this structure. */
-        void* next;                         /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
+        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         int load_builtin_modules;           /**< Load default modules. Valid values 0 or 1. */
         int load_extension_modules;         /**< Discover and load extension modules on start. Valid values 0 or 1. */
         const char* extension_modules_path; /**< There may be several paths separated by ':' on Linux or ';' on Windows */
-        int default_debug_messenger;        /**< Create default debug messenger. Valid values 0 or 1. */
-        uint32_t message_severity;          /**< Severity for default debug messenger */
-        uint32_t message_category;          /**< Message category for default debug messenger */
+        int create_debug_messenger;         /**< Create debug messenger during instance creation. Valid values 0 or 1. */
+        /** Pointer to description to use when creating debug messenger. If NULL, default internal description will be used,
+         *  together with following message_severity and message_category fields. */
+        const nvimgcodecDebugMessengerDesc_t* debug_messenger_desc;
+        uint32_t message_severity; /**< Severity for default debug messenger */
+        uint32_t message_category; /**< Message category for default debug messenger */
     } nvimgcodecInstanceCreateInfo_t;
 
     /**
@@ -1360,7 +1364,8 @@ extern "C"
      * @param create_info [in] Pointer to a nvimgcodecInstanceCreateInfo_t structure controlling creation of the instance.
      * @return nvimgcodecStatus_t - An error code as specified in {@link nvimgcodecStatus_t API Return Status Codes}
      */
-    NVIMGCODECAPI nvimgcodecStatus_t nvimgcodecInstanceCreate(nvimgcodecInstance_t* instance, const nvimgcodecInstanceCreateInfo_t* create_info);
+    NVIMGCODECAPI nvimgcodecStatus_t nvimgcodecInstanceCreate(
+        nvimgcodecInstance_t* instance, const nvimgcodecInstanceCreateInfo_t* create_info);
 
     /**
      * @brief Destroys the nvImageCodec library instance.
@@ -1542,7 +1547,8 @@ extern "C"
      * @param image_info [in/out] Points a nvimgcodecImageInfo_t handle in which the image information is returned.
      * @return nvimgcodecStatus_t - An error code as specified in {@link nvimgcodecStatus_t API Return Status Codes}
      */
-    NVIMGCODECAPI nvimgcodecStatus_t nvimgcodecCodeStreamGetImageInfo(nvimgcodecCodeStream_t code_stream, nvimgcodecImageInfo_t* image_info);
+    NVIMGCODECAPI nvimgcodecStatus_t nvimgcodecCodeStreamGetImageInfo(
+        nvimgcodecCodeStream_t code_stream, nvimgcodecImageInfo_t* image_info);
 
     /**
      * @brief Creates generic image decoder.

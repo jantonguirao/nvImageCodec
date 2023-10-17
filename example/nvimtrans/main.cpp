@@ -738,7 +738,7 @@ int main(int argc, const char* argv[])
     nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
     instance_create_info.load_builtin_modules = 1;
     instance_create_info.load_extension_modules = 1;
-    instance_create_info.default_debug_messenger = 1;
+    instance_create_info.create_debug_messenger = 1;
     instance_create_info.message_severity = verbosity2severity(params.verbose);
     instance_create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
 

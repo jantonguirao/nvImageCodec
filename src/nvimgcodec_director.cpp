@@ -22,8 +22,7 @@ namespace nvimgcodec {
 
 NvImgCodecDirector::NvImgCodecDirector(const nvimgcodecInstanceCreateInfo_t* create_info)
     : logger_("nvimgcodec")
-    , default_debug_messenger_manager_(
-          &logger_, create_info->message_severity, create_info->message_category, create_info->default_debug_messenger)
+    , default_debug_messenger_manager_(&logger_, create_info)
     , codec_registry_(&logger_)
     , plugin_framework_(&logger_, &codec_registry_, std::move(std::make_unique<Environment>()),
           std::move(std::make_unique<DirectoryScaner>()), std::move(std::make_unique<LibraryLoader>()), create_info->extension_modules_path ? create_info->extension_modules_path : "")
