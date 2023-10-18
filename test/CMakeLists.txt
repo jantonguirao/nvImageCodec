@@ -52,6 +52,10 @@ if (BUILD_NVBMP_EXT)
     list(APPEND SRCS extensions/nvbmp_ext_decoder_test.cpp)
 endif()
 
+if (BUILD_NVPNM_EXT)
+    list(APPEND SRCS extensions/nvpnm_ext_encoder_test.cpp)
+endif()
+
 set(FILESTOPACK nvimgcodec_tests)
 
 add_executable(nvimgcodec_tests ${SRCS})
@@ -117,6 +121,9 @@ foreach(testapp nvimgcodec_tests)
         list(APPEND TARGET_LIBS nvbmp_ext_static)
     endif()
 
+    if (BUILD_NVPNM_EXT)
+        list(APPEND TARGET_LIBS nvpnm_ext_static)
+    endif()
 
     target_link_libraries(${testapp} PUBLIC
         ${TARGET_LIBS}
