@@ -42,7 +42,6 @@ export BUILD_PYTHON=${BUILD_PYTHON:-ON}
 export BUILD_WHEEL=${BUILD_WHEEL:-ON}
 export WITH_DYNAMIC_NVJPEG=${WITH_DYNAMIC_NVJPEG:-ON}
 export WITH_DYNAMIC_NVJPEG2K=${WITH_DYNAMIC_NVJPEG2K:-OFF}
-export WITH_DYNAMIC_NPP=${WITH_DYNAMIC_NPP:-ON}
 
 export NVIDIA_BUILD_ID=${NVIDIA_BUILD_ID:-0}
 export GIT_SHA=${GIT_SHA}
@@ -83,7 +82,6 @@ cmake ../                                                            \
       -DBUILD_WHEEL=${BUILD_WHEEL}                                   \
       -DWITH_DYNAMIC_NVJPEG=${WITH_DYNAMIC_NVJPEG}                   \
       -DWITH_DYNAMIC_NVJPEG2K=${WITH_DYNAMIC_NVJPEG2K}               \
-      -DWITH_DYNAMIC_NPP=${WITH_DYNAMIC_NPP}                         \
       -DNVIMGCODEC_BUILD_FLAVOR=${BUILD_FLAVOR}                     \
       -DNVIMGCODEC_WHL_PLATFORM_NAME=${WHL_PLATFORM_NAME}           \
       -DTIMESTAMP=${NVIMGCODEC_TIMESTAMP} -DGIT_SHA=${GIT_SHA}      \

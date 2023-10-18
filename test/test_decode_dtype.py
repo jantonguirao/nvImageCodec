@@ -1,9 +1,12 @@
 from __future__ import annotations
 import os
 import numpy as np
+import cv2  # this is a workaround for the ~std::locale crash
 from nvidia import nvimgcodec
 
 img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
+
+debug_output = False
 
 def impl_decode_single_jpeg2k_dtype_with_precision(img_path, shape, dtype, precision):
     input_img_path = os.path.join(img_dir_path, img_path)
@@ -20,7 +23,8 @@ def impl_decode_single_jpeg2k_dtype_with_precision(img_path, shape, dtype, preci
     data_any_depth = np.array(img_any_depth.cpu())
     # Scale it down, to compare later
     data_any_depth_converted_u8 = (data_any_depth * (255 / ((2**precision)-1))).astype(np.uint8)
-    # nvimgcodec.Encoder().write("a.bmp", data_any_depth_converted_u8)
+    if debug_output:
+        nvimgcodec.Encoder().write("a.bmp", data_any_depth_converted_u8)
 
     # Now decode without extra parameters, meaning we will decode to HWC RGB u8 always (scaling the 12 bit dynamic range to 8 bit dynamic range)
     img_u8 = decoder.read(input_img_path, params=nvimgcodec.DecodeParams(allow_any_depth=False))
@@ -28,7 +32,8 @@ def impl_decode_single_jpeg2k_dtype_with_precision(img_path, shape, dtype, preci
     assert img_u8.dtype == np.uint8
     assert img_u8.precision == 0
     data_u8 = np.array(img_u8.cpu())
-    # nvimgcodec.Encoder().write("b.bmp", data_u8)
+    if debug_output:
+        nvimgcodec.Encoder().write("b.bmp", data_u8)
 
     atol = 1 if precision != 0 and precision != type_precision else 0
     np.testing.assert_allclose(data_u8, data_any_depth_converted_u8, atol=atol)

@@ -98,12 +98,29 @@ inline double MaxValue(nvimgcodecSampleDataType_t dtype)
     return (uint64_t(1) << PositiveBits(dtype)) - 1;
 }
 
+inline int ActualPrecision(int precision, nvimgcodecSampleDataType_t dtype)
+{
+    assert(precision <= PositiveBits(dtype));
+    return precision == 0 ? PositiveBits(dtype) : precision;
+}
+
 /**
  * @brief Whether given precision needs scaling to use the full width of the type
  */
 inline bool NeedDynamicRangeScaling(int precision, nvimgcodecSampleDataType_t dtype)
 {
-    return PositiveBits(dtype) != precision;
+    return PositiveBits(dtype) != ActualPrecision(precision, dtype);
+}
+
+/**
+ * @brief Whether given precision needs scaling to convert from one precision/dtype to another
+ */
+inline bool NeedDynamicRangeScaling(
+    int out_precision, nvimgcodecSampleDataType_t out_dtype, int in_precision, nvimgcodecSampleDataType_t in_dtype)
+{
+    if (out_dtype == in_dtype && ActualPrecision(out_precision, out_dtype) == ActualPrecision(in_precision, in_dtype))
+        return false;
+    return NeedDynamicRangeScaling(in_precision, in_dtype) || NeedDynamicRangeScaling(out_precision, out_dtype);
 }
 
 /**
@@ -112,8 +129,18 @@ inline bool NeedDynamicRangeScaling(int precision, nvimgcodecSampleDataType_t dt
  */
 inline double DynamicRangeMultiplier(int precision, nvimgcodecSampleDataType_t dtype)
 {
-    double input_max_value = (uint64_t(1) << precision) - 1;
+    double input_max_value = (uint64_t(1) << ActualPrecision(precision, dtype)) - 1;
     return MaxValue(dtype) / input_max_value;
+}
+
+/**
+ * @brief Dynamic range multiplier to apply when precision is lower than the
+ *        width of the data type on either the input or output data type
+ */
+inline double DynamicRangeMultiplier(
+    int out_precision, nvimgcodecSampleDataType_t out_dtype, int in_precision, nvimgcodecSampleDataType_t in_dtype)
+{
+    return DynamicRangeMultiplier(in_precision, in_dtype) / DynamicRangeMultiplier(out_precision, out_dtype);
 }
 
 template <nvimgcodecSampleDataType_t id>

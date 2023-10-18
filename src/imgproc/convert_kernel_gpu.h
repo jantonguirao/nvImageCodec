@@ -20,7 +20,6 @@
 
 namespace nvimgcodec {
 
-void LaunchConvertNormKernel(void* output, nvimgcodecSampleDataType_t output_dtype, const void* input,
-    nvimgcodecSampleDataType_t input_dtype, int64_t sz, cudaStream_t stream, int input_precision = 0);
+void LaunchConvertNormKernel(const nvimgcodecImageInfo_t& out_info, const nvimgcodecImageInfo_t& in_info, cudaStream_t stream);
 
 }  // namespace nvimgcodec

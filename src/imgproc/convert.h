@@ -327,7 +327,7 @@ struct ConvertIntInt<Out, In, false, true> {
   static constexpr Out ConvertSatNorm(In value) {
 #ifdef __CUDA_ARCH__
     return detail::cuda_round_helper(
-      __saturatef(value * (1.0f / max_value<In>())) * max_value<Out>());
+      __saturatef(value * (1.0f / max_value<In>())) * max_value<Out>(), Out{});
 #else
     return value < 0 ? 0 : ConvertNorm(value);
 #endif

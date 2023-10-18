@@ -4,7 +4,6 @@ variables:
     GIT_SUBMODULE_STRATEGY: recursive
     GIT_SUBMODULE_DEPTH: 20
     WITH_DYNAMIC_NVJPEG: "ON"
-    WITH_DYNAMIC_NPP: "ON"
 
 stages:
     - build
@@ -35,7 +34,6 @@ build:cuda11.8:
     extends: .build:nvimagecodec
     variables:
         WITH_DYNAMIC_NVJPEG: "OFF"
-        WITH_DYNAMIC_NPP: "OFF"
     image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-v3
 
 
@@ -47,7 +45,6 @@ build:cuda11.8-gcc9:
     extends: .build:nvimagecodec
     variables:
         WITH_DYNAMIC_NVJPEG: "OFF"
-        WITH_DYNAMIC_NPP: "OFF"
     when: manual
     image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-gcc9-v3
 
