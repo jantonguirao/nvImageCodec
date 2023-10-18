@@ -1,6 +1,7 @@
 from __future__ import annotations
 import os
 import numpy as np
+import cv2  # this is a workaround for the ~std::locale crash
 from nvidia import nvimgcodec
 
 img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
