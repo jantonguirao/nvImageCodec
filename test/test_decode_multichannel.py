@@ -1,6 +1,5 @@
 from __future__ import annotations
 import os
-import cv2  # This is a workaround for the ~std::locale crash
 import numpy as np
 from nvidia import nvimgcodec
 import pytest as t

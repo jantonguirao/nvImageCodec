@@ -39,7 +39,7 @@ namespace fs = std::filesystem;
     {                                                                                                             \
         cudaError_t _e = (call);                                                                                  \
         if (_e != cudaSuccess) {                                                                                  \
-            std::cerr << "CUDA Runtime failure: '#" << _e << "' at " << __FILE__ << ":" << __LINE__ << std::endl; \
+            std::cerr << "CUDA Runtime failure: '#" << std::to_string(_e) << "' at " << __FILE__ << ":" << __LINE__ << std::endl; \
             return EXIT_FAILURE;                                                                                  \
         }                                                                                                         \
     }
@@ -49,7 +49,7 @@ namespace fs = std::filesystem;
         nvimgcodecStatus_t _e = (call);                          \
         if (_e != NVIMGCODEC_STATUS_SUCCESS) {                   \
             std::stringstream _error;                           \
-            _error << "nvImageCodec failure: '#" << _e << "'"; \
+            _error << "nvImageCodec failure: '#" << std::to_string(_e) << "'"; \
             throw std::runtime_error(_error.str());             \
         }                                                       \
     }
