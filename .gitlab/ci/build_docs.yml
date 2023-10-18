@@ -1,5 +1,5 @@
 .build-nvimagecodec-docs-script: &build-nvimagecodec-docs-script |
-    python3 -m pip install artifacts/nvidia_nvimgcodec_cuda110-*.whl
+    python3 -m pip install artifacts/nvidia_nvimgcodec_cu11-*.whl
     cd docs/doxygen
     doxygen
     cd ../sphinx
