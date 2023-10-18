@@ -15,7 +15,7 @@
         cudaError_t _e = (call);                                                                               \
         if (_e != cudaSuccess) {                                                                               \
             std::stringstream _error;                                                                          \
-            _error << "CUDA Runtime failure: '#" << _e << "' at " << __FILE__ << ":" << __LINE__ << std::endl; \
+            _error << "CUDA Runtime failure: '#" << std::to_string(_e) << "' at " << __FILE__ << ":" << __LINE__; \
             throw std::runtime_error(_error.str());                                                            \
         }                                                                                                      \
     }
@@ -25,7 +25,7 @@
         nvimgcodecStatus_t _e = (call);                          \
         if (_e != NVIMGCODEC_STATUS_SUCCESS) {                   \
             std::stringstream _error;                           \
-            _error << "nvImageCodec failure: '#" << _e << "'"; \
+            _error << "nvImageCodec failure: '#" << std::to_string(_e) << "'"; \
             throw std::runtime_error(_error.str());             \
         }                                                       \
     }

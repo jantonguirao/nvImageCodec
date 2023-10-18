@@ -24,7 +24,7 @@
         cudaError_t _e = (call);                               \
         if (_e != cudaSuccess) {                               \
             std::stringstream _error;                          \
-            _error << "CUDA Runtime failure: '#" << _e << "'"; \
+            _error << "CUDA Runtime failure: '#" << std::to_string(_e) << "'"; \
             FatalError(_e, _error.str());                      \
         }                                                      \
     }
@@ -34,7 +34,7 @@
         nvjpeg2kStatus_t _e = (call);                              \
         if (_e != NVJPEG2K_STATUS_SUCCESS) {                       \
             std::stringstream _error;                              \
-            _error << "nvjpeg2k Runtime failure: '#" << _e << "'"; \
+            _error << "nvjpeg2k Runtime failure: '#" << std::to_string(_e) << "'"; \
             FatalError(_e, _error.str());                          \
         }                                                          \
     }
@@ -44,7 +44,7 @@
         nvjpeg2kStatus_t _e = (call);                              \
         if (_e != NVJPEG2K_STATUS_SUCCESS) {                       \
             std::stringstream _error;                              \
-            _error << "nvjpeg2k Runtime failure: '#" << _e << "'"; \
+            _error << "nvjpeg2k Runtime failure: '#" << std::to_string(_e) << "'"; \
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, _error.str());    \
         }                                                          \
     }
@@ -54,7 +54,7 @@
         nvjpeg2kStatus_t _e = (call);                              \
         if (_e != NVJPEG2K_STATUS_SUCCESS) {                       \
             std::stringstream _error;                              \
-            _error << "nvjpeg2k Runtime failure: '#" << _e << "'"; \
+            _error << "nvjpeg2k Runtime failure: '#" << std::to_string(_e) << "'"; \
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, _error.str());    \
         }                                                          \
     }
@@ -64,7 +64,7 @@
         cudaError_t _e = (call);                                \
         if (_e != cudaSuccess) {                                \
             std::stringstream _error;                           \
-            _error << "CUDA Runtime failure: '#" << _e << "'";  \
+            _error << "CUDA Runtime failure: '#" << std::to_string(_e) << "'";  \
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, _error.str()); \
         }                                                       \
     }

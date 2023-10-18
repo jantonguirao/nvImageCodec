@@ -75,7 +75,7 @@ class Exception : public std::exception
         cudaError_t _e = (call);                               \
         if (_e != cudaSuccess) {                               \
             std::stringstream _error;                          \
-            _error << "CUDA Runtime failure: '#" << _e << "'"; \
+            _error << "CUDA Runtime failure: '#" << std::to_string(_e) << "'"; \
             FatalError(CUDA_CALL_ERROR, _error.str());         \
         }                                                      \
     }
@@ -85,7 +85,7 @@ class Exception : public std::exception
         cudaError_t _e = (call);                                        \
         if (_e != cudaSuccess) {                                        \
             std::stringstream _error;                                   \
-            std::cerr << "CUDA Runtime failure: '#" << _e << std::endl; \
+            std::cerr << "CUDA Runtime failure: '#" << std::to_string(_e) << std::endl; \
         }                                                               \
     }
 
@@ -94,7 +94,7 @@ class Exception : public std::exception
          CUresult _e = (call);                                                                      \
          if (_e != CUDA_SUCCESS) {                                                                  \
              std::stringstream _error;                                                              \
-             _error << "CUDA Driver API failure: '#" << static_cast<int>(_e) << "'";                \
+             _error << "CUDA Driver API failure: '#" << std::to_string(_e) << "'";                  \
              FatalError(CUDA_CALL_ERROR, _error.str());                                             \
          }                                                                                          \
      }

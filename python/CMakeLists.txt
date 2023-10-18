@@ -42,7 +42,7 @@ build_per_python_lib(nvimgcodec_python
     OUTPUT_NAME nvimgcodec_impl
     OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec
     PUBLIC_LIBS nvimgcodec
-    PRIV_LIBS CUDA::cudart_static -static-libstdc++
+    PRIV_LIBS CUDA::cudart_static
     SRC ${PY_NVIMGCODEC_SRCS})
 
 # TODO(janton)
