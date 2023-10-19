@@ -90,7 +90,7 @@ else()
     set(CPACK_GENERATOR "TGZ;DEB")
 
     if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-        set(CMAKE_INSTALL_PREFIX "/opt/nvidia/nvimgcodec" CACHE PATH "where nvImageCodec will be installed" FORCE)
+        set(CMAKE_INSTALL_PREFIX "/opt/nvidia/nvimgcodec_${CUDA_VERSION_MAJOR}" CACHE PATH "where nvImageCodec will be installed" FORCE)
     endif()
 
     set(CPACK_COMPONENTS_GROUPING IGNORE)
