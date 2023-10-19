@@ -89,7 +89,6 @@ cmake ../                                                            \
       ${EXTRA_CMAKE_OPTIONS}
 
 make -j"$(grep ^processor /proc/cpuinfo | wc -l)"
-make install
 
 cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
 mkdir -p ${WHL_OUTDIR}

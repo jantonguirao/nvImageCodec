@@ -23,6 +23,8 @@
 #include <filesystem>
 #include <iostream>
 #include <sstream>
+#include <cuda_runtime_api.h>
+
 #include "codec.h"
 #include "codec_registry.h"
 #include "ienvironment.h"
@@ -36,6 +38,7 @@
     #include <dlfcn.h>
 #endif
 
+#define CUDART_MAJOR_VERSION (CUDART_VERSION / 1000)
 namespace fs = std::filesystem;
 
 namespace nvimgcodec {
@@ -46,19 +49,25 @@ std::string GetDefaultExtensionsPath()
 {
     Dl_info info;
     if (dladdr((const void*)GetDefaultExtensionsPath, &info)) {
-        std::string path(info.dli_fname);
+        fs::path path(info.dli_fname);
         // If this comes from a shared_object in the installation dir,
-        // we trim the nvimgcodec dir and add "extensions" to the path
+        // go level up dir (or two levels when there is yet lib64) and add "extensions" to the path
         // Examples:
-        // /opt/nvidia/nvimgcodec/lib64/libnvimgcodec.so -> /opt/nvidia/nvimgcodec/extensions
+        // /opt/nvidia/nvimgcodec_cu<major_cuda_ver>/lib64/libnvimgcodec.so -> /opt/nvidia/nvimgcodec_cu<major_cuda_ver>/extensions
         // ~/.local/lib/python3.8/site-packages/nvidia/nvimgcodec/libnvimgcodec.so ->
         //      ~/.local/lib/python3.8/site-packages/nvidia/nvimgcodec/extensions
-        auto pos = path.find("nvimgcodec/");
-        if (pos != std::string::npos) {
-            return path.substr(0, pos + strlen("nvimgcodec/")) + "extensions";
+        path = path.parent_path();
+        if (path.filename().string() == "lib64") {
+            path = path.parent_path();
         }
+
+        path /= "extensions";
+        return path.string();
     }
-    return "/opt/nvidia/nvimgcodec/extensions";
+    std::stringstream ss;
+
+    ss << "/opt/nvidia/nvimgcodec_cu" << CUDART_MAJOR_VERSION << "/extensions";
+    return ss.str();
 }
 
 char GetPathSeparator()
@@ -70,7 +79,9 @@ char GetPathSeparator()
 
 std::string GetDefaultExtensionsPath()
 {
-    return "C:/Program Files/nvimgcodec/extensions";
+    std::stringstream ss;
+    ss << "C:/Program Files/nvimgcodec_cu" << CUDART_MAJOR_VERSION << "/extensions";
+    return ss.str();
 }
 
 char GetPathSeparator()

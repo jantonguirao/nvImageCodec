@@ -30,7 +30,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 
     find_package(CUDAToolkit REQUIRED)
 
-    list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodec")
+    list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodec_cu${CUDA_VERSION_MAJOR}")
     find_package(nvimgcodec CONFIG REQUIRED)
 
     include_directories(${nvimgcodec_INCLUDE_DIR})
