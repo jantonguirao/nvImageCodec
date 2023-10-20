@@ -322,18 +322,15 @@ struct ConvertIntInt<Out, In, false, true> {
   static constexpr Out Convert(In value) { return value; }
   NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertNorm(In value) {
-    return Converter<Out, float>::Convert(value * (1.0f * max_value<Out>() / max_value<In>()));
+    float value_norm_f = 0.5f * (1.0f + Converter<float, In>::ConvertNorm(value));
+    return Converter<Out, float>::ConvertNorm(value_norm_f);
   }
   NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSat(In value) { return clamp<Out>(value); }
   NVIMGCODEC_HOST_DEV
   static constexpr Out ConvertSatNorm(In value) {
-#ifdef __CUDA_ARCH__
-    return detail::cuda_round_helper(
-      __saturatef(value * (1.0f / max_value<In>())) * max_value<Out>(), Out{});
-#else
-    return value < 0 ? 0 : ConvertNorm(value);
-#endif
+    float value_norm_f = 0.5f * (1.0f + Converter<float, In>::ConvertSatNorm(value));
+    return Converter<Out, float>::ConvertSatNorm(value_norm_f);
   }
 };
 

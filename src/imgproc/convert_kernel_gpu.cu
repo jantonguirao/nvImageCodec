@@ -55,7 +55,7 @@ struct Gray_to_RGB_Converter {
   static constexpr int out_pixel_sz = 3;
   static constexpr int in_pixel_sz = 1;
   static NVIMGCODEC_HOST_DEV NVIMGCODEC_FORCEINLINE vec<out_pixel_sz, Out> convert(vec<in_pixel_sz, In> gray) {
-    return vec<out_pixel_sz, Out>(gray[0]);
+    return vec<out_pixel_sz, Out>(ConvertNorm<Out>(gray[0]));
   }
 };
 
