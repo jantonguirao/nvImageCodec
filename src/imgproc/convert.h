@@ -296,7 +296,7 @@ struct ConverterBase<Out, In, false, true> {
   }
 };
 
-/// Converts signed to signed, unsigned to unsigned or unsigned to signed
+/// Converts signed to signed, unsigned to unsigned
 template <typename Out, typename In,
           bool IsOutSigned = std::is_signed<Out>::value,
           bool IsInSigned = std::is_signed<In>::value>
@@ -331,6 +331,25 @@ struct ConvertIntInt<Out, In, false, true> {
   static constexpr Out ConvertSatNorm(In value) {
     float value_norm_f = 0.5f * (1.0f + Converter<float, In>::ConvertSatNorm(value));
     return Converter<Out, float>::ConvertSatNorm(value_norm_f);
+  }
+};
+
+/// Converts unsigned to signed integer
+template <typename Out, typename In>
+struct ConvertIntInt<Out, In, true, false> {
+  NVIMGCODEC_HOST_DEV
+  static constexpr Out Convert(In value) { return value; }
+  NVIMGCODEC_HOST_DEV
+  static constexpr Out ConvertNorm(In value) {
+    float value_f = -1.0f + 2.0f * Converter<float, In>::ConvertNorm(value);
+    return Converter<Out, float>::ConvertNorm(value_f);
+  }
+  NVIMGCODEC_HOST_DEV
+  static constexpr Out ConvertSat(In value) { return clamp<Out>(value); }
+  NVIMGCODEC_HOST_DEV
+  static constexpr Out ConvertSatNorm(In value) {
+    float value_f = -1.0f + 2.0f * Converter<float, In>::ConvertSatNorm(value);
+    return Converter<Out, float>::ConvertSatNorm(value_f);
   }
 };
 

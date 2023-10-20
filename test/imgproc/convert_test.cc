@@ -101,7 +101,23 @@ TEST(ConvertNorm, int16uint8) {
   EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(-2000)), 120);
   EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(2278)), 136);
   EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(32767)), 255);
-  EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(-32768)), 0);
+  EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(-32767)), 0);
 }
+
+TEST(ConvertNorm, uint8int16) {
+  EXPECT_EQ((ConvertNorm<int16_t, uint8_t>(255)), 32767);
+  EXPECT_EQ((ConvertNorm<int16_t, uint8_t>(0)), -32767);
+}
+
+TEST(ConvertNorm, uint16int8) {
+  EXPECT_EQ((ConvertNorm<int8_t, uint16_t>(0)), -127);
+  EXPECT_EQ((ConvertNorm<int8_t, uint16_t>(65535)), 127);
+}
+
+TEST(ConvertNorm, int8uint16) {
+  EXPECT_EQ((ConvertNorm<uint16_t, int8_t>(-127)), 0);
+  EXPECT_EQ((ConvertNorm<uint16_t, int8_t>(127)), 65535);
+}
+
 
 }  // namespace nvimgcodec
