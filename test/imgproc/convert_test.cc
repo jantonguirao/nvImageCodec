@@ -97,5 +97,11 @@ TEST(ConvertNorm, int2float) {
   EXPECT_NEAR((ConvertNorm<float, int8_t>(64)), 1.0f*64/127, 1e-7f);
 }
 
+TEST(ConvertNorm, int16uint8) {
+  EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(-2000)), 120);
+  EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(2278)), 136);
+  EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(32767)), 255);
+  EXPECT_EQ((ConvertNorm<uint8_t, int16_t>(-32768)), 0);
+}
 
 }  // namespace nvimgcodec
