@@ -42,8 +42,8 @@ def test_decode_jpeg_lossless(image_path, dtype, precision):
     params = nvimgcodec.DecodeParams(color_spec=nvimgcodec.ColorSpec.UNCHANGED, allow_any_depth=True)
     img = decoder.read(input_img_path, params=params)
     img_cpu = np.array(img.cpu())
-    assert(img.dtype, dtype)
-    assert(img.precision, precision)
+    assert(img.dtype == dtype)
+    assert(img.precision == precision)
     ref = np.load(ref_path)
     np.testing.assert_allclose(img_cpu, ref)
 
