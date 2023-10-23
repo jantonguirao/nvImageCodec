@@ -75,7 +75,12 @@ void CodeStream::setOutputToHostMem(void* ctx, nvimgcodecResizeBufferFunc_t resi
 nvimgcodecStatus_t CodeStream::getImageInfo(nvimgcodecImageInfo_t* image_info)
 {
     assert(image_info);
-    if (!image_info_) {
+    if (image_info->next) {
+        // If we have some linked structure, we might need to ask the parser again
+        assert(parser_);
+        return parser_->getImageInfo(&code_stream_desc_, image_info);
+    } else if (!image_info_) {
+        // If no linked structure, but it's the first time we parse, we ask the parser and store the results
         assert(parser_);
         image_info_ = std::make_unique<nvimgcodecImageInfo_t>();
         image_info_->type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
@@ -86,6 +91,7 @@ nvimgcodecStatus_t CodeStream::getImageInfo(nvimgcodecImageInfo_t* image_info)
             return res;
         }
     }
+    // Otherwise, we just return the previous info structure
     *image_info = *image_info_.get();
     return NVIMGCODEC_STATUS_SUCCESS;
 }
