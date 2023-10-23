@@ -52,7 +52,7 @@ sudo apt-get install -y ./nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
 `x` in the below command is the build id. It will be 0 when the .whl is built locally.
 
 ```
-pip install nvidia_nvimgcodec_cu12-0.1.0.x-py3-none-manylinux2014_x86_64.whl
+pip install nvidia_nvimgcodec_cuda12-0.1.0.x-py3-none-manylinux2014_x86_64.whl
 ```
 
 ### Build
@@ -82,13 +82,13 @@ cmake --install . --config Release -prefix /opt/nvidia/nvimgcodec_<major_cuda_ve
 ```
 
 After execution there should be:
-- all extension modules in /opt/nvidia/nvimgcodec_cu<major_cuda_ver>/extensions (it is default directory for extension discovery)
-- libnvimgcodec.so in /opt/nvidia/nvimgcodec_cu<major_cuda_ver>/lib64
+- all extension modules in /opt/nvidia/nvimgcodec_cuda<major_cuda_ver>/extensions (it is default directory for extension discovery)
+- libnvimgcodec.so in /opt/nvidia/nvimgcodec_cuda<major_cuda_ver>/lib64
 
 Add directory with libnvimgcodec.so to LD_LIBRARY_PATH
 
 ```
-export LD_LIBRARY_PATH=/opt/nvidia/nvimgcodec_cu<major_cuda_ver>/lib64:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/opt/nvidia/nvimgcodec_cuda<major_cuda_ver>/lib64:$LD_LIBRARY_PATH
 ```
 
 ##### Windows
@@ -98,10 +98,10 @@ To install nvImageCodec on Windows please execute following commands in console 
 cd build
 cmake --install . --config Release
 ```
-All necessary files should be installed in C:\Program Files\nvimgcodec_cu<major_cuda_ver> directory.
+All necessary files should be installed in C:\Program Files\nvimgcodec_cuda<major_cuda_ver> directory.
 
 ```
-C:\Program Files\nvimgcodec_cu<major_cuda_ver>
+C:\Program Files\nvimgcodec_cuda<major_cuda_ver>
 │   LICENSE.txt
 │
 ├───bin
@@ -160,7 +160,7 @@ This will generate in build directory *.zip or *tar.xz files
 
 To use nvimagecodec as a dependency in your CMake project, use:
 ```
-list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodec_cu<major_cuda_ver>/")  # or the prefix where the package was installed if custom
+list(APPEND CMAKE_PREFIX_PATH "/opt/nvidia/nvimgcodec_cuda<major_cuda_ver>/")  # or the prefix where the package was installed if custom
 
 find_package(nvimgcodec CONFIG REQUIRED)
 # Mostly for showing some of the variables defined

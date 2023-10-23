@@ -61,7 +61,7 @@ build:cuda11.8-gcc9:
         - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
         - dpkg -i artifacts/nvimgcodec-*-cuda${CUDA_VERSION_MAJOR}*lib.deb
         - dpkg -i artifacts/nvimgcodec-*-cuda${CUDA_VERSION_MAJOR}*tests.deb
-        - /opt/nvidia/nvimgcodec_cu${CUDA_VERSION_MAJOR}/test/nvimgcodec_tests --resources_dir /opt/nvidia/nvimgcodec_cu${CUDA_VERSION_MAJOR}/resources
+        - /opt/nvidia/nvimgcodec_cuda${CUDA_VERSION_MAJOR}/test/nvimgcodec_tests --resources_dir /opt/nvidia/nvimgcodec_cuda${CUDA_VERSION_MAJOR}/resources
 
 .test:python:
     extends: .test
@@ -80,7 +80,7 @@ build:cuda11.8-gcc9:
         - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
         - dpkg -i artifacts/nvimgcodec-*-cuda${CUDA_VERSION_MAJOR}*lib.deb
         - dpkg -i artifacts/nvimgcodec-*-cuda${CUDA_VERSION_MAJOR}*tests.deb
-        - pytest-3 -v /opt/nvidia/nvimgcodec_cu${CUDA_VERSION_MAJOR}/test/test_transcode.py
+        - pytest-3 -v /opt/nvidia/nvimgcodec_cuda${CUDA_VERSION_MAJOR}/test/test_transcode.py
 
 test:cuda11.3:
     extends: .test:nvimagecodec
