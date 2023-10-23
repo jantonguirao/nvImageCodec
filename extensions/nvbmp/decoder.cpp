@@ -83,7 +83,7 @@ struct DecoderImpl
 };
 
 NvBmpDecoderPlugin::NvBmpDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, NULL, this, plugin_id_, "bmp", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t),NULL, this, plugin_id_, "bmp", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
           DecoderImpl::static_destroy, DecoderImpl::static_can_decode, DecoderImpl::static_decode_batch}
     , framework_(framework)
 {
@@ -109,7 +109,7 @@ nvimgcodecStatus_t DecoderImpl::canDecode(nvimgcodecProcessingStatus_t* status, 
         for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
             *result = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
 
-            nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
             (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
             if (strcmp(cs_image_info.codec_name, "bmp") != 0) {
@@ -121,7 +121,7 @@ nvimgcodecStatus_t DecoderImpl::canDecode(nvimgcodecProcessingStatus_t* status, 
                 *result |= NVIMGCODEC_PROCESSING_STATUS_ROI_UNSUPPORTED;
             }
 
-            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
             (*image)->getImageInfo((*image)->instance, &image_info);
             if (image_info.color_spec != NVIMGCODEC_COLORSPEC_SRGB) {
                 *result |= NVIMGCODEC_PROCESSING_STATUS_COLOR_SPEC_UNSUPPORTED;
@@ -235,7 +235,7 @@ nvimgcodecProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nv
     try {
         NVIMGCODEC_LOG_TRACE(framework, plugin_id, "nvbmp_decoder_decode");
 
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         auto ret = image->getImageInfo(image->instance, &image_info);
         if (ret != NVIMGCODEC_STATUS_SUCCESS)
             return NVIMGCODEC_PROCESSING_STATUS_FAIL;

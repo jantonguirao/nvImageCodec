@@ -175,7 +175,7 @@ nvimgcodecStatus_t nvimgcodecGetProperties(nvimgcodecProperties_t* properties)
     NVIMGCODECAPI_TRY
         {
             CHECK_NULL(properties);
-            if (properties->type != NVIMGCODEC_STRUCTURE_TYPE_PROPERTIES) {
+            if (properties->struct_type != NVIMGCODEC_STRUCTURE_TYPE_PROPERTIES) {
                 return NVIMGCODEC_STATUS_INVALID_PARAMETER;
             }
             properties->version = NVIMGCODEC_VER;

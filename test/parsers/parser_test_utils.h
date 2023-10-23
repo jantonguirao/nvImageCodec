@@ -47,8 +47,9 @@ inline std::vector<uint8_t> replace(const std::vector<uint8_t>& data, const std:
 }
 
 inline void expect_eq(nvimgcodecImageInfo_t expected, nvimgcodecImageInfo_t actual) {
-    EXPECT_EQ(expected.type, actual.type);
-    EXPECT_EQ(expected.next, actual.next);
+    EXPECT_EQ(expected.struct_type, actual.struct_type);
+    EXPECT_EQ(expected.struct_size, actual.struct_size);
+    EXPECT_EQ(expected.struct_next, actual.struct_next);
     EXPECT_EQ(expected.sample_format, actual.sample_format);
     EXPECT_EQ(expected.num_planes, actual.num_planes);
     EXPECT_EQ(expected.color_spec, actual.color_spec);

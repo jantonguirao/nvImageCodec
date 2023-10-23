@@ -97,7 +97,7 @@ PluginFramework::PluginFramework(ILogger* logger, ICodecRegistry* codec_registry
     , env_(std::move(env))
     , directory_scaner_(std::move(directory_scaner))
     , library_loader_(std::move(library_loader))
-    , framework_desc_{NVIMGCODEC_STRUCTURE_TYPE_FRAMEWORK_DESC, nullptr, this, "nvImageCodec", NVIMGCODEC_VER, NVIMGCODEC_EXT_API_VER,
+    , framework_desc_{NVIMGCODEC_STRUCTURE_TYPE_FRAMEWORK_DESC, sizeof(nvimgcodecFrameworkDesc_t),nullptr, this, "nvImageCodec", NVIMGCODEC_VER, NVIMGCODEC_EXT_API_VER,
           CUDART_VERSION, &static_log, &static_register_encoder, &static_unregister_encoder, &static_register_decoder,
           &static_unregister_decoder, &static_register_parser, &static_unregister_parser}
     , codec_registry_(codec_registry)
@@ -333,7 +333,7 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
 
         return;
     }
-    nvimgcodecExtensionDesc_t extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, 0};
+    nvimgcodecExtensionDesc_t extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
     nvimgcodecStatus_t status = module.extension_entry_(&extension_desc);
     if (status != NVIMGCODEC_STATUS_SUCCESS) {
         NVIMGCODEC_LOG_ERROR(logger_, "Could not get extension module description");

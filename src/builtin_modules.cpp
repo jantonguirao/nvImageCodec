@@ -25,7 +25,7 @@ namespace nvimgcodec {
 const std::vector<nvimgcodecExtensionDesc_t>& get_builtin_modules() {
     static std::vector<nvimgcodecExtensionDesc_t> builtin_modules_vec;
     if (builtin_modules_vec.empty()) {
-        builtin_modules_vec.push_back({NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, nullptr});
+        builtin_modules_vec.push_back({NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t),nullptr});
         nvimgcodecStatus_t ret = get_parsers_extension_desc(&builtin_modules_vec.back());
         if (ret != NVIMGCODEC_STATUS_SUCCESS)
             throw Exception(INTERNAL_ERROR, "Failed to load parsers extension");

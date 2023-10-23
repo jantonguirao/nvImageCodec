@@ -34,14 +34,16 @@ class PNMParserPluginTest : public ::testing::Test
 
     void SetUp() override
     {
-        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, sizeof(nvimgcodecInstanceCreateInfo_t), 0};
         create_info.message_severity = NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
 
 
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecInstanceCreate(&instance_, &create_info));
 
-        pnm_parser_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        pnm_parser_extension_desc_.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        pnm_parser_extension_desc_.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        pnm_parser_extension_desc_.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_pnm_parser_extension_desc(&pnm_parser_extension_desc_));
         nvimgcodecExtensionCreate(instance_, &pnm_parser_extension_, &pnm_parser_extension_desc_);
     }
@@ -57,9 +59,7 @@ class PNMParserPluginTest : public ::testing::Test
     void TestComments(const char* data, size_t data_size)
     {
         LoadImageFromHostMemory(instance_, stream_handle_, reinterpret_cast<const uint8_t*>(data), data_size);
-        nvimgcodecImageInfo_t info;
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
         EXPECT_EQ(NVIMGCODEC_SAMPLING_NONE, info.chroma_subsampling);
         EXPECT_EQ(NVIMGCODEC_COLORSPEC_SRGB, info.color_spec);
@@ -75,15 +75,12 @@ class PNMParserPluginTest : public ::testing::Test
 
     nvimgcodecImageInfo_t expected_cat_2184682_640()
     {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 398;
             info.plane_info[p].width = 640;
@@ -96,15 +93,12 @@ class PNMParserPluginTest : public ::testing::Test
 
     nvimgcodecImageInfo_t expected_cat_1245673_640()
     {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 423;
             info.plane_info[p].width = 640;
@@ -116,15 +110,12 @@ class PNMParserPluginTest : public ::testing::Test
     }
 
     nvimgcodecImageInfo_t expected_cat_111793_640() {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 426;
             info.plane_info[p].width = 640;
@@ -145,9 +136,7 @@ TEST_F(PNMParserPluginTest, ValidPbm)
 {
     auto buffer = read_file(resources_dir + "/pnm/cat-2184682_640.pbm");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected = expected_cat_2184682_640();
     expected.num_planes = 1;
@@ -159,9 +148,7 @@ TEST_F(PNMParserPluginTest, ValidPgm)
 {
     auto buffer = read_file(resources_dir + "/pnm/cat-1245673_640.pgm");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected = expected_cat_1245673_640();
     expected.num_planes = 1;
@@ -174,9 +161,7 @@ TEST_F(PNMParserPluginTest, ValidPpm)
 {
     auto buffer = read_file(resources_dir + "/pnm/cat-111793_640.ppm");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected = expected_cat_111793_640();
     expected.num_planes = 3;

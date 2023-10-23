@@ -45,18 +45,18 @@ class NvJpeg2kExtEncoderTestBase : public NvJpeg2kExtTestBase
     {
         NvJpeg2kExtTestBase::SetUp();
         const char* options = nullptr;
-        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
         exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecEncoderCreate(instance_, &encoder_, &exec_params, options));
 
-        jpeg2k_enc_params_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
+        jpeg2k_enc_params_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, sizeof(nvimgcodecJpeg2kEncodeParams_t), 0};
         jpeg2k_enc_params_.stream_type = NVIMGCODEC_JPEG2K_STREAM_J2K;
         jpeg2k_enc_params_.prog_order = NVIMGCODEC_JPEG2K_PROG_ORDER_LRCP;
         jpeg2k_enc_params_.num_resolutions = 2;
         jpeg2k_enc_params_.code_block_w = 32;
         jpeg2k_enc_params_.code_block_h = 32;
         bool irreversible = false;
-        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, &jpeg2k_enc_params_, 0};
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, sizeof(nvimgcodecEncodeParams_t),&jpeg2k_enc_params_, 0};
         params_.quality = 0;
         params_.target_psnr = 30;
     }
@@ -151,7 +151,7 @@ TEST_P(NvJpeg2kExtEncoderTestSingleImage, ValidFormatAndParameters)
     ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, 1);
 
     LoadImageFromHostMemory(instance_, in_code_stream_, code_stream_buffer_.data(), code_stream_buffer_.size());
-    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &load_info));
     //TODO uncomment when generic jpeg2k parser is in place EXPECT_EQ(cs_image_info.chroma_subsampling, load_info.chroma_subsampling);
 

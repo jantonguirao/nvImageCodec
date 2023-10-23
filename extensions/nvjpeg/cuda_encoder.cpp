@@ -35,7 +35,7 @@
 namespace nvjpeg {
 
 NvJpegCudaEncoderPlugin::NvJpegCudaEncoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
+    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t),NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
           static_create, Encoder::static_destroy, Encoder::static_can_encode, Encoder::static_encode_batch}
     , framework_(framework)
 {
@@ -61,7 +61,7 @@ nvimgcodecStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcodecProcess
     auto image = images;
     for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
         *result = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
-        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
         if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
@@ -69,9 +69,9 @@ nvimgcodecStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcodecProcess
             continue;
         }
 
-        nvimgcodecJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(cs_image_info.next);
-        while (jpeg_image_info && jpeg_image_info->type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
-            jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(jpeg_image_info->next);
+        nvimgcodecJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(cs_image_info.struct_next);
+        while (jpeg_image_info && jpeg_image_info->struct_type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+            jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(jpeg_image_info->struct_next);
         if (jpeg_image_info) {
 
             static const std::set<nvimgcodecJpegEncoding_t> supported_encoding{
@@ -82,9 +82,9 @@ nvimgcodecStatus_t NvJpegCudaEncoderPlugin::Encoder::canEncode(nvimgcodecProcess
             }
         }
 
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         (*image)->getImageInfo((*image)->instance, &image_info);
-        nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
 
         static const std::set<nvimgcodecColorSpec_t> supported_color_space{
@@ -297,10 +297,10 @@ nvimgcodecStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
             auto& t = encode_state->per_thread_[tid];
             auto& jpeg_state_ = t.state_;
             try {
-                nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+                nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
                 image->getImageInfo(image->instance, &image_info);
 
-                nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+                nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
                 code_stream->getImageInfo(code_stream->instance, &out_image_info);
 
                 if (image_info.plane_info[0].sample_type != NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8) {
@@ -336,18 +336,18 @@ nvimgcodecStatus_t NvJpegCudaEncoderPlugin::Encoder::encode(int sample_idx)
                 XM_CHECK_NVJPEG(nvjpegEncoderParamsSetQuality(encode_params.get(), static_cast<int>(params->quality), t.stream_));
                 NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_, " - quality: " << static_cast<int>(params->quality));
 
-                auto jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(out_image_info.next);
-                while (jpeg_image_info && jpeg_image_info->type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
-                    jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(jpeg_image_info->next);
+                auto jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(out_image_info.struct_next);
+                while (jpeg_image_info && jpeg_image_info->struct_type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+                    jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(jpeg_image_info->struct_next);
                 if (jpeg_image_info) {
                     nvjpegJpegEncoding_t encoding = nvimgcodec_to_nvjpeg_encoding(jpeg_image_info->encoding);
                     NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_, " - encoding: " << encoding);
                     XM_CHECK_NVJPEG(nvjpegEncoderParamsSetEncoding(encode_params.get(), encoding, t.stream_));
                 }
 
-                auto jpeg_encode_params = static_cast<nvimgcodecJpegEncodeParams_t*>(params->next);
-                while (jpeg_encode_params && jpeg_encode_params->type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS)
-                    jpeg_encode_params = static_cast<nvimgcodecJpegEncodeParams_t*>(jpeg_encode_params->next);
+                auto jpeg_encode_params = static_cast<nvimgcodecJpegEncodeParams_t*>(params->struct_next);
+                while (jpeg_encode_params && jpeg_encode_params->struct_type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS)
+                    jpeg_encode_params = static_cast<nvimgcodecJpegEncodeParams_t*>(jpeg_encode_params->struct_next);
                 if (jpeg_encode_params) {
                     NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_, " - optimized huffman: " << jpeg_encode_params->optimized_huffman);
                     XM_CHECK_NVJPEG(

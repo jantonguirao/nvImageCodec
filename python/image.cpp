@@ -157,7 +157,7 @@ Image::Image(nvimgcodecInstance_t instance, PyObject* o, intptr_t cuda_stream)
         throw std::runtime_error("Object cannot be None");
     }
     py::object tmp = py::reinterpret_borrow<py::object>(o);
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
     if (py::isinstance<py::capsule>(tmp)) {
         py::capsule cap = tmp.cast<py::capsule>();
@@ -284,13 +284,13 @@ void Image::initCudaEventForDLPack()
 
 int Image::getWidth() const
 {
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.plane_info[0].width;
 }
 int Image::getHeight() const
 {
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.plane_info[0].height;
 }
@@ -324,7 +324,7 @@ py::object Image::shape() const
 
 py::object Image::dtype() const
 {
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
     return py::dtype(format);
@@ -332,14 +332,14 @@ py::object Image::dtype() const
 
 int Image::precision() const
 {
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.plane_info[0].precision;
 }
 
 nvimgcodecImageBufferKind_t Image::getBufferKind() const
 {
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.buffer_kind;
 }
@@ -357,7 +357,7 @@ py::capsule Image::dlpack(py::object stream_obj) const
             "Could not get DLTensor capsules. It can be consumed only once, so you might have already constructed a tensor from it once.");
     }
 
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
 
     // Add synchronisation
@@ -383,7 +383,7 @@ const py::tuple Image::getDlpackDevice() const
 
 py::object Image::cpu()
 {
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
 
     if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
@@ -406,7 +406,7 @@ py::object Image::cpu()
 
 py::object Image::cuda(bool synchronize)
 {
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
 
     if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {

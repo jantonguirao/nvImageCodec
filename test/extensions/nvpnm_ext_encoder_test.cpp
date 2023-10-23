@@ -46,17 +46,19 @@ class NvpnmExtTestBase : public ExtensionTestBase
     {
         ExtensionTestBase::SetUp();
 
-        nvpnm_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        nvpnm_extension_desc_.next = nullptr;
+        nvpnm_extension_desc_.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvpnm_extension_desc_.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        nvpnm_extension_desc_.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_nvpnm_extension_desc(&nvpnm_extension_desc_));
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &nvpnm_extension_, &nvpnm_extension_desc_));
 
-        nvpnm_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        nvpnm_parser_extension_desc.next = nullptr;
+        nvpnm_parser_extension_desc.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvpnm_parser_extension_desc.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        nvpnm_parser_extension_desc.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_pnm_parser_extension_desc(&nvpnm_parser_extension_desc));
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &nvpnm_parser_extension_, &nvpnm_parser_extension_desc));
 
-        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     }
 
     virtual void TearDown()
@@ -83,11 +85,11 @@ class NvpnmExtEncoderTest : public NvpnmExtTestBase, public TestWithParam<nvimgc
         NvpnmExtTestBase::SetUp();
 
         const char* options = nullptr;
-        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
         exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecEncoderCreate(instance_, &encoder_, &exec_params, options));
 
-        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, sizeof(nvimgcodecEncodeParams_t), 0};
         params_.quality = 0;
         params_.target_psnr = 0;
 
@@ -175,7 +177,7 @@ TEST_P(NvpnmExtEncoderTest, ValidFormatAndParameters)
 
     // read the compressed image info
     LoadImageFromHostMemory(instance_, in_code_stream_, code_stream_buffer_.data(), code_stream_buffer_.size());
-    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &load_info));
 
     // compare the image info with the original image info

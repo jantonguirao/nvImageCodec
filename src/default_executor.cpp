@@ -24,7 +24,7 @@ namespace nvimgcodec {
 
 DefaultExecutor::DefaultExecutor(ILogger* logger, int num_threads)
     : logger_(logger)
-    , desc_{NVIMGCODEC_STRUCTURE_TYPE_EXECUTOR_DESC, nullptr, this, &static_launch, &static_get_num_threads}
+    , desc_{NVIMGCODEC_STRUCTURE_TYPE_EXECUTOR_DESC, sizeof(nvimgcodecExecutorDesc_t),nullptr, this, &static_launch, &static_get_num_threads}
     , num_threads_(num_threads)
 {
     if (num_threads_ == 0) {

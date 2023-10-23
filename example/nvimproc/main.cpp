@@ -152,7 +152,7 @@ int decode_one_image(nvimgcodecInstance_t instance, const CommandLineParams& par
     int result = EXIT_SUCCESS;
     nvimgcodecCodeStream_t code_stream;
     nvimgcodecCodeStreamCreateFromFile(instance, &code_stream, image_names[0].c_str());
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecCodeStreamGetImageInfo(code_stream, &image_info);
 
     // Prepare decode parameters
@@ -189,7 +189,7 @@ int decode_one_image(nvimgcodecInstance_t instance, const CommandLineParams& par
     nvimgcodecImage_t image;
     nvimgcodecImageCreate(instance, &image, &image_info);
 
-    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
     nvimgcodecDecoder_t decoder;
     nvimgcodecDecoderCreate(instance, &decoder, &exec_params, nullptr);
@@ -222,13 +222,13 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
     nvimgcodecJpeg2kEncodeParams_t* jpeg2k_encode_params, nvimgcodecJpegEncodeParams_t* jpeg_encode_params,
     nvimgcodecJpegImageInfo_t* jpeg_image_info)
 {
-    encode_params->type = NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS;
+    encode_params->struct_type = NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS;
     encode_params->quality = params.quality;
     encode_params->target_psnr = params.target_psnr;
 
     //codec sepcific encode params
     if (params.output_codec == "jpeg2k") {
-        jpeg2k_encode_params->type = NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
+        jpeg2k_encode_params->struct_type = NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS;
         jpeg2k_encode_params->stream_type =
             output_path.extension().string() == ".jp2" ? NVIMGCODEC_JPEG2K_STREAM_JP2 : NVIMGCODEC_JPEG2K_STREAM_J2K;
         jpeg2k_encode_params->code_block_w = params.code_block_w;
@@ -236,12 +236,12 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
         jpeg2k_encode_params->irreversible = !params.reversible;
         jpeg2k_encode_params->prog_order = params.jpeg2k_prog_order;
         jpeg2k_encode_params->num_resolutions = params.num_decomps;
-        encode_params->next = jpeg2k_encode_params;
+        encode_params->struct_next = jpeg2k_encode_params;
     } else if (params.output_codec == "jpeg") {
-        jpeg_encode_params->type = NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
+        jpeg_encode_params->struct_type = NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS;
         jpeg_image_info->encoding = params.jpeg_encoding;
         jpeg_encode_params->optimized_huffman = params.optimized_huffman;
-        encode_params->next = jpeg_encode_params;
+        encode_params->struct_next = jpeg_encode_params;
     }
 }
 
@@ -250,7 +250,7 @@ int encode_one_image(nvimgcodecInstance_t instance, const CommandLineParams& par
 {
     int result = EXIT_SUCCESS;
 
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodec::adapter::nvcv::TensorData2ImageInfo(&image_info, tensor_data);
     if (0) {
         std::cout << "Input image info: " << std::endl;
@@ -266,15 +266,15 @@ int encode_one_image(nvimgcodecInstance_t instance, const CommandLineParams& par
     nvimgcodecImage_t image;
     nvimgcodecImageCreate(instance, &image, &image_info);
 
-    nvimgcodecJpegImageInfo_t out_jpeg_image_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
-    nvimgcodecEncodeParams_t encode_params{NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
-    nvimgcodecJpeg2kEncodeParams_t jpeg2k_encode_params{NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, 0};
-    nvimgcodecJpegEncodeParams_t jpeg_encode_params{NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
+    nvimgcodecJpegImageInfo_t out_jpeg_image_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), 0};
+    nvimgcodecEncodeParams_t encode_params{NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, sizeof(nvimgcodecEncodeParams_t), 0};
+    nvimgcodecJpeg2kEncodeParams_t jpeg2k_encode_params{NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, sizeof(nvimgcodecJpeg2kEncodeParams_t), 0};
+    nvimgcodecJpegEncodeParams_t jpeg_encode_params{NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, sizeof(nvimgcodecJpegEncodeParams_t), 0};
     fill_encode_params(params, output_path, &encode_params, &jpeg2k_encode_params, &jpeg_encode_params, &out_jpeg_image_info);
 
     nvimgcodecImageInfo_t out_image_info(image_info);
     strcpy(out_image_info.codec_name, params.output_codec.c_str());
-    out_image_info.next = &out_jpeg_image_info;
+    out_image_info.struct_next = &out_jpeg_image_info;
     if (params.enc_color_trans) {
         out_image_info.color_spec = NVIMGCODEC_COLORSPEC_SYCC;
     }
@@ -283,7 +283,7 @@ int encode_one_image(nvimgcodecInstance_t instance, const CommandLineParams& par
 
 
     nvimgcodecEncoder_t encoder;
-    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
     nvimgcodecEncoderCreate(instance, &encoder, &exec_params, nullptr);
 
@@ -436,7 +436,7 @@ int main(int argc, const char* argv[])
         return EXIT_FAILURE;
     }
 
-    nvimgcodecProperties_t properties{NVIMGCODEC_STRUCTURE_TYPE_PROPERTIES, 0};
+    nvimgcodecProperties_t properties{NVIMGCODEC_STRUCTURE_TYPE_PROPERTIES, sizeof(nvimgcodecProperties_t), 0};
     nvimgcodecGetProperties(&properties);
     std::cout << "nvImageCodec version: " << NVIMGCODEC_STREAM_VER(properties.version) << std::endl;
     std::cout << " - Extension API version: " << NVIMGCODEC_STREAM_VER(properties.ext_api_version) << std::endl;
@@ -449,7 +449,7 @@ int main(int argc, const char* argv[])
     std::cout << "Using GPU: " << props.name << " with Compute Capability " << props.major << "." << props.minor << std::endl;
 
     nvimgcodecInstance_t instance;
-    nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+    nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, sizeof(nvimgcodecInstanceCreateInfo_t), 0};
     instance_create_info.load_builtin_modules = 1;
     instance_create_info.load_extension_modules = 1;
     instance_create_info.create_debug_messenger = 1;

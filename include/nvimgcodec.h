@@ -185,7 +185,6 @@ extern "C"
         NVIMGCODEC_STRUCTURE_TYPE_IMAGE_PLANE_INFO,
         NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO,
         NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS,
-        NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_IMAGE_INFO,
         NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS,
         NVIMGCODEC_STRUCTURE_TYPE_BACKEND,
         NVIMGCODEC_STRUCTURE_TYPE_IO_STREAM_DESC,
@@ -211,8 +210,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         uint32_t version;         /**< The nvImageCodec library version. */
         uint32_t ext_api_version; /**< The nvImageCodec extension API version. */
@@ -271,8 +271,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecDeviceMalloc_t device_malloc; /**< Allocate memory on the device. */
         nvimgcodecDeviceFree_t device_free;     /**< Frees memory on the device.*/
@@ -287,8 +288,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecPinnedMalloc_t pinned_malloc; /**< Allocate host pinned memory: memory directly 
                                                     accessible by both CPU and cuda-enabled GPU. */
@@ -413,8 +415,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         int rotated; /**< Rotation angle in degrees (clockwise). Only multiples of 90 are allowed. */
         int flip_x;  /**< Flip horizontal 0 or 1*/
@@ -426,8 +429,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         uint32_t width;                         /**< Plane width. First plane defines width of image. */
         uint32_t height;                        /**< Plane height. First plane defines height of image.*/
@@ -443,8 +447,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         int ndim;                          /**< Number of dimensions, 0 value means no region. */
         int start[NVIMGCODEC_MAX_NUM_DIM]; /**< Region start position at the particular dimension. */
@@ -468,8 +473,9 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         char codec_name[NVIMGCODEC_MAX_CODEC_NAME_SIZE]; /**< Information about codec used. Only valid when used with code stream. */
 
@@ -524,8 +530,9 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecJpegEncoding_t encoding; /**< JPEG encoding type. */
     } nvimgcodecJpegImageInfo_t;
@@ -546,8 +553,9 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         /** 
          * Fraction of the batch items that will be picked by this backend.
@@ -561,8 +569,9 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecBackendKind_t kind;     /**< Decoding/encoding backend kind. */
         nvimgcodecBackendParams_t params; /**< Decoding/encoding backend parameters. */
@@ -612,8 +621,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         int apply_exif_orientation; /**<  Apply exif orientation if available. Valid values 0 or 1. */
         int enable_roi;             /**<  Enables region of interest. Valid values 0 or 1. */
@@ -625,8 +635,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         /** 
          * Float value of quality which interpretation depends of particular codec.
@@ -673,8 +684,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecJpeg2kBitstreamType_t stream_type; /**< JPEG2000 code stream type. */
         nvimgcodecJpeg2kProgOrder_t prog_order;      /**< JPEG2000 progression order. */
@@ -689,8 +701,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         /**
          * Sets whether or not to use optimized Huffman. Valid values 0 or 1.
@@ -741,8 +754,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         const char* message;         /**< Null-terminated string detailing the trigger conditions */
         uint32_t internal_status_id; /**< It is internal codec status id */
@@ -768,8 +782,9 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         uint32_t message_severity;               /**< Bitmask of message severity to listen for e.g. error or warning.  */
         uint32_t message_category;               /**< Bitmask of message category to listen for e.g. general or performance related. */
@@ -784,8 +799,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        const void* struct_next;               /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance; /**< Executor instance pointer which will be passed back in functions */
 
@@ -816,8 +832,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         nvimgcodecDeviceAllocator_t* device_allocator; /**< Custom allocator for device memory */
         nvimgcodecPinnedAllocator_t* pinned_allocator; /**< Custom allocator for pinned memory */
@@ -842,8 +859,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance; /**< I/O stream description instance pointer which will be passed back in functions */
 
@@ -962,8 +980,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance; /**< Code stream description instance pointer which will be passed back in functions */
 
@@ -984,8 +1003,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance; /**< Image instance pointer which will be passed back in functions */
 
@@ -1013,10 +1033,12 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
-        void* instance;    /**< Parser description instance pointer which will be passed back in functions */
+        void*
+            instance; /**<nvimgcodecStatus_t (*size)(void* instance, size_t* size); Parser description instance pointer which will be passed back in functions */
         const char* id;    /**< Codec named identifier e.g. nvJpeg2000 */
         const char* codec; /**< Codec name e.g. jpeg2000 */
 
@@ -1064,8 +1086,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance;                       /**< Encoder description instance pointer which will be passed back in functions */
         const char* id;                       /**< Codec named identifier e.g. nvJpeg2000 */
@@ -1126,8 +1149,9 @@ extern "C"
     */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance;                       /**< Decoder description instance pointer which will be passed back in functions */
         const char* id;                       /**< Codec named identifier e.g. nvJpeg2000 */
@@ -1220,8 +1244,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        const void* next;               /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance;           /**< Plugin framework instance pointer which will be passed back in functions */
         const char* id;           /**< Plugin framework named identifier e.g. nvImageCodec */
@@ -1294,8 +1319,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance;           /**< Extension instance pointer which will be passed back in functions */
         const char* id;           /**< Extension named identifier e.g. nvjpeg_ext */
@@ -1350,8 +1376,9 @@ extern "C"
      */
     typedef struct
     {
-        nvimgcodecStructureType_t type; /**< Is the type of this structure. */
-        void* next;                     /**< Is NULL or a pointer to an extension structure type. */
+        nvimgcodecStructureType_t struct_type; /**< The type of the structure. */
+        size_t struct_size;                    /**< The size of the structure, in bytes. */
+        void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         int load_builtin_modules;           /**< Load default modules. Valid values 0 or 1. */
         int load_extension_modules;         /**< Discover and load extension modules on start. Valid values 0 or 1. */

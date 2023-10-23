@@ -34,14 +34,16 @@ class TIFFParserPluginTest : public ::testing::Test
 
     void SetUp() override
     {
-        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, sizeof(nvimgcodecInstanceCreateInfo_t), 0};
         create_info.message_severity = NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
 
 
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecInstanceCreate(&instance_, &create_info));
 
-        tiff_parser_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        tiff_parser_extension_desc_.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        tiff_parser_extension_desc_.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        tiff_parser_extension_desc_.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_tiff_parser_extension_desc(&tiff_parser_extension_desc_));
         nvimgcodecExtensionCreate(instance_, &tiff_parser_extension_, &tiff_parser_extension_desc_);
     }
@@ -56,15 +58,12 @@ class TIFFParserPluginTest : public ::testing::Test
 
     nvimgcodecImageInfo_t expected_cat_1245673_640()
     {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_UNKNOWN;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 423;
             info.plane_info[p].width = 640;
@@ -77,10 +76,7 @@ class TIFFParserPluginTest : public ::testing::Test
 
     nvimgcodecImageInfo_t expected_cat_1046544_640()
     {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_UNKNOWN;
@@ -107,9 +103,7 @@ class TIFFParserPluginTest : public ::testing::Test
 TEST_F(TIFFParserPluginTest, RGB)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/tiff/cat-1245673_640.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1245673_640(), info);
 }
@@ -118,9 +112,7 @@ TEST_F(TIFFParserPluginTest, RGB_FromHostMem)
 {
     auto buffer = read_file(resources_dir + "/tiff/cat-1245673_640.tiff");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1245673_640(), info);
 }
@@ -128,9 +120,7 @@ TEST_F(TIFFParserPluginTest, RGB_FromHostMem)
 TEST_F(TIFFParserPluginTest, EXIF_Orientation_Horizontal)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_horizontal.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 0;
@@ -142,9 +132,7 @@ TEST_F(TIFFParserPluginTest, EXIF_Orientation_Horizontal)
 TEST_F(TIFFParserPluginTest, EXIF_Orientation_MirrorHorizontal)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_mirror_horizontal.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 0;
@@ -156,9 +144,7 @@ TEST_F(TIFFParserPluginTest, EXIF_Orientation_MirrorHorizontal)
 TEST_F(TIFFParserPluginTest, EXIF_Orientation_Rotate180)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_rotate_180.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 180;
@@ -170,9 +156,7 @@ TEST_F(TIFFParserPluginTest, EXIF_Orientation_Rotate180)
 TEST_F(TIFFParserPluginTest, EXIF_Orientation_MirrorVertical)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_mirror_vertical.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 0;
@@ -185,9 +169,7 @@ TEST_F(TIFFParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate270)
 {
     LoadImageFromFilename(
         instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_mirror_horizontal_rotate_270.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 360 - 270;
@@ -199,9 +181,7 @@ TEST_F(TIFFParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate270)
 TEST_F(TIFFParserPluginTest, EXIF_Orientation_Rotate90)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_rotate_90.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 360 - 90;
@@ -214,9 +194,7 @@ TEST_F(TIFFParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate90)
 {
     LoadImageFromFilename(
         instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_mirror_horizontal_rotate_90.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 360 - 90;
@@ -228,9 +206,7 @@ TEST_F(TIFFParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate90)
 TEST_F(TIFFParserPluginTest, EXIF_Orientation_Rotate270)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_rotate_270.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 360 - 270;
@@ -242,9 +218,7 @@ TEST_F(TIFFParserPluginTest, EXIF_Orientation_Rotate270)
 TEST_F(TIFFParserPluginTest, EXIF_Orientation_NoOrientation)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/tiff/exif_orientation/cat-1046544_640_no_orientation.tiff");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
     expected_info.orientation.rotated = 0;

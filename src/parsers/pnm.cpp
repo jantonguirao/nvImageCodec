@@ -88,7 +88,7 @@ nvimgcodecStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcodecFrame
     io_stream->size(io_stream->instance, &io_stream_length);
     io_stream->seek(io_stream->instance, 0, SEEK_SET);
 
-    if (image_info->type != NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO) {
+    if (image_info->struct_type != NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO) {
         NVIMGCODEC_LOG_ERROR(framework, plugin_id, "Unexpected structure type");
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
@@ -115,7 +115,7 @@ nvimgcodecStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcodecFrame
     uint32_t height = ParseInt(io_stream);
 
     image_info->sample_format = nchannels >= 3 ? NVIMGCODEC_SAMPLEFORMAT_P_RGB : NVIMGCODEC_SAMPLEFORMAT_P_Y;
-    image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+    image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
     image_info->chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
     image_info->color_spec = NVIMGCODEC_COLORSPEC_SRGB;
     image_info->num_planes = nchannels;
@@ -132,7 +132,7 @@ nvimgcodecStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcodecFrame
 
 PNMParserPlugin::PNMParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "pnm", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t),nullptr, this, plugin_id_, "pnm", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }
@@ -292,6 +292,7 @@ class PnmParserExtension
 // clang-format off
 nvimgcodecExtensionDesc_t pnm_parser_extension = {
     NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC,
+    sizeof(nvimgcodecExtensionDesc_t),
     NULL,
 
     NULL,
@@ -310,7 +311,7 @@ nvimgcodecStatus_t get_pnm_parser_extension_desc(nvimgcodecExtensionDesc_t* ext_
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
-    if (ext_desc->type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
+    if (ext_desc->struct_type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 

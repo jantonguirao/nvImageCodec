@@ -46,63 +46,54 @@ class OpenCVExtDecoderTest : public ::testing::Test, public CommonExtDecoderTest
     {
         CommonExtDecoderTest::SetUp();
 
-        nvimgcodecExtensionDesc_t jpeg_parser_extension_desc;
-        jpeg_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t jpeg_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_jpeg_parser_extension_desc(&jpeg_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &jpeg_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t jpeg2k_parser_extension_desc;
-        jpeg2k_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t jpeg2k_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_jpeg2k_parser_extension_desc(&jpeg2k_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &jpeg2k_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t png_parser_extension_desc;
-        png_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t png_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_png_parser_extension_desc(&png_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &png_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t bmp_parser_extension_desc;
-        bmp_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t bmp_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_bmp_parser_extension_desc(&bmp_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &bmp_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t pnm_parser_extension_desc;
-        pnm_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t pnm_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_pnm_parser_extension_desc(&pnm_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &pnm_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t tiff_parser_extension_desc;
-        tiff_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t tiff_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_tiff_parser_extension_desc(&tiff_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &tiff_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t webp_parser_extension_desc;
-        webp_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t webp_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_webp_parser_extension_desc(&webp_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &webp_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t opencv_extension_desc;
-        opencv_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        opencv_extension_desc.next = nullptr;
+        nvimgcodecExtensionDesc_t opencv_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_opencv_extension_desc(&opencv_extension_desc));
         extensions_.emplace_back();
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &extensions_.back(), &opencv_extension_desc));
 
-        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         images_.clear();
         streams_.clear();
 
-        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
         exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderCreate(instance_, &decoder_, &exec_params, nullptr));
-        params_ = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, 0};
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, sizeof(nvimgcodecDecodeParams_t), 0};
         params_.apply_exif_orientation= 1;
     }
 
@@ -185,7 +176,7 @@ TEST_F(OpenCVExtDecoderTest, JPEG_EXIFOrientationRotate270)
 TEST_F(OpenCVExtDecoderTest, JPEG_ROIDecodingWholeImage)
 {
     // Whole image
-    nvimgcodecRegion_t region1{NVIMGCODEC_STRUCTURE_TYPE_REGION, nullptr, 2};
+    nvimgcodecRegion_t region1{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t),nullptr, 2};
     region1.start[0] = 0;
     region1.start[1] = 0;
     region1.end[0] = 426;
@@ -196,7 +187,7 @@ TEST_F(OpenCVExtDecoderTest, JPEG_ROIDecodingWholeImage)
 TEST_F(OpenCVExtDecoderTest, JPEG_ROIDecodingPortion)
 {
     // Actual ROI
-    nvimgcodecRegion_t region2{NVIMGCODEC_STRUCTURE_TYPE_REGION, nullptr, 2};
+    nvimgcodecRegion_t region2{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t),nullptr, 2};
     region2.start[0] = 10;
     region2.start[1] = 20;
     region2.end[0] = 10 + 100;

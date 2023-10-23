@@ -59,7 +59,7 @@ PYBIND11_MODULE(nvimgcodec_impl, m)
     )pbdoc";
 
 
-    nvimgcodecProperties_t properties{NVIMGCODEC_STRUCTURE_TYPE_PROPERTIES, 0};
+    nvimgcodecProperties_t properties{NVIMGCODEC_STRUCTURE_TYPE_PROPERTIES, sizeof(nvimgcodecProperties_t), 0};
     nvimgcodecGetProperties(&properties);
     std::stringstream ver_ss{};
     ver_ss << NVIMGCODEC_STREAM_VER(properties.version);

@@ -29,7 +29,7 @@ Image::Image()
     , image_info_{}
     , decode_state_(nullptr)
     , encode_state_(nullptr)
-    , image_desc_{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_DESC, nullptr, this, Image::static_get_image_info,
+    , image_desc_{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_DESC, sizeof(nvimgcodecImageDesc_t),nullptr, this, Image::static_get_image_info,
           Image::static_image_ready}
     , promise_(nullptr)
 {

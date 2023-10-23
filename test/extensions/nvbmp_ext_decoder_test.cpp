@@ -40,15 +40,12 @@ class NvbmpExtDecoderTest : public ::testing::Test, public CommonExtDecoderTest
     {
         CommonExtDecoderTest::SetUp();
 
-        nvimgcodecExtensionDesc_t bmp_parser_extension_desc;
-        bmp_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t bmp_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_bmp_parser_extension_desc(&bmp_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &bmp_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t nvbmp_extension_desc;
-        nvbmp_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        nvbmp_extension_desc.next = nullptr;
+        nvimgcodecExtensionDesc_t nvbmp_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_nvbmp_extension_desc(&nvbmp_extension_desc));
         extensions_.emplace_back();
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &extensions_.back(), &nvbmp_extension_desc));
