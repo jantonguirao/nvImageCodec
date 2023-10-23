@@ -43,6 +43,8 @@ class NvJpegLosslessDecoderPlugin
             nvimgcodecCodeStreamDesc_t* code_stream;
             nvimgcodecImageDesc_t* image;
             const nvimgcodecDecodeParams_t* params;
+
+            std::vector<uint8_t> buff;  // to read the encoded stream into memory if needed
         };
 
         const char* plugin_id_;

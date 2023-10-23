@@ -106,13 +106,14 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcodecPro
         void* encoded_stream_data = nullptr;
         void* mapped_encoded_stream_data = nullptr;
         io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
-
         if (!mapped_encoded_stream_data) {
+            parse_state_->buffer_.resize(encoded_stream_data_size);
             io_stream->seek(io_stream->instance, 0, SEEK_SET);
             size_t read_nbytes = 0;
             io_stream->read(io_stream->instance, &read_nbytes, &parse_state_->buffer_[0], encoded_stream_data_size);
             if (read_nbytes != encoded_stream_data_size) {
                 NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected end-of-stream");
+                *status = NVIMGCODEC_PROCESSING_STATUS_CODESTREAM_UNSUPPORTED;
                 return NVIMGCODEC_STATUS_BAD_CODESTREAM;
             }
             encoded_stream_data = &parse_state_->buffer_[0];
@@ -134,6 +135,7 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcodecPro
         if (mapped_encoded_stream_data) {
             io_stream->unmap(io_stream->instance, &mapped_encoded_stream_data, encoded_stream_data_size);
         }
+        parse_state_->buffer_.clear();
     } catch (const NvJpegException& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not check if lossless nvjpeg can decode - " << e.info());
         return e.nvimgcodecStatus();
@@ -405,6 +407,19 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 io_stream->size(io_stream->instance, &encoded_stream_data_size);
                 void* encoded_stream_data = nullptr;
                 io_stream->map(io_stream->instance, &encoded_stream_data, 0, encoded_stream_data_size);
+                if (!encoded_stream_data) {
+                    decode_state_batch_->samples_[sample_idx].buff.clear();
+                    decode_state_batch_->samples_[sample_idx].buff.resize(encoded_stream_data_size);
+                    io_stream->seek(io_stream->instance, 0, SEEK_SET);
+                    size_t read_nbytes = 0;
+                    io_stream->read(io_stream->instance, &read_nbytes, &decode_state_batch_->samples_[sample_idx].buff[0], encoded_stream_data_size);
+                    if (read_nbytes != encoded_stream_data_size) {
+                        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected end-of-stream");
+                        image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
+                        continue;
+                    }
+                    encoded_stream_data = &decode_state_batch_->samples_[sample_idx].buff[0];
+                }
                 batched_bitstreams.push_back(static_cast<const unsigned char*>(encoded_stream_data));
                 batched_bitstreams_size.push_back(encoded_stream_data_size);
                 batched_output.push_back(nvjpeg_image);
