@@ -99,6 +99,9 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcodecPro
         if (!(image_info.num_planes <= 2 && image_info.plane_info[0].sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16))
             *status |= NVIMGCODEC_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
 
+        if (*status != NVIMGCODEC_PROCESSING_STATUS_SUCCESS)
+            return NVIMGCODEC_STATUS_SUCCESS;
+
         nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;
         size_t encoded_stream_data_size = 0;
         io_stream->size(io_stream->instance, &encoded_stream_data_size);
