@@ -19,7 +19,7 @@ import numpy as np
 from nvidia import nvimgcodec
 import pytest as t
 
-img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
+img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../resources"))
 backends_cpu_only=[nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]
 
 def test_decode_tiff_palette():

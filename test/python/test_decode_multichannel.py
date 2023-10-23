@@ -19,7 +19,7 @@ import numpy as np
 from nvidia import nvimgcodec
 import pytest as t
 
-img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
+img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../resources"))
 
 params_unchanged=nvimgcodec.DecodeParams(color_spec=nvimgcodec.ColorSpec.UNCHANGED)
 backends_gpu_only=[nvimgcodec.Backend(nvimgcodec.GPU_ONLY), nvimgcodec.Backend(nvimgcodec.HYBRID_CPU_GPU)]

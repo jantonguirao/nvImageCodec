@@ -31,7 +31,7 @@ except:
     has_tf = False
 
 img_dir_path = os.path.abspath(os.path.join(
-    os.path.dirname(__file__), "../resources"))
+    os.path.dirname(__file__), "../../resources"))
 
 def is_fancy_upsampling_available():
     return nvimgcodec.__cuda_version__ >= 12010
