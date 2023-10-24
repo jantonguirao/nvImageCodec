@@ -18,7 +18,7 @@ import os
 import numpy as np
 from nvidia import nvimgcodec
 
-img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../resources"))
+img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../resources"))
 
 debug_output = False
 

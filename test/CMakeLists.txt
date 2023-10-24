@@ -148,13 +148,18 @@ install(TARGETS ${FILESTOPACK}
     DESTINATION test COMPONENT tests
 )
 
-install(FILES
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_python.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_transcode.py
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_decode_multichannel.py
+install(DIRECTORY
+    ${CMAKE_CURRENT_SOURCE_DIR}/python
     DESTINATION test
     COMPONENT tests
 )
+
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_transcode.py
+    DESTINATION test
+    COMPONENT tests
+)
+
 
 install(DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/../resources
