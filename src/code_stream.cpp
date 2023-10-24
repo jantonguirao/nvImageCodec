@@ -75,7 +75,7 @@ void CodeStream::setOutputToHostMem(void* ctx, nvimgcodecResizeBufferFunc_t resi
 nvimgcodecStatus_t CodeStream::getImageInfo(nvimgcodecImageInfo_t* image_info)
 {
     assert(image_info);
-    if (image_info->next) {
+    if (image_info->struct_next) {
         // If we have some linked structure, we might need to ask the parser again
         assert(parser_);
         return parser_->getImageInfo(&code_stream_desc_, image_info);
