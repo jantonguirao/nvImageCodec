@@ -47,7 +47,7 @@ class MockDecoderPlugin
   public:
     explicit MockDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework, const std::vector<nvimgcodecProcessingStatus_t>& return_status)
         : return_status_(return_status)
-        , decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t),NULL,
+        , decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL,
               this,                // instance
               "mock_test_decoder", // id
               "bmp",               // codec_type
@@ -90,7 +90,7 @@ struct MockCodecExtensionFactory
 {
   public:
     explicit MockCodecExtensionFactory(const std::vector<std::vector<nvimgcodecProcessingStatus_t>>* statuses)
-        : desc_{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t),nullptr, this, "test_extension", NVIMGCODEC_VER, NVIMGCODEC_EXT_API_VER, static_extension_create,
+        : desc_{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), nullptr, this, "test_extension", NVIMGCODEC_VER, NVIMGCODEC_EXT_API_VER, static_extension_create,
               static_extension_destroy}
         , statuses_(statuses)
 

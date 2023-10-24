@@ -68,7 +68,7 @@ Encoder::Encoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, 
     if (backend_kinds.has_value()) {
         for (size_t i = 0; i < backend_kinds.value().size(); ++i) {
             nvimgcds_backends[i].kind = backend_kinds.value()[i];
-            nvimgcds_backends[i].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t),nullptr, 1.0f};
+            nvimgcds_backends[i].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
         }
     }
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;

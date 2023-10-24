@@ -43,7 +43,7 @@
 namespace nvjpeg {
 
 NvJpegHwDecoderPlugin::NvJpegHwDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t),NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY,
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HW_GPU_ONLY,
           static_create, Decoder::static_destroy, Decoder::static_can_decode, Decoder::static_decode_batch}
     , framework_(framework)
 {}
@@ -529,7 +529,7 @@ nvimgcodecStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
             nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;
             nvimgcodecImageDesc_t* image = decode_state_batch_->samples_[i].image;
 
-            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t),nullptr};
+            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), nullptr};
             image->getImageInfo(image->instance, &image_info);
             unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
             const auto* params = decode_state_batch_->samples_[i].params;

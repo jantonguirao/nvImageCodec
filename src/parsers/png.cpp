@@ -183,7 +183,7 @@ nvimgcodecStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcodecFrame
     }
 
     io_stream->skip(io_stream->instance, 3 + 4); // Skip the other fields and the CRC checksum.
-    image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
+    image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
     while (true) {
         uint32_t chunk_length = ReadValueBE<uint32_t>(io_stream);
         auto chunk_type = ReadValue<chunk_type_field_t>(io_stream);
@@ -219,7 +219,7 @@ nvimgcodecStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcodecFrame
 
 PNGParserPlugin::PNGParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t),nullptr, this, plugin_id_, "png", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t), nullptr, this, plugin_id_, "png", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }

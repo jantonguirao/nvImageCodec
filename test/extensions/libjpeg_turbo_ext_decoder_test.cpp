@@ -145,7 +145,7 @@ TEST_F(LibjpegTurboExtDecoderTest, EXIFOrientationUnsupported)
 TEST_F(LibjpegTurboExtDecoderTest, ROIDecodingWholeImage)
 {
     // Whole image
-    nvimgcodecRegion_t region1{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t),nullptr, 2};
+    nvimgcodecRegion_t region1{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 2};
     region1.start[0] = 0;
     region1.start[1] = 0;
     region1.end[0] = 426;
@@ -156,7 +156,7 @@ TEST_F(LibjpegTurboExtDecoderTest, ROIDecodingWholeImage)
 TEST_F(LibjpegTurboExtDecoderTest, ROIDecodingPortion)
 {
     // Actual ROI
-    nvimgcodecRegion_t region2{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t),nullptr, 2};
+    nvimgcodecRegion_t region2{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 2};
     region2.start[0] = 10;
     region2.start[1] = 20;
     region2.end[0] = 10 + 100;

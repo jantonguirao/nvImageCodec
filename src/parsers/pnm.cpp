@@ -115,7 +115,7 @@ nvimgcodecStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcodecFrame
     uint32_t height = ParseInt(io_stream);
 
     image_info->sample_format = nchannels >= 3 ? NVIMGCODEC_SAMPLEFORMAT_P_RGB : NVIMGCODEC_SAMPLEFORMAT_P_Y;
-    image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
+    image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
     image_info->chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
     image_info->color_spec = NVIMGCODEC_COLORSPEC_SRGB;
     image_info->num_planes = nchannels;
@@ -132,7 +132,7 @@ nvimgcodecStatus_t GetImageInfoImpl(const char* plugin_id, const nvimgcodecFrame
 
 PNMParserPlugin::PNMParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t),nullptr, this, plugin_id_, "pnm", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t), nullptr, this, plugin_id_, "pnm", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }

@@ -39,7 +39,7 @@
 namespace nvjpeg {
 
 NvJpegCudaDecoderPlugin::NvJpegCudaDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t),NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
           static_create, Decoder::static_destroy, Decoder::static_can_decode, Decoder::static_decode_batch}
     , framework_(framework)
 {}
@@ -59,8 +59,8 @@ nvimgcodecStatus_t NvJpegCudaDecoderPlugin::Decoder::canDecode(nvimgcodecProcess
         XM_CHECK_NULL(image);
         XM_CHECK_NULL(params);
         *status = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
-        nvimgcodecJpegImageInfo_t jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t),nullptr};
-        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t),static_cast<void*>(&jpeg_info)};
+        nvimgcodecJpegImageInfo_t jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), nullptr};
+        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), static_cast<void*>(&jpeg_info)};
         code_stream->getImageInfo(code_stream->instance, &cs_image_info);
 
         if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {

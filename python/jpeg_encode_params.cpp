@@ -24,8 +24,8 @@
 namespace nvimgcodec {
 
 JpegEncodeParams::JpegEncodeParams()
-    : nvimgcodec_jpeg_encode_params_{NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, sizeof(nvimgcodecJpegEncodeParams_t),nullptr, false}
-    , nvimgcodec_jpeg_image_info_{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t),nullptr, NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT}
+    : nvimgcodec_jpeg_encode_params_{NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, sizeof(nvimgcodecJpegEncodeParams_t), nullptr, false}
+    , nvimgcodec_jpeg_image_info_{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), nullptr, NVIMGCODEC_JPEG_ENCODING_BASELINE_DCT}
 {
 }
 

@@ -80,7 +80,7 @@ class PNMParserPluginTest : public ::testing::Test
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 398;
             info.plane_info[p].width = 640;
@@ -98,7 +98,7 @@ class PNMParserPluginTest : public ::testing::Test
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 423;
             info.plane_info[p].width = 640;
@@ -115,7 +115,7 @@ class PNMParserPluginTest : public ::testing::Test
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 426;
             info.plane_info[p].width = 640;

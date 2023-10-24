@@ -24,7 +24,7 @@
 namespace nvimgcodec {
 
 BackendParams::BackendParams()
-    : backend_params_{NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t),nullptr, 1.0f}
+    : backend_params_{NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f}
 {
 }
 

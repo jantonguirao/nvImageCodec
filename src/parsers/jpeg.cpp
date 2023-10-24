@@ -117,7 +117,7 @@ nvimgcodecChromaSubsampling_t chroma_subsampling_from_factors(
 
 JPEGParserPlugin::JPEGParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t),nullptr, this, plugin_id_, "jpeg", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t), nullptr, this, plugin_id_, "jpeg", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }
@@ -226,7 +226,7 @@ nvimgcodecStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_t*
         uint16_t height = 0, width = 0;
         uint8_t num_components;
         uint8_t precision = 8;
-        nvimgcodecOrientation_t orientation{NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
+        nvimgcodecOrientation_t orientation{NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         int adobe_transform = -1;
         nvimgcodecChromaSubsampling_t subsampling = NVIMGCODEC_SAMPLING_NONE;
         jpeg_marker_t sof_marker = {};

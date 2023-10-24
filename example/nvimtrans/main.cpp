@@ -582,7 +582,7 @@ int process_images(nvimgcodecInstance_t instance, fs::path input_path, fs::path 
         size_t status_size;
         nvimgcodecFutureGetProcessingStatus(decode_future, nullptr, &status_size);
         CHECK_CUDA(cudaDeviceSynchronize());
-        double decode_time = wtime() - start_decoding_time; //TODO add gpu time
+        double decode_time = wtime() - start_decoding_time;
 
         std::vector<nvimgcodecProcessingStatus_t> decode_status(status_size);
         nvimgcodecFutureGetProcessingStatus(decode_future, &decode_status[0], &status_size);
@@ -611,7 +611,7 @@ int process_images(nvimgcodecInstance_t instance, fs::path input_path, fs::path 
 
         nvimgcodecFutureGetProcessingStatus(encode_future, nullptr, &status_size);
         CHECK_CUDA(cudaDeviceSynchronize());
-        double encode_time = wtime() - start_encoding_time; //TODO add gpu time
+        double encode_time = wtime() - start_encoding_time;
         std::vector<nvimgcodecProcessingStatus_t> encode_status(status_size);
         nvimgcodecFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
         for (int i = 0; i < encode_status.size(); ++i) {

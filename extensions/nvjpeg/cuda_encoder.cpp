@@ -35,7 +35,7 @@
 namespace nvjpeg {
 
 NvJpegCudaEncoderPlugin::NvJpegCudaEncoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t),NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
+    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t), NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
           static_create, Encoder::static_destroy, Encoder::static_can_encode, Encoder::static_encode_batch}
     , framework_(framework)
 {

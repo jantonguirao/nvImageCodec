@@ -23,8 +23,8 @@
 namespace nvimgcodec {
 
 Backend::Backend()
-    : backend_{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, sizeof(nvimgcodecBackend_t),nullptr, NVIMGCODEC_BACKEND_KIND_GPU_ONLY,
-          {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t),nullptr, 1.0f}}
+    : backend_{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, sizeof(nvimgcodecBackend_t), nullptr, NVIMGCODEC_BACKEND_KIND_GPU_ONLY,
+          {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f}}
 {
 }
 

@@ -176,7 +176,7 @@ TEST_F(OpenCVExtDecoderTest, JPEG_EXIFOrientationRotate270)
 TEST_F(OpenCVExtDecoderTest, JPEG_ROIDecodingWholeImage)
 {
     // Whole image
-    nvimgcodecRegion_t region1{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t),nullptr, 2};
+    nvimgcodecRegion_t region1{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 2};
     region1.start[0] = 0;
     region1.start[1] = 0;
     region1.end[0] = 426;
@@ -187,7 +187,7 @@ TEST_F(OpenCVExtDecoderTest, JPEG_ROIDecodingWholeImage)
 TEST_F(OpenCVExtDecoderTest, JPEG_ROIDecodingPortion)
 {
     // Actual ROI
-    nvimgcodecRegion_t region2{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t),nullptr, 2};
+    nvimgcodecRegion_t region2{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 2};
     region2.start[0] = 10;
     region2.start[1] = 20;
     region2.end[0] = 10 + 100;

@@ -104,7 +104,7 @@ struct DecoderImpl
 };
 
 LibjpegTurboDecoderPlugin::LibjpegTurboDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t),NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
           DecoderImpl::static_destroy, DecoderImpl::static_can_decode, DecoderImpl::static_decode_batch}
     , framework_(framework)
 {

@@ -192,7 +192,7 @@ struct EncoderImpl
 };
 
 NvBmpEncoderPlugin::NvBmpEncoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t),NULL, this, plugin_id_, "bmp", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
+    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t), NULL, this, plugin_id_, "bmp", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
           EncoderImpl::static_destroy, EncoderImpl::static_can_encode, EncoderImpl::static_encode_batch}
     , framework_(framework)
 {

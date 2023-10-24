@@ -30,9 +30,9 @@ CodeStream::CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStream
     , parser_(nullptr)
     , io_stream_factory_(std::move(io_stream_factory))
     , io_stream_(nullptr)
-    , io_stream_desc_{NVIMGCODEC_STRUCTURE_TYPE_IO_STREAM_DESC, sizeof(nvimgcodecIoStreamDesc_t),nullptr, this, read_static, write_static, putc_static, skip_static,
+    , io_stream_desc_{NVIMGCODEC_STRUCTURE_TYPE_IO_STREAM_DESC, sizeof(nvimgcodecIoStreamDesc_t), nullptr, this, read_static, write_static, putc_static, skip_static,
           seek_static, tell_static, size_static, reserve_static, flush_static, map_static, unmap_static}
-    , code_stream_desc_{NVIMGCODEC_STRUCTURE_TYPE_CODE_STREAM_DESC, sizeof(nvimgcodecCodeStreamDesc_t),nullptr, this, &io_stream_desc_, static_get_image_info}
+    , code_stream_desc_{NVIMGCODEC_STRUCTURE_TYPE_CODE_STREAM_DESC, sizeof(nvimgcodecCodeStreamDesc_t), nullptr, this, &io_stream_desc_, static_get_image_info}
     , image_info_(nullptr)
 {
 }

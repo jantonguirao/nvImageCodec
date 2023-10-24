@@ -96,7 +96,7 @@ static int number_of_channels(
 
 BMPParserPlugin::BMPParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t),nullptr, this, plugin_id_, "bmp", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t), nullptr, this, plugin_id_, "bmp", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }
@@ -272,7 +272,7 @@ nvimgcodecStatus_t BMPParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_t* 
             image_info->sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
             image_info->color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         }
-        image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t),nullptr, 0, false, false};
+        image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         image_info->chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
 
         return NVIMGCODEC_STATUS_SUCCESS;

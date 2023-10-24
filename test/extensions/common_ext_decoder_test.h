@@ -75,7 +75,7 @@ class CommonExtDecoderTest
     }
 
     void TestSingleImage(const std::string& rel_path, nvimgcodecSampleFormat_t sample_format,
-        nvimgcodecRegion_t region = {NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t),nullptr, 0})
+        nvimgcodecRegion_t region = {NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 0})
     {
         std::string filename = resources_dir + "/" + rel_path;
         std::string reference_filename = std::filesystem::path(resources_dir + "/ref/" + rel_path).replace_extension(".ppm").string();

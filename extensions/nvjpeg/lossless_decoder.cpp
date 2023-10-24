@@ -39,7 +39,7 @@
 namespace nvjpeg {
 
 NvJpegLosslessDecoderPlugin::NvJpegLosslessDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t),NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
           static_create, Decoder::static_destroy, Decoder::static_can_decode, Decoder::static_decode_batch}
     , framework_(framework)
 {
@@ -66,7 +66,7 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcodecPro
         XM_CHECK_NULL(params);
 
         *status = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
-        nvimgcodecImageInfo_t jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t),nullptr};
+        nvimgcodecImageInfo_t jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), nullptr};
         nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t),static_cast<void*>(&jpeg_info)};
         code_stream->getImageInfo(code_stream->instance, &cs_image_info);
 
@@ -87,7 +87,7 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcodecPro
             *status = NVIMGCODEC_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
             return NVIMGCODEC_STATUS_SUCCESS;
         }
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t),nullptr};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), nullptr};
         image->getImageInfo(image->instance, &image_info);
 
         if (image_info.chroma_subsampling != NVIMGCODEC_SAMPLING_444) {
@@ -378,7 +378,7 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
 
         for (int sample_idx = 0; sample_idx < nsamples; sample_idx++) {
             nvimgcodecCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
-            nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t),nullptr};
+            nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), nullptr};
             code_stream->getImageInfo(code_stream->instance, &cs_image_info);
 
             nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;

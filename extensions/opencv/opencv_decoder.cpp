@@ -216,7 +216,7 @@ struct DecoderImpl
 OpenCVDecoderPlugin::OpenCVDecoderPlugin(const std::string& codec_name, const nvimgcodecFrameworkDesc_t* framework)
     : codec_name_(codec_name)
     , plugin_id_("opencv_" + codec_name_ + "_decoder")
-    , decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t),NULL, this, plugin_id_.c_str(), codec_name_.c_str(),
+    , decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_.c_str(), codec_name_.c_str(),
           NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create, DecoderImpl::static_destroy, DecoderImpl::static_can_decode,
           DecoderImpl::static_decode_batch}
     , framework_(framework)

@@ -114,7 +114,7 @@ static int write_pnm(nvimgcodecIoStreamDesc_t* io_stream, const D* chanR, size_t
 }
 
 NvPnmEncoderPlugin::NvPnmEncoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t),NULL, this, plugin_id_, "pnm", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
+    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t), NULL, this, plugin_id_, "pnm", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
           Encoder::static_destroy, Encoder::static_can_encode, Encoder::static_encode_batch}
     , framework_(framework)
 {
