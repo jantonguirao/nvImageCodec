@@ -269,6 +269,9 @@ void LaunchConvertNormKernelImpl(const nvimgcodecImageInfo_t& out_info, const nv
     } else {
         throw std::runtime_error("Invalid conversion");
     }
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess)
+      throw std::runtime_error("CUDA Runtime failure: '#" + std::to_string(err) + "'");
 
 #undef CONV_KERNEL
 #undef PASSTHROUGH_KERNEL

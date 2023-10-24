@@ -8,8 +8,8 @@
 # GCC 10, CUDA 11.8
 docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-v3"
 
-# GCC 10, CUDA 12.1
-docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-12.1-v3"
+# GCC 10, CUDA 12.3
+docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-12.3-v3"
 
 ####### TEST IMAGES #######
 
@@ -19,5 +19,5 @@ docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runne
 # CUDA 11.8
 docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.8-v4"
 
-# CUDA 12.1
+# CUDA 12.3
 docker push "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1-v4"
