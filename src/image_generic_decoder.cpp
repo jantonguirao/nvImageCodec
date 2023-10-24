@@ -161,7 +161,7 @@ static void sortSamples(std::vector<size_t>& order, ICodeStream *const * streams
     std::vector<sort_elem_t> sample_meta;
     sample_meta.reserve(batch_size);
     for (int i = 0; i < batch_size; i++) {
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         streams[i]->getImageInfo(&image_info);
         uint64_t area = image_info.plane_info[0].height * image_info.plane_info[0].width;
         // we prefer i to be in ascending order

@@ -117,7 +117,7 @@ nvimgcodecChromaSubsampling_t chroma_subsampling_from_factors(
 
 JPEGParserPlugin::JPEGParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "jpeg", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t), nullptr, this, plugin_id_, "jpeg", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }
@@ -226,7 +226,7 @@ nvimgcodecStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_t*
         uint16_t height = 0, width = 0;
         uint8_t num_components;
         uint8_t precision = 8;
-        nvimgcodecOrientation_t orientation{NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        nvimgcodecOrientation_t orientation{NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         int adobe_transform = -1;
         nvimgcodecChromaSubsampling_t subsampling = NVIMGCODEC_SAMPLING_NONE;
         jpeg_marker_t sof_marker = {};
@@ -312,7 +312,7 @@ nvimgcodecStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_t*
             return NVIMGCODEC_STATUS_BAD_CODESTREAM;
         }
 
-        image_info->type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
+        image_info->struct_type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
         image_info->sample_format = num_components > 1 ? NVIMGCODEC_SAMPLEFORMAT_P_RGB : NVIMGCODEC_SAMPLEFORMAT_P_Y;
         image_info->orientation = orientation;
         image_info->chroma_subsampling = subsampling;
@@ -343,10 +343,10 @@ nvimgcodecStatus_t JPEGParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_t*
             image_info->plane_info[p].precision = precision;
         }
 
-        nvimgcodecJpegImageInfo_t* jpeg_image_info = reinterpret_cast<nvimgcodecJpegImageInfo_t*>(image_info->next);
-        while (jpeg_image_info && jpeg_image_info->type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
-            jpeg_image_info = reinterpret_cast<nvimgcodecJpegImageInfo_t*>(jpeg_image_info->next);
-        if (jpeg_image_info && jpeg_image_info->type == NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO) {
+        nvimgcodecJpegImageInfo_t* jpeg_image_info = reinterpret_cast<nvimgcodecJpegImageInfo_t*>(image_info->struct_next);
+        while (jpeg_image_info && jpeg_image_info->struct_type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+            jpeg_image_info = reinterpret_cast<nvimgcodecJpegImageInfo_t*>(jpeg_image_info->struct_next);
+        if (jpeg_image_info && jpeg_image_info->struct_type == NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO) {
             jpeg_image_info->encoding = NVIMGCODEC_JPEG_ENCODING_UNKNOWN;
             if (sof_marker[1] >= 0xc0 && sof_marker[1] <= 0xcf)
                 jpeg_image_info->encoding = static_cast<nvimgcodecJpegEncoding_t>(sof_marker[1]);
@@ -418,6 +418,7 @@ class JpegParserExtension
 // clang-format off
 nvimgcodecExtensionDesc_t jpeg_parser_extension = {
     NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC,
+    sizeof(nvimgcodecExtensionDesc_t),
     NULL,
 
     NULL,
@@ -436,7 +437,7 @@ nvimgcodecStatus_t get_jpeg_parser_extension_desc(nvimgcodecExtensionDesc_t* ext
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
-    if (ext_desc->type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
+    if (ext_desc->struct_type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 

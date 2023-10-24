@@ -38,16 +38,17 @@ class NvJpeg2kExtTestBase : public ExtensionTestBase
     virtual void SetUp()
     {
         ExtensionTestBase::SetUp();
-        nvjpeg2k_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        nvjpeg2k_extension_desc_.next = nullptr;
+        nvjpeg2k_extension_desc_.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvjpeg2k_extension_desc_.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        nvjpeg2k_extension_desc_.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_nvjpeg2k_extension_desc(&nvjpeg2k_extension_desc_));
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &nvjpeg2k_extension_, &nvjpeg2k_extension_desc_));
 
-        nvimgcodecExtensionDesc_t jpeg2k_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, 0};
+        nvimgcodecExtensionDesc_t jpeg2k_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_jpeg2k_parser_extension_desc(&jpeg2k_parser_extension_desc));
         nvimgcodecExtensionCreate(instance_, &jpeg2k_parser_extension_, &jpeg2k_parser_extension_desc);
 
-        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     }
 
     virtual void TearDown()

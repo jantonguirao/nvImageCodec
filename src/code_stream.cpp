@@ -30,9 +30,9 @@ CodeStream::CodeStream(ICodecRegistry* codec_registry, std::unique_ptr<IIoStream
     , parser_(nullptr)
     , io_stream_factory_(std::move(io_stream_factory))
     , io_stream_(nullptr)
-    , io_stream_desc_{NVIMGCODEC_STRUCTURE_TYPE_IO_STREAM_DESC, nullptr, this, read_static, write_static, putc_static, skip_static,
+    , io_stream_desc_{NVIMGCODEC_STRUCTURE_TYPE_IO_STREAM_DESC, sizeof(nvimgcodecIoStreamDesc_t), nullptr, this, read_static, write_static, putc_static, skip_static,
           seek_static, tell_static, size_static, reserve_static, flush_static, map_static, unmap_static}
-    , code_stream_desc_{NVIMGCODEC_STRUCTURE_TYPE_CODE_STREAM_DESC, nullptr, this, &io_stream_desc_, static_get_image_info}
+    , code_stream_desc_{NVIMGCODEC_STRUCTURE_TYPE_CODE_STREAM_DESC, sizeof(nvimgcodecCodeStreamDesc_t), nullptr, this, &io_stream_desc_, static_get_image_info}
     , image_info_(nullptr)
 {
 }
@@ -83,8 +83,9 @@ nvimgcodecStatus_t CodeStream::getImageInfo(nvimgcodecImageInfo_t* image_info)
         // If no linked structure, but it's the first time we parse, we ask the parser and store the results
         assert(parser_);
         image_info_ = std::make_unique<nvimgcodecImageInfo_t>();
-        image_info_->type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        image_info_->next = image_info->next; // TODO(janton): temp solution but we probably need deep copy
+        image_info_->struct_type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
+        image_info_->struct_size = sizeof(nvimgcodecImageInfo_t);
+        image_info_->struct_next = image_info->struct_next; // TODO(janton): temp solution but we probably need deep copy
         auto res = parser_->getImageInfo(&code_stream_desc_, image_info_.get());
         if (res != NVIMGCODEC_STATUS_SUCCESS) {
             image_info_.reset();

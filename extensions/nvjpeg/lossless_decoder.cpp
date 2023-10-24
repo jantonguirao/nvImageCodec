@@ -39,7 +39,7 @@
 namespace nvjpeg {
 
 NvJpegLosslessDecoderPlugin::NvJpegLosslessDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_, "jpeg", NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU,
           static_create, Decoder::static_destroy, Decoder::static_can_decode, Decoder::static_decode_batch}
     , framework_(framework)
 {
@@ -66,8 +66,8 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcodecPro
         XM_CHECK_NULL(params);
 
         *status = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
-        nvimgcodecImageInfo_t jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, nullptr};
-        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, static_cast<void*>(&jpeg_info)};
+        nvimgcodecImageInfo_t jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), nullptr};
+        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t),static_cast<void*>(&jpeg_info)};
         code_stream->getImageInfo(code_stream->instance, &cs_image_info);
 
         if (strcmp(cs_image_info.codec_name, "jpeg") != 0) {
@@ -75,9 +75,9 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcodecPro
             return NVIMGCODEC_STATUS_SUCCESS;
         }
 
-        nvimgcodecJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(cs_image_info.next);
-        while (jpeg_image_info && jpeg_image_info->type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
-            jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(jpeg_image_info->next);
+        nvimgcodecJpegImageInfo_t* jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(cs_image_info.struct_next);
+        while (jpeg_image_info && jpeg_image_info->struct_type != NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO)
+            jpeg_image_info = static_cast<nvimgcodecJpegImageInfo_t*>(jpeg_image_info->struct_next);
         if (jpeg_image_info) {
             if (jpeg_image_info->encoding != NVIMGCODEC_JPEG_ENCODING_LOSSLESS_HUFFMAN) {
                 *status = NVIMGCODEC_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
@@ -87,7 +87,7 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::canDecode(nvimgcodecPro
             *status = NVIMGCODEC_PROCESSING_STATUS_ENCODING_UNSUPPORTED;
             return NVIMGCODEC_STATUS_SUCCESS;
         }
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), nullptr};
         image->getImageInfo(image->instance, &image_info);
 
         if (image_info.chroma_subsampling != NVIMGCODEC_SAMPLING_444) {
@@ -383,13 +383,13 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
 
         for (int sample_idx = 0; sample_idx < nsamples; sample_idx++) {
             nvimgcodecCodeStreamDesc_t* code_stream = decode_state_batch_->samples_[sample_idx].code_stream;
-            nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, nullptr};
+            nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), nullptr};
             code_stream->getImageInfo(code_stream->instance, &cs_image_info);
 
             nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;
             nvimgcodecImageDesc_t* image = decode_state_batch_->samples_[sample_idx].image;
 
-            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
             image->getImageInfo(image->instance, &image_info);
             unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 

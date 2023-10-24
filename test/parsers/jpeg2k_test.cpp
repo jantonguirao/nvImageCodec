@@ -38,14 +38,16 @@ class JPEG2KParserPluginTest : public ::testing::Test
 
     void SetUp() override
     {
-        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, sizeof(nvimgcodecInstanceCreateInfo_t), 0};
         create_info.message_severity = NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
 
 
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecInstanceCreate(&instance_, &create_info));
 
-        jpeg2k_parser_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        jpeg2k_parser_extension_desc_.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        jpeg2k_parser_extension_desc_.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        jpeg2k_parser_extension_desc_.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_jpeg2k_parser_extension_desc(&jpeg2k_parser_extension_desc_));
         nvimgcodecExtensionCreate(instance_, &jpeg2k_parser_extension_, &jpeg2k_parser_extension_desc_);
     }
@@ -59,10 +61,7 @@ class JPEG2KParserPluginTest : public ::testing::Test
     }
 
     nvimgcodecImageInfo_t expected_cat_1046544_640() {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
@@ -82,10 +81,7 @@ class JPEG2KParserPluginTest : public ::testing::Test
 
     nvimgcodecImageInfo_t expected_cat_1245673_640_12bit()
     {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
@@ -104,10 +100,7 @@ class JPEG2KParserPluginTest : public ::testing::Test
     }
     nvimgcodecImageInfo_t expected_cat_1245673_640_5bit()
     {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
@@ -134,9 +127,7 @@ class JPEG2KParserPluginTest : public ::testing::Test
 
 TEST_F(JPEG2KParserPluginTest, Uint8) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg2k/cat-1046544_640.jp2");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1046544_640(), info);
 }
@@ -144,9 +135,7 @@ TEST_F(JPEG2KParserPluginTest, Uint8) {
 TEST_F(JPEG2KParserPluginTest, Uint8_FromHostMem) {
     auto buffer = read_file(resources_dir + "/jpeg2k/cat-1046544_640.jp2");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1046544_640(), info);
 }
@@ -155,9 +144,7 @@ TEST_F(JPEG2KParserPluginTest, Uint8_Precision_5_FromHostMem)
 {
     auto buffer = read_file(resources_dir + "/jpeg2k/cat-1245673_640-5bit.jp2");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1245673_640_5bit(), info);
 }
@@ -166,9 +153,7 @@ TEST_F(JPEG2KParserPluginTest, Uint16_Precision_12_FromHostMem)
 {
     auto buffer = read_file(resources_dir + "/jpeg2k/cat-1245673_640-12bit.jp2");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1245673_640_12bit(), info);
 }
@@ -191,18 +176,14 @@ TEST_F(JPEG2KParserPluginTest, Uint8_CodeStreamOnly) {
     auto expected_info = expected_cat_1046544_640();
     expected_info.color_spec = NVIMGCODEC_COLORSPEC_UNKNOWN;  // don't have such info in codestream
 
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_info, info);
 }
 
 TEST_F(JPEG2KParserPluginTest, TiledUint8) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg2k/tiled-cat-1046544_640.jp2");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1046544_640(), info);
@@ -210,9 +191,7 @@ TEST_F(JPEG2KParserPluginTest, TiledUint8) {
 
 TEST_F(JPEG2KParserPluginTest, TiledUint16) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg2k/cat-1046544_640-16bit.jp2");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_cat_1046544_640();
@@ -224,9 +203,7 @@ TEST_F(JPEG2KParserPluginTest, TiledUint16) {
 TEST_F(JPEG2KParserPluginTest, ErrorUnexpectedEnd) {
     const std::array<uint8_t, 12> just_the_signatures = {0x00, 0x00, 0x00, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a};
     LoadImageFromHostMemory(instance_, stream_handle_, just_the_signatures.data(), just_the_signatures.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_NE(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
 }

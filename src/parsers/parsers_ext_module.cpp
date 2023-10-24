@@ -99,6 +99,7 @@ class ParsersExtension
 // clang-format off
 nvimgcodecExtensionDesc_t parsers_extension = {
     NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC,
+    sizeof(nvimgcodecExtensionDesc_t),
     NULL,
 
     NULL,
@@ -117,7 +118,7 @@ nvimgcodecStatus_t get_parsers_extension_desc(nvimgcodecExtensionDesc_t* ext_des
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
-    if (ext_desc->type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
+    if (ext_desc->struct_type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 

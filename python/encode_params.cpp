@@ -27,7 +27,7 @@ namespace nvimgcodec {
 EncodeParams::EncodeParams()
     : jpeg2k_encode_params_{}
     , jpeg_encode_params_{}
-    , encode_params_{NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, nullptr, 95, 50}
+    , encode_params_{NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, sizeof(nvimgcodecEncodeParams_t), nullptr, 95, 50}
     , chroma_subsampling_{NVIMGCODEC_SAMPLING_444}
     , color_spec_{NVIMGCODEC_COLORSPEC_UNCHANGED}
 {

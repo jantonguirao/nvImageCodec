@@ -36,7 +36,7 @@ class DefaultDebugMessenger : public IDebugMessenger
   public:
     DefaultDebugMessenger(uint32_t message_severity = NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEFAULT,
         uint32_t message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL)
-        : desc_{NVIMGCODEC_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC, nullptr, message_severity, message_category,
+        : desc_{NVIMGCODEC_STRUCTURE_TYPE_DEBUG_MESSENGER_DESC, sizeof(nvimgcodecDebugMessengerDesc_t), nullptr, message_severity, message_category,
               DefaultDebugMessenger::static_debug_callback, this}
     {
     }

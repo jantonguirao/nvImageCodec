@@ -71,7 +71,7 @@ Module::Module()
         logger_ = std::make_unique<Logger>("pynvimgcodec");
     }
 
-    nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+    nvimgcodecInstanceCreateInfo_t instance_create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, sizeof(nvimgcodecInstanceCreateInfo_t), 0};
     instance_create_info.load_builtin_modules = 1;
     instance_create_info.load_extension_modules = 1;
     instance_create_info.create_debug_messenger = verbosity > 0 ? 1 : 0;

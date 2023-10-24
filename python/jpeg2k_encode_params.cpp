@@ -24,7 +24,7 @@
 namespace nvimgcodec {
 
 Jpeg2kEncodeParams::Jpeg2kEncodeParams()
-    : nvimgcodec_jpeg2k_encode_params_{NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, nullptr, NVIMGCODEC_JPEG2K_STREAM_JP2, NVIMGCODEC_JPEG2K_PROG_ORDER_RPCL,
+    : nvimgcodec_jpeg2k_encode_params_{NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS, sizeof(nvimgcodecJpeg2kEncodeParams_t), nullptr, NVIMGCODEC_JPEG2K_STREAM_JP2, NVIMGCODEC_JPEG2K_PROG_ORDER_RPCL,
           5, 64, 64, true}
 {
 }

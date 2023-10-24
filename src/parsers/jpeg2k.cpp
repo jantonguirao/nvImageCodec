@@ -119,7 +119,7 @@ nvimgcodecChromaSubsampling_t XRSizYRSizToSubsampling(uint8_t CSiz, const uint8_
 
 JPEG2KParserPlugin::JPEG2KParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "jpeg2k", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t), nullptr, this, plugin_id_, "jpeg2k", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }
@@ -350,7 +350,7 @@ nvimgcodecStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_
         }
         io_stream->seek(io_stream->instance, 0, SEEK_SET);
 
-        if (image_info->type != NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO) {
+        if (image_info->struct_type != NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO) {
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected structure type");
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         }
@@ -378,7 +378,7 @@ nvimgcodecStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_
         }
 
         image_info->sample_format = num_components > 1 ? NVIMGCODEC_SAMPLEFORMAT_P_RGB : NVIMGCODEC_SAMPLEFORMAT_P_Y;
-        image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        image_info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         image_info->chroma_subsampling = XRSizYRSizToSubsampling(CSiz, &XRSiz[0], &YRSiz[0]);
         image_info->color_spec = color_spec;
         image_info->num_planes = num_components;
@@ -456,6 +456,7 @@ class Jpeg2kParserExtension
 // clang-format off
 nvimgcodecExtensionDesc_t jpeg2k_parser_extension = {
     NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC,
+    sizeof(nvimgcodecExtensionDesc_t),
     NULL,
 
     NULL,
@@ -474,7 +475,7 @@ nvimgcodecStatus_t get_jpeg2k_parser_extension_desc(nvimgcodecExtensionDesc_t* e
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
-    if (ext_desc->type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
+    if (ext_desc->struct_type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 

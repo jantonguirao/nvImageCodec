@@ -34,14 +34,16 @@ class PNGParserPluginTest : public ::testing::Test
 
     void SetUp() override
     {
-        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, sizeof(nvimgcodecInstanceCreateInfo_t), 0};
         create_info.message_severity = NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
 
 
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecInstanceCreate(&instance_, &create_info));
 
-        png_parser_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        png_parser_extension_desc_.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        png_parser_extension_desc_.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        png_parser_extension_desc_.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_png_parser_extension_desc(&png_parser_extension_desc_));
         nvimgcodecExtensionCreate(instance_, &png_parser_extension_, &png_parser_extension_desc_);
     }
@@ -56,15 +58,12 @@ class PNGParserPluginTest : public ::testing::Test
 
     nvimgcodecImageInfo_t expected_cat_1245673_640()
     {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 3;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 423;
             info.plane_info[p].width = 640;
@@ -77,15 +76,12 @@ class PNGParserPluginTest : public ::testing::Test
 
     nvimgcodecImageInfo_t expected_bicycle_161524_1280()
     {
-        nvimgcodecImageInfo_t info;
-        memset(&info, 0, sizeof(nvimgcodecImageInfo_t));
-        info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-        info.next = nullptr;
+        nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
         info.num_planes = 4;
         info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
         info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        info.orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
         for (int p = 0; p < info.num_planes; p++) {
             info.plane_info[p].height = 901;
             info.plane_info[p].width = 1280;
@@ -105,9 +101,7 @@ class PNGParserPluginTest : public ::testing::Test
 TEST_F(PNGParserPluginTest, RGB)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/png/cat-1245673_640.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1245673_640(), info);
 }
@@ -116,9 +110,7 @@ TEST_F(PNGParserPluginTest, RGB_FromHostMem)
 {
     auto buffer = read_file(resources_dir + "/png/cat-1245673_640.png");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     expect_eq(expected_cat_1245673_640(), info);
 }
@@ -126,9 +118,7 @@ TEST_F(PNGParserPluginTest, RGB_FromHostMem)
 TEST_F(PNGParserPluginTest, EXIF_Orientation_Horizontal)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_horizontal.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 0;
@@ -140,9 +130,7 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_Horizontal)
 TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontal)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_mirror_horizontal.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 0;
@@ -154,9 +142,7 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontal)
 TEST_F(PNGParserPluginTest, EXIF_Orientation_Rotate180)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_rotate_180.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 180;
@@ -168,9 +154,7 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_Rotate180)
 TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorVertical)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_mirror_vertical.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 0;
@@ -183,9 +167,7 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate270)
 {
     LoadImageFromFilename(
         instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_mirror_horizontal_rotate_270.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 360 - 270;
@@ -197,9 +179,7 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate270)
 TEST_F(PNGParserPluginTest, EXIF_Orientation_Rotate90)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_rotate_90.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 360 - 90;
@@ -212,9 +192,7 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate90)
 {
     LoadImageFromFilename(
         instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_mirror_horizontal_rotate_90.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 360 - 90;
@@ -226,9 +204,7 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_MirrorHorizontalRotate90)
 TEST_F(PNGParserPluginTest, EXIF_Orientation_Rotate270)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_rotate_270.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 360 - 270;
@@ -240,9 +216,7 @@ TEST_F(PNGParserPluginTest, EXIF_Orientation_Rotate270)
 TEST_F(PNGParserPluginTest, EXIF_Orientation_NoOrientation)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/png/exif_orientation/bicycle-161524_1280_no_orientation.png");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     auto expected_info = expected_bicycle_161524_1280();
     expected_info.orientation.rotated = 0;

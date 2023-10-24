@@ -47,7 +47,7 @@ Encoder::Encoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, 
 
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
     nvimgcodecEncoder_t encoder;
-    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = device_id;
     exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
@@ -68,12 +68,12 @@ Encoder::Encoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, 
     if (backend_kinds.has_value()) {
         for (size_t i = 0; i < backend_kinds.value().size(); ++i) {
             nvimgcds_backends[i].kind = backend_kinds.value()[i];
-            nvimgcds_backends[i].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f};
+            nvimgcds_backends[i].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
         }
     }
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
     nvimgcodecEncoder_t encoder;
-    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = device_id;
     exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
@@ -141,20 +141,20 @@ void Encoder::encode(const std::vector<Image*>& images, std::optional<EncodePara
     std::vector<nvimgcodecImage_t> int_images(images.size());
     EncodeParams params = params_opt.has_value() ? params_opt.value() : EncodeParams();
 
-    params.jpeg2k_encode_params_.nvimgcodec_jpeg2k_encode_params_.next = nullptr;
-    params.jpeg_encode_params_.nvimgcodec_jpeg_encode_params_.next = &params.jpeg2k_encode_params_.nvimgcodec_jpeg2k_encode_params_;
-    params.encode_params_.next = &params.jpeg_encode_params_.nvimgcodec_jpeg_encode_params_;
+    params.jpeg2k_encode_params_.nvimgcodec_jpeg2k_encode_params_.struct_next = nullptr;
+    params.jpeg_encode_params_.nvimgcodec_jpeg_encode_params_.struct_next = &params.jpeg2k_encode_params_.nvimgcodec_jpeg2k_encode_params_;
+    params.encode_params_.struct_next = &params.jpeg_encode_params_.nvimgcodec_jpeg_encode_params_;
 
     for (size_t i = 0; i < images.size(); i++) {
         int_images[i] = images[i]->getNvImgCdcsImage();
 
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         nvimgcodecImageGetImageInfo(int_images[i], &image_info);
 
         nvimgcodecImageInfo_t out_image_info(image_info);
         out_image_info.chroma_subsampling = params.chroma_subsampling_;
         out_image_info.color_spec = params.color_spec_;
-        out_image_info.next = (void*)(&params.jpeg_encode_params_.nvimgcodec_jpeg_image_info_);
+        out_image_info.struct_next = (void*)(&params.jpeg_encode_params_.nvimgcodec_jpeg_image_info_);
 
         create_code_stream(i, out_image_info, &code_streams[i]);
     }

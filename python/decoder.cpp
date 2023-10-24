@@ -44,7 +44,7 @@ Decoder::Decoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, 
     }
 
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
-    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = device_id;
     exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
@@ -66,12 +66,12 @@ Decoder::Decoder(nvimgcodecInstance_t instance, ILogger* logger, int device_id, 
     if (backend_kinds.has_value()) {
         for (size_t i = 0; i < backend_kinds.value().size(); ++i) {
             nvimgcds_backends[i].kind = backend_kinds.value()[i];
-            nvimgcds_backends[i].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, nullptr, 1.0f};
+            nvimgcds_backends[i].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
         }
     }
 
     auto backends_ptr = nvimgcds_backends.size() ? nvimgcds_backends.data() : nullptr;
-    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = device_id;
     exec_params.max_num_cpu_threads = max_num_cpu_threads;
     exec_params.num_backends = nvimgcds_backends.size();
@@ -155,7 +155,7 @@ std::vector<py::object> Decoder::decode(
 
     size_t skip_samples = 0;
     for (uint32_t i = 0; i < code_streams.size(); i++) {
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         CHECK_NVIMGCODEC(nvimgcodecCodeStreamGetImageInfo(code_streams[i], &image_info));
 
         if (image_info.num_planes > NVIMGCODEC_MAX_NUM_PLANES) {

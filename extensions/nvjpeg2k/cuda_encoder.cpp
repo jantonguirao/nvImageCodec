@@ -34,7 +34,7 @@
 namespace nvjpeg2k {
 
 NvJpeg2kEncoderPlugin::NvJpeg2kEncoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, NULL, this, plugin_id_, "jpeg2k", NVIMGCODEC_BACKEND_KIND_GPU_ONLY, static_create,
+    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t), NULL, this, plugin_id_, "jpeg2k", NVIMGCODEC_BACKEND_KIND_GPU_ONLY, static_create,
           Encoder::static_destroy, Encoder::static_can_encode, Encoder::static_encode_batch}
     , framework_(framework)
 {
@@ -60,7 +60,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcodecProcessin
     auto image = images;
     for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
         *result = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
-        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
         if (strcmp(cs_image_info.codec_name, "jpeg2k") != 0) {
@@ -68,9 +68,9 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcodecProcessin
             continue;
         }
 
-        nvimgcodecJpeg2kEncodeParams_t* j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(params->next);
-        while (j2k_encode_params && j2k_encode_params->type != NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS)
-            j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(j2k_encode_params->next);
+        nvimgcodecJpeg2kEncodeParams_t* j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(params->struct_next);
+        while (j2k_encode_params && j2k_encode_params->struct_type != NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS)
+            j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(j2k_encode_params->struct_next);
         if (j2k_encode_params) {
             if ((j2k_encode_params->code_block_w != 32 || j2k_encode_params->code_block_h != 32) &&
                 (j2k_encode_params->code_block_w != 64 || j2k_encode_params->code_block_h != 64)) {
@@ -87,9 +87,9 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcodecProcessin
             }
         }
 
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         (*image)->getImageInfo((*image)->instance, &image_info);
-        nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
 
         static const std::set<nvimgcodecColorSpec_t> supported_color_space{
@@ -271,9 +271,9 @@ NvJpeg2kEncoderPlugin::EncodeState::~EncodeState()
 
 static void fill_encode_config(nvjpeg2kEncodeConfig_t* encode_config, const nvimgcodecEncodeParams_t* params)
 {
-    nvimgcodecJpeg2kEncodeParams_t* j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(params->next);
-    while (j2k_encode_params && j2k_encode_params->type != NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS)
-        j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(j2k_encode_params->next);
+    nvimgcodecJpeg2kEncodeParams_t* j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(params->struct_next);
+    while (j2k_encode_params && j2k_encode_params->struct_type != NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS)
+        j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(j2k_encode_params->struct_next);
     if (j2k_encode_params) {
         encode_config->stream_type = static_cast<nvjpeg2kBitstreamType>(j2k_encode_params->stream_type);
         encode_config->code_block_w = j2k_encode_params->code_block_w;
@@ -325,7 +325,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
             size_t tmp_buffer_sz = 0;
             void* tmp_buffer = nullptr;
             try {
-                nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+                nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
                 image->getImageInfo(image->instance, &image_info);
 
                 unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
@@ -394,8 +394,9 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                         planar_info.plane_info[p].precision = image_info.plane_info[0].precision;
                         planar_info.plane_info[p].row_stride = bytes_per_sample * image_info.plane_info[0].width;
                         planar_info.plane_info[p].sample_type = image_info.plane_info[0].sample_type;
-                        planar_info.plane_info[p].type = image_info.plane_info[0].type;
-                        planar_info.plane_info[p].next = image_info.plane_info[0].next;
+                        planar_info.plane_info[p].struct_type = image_info.plane_info[0].struct_type;
+                        planar_info.plane_info[p].struct_size = image_info.plane_info[0].struct_size;
+                        planar_info.plane_info[p].struct_next = image_info.plane_info[0].struct_next;
                     }
                     nvimgcodec::LaunchConvertNormKernel(planar_info, image_info, t.stream_);
                 } else {
@@ -415,7 +416,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                         (sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_INT8) || (sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_INT16);
                 }
 
-                nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+                nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
                 code_stream->getImageInfo(code_stream->instance, &out_image_info);
 
                 nvjpeg2kEncodeConfig_t encode_config;

@@ -114,7 +114,7 @@ static int write_pnm(nvimgcodecIoStreamDesc_t* io_stream, const D* chanR, size_t
 }
 
 NvPnmEncoderPlugin::NvPnmEncoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, NULL, this, plugin_id_, "pnm", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
+    : encoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_ENCODER_DESC, sizeof(nvimgcodecEncoderDesc_t), NULL, this, plugin_id_, "pnm", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
           Encoder::static_destroy, Encoder::static_can_encode, Encoder::static_encode_batch}
     , framework_(framework)
 {
@@ -197,7 +197,7 @@ nvimgcodecStatus_t NvPnmEncoderPlugin::Encoder::canEncode(nvimgcodecProcessingSt
         auto image = images;
         for (int i = 0; i < batch_size; ++i, ++result, ++code_stream, ++image) {
             *result = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
-            nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
             (*code_stream)->getImageInfo((*code_stream)->instance, &cs_image_info);
 
             if (strcmp(cs_image_info.codec_name, "pnm") != 0) {
@@ -209,9 +209,9 @@ nvimgcodecStatus_t NvPnmEncoderPlugin::Encoder::canEncode(nvimgcodecProcessingSt
                 continue;
             }
 
-            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
             (*image)->getImageInfo((*image)->instance, &image_info);
-            nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+            nvimgcodecImageInfo_t out_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
             (*code_stream)->getImageInfo((*code_stream)->instance, &out_image_info);
 
             if (image_info.color_spec != NVIMGCODEC_COLORSPEC_SRGB) {
@@ -269,7 +269,7 @@ nvimgcodecProcessingStatus_t NvPnmEncoderPlugin::Encoder::encode(const char* plu
 {
     try {
         NVIMGCODEC_LOG_TRACE(framework, plugin_id, "pnm_encode");
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     image->getImageInfo(image->instance, &image_info);
     unsigned char* host_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 

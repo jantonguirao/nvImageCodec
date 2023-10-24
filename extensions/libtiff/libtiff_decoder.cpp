@@ -349,7 +349,7 @@ struct DecoderImpl
 };
 
 LibtiffDecoderPlugin::LibtiffDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, NULL, this, plugin_id_, "tiff", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_, "tiff", NVIMGCODEC_BACKEND_KIND_CPU_ONLY, static_create,
           DecoderImpl::static_destroy, DecoderImpl::static_can_decode, DecoderImpl::static_decode_batch}
     , framework_(framework)
 {}
@@ -369,13 +369,13 @@ nvimgcodecStatus_t DecoderImpl::canDecode(nvimgcodecProcessingStatus_t* status, 
         XM_CHECK_NULL(image);
         XM_CHECK_NULL(params);
         *status = NVIMGCODEC_PROCESSING_STATUS_SUCCESS;
-        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         code_stream->getImageInfo(code_stream->instance, &cs_image_info);
         if (strcmp(cs_image_info.codec_name, "tiff") != 0) {
             *status = NVIMGCODEC_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             return NVIMGCODEC_STATUS_SUCCESS;
         }
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         image->getImageInfo(image->instance, &image_info);
         switch (image_info.sample_format) {
         case NVIMGCODEC_SAMPLEFORMAT_P_YUV:
@@ -804,7 +804,7 @@ nvimgcodecProcessingStatus_t DecoderImpl::decode(const char* plugin_id, const nv
     std::vector<uint8_t>& buffer)
 {
     try {
-        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
         auto ret = image->getImageInfo(image->instance, &image_info);
         if (ret != NVIMGCODEC_STATUS_SUCCESS)
             return NVIMGCODEC_PROCESSING_STATUS_FAIL;

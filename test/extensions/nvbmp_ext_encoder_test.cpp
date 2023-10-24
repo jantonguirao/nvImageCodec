@@ -46,17 +46,19 @@ class NvbmpExtTestBase : public ExtensionTestBase
     {
         ExtensionTestBase::SetUp();
 
-        nvbmp_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        nvbmp_extension_desc_.next = nullptr;
+        nvbmp_extension_desc_.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvbmp_extension_desc_.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        nvbmp_extension_desc_.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_nvbmp_extension_desc(&nvbmp_extension_desc_));
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &nvbmp_extension_, &nvbmp_extension_desc_));
 
-        nvbmp_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        nvbmp_parser_extension_desc.next = nullptr;
+        nvbmp_parser_extension_desc.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvbmp_parser_extension_desc.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        nvbmp_parser_extension_desc.struct_next = nullptr;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_bmp_parser_extension_desc(&nvbmp_parser_extension_desc));
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &nvbmp_parser_extension_, &nvbmp_parser_extension_desc));
 
-        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+        image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     }
 
     virtual void TearDown()
@@ -83,11 +85,11 @@ class NvbmpExtEncoderTest : public NvbmpExtTestBase, public TestWithParam<nvimgc
         NvbmpExtTestBase::SetUp();
 
         const char* options = nullptr;
-        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
         exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecEncoderCreate(instance_, &encoder_, &exec_params, options));
 
-        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, sizeof(nvimgcodecEncodeParams_t), 0};
         params_.quality = 0;
         params_.target_psnr = 0;
 
@@ -175,7 +177,7 @@ TEST_P(NvbmpExtEncoderTest, ValidFormatAndParameters)
 
     // read the compressed image info
     LoadImageFromHostMemory(instance_, in_code_stream_, code_stream_buffer_.data(), code_stream_buffer_.size());
-    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
+    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &load_info));
 
     // compare the image info with the original image info
@@ -198,13 +200,13 @@ TEST_P(NvbmpExtEncoderTest, ValidFormatAndParameters)
 
     // decode the compressed image
     nvimgcodecDecoder_t decoder;
-    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+    nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
     exec_params.max_num_cpu_threads = 1;
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderCreate(instance_, &decoder, &exec_params, nullptr));
 
     nvimgcodecDecodeParams_t decode_params;
-    decode_params = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, 0};
+    decode_params = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, sizeof(nvimgcodecDecodeParams_t), 0};
 
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageCreate(instance_, &out_image_, &load_info));
 

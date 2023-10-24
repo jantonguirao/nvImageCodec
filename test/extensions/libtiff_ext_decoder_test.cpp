@@ -40,15 +40,13 @@ class LibtiffExtDecoderTest : public ::testing::Test, public CommonExtDecoderTes
     {
         CommonExtDecoderTest::SetUp();
 
-        nvimgcodecExtensionDesc_t tiff_parser_extension_desc;
-        tiff_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t tiff_parser_extension_desc{
+            NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_tiff_parser_extension_desc(&tiff_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &tiff_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t libtiff_extension_desc;
-        libtiff_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        libtiff_extension_desc.next = nullptr;
+        nvimgcodecExtensionDesc_t libtiff_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_libtiff_extension_desc(&libtiff_extension_desc));
         extensions_.emplace_back();
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &extensions_.back(), &libtiff_extension_desc));

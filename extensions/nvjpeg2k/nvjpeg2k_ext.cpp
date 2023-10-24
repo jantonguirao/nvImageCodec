@@ -78,6 +78,7 @@ struct NvJpeg2kImgCodecsExtension
 // clang-format off
 nvimgcodecExtensionDesc_t nvjpeg2k_extension = {
     NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC,
+    sizeof(nvimgcodecExtensionDesc_t),
     NULL,
 
     NULL,
@@ -96,7 +97,7 @@ nvimgcodecStatus_t get_nvjpeg2k_extension_desc(nvimgcodecExtensionDesc_t* ext_de
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
-    if (ext_desc->type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
+    if (ext_desc->struct_type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 

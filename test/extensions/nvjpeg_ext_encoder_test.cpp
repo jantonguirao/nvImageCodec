@@ -49,17 +49,17 @@ class NvJpegExtEncoderTestBase : public NvJpegExtTestBase
     {
         NvJpegExtTestBase::SetUp();
         const char* options = nullptr;
-        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
         exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecEncoderCreate(instance_, &encoder_, &exec_params, options));
 
-        jpeg_enc_params_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, 0};
+        jpeg_enc_params_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG_ENCODE_PARAMS, sizeof(nvimgcodecJpegEncodeParams_t), 0};
         jpeg_enc_params_.optimized_huffman = 0;
-        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, 0};
-        params_.next = &jpeg_enc_params_;
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_ENCODE_PARAMS, sizeof(nvimgcodecEncodeParams_t), 0};
+        params_.struct_next = &jpeg_enc_params_;
         params_.quality = 95;
         params_.target_psnr = 0;
-        out_jpeg_image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
+        out_jpeg_image_info_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), 0};
     }
 
     virtual void TearDown()
@@ -94,7 +94,7 @@ class NvJpegExtEncoderTestSingleImage : public NvJpegExtEncoderTestBase,
         chroma_subsampling_ = std::get<3>(GetParam());
         encoded_chroma_subsampling_ = std::get<4>(GetParam());
         out_jpeg_image_info_.encoding = std::get<5>(GetParam());
-        image_info_.next = &out_jpeg_image_info_;
+        image_info_.struct_next = &out_jpeg_image_info_;
     }
 
     void TearDown() override
@@ -136,9 +136,9 @@ TEST_P(NvJpegExtEncoderTestSingleImage, ValidFormatAndParameters)
     }
 
     LoadImageFromHostMemory(instance_, in_code_stream_, code_stream_buffer_.data(), code_stream_buffer_.size());
-    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, 0};
-    nvimgcodecJpegImageInfo_t load_jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, 0};
-    load_info.next = &load_jpeg_info;
+    nvimgcodecImageInfo_t load_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
+    nvimgcodecJpegImageInfo_t load_jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), 0};
+    load_info.struct_next = &load_jpeg_info;
 
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &load_info));
     EXPECT_EQ(out_jpeg_image_info_.encoding, load_jpeg_info.encoding);
@@ -257,7 +257,7 @@ class NvJpegExtEncoderTestSingleImageWithStatus : public NvJpegExtEncoderTestBas
         encoded_chroma_subsampling_ = std::get<4>(GetParam());
         out_jpeg_image_info_.encoding = std::get<5>(GetParam());
         expected_status_ =  std::get<6>(GetParam());
-        image_info_.next = &out_jpeg_image_info_;
+        image_info_.struct_next = &out_jpeg_image_info_;
 
     }
 

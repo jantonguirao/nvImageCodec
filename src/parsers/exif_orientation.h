@@ -37,23 +37,23 @@ enum class ExifOrientation : uint16_t {
 inline nvimgcodecOrientation_t FromExifOrientation(ExifOrientation exif_orientation) {
   switch (exif_orientation) {
     case ExifOrientation::HORIZONTAL:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
     case ExifOrientation::MIRROR_HORIZONTAL:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, true, false};
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, true, false};
     case ExifOrientation::ROTATE_180:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 180, false, false};
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 180, false, false};
     case ExifOrientation::MIRROR_VERTICAL:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, true};
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, true};
     case ExifOrientation::MIRROR_HORIZONTAL_ROTATE_270_CW:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 90, false, true};  // 270 CW = 90 CCW
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 90, false, true};  // 270 CW = 90 CCW
     case ExifOrientation::ROTATE_90_CW:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 270, false, false};  // 90 CW = 270 CCW
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 270, false, false};  // 90 CW = 270 CCW
     case ExifOrientation::MIRROR_HORIZONTAL_ROTATE_90_CW:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 270, false, true};  // 90 CW = 270 CCW
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 270, false, true};  // 90 CW = 270 CCW
     case ExifOrientation::ROTATE_270_CW:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 90, false, false};  // 270 CW = 90 CCW
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 90, false, false};  // 270 CW = 90 CCW
     default:
-      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+      return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
   }
 }
 

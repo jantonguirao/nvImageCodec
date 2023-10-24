@@ -152,22 +152,22 @@ nvimgcodecOrientation_t exif_to_nvimgcodec_orientation(nvjpegExifOrientation_t e
 {
     switch (exif_orientation) {
     case NVJPEG_ORIENTATION_NORMAL:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
     case NVJPEG_ORIENTATION_FLIP_HORIZONTAL:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, true, false};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, true, false};
     case NVJPEG_ORIENTATION_ROTATE_180:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 180, false, false};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 180, false, false};
     case NVJPEG_ORIENTATION_FLIP_VERTICAL:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, true};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, true};
     case NVJPEG_ORIENTATION_TRANSPOSE:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 90, false, true};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 90, false, true};
     case NVJPEG_ORIENTATION_ROTATE_90:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 270, false, false};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 270, false, false};
     case NVJPEG_ORIENTATION_TRANSVERSE:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 270, false, true};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 270, false, true};
     case NVJPEG_ORIENTATION_ROTATE_270:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 90, false, false};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 90, false, false};
     default:
-        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+        return {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
     }
 }

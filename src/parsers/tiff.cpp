@@ -77,7 +77,7 @@ nvimgcodecStatus_t GetInfoImpl(
     info->color_spec = NVIMGCODEC_COLORSPEC_UNKNOWN;
     info->chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
     info->sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
-    info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, nullptr, 0, false, false};
+    info->orientation = {NVIMGCODEC_STRUCTURE_TYPE_ORIENTATION, sizeof(nvimgcodecOrientation_t), nullptr, 0, false, false};
 
     bool width_read = false, height_read = false, samples_per_px_read = false, palette_read = false, bitdepth_read = false;
     int64_t width = 0, height = 0, nchannels = 0;
@@ -169,7 +169,7 @@ nvimgcodecStatus_t GetInfoImpl(
 
 TIFFParserPlugin::TIFFParserPlugin(const nvimgcodecFrameworkDesc_t* framework)
     : framework_(framework)
-    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, nullptr, this, plugin_id_, "tiff", static_can_parse, static_create,
+    , parser_desc_{NVIMGCODEC_STRUCTURE_TYPE_PARSER_DESC, sizeof(nvimgcodecParserDesc_t), nullptr, this, plugin_id_, "tiff", static_can_parse, static_create,
           Parser::static_destroy, Parser::static_get_image_info}
 {
 }
@@ -346,6 +346,7 @@ class TiffParserExtension
 // clang-format off
 nvimgcodecExtensionDesc_t tiff_parser_extension = {
     NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC,
+    sizeof(nvimgcodecExtensionDesc_t),
     NULL,
    
     NULL,
@@ -364,7 +365,7 @@ nvimgcodecStatus_t get_tiff_parser_extension_desc(nvimgcodecExtensionDesc_t* ext
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 
-    if (ext_desc->type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
+    if (ext_desc->struct_type != NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC) {
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     }
 

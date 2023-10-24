@@ -42,14 +42,16 @@ class JPEGParserPluginTest : public ::testing::Test
 
     void SetUp() override
     {
-        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, 0};
+        nvimgcodecInstanceCreateInfo_t create_info{NVIMGCODEC_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, sizeof(nvimgcodecInstanceCreateInfo_t), 0};
         create_info.message_severity = NVIMGCODEC_DEBUG_MESSAGE_SEVERITY_DEFAULT;
         create_info.message_category = NVIMGCODEC_DEBUG_MESSAGE_CATEGORY_ALL;
 
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
             nvimgcodecInstanceCreate(&instance_, &create_info));
 
-        jpeg_parser_extension_desc_.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        jpeg_parser_extension_desc_.struct_type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        jpeg_parser_extension_desc_.struct_size = sizeof(nvimgcodecExtensionDesc_t);
+        jpeg_parser_extension_desc_.struct_next = nullptr;
          ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
             get_jpeg_parser_extension_desc(&jpeg_parser_extension_desc_));
         nvimgcodecExtensionCreate(instance_, &jpeg_parser_extension_, &jpeg_parser_extension_desc_);
@@ -71,9 +73,7 @@ class JPEGParserPluginTest : public ::testing::Test
 
 TEST_F(JPEGParserPluginTest, YCC_410) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_410.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
@@ -93,12 +93,8 @@ TEST_F(JPEGParserPluginTest, YCC_410) {
 
 TEST_F(JPEGParserPluginTest, YCC_410_Extended_JPEG_info) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_410.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
-    nvimgcodecJpegImageInfo_t jpeg_info;
-    jpeg_info.type = NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO;
-    info.next = &jpeg_info;
+    nvimgcodecJpegImageInfo_t jpeg_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), 0};
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), &jpeg_info};
 
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
@@ -122,9 +118,7 @@ TEST_F(JPEGParserPluginTest, YCC_410_Extended_JPEG_info) {
 
 TEST_F(JPEGParserPluginTest, YCC_411) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_411.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
@@ -145,9 +139,7 @@ TEST_F(JPEGParserPluginTest, YCC_411) {
 
 TEST_F(JPEGParserPluginTest, YCC_420) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_420.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
@@ -168,9 +160,7 @@ TEST_F(JPEGParserPluginTest, YCC_420) {
 
 TEST_F(JPEGParserPluginTest, YCC_422) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_422.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
@@ -191,9 +181,7 @@ TEST_F(JPEGParserPluginTest, YCC_422) {
 
 TEST_F(JPEGParserPluginTest, YCC_440) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_440.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
@@ -214,9 +202,7 @@ TEST_F(JPEGParserPluginTest, YCC_440) {
 
 TEST_F(JPEGParserPluginTest, YCC_444) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_444.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
@@ -236,9 +222,7 @@ TEST_F(JPEGParserPluginTest, YCC_444) {
 
 TEST_F(JPEGParserPluginTest, Gray) {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_gray.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_Y, info.sample_format);
@@ -259,9 +243,7 @@ TEST_F(JPEGParserPluginTest, Gray) {
 
 TEST_F(JPEGParserPluginTest, CMYK) {  // TODO(janton) : get a permissive license free image
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/cmyk-dali.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
@@ -281,9 +263,7 @@ TEST_F(JPEGParserPluginTest, CMYK) {  // TODO(janton) : get a permissive license
 
 TEST_F(JPEGParserPluginTest, YCCK) {  // TODO(janton) : get a permissive license free image
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/ycck_colorspace.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS,
         nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
@@ -304,31 +284,31 @@ TEST_F(JPEGParserPluginTest, YCCK) {  // TODO(janton) : get a permissive license
 TEST_F(JPEGParserPluginTest, File_vs_MemoryStream)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/padlock-406986_640_420.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
 
     auto buffer = read_file(resources_dir + "/jpeg/padlock-406986_640_420.jpg");
     LoadImageFromHostMemory(instance_, stream_handle_, buffer.data(), buffer.size());
-    nvimgcodecImageInfo_t info2;
-    info2.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info2.next = nullptr;
+    nvimgcodecImageInfo_t info2{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
+
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info2));
 
-    EXPECT_EQ(info.type, info2.type);
-    EXPECT_EQ(info.next, info2.next);
+    EXPECT_EQ(info.struct_type, info2.struct_type);
+    EXPECT_EQ(info.struct_size, info2.struct_size);
+    EXPECT_EQ(info.struct_next, info2.struct_next);
     EXPECT_STREQ(info.codec_name, info2.codec_name);
     EXPECT_EQ(info.color_spec, info2.color_spec);
     EXPECT_EQ(info.chroma_subsampling, info2.chroma_subsampling);
     EXPECT_EQ(info.sample_format, info2.sample_format);
-    EXPECT_EQ(info.orientation.type, info2.orientation.type);
-    EXPECT_EQ(info.orientation.next, info2.orientation.next);
+    EXPECT_EQ(info.orientation.struct_type, info2.orientation.struct_type);
+    EXPECT_EQ(info.orientation.struct_size, info2.orientation.struct_size);
+    EXPECT_EQ(info.orientation.struct_next, info2.orientation.struct_next);
     EXPECT_EQ(info.orientation.rotated, info2.orientation.rotated);
     EXPECT_EQ(info.orientation.flip_x, info2.orientation.flip_x);
     EXPECT_EQ(info.orientation.flip_y, info2.orientation.flip_y);
-    EXPECT_EQ(info.region.type, info.region.type);
-    EXPECT_EQ(info.region.next, info.region.next);
+    EXPECT_EQ(info.region.struct_type, info.region.struct_type);
+    EXPECT_EQ(info.region.struct_size, info.region.struct_size);
+    EXPECT_EQ(info.region.struct_next, info.region.struct_next);
     EXPECT_EQ(info.region.ndim, info.region.ndim);
     for (int d = 0; d < info.region.ndim; d++) {
         EXPECT_EQ(info.region.start[d], info2.region.start[d]);
@@ -336,8 +316,9 @@ TEST_F(JPEGParserPluginTest, File_vs_MemoryStream)
     }
     EXPECT_EQ(info.num_planes, info2.num_planes);
     for (int p = 0; p < info.num_planes; p++) {
-        EXPECT_EQ(info.plane_info[p].type, info2.plane_info[p].type);
-        EXPECT_EQ(info.plane_info[p].next, info2.plane_info[p].next);
+        EXPECT_EQ(info.plane_info[p].struct_type, info2.plane_info[p].struct_type);
+        EXPECT_EQ(info.plane_info[p].struct_size, info2.plane_info[p].struct_size);
+        EXPECT_EQ(info.plane_info[p].struct_next, info2.plane_info[p].struct_next);
         EXPECT_EQ(info.plane_info[p].width, info2.plane_info[p].width);
         EXPECT_EQ(info.plane_info[p].height, info2.plane_info[p].height);
         EXPECT_EQ(info.plane_info[p].row_stride, info2.plane_info[p].row_stride);
@@ -389,9 +370,7 @@ TEST_F(JPEGParserPluginTest, Padding)
     padded = replace(padded, {0xff, 0xdb}, {0xff, 0xff, 0xff, 0xdb});
     padded = replace(padded, {0xff, 0xc0}, {0xff, 0xff, 0xff, 0xff, 0xff, 0xc0});
     EXPECT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamCreateFromHostMem(instance_, &stream_handle_, padded.data(), padded.size()));
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(NVIMGCODEC_SAMPLEFORMAT_P_RGB, info.sample_format);
     EXPECT_EQ(3, info.num_planes);
@@ -411,9 +390,7 @@ TEST_F(JPEGParserPluginTest, Padding)
 TEST_F(JPEGParserPluginTest, EXIF_NoOrientation)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_no_orientation.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(0, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(false, info.orientation.flip_x);
@@ -423,9 +400,7 @@ TEST_F(JPEGParserPluginTest, EXIF_NoOrientation)
 TEST_F(JPEGParserPluginTest, EXIF_Horizontal)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_horizontal.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(0, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(false, info.orientation.flip_x);
@@ -435,9 +410,7 @@ TEST_F(JPEGParserPluginTest, EXIF_Horizontal)
 TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontal)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(0, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(true, info.orientation.flip_x);
@@ -447,9 +420,7 @@ TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontal)
 TEST_F(JPEGParserPluginTest, EXIF_Rotate180)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_rotate_180.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(180, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(false, info.orientation.flip_x);
@@ -459,9 +430,7 @@ TEST_F(JPEGParserPluginTest, EXIF_Rotate180)
 TEST_F(JPEGParserPluginTest, EXIF_MirrorVertical)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_mirror_vertical.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(0, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(false, info.orientation.flip_x);
@@ -471,9 +440,7 @@ TEST_F(JPEGParserPluginTest, EXIF_MirrorVertical)
 TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontalRotate270)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_270.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(360 - 270, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(false, info.orientation.flip_x);
@@ -483,9 +450,7 @@ TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontalRotate270)
 TEST_F(JPEGParserPluginTest, EXIF_Rotate90)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_rotate_90.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(360 - 90, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(false, info.orientation.flip_x);
@@ -495,9 +460,7 @@ TEST_F(JPEGParserPluginTest, EXIF_Rotate90)
 TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontalRotate90)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_90.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(360 - 90, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(false, info.orientation.flip_x);
@@ -507,9 +470,7 @@ TEST_F(JPEGParserPluginTest, EXIF_MirrorHorizontalRotate90)
 TEST_F(JPEGParserPluginTest, EXIF_Rotate270)
 {
     LoadImageFromFilename(instance_, stream_handle_, resources_dir + "/jpeg/exif/padlock-406986_640_rotate_270.jpg");
-    nvimgcodecImageInfo_t info;
-    info.type = NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO;
-    info.next = nullptr;
+    nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(stream_handle_, &info));
     EXPECT_EQ(360 - 270, NormalizeAngle(info.orientation.rotated));
     EXPECT_EQ(false, info.orientation.flip_x);

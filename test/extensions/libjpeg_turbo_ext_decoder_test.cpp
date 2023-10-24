@@ -39,15 +39,12 @@ class LibjpegTurboExtDecoderTest : public ::testing::Test, public CommonExtDecod
     {
         CommonExtDecoderTest::SetUp();
 
-        nvimgcodecExtensionDesc_t jpeg_parser_extension_desc;
-        jpeg_parser_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
+        nvimgcodecExtensionDesc_t jpeg_parser_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_jpeg_parser_extension_desc(&jpeg_parser_extension_desc));
         extensions_.emplace_back();
         nvimgcodecExtensionCreate(instance_, &extensions_.back(), &jpeg_parser_extension_desc);
 
-        nvimgcodecExtensionDesc_t libjpeg_turbo_extension_desc;
-        libjpeg_turbo_extension_desc.type = NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC;
-        libjpeg_turbo_extension_desc.next = nullptr;
+        nvimgcodecExtensionDesc_t libjpeg_turbo_extension_desc{NVIMGCODEC_STRUCTURE_TYPE_EXTENSION_DESC, sizeof(nvimgcodecExtensionDesc_t), 0};
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, get_libjpeg_turbo_extension_desc(&libjpeg_turbo_extension_desc));
         extensions_.emplace_back();
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecExtensionCreate(instance_, &extensions_.back(), &libjpeg_turbo_extension_desc));
@@ -148,7 +145,7 @@ TEST_F(LibjpegTurboExtDecoderTest, EXIFOrientationUnsupported)
 TEST_F(LibjpegTurboExtDecoderTest, ROIDecodingWholeImage)
 {
     // Whole image
-    nvimgcodecRegion_t region1{NVIMGCODEC_STRUCTURE_TYPE_REGION, nullptr, 2};
+    nvimgcodecRegion_t region1{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 2};
     region1.start[0] = 0;
     region1.start[1] = 0;
     region1.end[0] = 426;
@@ -159,7 +156,7 @@ TEST_F(LibjpegTurboExtDecoderTest, ROIDecodingWholeImage)
 TEST_F(LibjpegTurboExtDecoderTest, ROIDecodingPortion)
 {
     // Actual ROI
-    nvimgcodecRegion_t region2{NVIMGCODEC_STRUCTURE_TYPE_REGION, nullptr, 2};
+    nvimgcodecRegion_t region2{NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 2};
     region2.start[0] = 10;
     region2.start[1] = 20;
     region2.end[0] = 10 + 100;

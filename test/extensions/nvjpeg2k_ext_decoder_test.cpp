@@ -50,10 +50,10 @@ class NvJpeg2kExtDecoderTestBase : public NvJpeg2kExtTestBase
     void SetUp()
     {
         NvJpeg2kExtTestBase::SetUp();
-        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, 0};
+        nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
         exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderCreate(instance_, &decoder_, &exec_params, nullptr));
-        params_ = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, 0};
+        params_ = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, sizeof(nvimgcodecDecodeParams_t), 0};
     }
 
     void TearDown()
@@ -141,7 +141,7 @@ static const char* css_filenames[] = {"/jpeg2k/chroma_420/artificial_420_8b3c_dw
 INSTANTIATE_TEST_SUITE_P(NVJPEG2K_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_FORMATS, NvJpeg2kExtDecoderTestSingleImage,
     Combine(::testing::ValuesIn(css_filenames),
         Values(NVIMGCODEC_COLORSPEC_SRGB),
-        Values(NVIMGCODEC_SAMPLEFORMAT_P_RGB),//NVIMGCODEC_SAMPLEFORMAT_I_RGB, NVIMGCODEC_SAMPLEFORMAT_P_BGR, NVIMGCODEC_SAMPLEFORMAT_I_BGR),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_RGB), //NVIMGCODEC_SAMPLEFORMAT_I_RGB, NVIMGCODEC_SAMPLEFORMAT_P_BGR, NVIMGCODEC_SAMPLEFORMAT_I_BGR),
         //Various output chroma subsampling are ignored for SRGB 
          Values(NVIMGCODEC_SAMPLING_NONE, NVIMGCODEC_SAMPLING_422, NVIMGCODEC_SAMPLING_420, NVIMGCODEC_SAMPLING_440, 
                 NVIMGCODEC_SAMPLING_411, NVIMGCODEC_SAMPLING_410, NVIMGCODEC_SAMPLING_GRAY, NVIMGCODEC_SAMPLING_410V), 
