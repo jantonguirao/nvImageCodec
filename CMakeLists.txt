@@ -1,3 +1,18 @@
+# SPDX-FileCopyrightText: Copyright (c) 2022-2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
 set(NVIMGCODEC_PROJECT_NAME "nvimgcodec")
@@ -82,8 +97,6 @@ propagate_option(WITH_DYNAMIC_NVJPEG2K)
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
 
-
-
 if(WIN32)
     set(CPACK_GENERATOR "ZIP")
 else()
@@ -150,21 +163,27 @@ endif()
 
 include (CPack)
 
+include(cmake/CUDA_utils.cmake)
 
-# Targeted CUDA Architectures
-# ALL: 30;35;50;60;70;75;82
-set(CUDA_TARGET_ARCHS 52;60;61;70;75;80 CACHE
-    STRING "List of targeted CUDA architectures (compute capabilities), for example \"30;35;50\""
-)
-message(STATUS "Targeted CUDA architectures: ${CUDA_TARGET_ARCHS}")
+set(USED_CUDA_COMPILER ${CMAKE_CUDA_COMPILER})
+message(STATUS "CUDA .cu files compiler: ${USED_CUDA_COMPILER}")
 
-set(CUDA_PTX_ARCHS 80 CACHE
-    STRING "List of targeted CUDA architectures (compute capabilities), for example \"30;35;50\""
-)
-message(STATUS "Targeted CUDA PTX architectures: ${CUDA_PTX_ARCHS}")
+CUDA_find_supported_arch_values(CUDA_supported_archs ${USED_CUDA_COMPILER} ${CUDA_known_archs})
+message(STATUS "CUDA supported archs: ${CUDA_supported_archs}")
 
-# Helper functions for setting CUDA architectures
-include(SetCUDAArchitectures)
+set(CUDA_TARGET_ARCHS_SORTED ${CUDA_TARGET_ARCHS})
+list(SORT CUDA_TARGET_ARCHS_SORTED)
+CUDA_find_supported_arch_values(CUDA_targeted_archs ${USED_CUDA_COMPILER} ${CUDA_TARGET_ARCHS_SORTED})
+message(STATUS "CUDA targeted archs: ${CUDA_targeted_archs}")
+if (NOT CUDA_targeted_archs)
+  message(FATAL_ERROR "None of the provided CUDA architectures ({${CUDA_TARGET_ARCHS}})"
+      " is supported by ${USED_CUDA_COMPILER}, use one or more of: ${CUDA_supported_archs}")
+endif()
+
+CUDA_get_cmake_cuda_archs(CMAKE_CUDA_ARCHITECTURES ${CUDA_targeted_archs})
+message(STATUS "Generated CMAKE_CUDA_ARCHITECTURES: ${CMAKE_CUDA_ARCHITECTURES}")
+
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --compiler-options \"-fvisibility=hidden -Wno-free-nonheap-object\" --Wno-deprecated-gpu-targets -Xfatbin -compress-all")
 
 if(WIN32)
     include(third_party/generate_product_version)
