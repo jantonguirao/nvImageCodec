@@ -10,18 +10,3 @@ RUN curl -LO https://developer.download.nvidia.com/compute/cuda/12.1.1/local_ins
     chmod +x cuda_*.run && \
     ./cuda_*.run --silent --no-opengl-libs --toolkit && \
     rm -f cuda_*.run;
-
-RUN mkdir -p -m 0700 /root/.ssh && ssh-keyscan gitlab-master.nvidia.com >> /root/.ssh/known_hosts
-RUN --mount=type=ssh git lfs clone ssh://git@gitlab-master.nvidia.com:12051/cuda-hpc-libraries/nvjpeg2k.git /root/nvjpeg2k
-RUN NVJPEG2K_VERSION=v0.7.0-rc1 && \
-    mkdir -p /root/nvjpeg2k/build && \
-    cd /root/nvjpeg2k/build && \
-    git checkout $NVJPEG2K_VERSION && \
-    export CUDACXX=/usr/local/cuda/bin/nvcc && \
-    cmake -DCMAKE_BUILD_TYPE=Release .. && \
-    make -j8 && \
-    make install && \
-    cp -rv /usr/local/include/* /usr/local/cuda/include/ && \
-    cp -v /usr/local/lib64/12/* /usr/local/cuda/lib64/ && \
-    cd /root/ && \
-    rm -rf nvjpeg2k 
