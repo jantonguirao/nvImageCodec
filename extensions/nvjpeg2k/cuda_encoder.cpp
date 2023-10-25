@@ -131,7 +131,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::canEncode(nvimgcodecProcessin
         }
 
         static const std::set<nvimgcodecSampleDataType_t> supported_sample_type{
-            NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8, NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16, NVIMGCODEC_SAMPLE_DATA_TYPE_INT16};
+            NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8, NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16};
         for (uint32_t p = 0; p < image_info.num_planes; ++p) {
             auto sample_type = image_info.plane_info[p].sample_type;
             if (supported_sample_type.find(sample_type) == supported_sample_type.end()) {
@@ -281,6 +281,10 @@ static void fill_encode_config(nvjpeg2kEncodeConfig_t* encode_config, const nvim
         encode_config->irreversible = j2k_encode_params->irreversible;
         encode_config->prog_order = static_cast<nvjpeg2kProgOrder>(j2k_encode_params->prog_order);
         encode_config->num_resolutions = j2k_encode_params->num_resolutions;
+    }
+    //Assume Gray color space when it is unknown and there is only one component
+    if (encode_config->color_space == NVJPEG2K_COLORSPACE_UNKNOWN && encode_config->num_components == 1) {
+        encode_config->color_space = NVJPEG2K_COLORSPACE_GRAY;
     }
 }
 
