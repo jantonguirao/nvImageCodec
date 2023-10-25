@@ -62,14 +62,14 @@ constexpr auto ext2loc_color_spec(NVCVColorSpec in)
         return NVIMGCODEC_COLORSPEC_UNSUPPORTED;
     case NVCV_COLOR_SPEC_sRGB:
         return NVIMGCODEC_COLORSPEC_SRGB;
-    //case :
-    //    return NVIMGCODEC_COLORSPEC_GRAY; //TODO
+    case NVCV_COLOR_SPEC_GRAY:
+       return NVIMGCODEC_COLORSPEC_GRAY;
     case NVCV_COLOR_SPEC_sYCC:
         return NVIMGCODEC_COLORSPEC_SYCC;
-    //case :
-    //    return NVIMGCODEC_COLORSPEC_CMYK; //TODO
-    //case :
-    //    return NVIMGCODEC_COLORSPEC_YCCK; //TODO
+    case NVCV_COLOR_SPEC_CMYK:
+       return NVIMGCODEC_COLORSPEC_CMYK;
+    case NVCV_COLOR_SPEC_YCCK:
+       return NVIMGCODEC_COLORSPEC_YCCK;
     default:
         return NVIMGCODEC_COLORSPEC_UNSUPPORTED;
     }
@@ -84,16 +84,16 @@ constexpr auto ext2loc_css(NVCVChromaSubsampling in)
         return NVIMGCODEC_SAMPLING_422;
     case NVCV_CSS_420:
         return NVIMGCODEC_SAMPLING_420;
-    //case :
-    //    return NVIMGCODEC_SAMPLING_440; //TODO
+    case NVCV_CSS_440:
+       return NVIMGCODEC_SAMPLING_440;
     case NVCV_CSS_411:
         return NVIMGCODEC_SAMPLING_411;
-    //case :
-    //    return NVIMGCODEC_SAMPLING_410; //TODO
-    //case :
+    case NVCV_CSS_410:
+       return NVIMGCODEC_SAMPLING_410;
+    // case :
     //    return NVIMGCODEC_SAMPLING_GRAY; //TODO
-    //case :
-    //   return NVIMGCODEC_SAMPLING_410V; //TODO
+    case NVCV_CSS_410R:
+      return NVIMGCODEC_SAMPLING_410V;
     default:
         return NVIMGCODEC_SAMPLING_UNSUPPORTED;
     }
@@ -251,15 +251,15 @@ constexpr auto loc2ext_css(nvimgcodecChromaSubsampling_t in)
     case NVIMGCODEC_SAMPLING_420:
         return NVCV_CSS_420;
     case NVIMGCODEC_SAMPLING_440:
-        return NVCV_CSS_NONE; //TODO
+        return NVCV_CSS_440;
     case NVIMGCODEC_SAMPLING_411:
         return NVCV_CSS_411;
     case NVIMGCODEC_SAMPLING_410:
-        return NVCV_CSS_NONE; //TODO
+        return NVCV_CSS_410;
     case NVIMGCODEC_SAMPLING_GRAY:
-        return NVCV_CSS_NONE; //TODO
+        return NVCV_CSS_NONE;
     case NVIMGCODEC_SAMPLING_410V:
-        return NVCV_CSS_NONE; //TODO
+        return NVCV_CSS_410R;
     default:
         return NVCV_CSS_NONE;
     }
@@ -273,13 +273,13 @@ constexpr auto loc2ext_color_spec(nvimgcodecColorSpec_t in)
     case NVIMGCODEC_COLORSPEC_SRGB:
         return NVCV_COLOR_SPEC_sRGB;
     case NVIMGCODEC_COLORSPEC_GRAY:
-        return NVCV_COLOR_SPEC_UNDEFINED; //TODO
+        return NVCV_COLOR_SPEC_GRAY;
     case NVIMGCODEC_COLORSPEC_SYCC:
         return NVCV_COLOR_SPEC_sYCC;
     case NVIMGCODEC_COLORSPEC_CMYK:
-        return NVCV_COLOR_SPEC_UNDEFINED; //TODO
+        return NVCV_COLOR_SPEC_CMYK;
     case NVIMGCODEC_COLORSPEC_YCCK:
-        return NVCV_COLOR_SPEC_UNDEFINED; //TODO
+        return NVCV_COLOR_SPEC_YCCK; 
     case NVIMGCODEC_COLORSPEC_UNSUPPORTED:
         return NVCV_COLOR_SPEC_UNDEFINED;
     default:
@@ -295,13 +295,13 @@ constexpr auto loc2ext_color_model(nvimgcodecColorSpec_t in)
     case NVIMGCODEC_COLORSPEC_SRGB:
         return NVCV_COLOR_MODEL_RGB;
     case NVIMGCODEC_COLORSPEC_GRAY:
-        return NVCV_COLOR_MODEL_UNDEFINED; //TODO
+        return NVCV_COLOR_MODEL_GRAY;
     case NVIMGCODEC_COLORSPEC_SYCC:
         return NVCV_COLOR_MODEL_YCbCr;
     case NVIMGCODEC_COLORSPEC_CMYK:
-        return NVCV_COLOR_MODEL_UNDEFINED; //TODO
+        return NVCV_COLOR_MODEL_CMYK;
     case NVIMGCODEC_COLORSPEC_YCCK:
-        return NVCV_COLOR_MODEL_UNDEFINED; //TODO
+        return NVCV_COLOR_MODEL_YCCK;
     case NVIMGCODEC_COLORSPEC_UNSUPPORTED:
         return NVCV_COLOR_MODEL_UNDEFINED;
     default:
