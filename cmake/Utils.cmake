@@ -52,7 +52,7 @@ function(build_per_python_lib)
                                INTERFACE "${pybind11_INCLUDE_DIR}")
 
 
-    set (PYTHON_VERSIONS "3.6;3.7;3.8;3.9;3.10;3.11")
+    set (PYTHON_VERSIONS "3.8;3.9;3.10;3.11;3.12")
     foreach(PYVER ${PYTHON_VERSIONS})
 
         set(PYTHON_LIB_TARGET_FOR_PYVER "${PYTHON_LIB_ARG_TARGET_NAME}_${PYVER}")

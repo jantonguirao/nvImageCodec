@@ -32,21 +32,21 @@ docker build -t "nvimgcodec_deps-x86_64" -f docker/Dockerfile.deps \
 ####### BUILDER IMAGES #######
 
 # GCC 9 (minimum supported), CUDA 11.8, x86_64
-docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-gcc9-v3" \
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-gcc9-v4" \
     -f docker/Dockerfile.cuda.deps \
     --build-arg "FROM_IMAGE_NAME=nvimgcodec_deps-x86_64-gcc9" \
     --build-arg "CUDA_IMAGE=cuda11.8-x86_64" \
     docker
 
 # GCC 10, CUDA 11.8, x86_64
-docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-v3" \
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-v4" \
     -f docker/Dockerfile.cuda.deps \
     --build-arg "FROM_IMAGE_NAME=nvimgcodec_deps-x86_64" \
     --build-arg "CUDA_IMAGE=cuda11.8-x86_64" \
     docker
 
 # GCC 10, CUDA 12.3, x86_64
-docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-12.3-v3" \
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-12.3-v4" \
     -f docker/Dockerfile.cuda.deps \
     --build-arg "FROM_IMAGE_NAME=nvimgcodec_deps-x86_64" \
     --build-arg "CUDA_IMAGE=cuda12.3-x86_64" \
