@@ -28,14 +28,14 @@ docker build -t nvimgcodec_deps-aarch64 -f docker/Dockerfile.deps \
 ####### BUILDER IMAGES #######
 
 # GCC 10, CUDA 11.8, aarch64
-docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-aarch64:cuda-11.8-v4" \
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-aarch64:cuda-11.8-v5" \
     -f docker/Dockerfile.cuda.deps \
     --build-arg "FROM_IMAGE_NAME=nvimgcodec_deps-aarch64" \
     --build-arg "CUDA_IMAGE=cuda11.8-aarch64" \
     docker
 
 # GCC 10, CUDA 12.3, aarch64
-docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-aarch64:cuda-12.3-v4" \
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-aarch64:cuda-12.3-v5" \
     -f docker/Dockerfile.cuda.deps \
     --build-arg "FROM_IMAGE_NAME=nvimgcodec_deps-aarch64" \
     --build-arg "CUDA_IMAGE=cuda12.3-aarch64" \
@@ -44,7 +44,7 @@ docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/b
 ####### TEST IMAGES #######
 
 # CUDA 11.8
-docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-aarch64:cuda-11.8-v4" \
+docker build -t "gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-aarch64:cuda-11.8-v5" \
      -f docker/Dockerfile.aarch64 \
      --build-arg "BASE=nvidia/cuda:11.8.0-runtime-ubuntu20.04" \
      --build-arg "VER_CUDA=11.8.0" \
