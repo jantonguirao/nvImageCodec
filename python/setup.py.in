@@ -23,7 +23,7 @@ setup(name='nvidia-nvimgcodec@NVIMGCODEC_FLAVOR_MINUS@-cu@CUDA_VERSION_MAJOR@',
 nvImageCodec is a library of accelerated codec with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
 ''',
       long_description_content_type="text/x-rst",
-      url='https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec',
+      url='https://github.com/NVIDIA/nvImageCodec',
       version='@NVIMGCODEC_VERSION_WITH_BUILD@',
       author='NVIDIA Corporation',
       license='Apache License 2.0',
