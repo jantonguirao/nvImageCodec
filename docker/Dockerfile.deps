@@ -57,6 +57,17 @@ RUN export LIBTIFF_VERSION=4.5.0; cd /tmp && \
     make -j8 && make install && \
     cd && rm -rf /tmp/tiff-${LIBTIFF_VERSION}.tar.gz /tmp/tiff-${LIBTIFF_VERSION}
 
+RUN export OPENJPEG_VERSION=2.5.0; cd /tmp && \
+    wget https://github.com/uclouvain/openjpeg/archive/refs/tags/v${OPENJPEG_VERSION}.zip && \
+    unzip v${OPENJPEG_VERSION}.zip && cd openjpeg-${OPENJPEG_VERSION} && \
+    mkdir rel_build && cd rel_build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/tmp/toolchain.cmake \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DBUILD_CODEC=OFF \
+      .. && \
+    make -j8 && make install && \
+    cd && rm -rf v${OPENJPEG_VERSION}.zip /tmp/openjpeg-${OPENJPEG_VERSION}
+
 RUN export OPENCV_VERSION=4.7.0 && cd /tmp && \
     wget https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz && \
     tar xzvf ${OPENCV_VERSION}.tar.gz && cd opencv-${OPENCV_VERSION} && mkdir build && cd build && \
