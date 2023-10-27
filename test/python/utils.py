@@ -14,15 +14,22 @@
 # limitations under the License.
 
 from __future__ import annotations
+import ctypes as c
+import os
 
 def get_nvjpeg_ver():
-    import ctypes as c
-    nvjpeg_libname = 'libnvjpeg.so'
-    nvjpeg_lib = c.CDLL(nvjpeg_libname)
     nvjpeg_ver_major, nvjpeg_ver_minor, nvjpeg_ver_patch = (c.c_int(), c.c_int(), c.c_int())
-    nvjpeg_lib.nvjpegGetProperty(0, c.byref(nvjpeg_ver_major))
-    nvjpeg_lib.nvjpegGetProperty(1, c.byref(nvjpeg_ver_minor))
-    nvjpeg_lib.nvjpegGetProperty(2, c.byref(nvjpeg_ver_patch))
+    try:
+        nvjpeg_libname = f'libnvjpeg.so'
+        nvjpeg_lib = c.CDLL(nvjpeg_libname)
+    except:
+        for file in os.listdir("/usr/local/cuda/lib64/"):
+            if file.startswith("libnvjpeg.so"):
+                nvjpeg_lib = c.CDLL(file)
+                nvjpeg_lib.nvjpegGetProperty(0, c.byref(nvjpeg_ver_major))
+                nvjpeg_lib.nvjpegGetProperty(1, c.byref(nvjpeg_ver_minor))
+                nvjpeg_lib.nvjpegGetProperty(2, c.byref(nvjpeg_ver_patch))
+                break
     return nvjpeg_ver_major.value, nvjpeg_ver_minor.value, nvjpeg_ver_patch.value
 
 def get_cuda_compute_capability(device_id=0):
