@@ -33,7 +33,7 @@ Setup
 
 The following steps describe how to install nvImageCodec from pre-built install packages. Choose the installation method that meets your environment needs.
 
-Download the nvImageCodec tar/deb package from `here <https://gitlab-master.nvidia.com/cuda-hpc-libraries/nvimagecodec/-/releases>`_
+Download the nvImageCodec tar/deb package from `here <https://github.com/NVIDIA/nvImageCodec/releases>`_
 
 * Tar File Installation
 
