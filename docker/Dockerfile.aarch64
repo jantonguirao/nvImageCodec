@@ -46,20 +46,4 @@ RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
     pynvml && \
     rm -rf /root/.cache/pip
 
-# Pytorch
-RUN CUDA_VERSION_SHORT=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\.([0-9]+)\..*/\1\2/') && \
-    test $CUDA_VERSION_SHORT -gt 118 && \
-        export PYTORCH_CU_VER=118 || \
-        export PYTORCH_CU_VER=${CUDA_VERSION_SHORT}; \
-    python3 -m pip install torch torchvision torchaudio \
-        --index-url https://download.pytorch.org/whl/cu${PYTORCH_CU_VER}
-
-# Tensorflow (only for CUDA 11.8)
-RUN CUDA_VERSION_SHORT=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\.([0-9]+)\..*/\1\2/') && \
-    test $CUDA_VERSION_SHORT -eq 118 && \
-        python3 -m pip install setuptools==59.5.0 && \
-        python3 -m pip install tensorflow==2.13.* || \
-        echo "Skipping tensorflow in this image, as it supports only CUDA 11.8"; \
-    rm -rf /root/.cache/pip
-
 WORKDIR /workspace

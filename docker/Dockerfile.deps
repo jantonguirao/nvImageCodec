@@ -64,6 +64,8 @@ RUN export OPENJPEG_VERSION=2.5.0; cd /tmp && \
     cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/tmp/toolchain.cmake \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DBUILD_CODEC=OFF \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DBUILD_STATIC_LIBS=ON \
       .. && \
     make -j8 && make install && \
     cd && rm -rf v${OPENJPEG_VERSION}.zip /tmp/openjpeg-${OPENJPEG_VERSION}

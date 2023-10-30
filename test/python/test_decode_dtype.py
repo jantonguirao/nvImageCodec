@@ -17,6 +17,8 @@ from __future__ import annotations
 import os
 import numpy as np
 from nvidia import nvimgcodec
+import pytest as t
+from utils import *
 
 img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../resources"))
 
@@ -58,5 +60,6 @@ def test_decode_single_jpeg2k_16bit():
 def test_decode_single_jpeg2k_12bit():
     impl_decode_single_jpeg2k_dtype_with_precision("jpeg2k/cat-1245673_640-12bit.jp2", (423, 640, 3), np.uint16, 12)
 
+@t.mark.skipif(not is_nvjpeg2k_supported(), reason="nvjpeg2k decoder not yet supported on aarch64")
 def test_decode_single_jpeg2k_5bit():
     impl_decode_single_jpeg2k_dtype_with_precision("jpeg2k/cat-1245673_640-5bit.jp2", (423, 640, 3), np.uint8, 5)

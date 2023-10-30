@@ -16,7 +16,9 @@
 from __future__ import annotations
 import os
 import numpy as np
+import pytest as t
 from nvidia import nvimgcodec
+from utils import *
 
 img_dir_path = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "../../resources"))
@@ -55,6 +57,7 @@ def impl_encode_single_jpeg2k_dtype_with_precision(img_path, shape, dtype, preci
     np.testing.assert_allclose(reference.cpu(), tested.cpu(), atol=atol)
 
 
+@t.mark.skipif(not is_nvjpeg2k_supported(), reason="nvjpeg2k encoder not yet supported on aarch64")
 def test_encode_single_jpeg2k_16bit():
     impl_encode_single_jpeg2k_dtype_with_precision(
         "jpeg2k/cat-111793_640-16bit-gray.jp2", (426, 640, 1), np.uint16, 16)
