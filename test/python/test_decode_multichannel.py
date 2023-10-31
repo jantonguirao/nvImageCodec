@@ -18,6 +18,7 @@ import os
 import numpy as np
 from nvidia import nvimgcodec
 import pytest as t
+from utils import is_nvjpeg2k_supported
 
 img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../resources"))
 
@@ -40,6 +41,10 @@ backends_cpu_only=[nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]
                     ],
                     )
 def test_decode_single_multichannel(path, shape, dtype, backends):
+    # TODO(janton): remove this when nvjpeg2k is released for arm
+    if 'jpeg2k' in path and not is_nvjpeg2k_supported():
+        t.skip("nvjpeg2k decoder not supported in this platform")
+
     input_img_path = os.path.join(img_dir_path, path)
 
     decoder = nvimgcodec.Decoder(backends=backends)

@@ -34,19 +34,18 @@ build:cuda11.8:
     extends: .build:nvimagecodec
     variables:
         WITH_DYNAMIC_NVJPEG: "OFF"
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-v4
-
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-11.8-x86_64:v6
 
 build:cuda12.3:
     extends: .build:nvimagecodec
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-12.3-v4
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-12.3-x86_64:v6
 
 build:cuda11.8-gcc9:
     extends: .build:nvimagecodec
     variables:
         WITH_DYNAMIC_NVJPEG: "OFF"
     when: manual
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-x86_64:cuda-11.8-gcc9-v4
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-11.8-gcc9-x86_64:v6
 
 .test:
     stage: test
@@ -69,7 +68,8 @@ build:cuda11.8-gcc9:
         - nvidia-smi
         - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
         - python3 -m pip install artifacts/nvidia_nvimgcodec_cu${CUDA_VERSION_MAJOR}-*.whl
-        - pytest-3 -v -s test/python
+        - pytest-3 -v -s test/python --ignore=test/python/integration
+        - pytest-3 -v -s test/python/integration/test_dlpack_cupy.py
 
 .test:transcode:
     extends: .test
@@ -100,37 +100,58 @@ test:cuda12.1:
 
 test:python-cuda11.3:
     extends: .test:python
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.3-v4
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.3-x86_64:v6
     dependencies:
         - build:cuda11.8
 
 test:python-cuda11.8:
     extends: .test:python
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.8-v4
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v6
     dependencies:
         - build:cuda11.8
 
 test:python-cuda12.1:
     extends: .test:python
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1-v4
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-12.1-x86_64:v6
     dependencies:
         - build:cuda12.3
 
+test:python-integration-tensorflow:
+    extends: .test
+    image:  nvcr.io/nvidia/tensorflow:23.10-tf2-py3
+    dependencies:
+        - build:cuda12.3
+    script:
+        - nvidia-smi
+        - python3 -m pip install pytest
+        - python3 -m pip install artifacts/nvidia_nvimgcodec_cu12-*.whl
+        - pytest -v -s test/python/integration/test_dlpack_tensorflow.py
+
+test:python-integration-pytorch:
+    extends: .test
+    image:  nvcr.io/nvidia/pytorch:23.10-py3
+    dependencies:
+        - build:cuda12.3
+    script:
+        - nvidia-smi
+        - python3 -m pip install artifacts/nvidia_nvimgcodec_cu12-*.whl
+        - pytest -v -s test/python/integration/test_dlpack_torch.py
+
 test:transcode-cuda11.3:
     extends: .test:transcode
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.3-v4
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.3-x86_64:v6
     dependencies:
         - build:cuda11.8
 
 test:transcode-cuda11.8:
     extends: .test:transcode
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-11.8-v4
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v6
     dependencies:
         - build:cuda11.8
 
 test:transcode-cuda12.1:
     extends: .test:transcode
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-linux-x86_64:cuda-12.1-v4
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-12.1-x86_64:v6
     dependencies:
         - build:cuda12.3
 

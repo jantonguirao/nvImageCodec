@@ -28,23 +28,53 @@ RUN export CMAKE_VERSION=3.24.1 \
       && rm -f /usr/local/bin/ctest \
       && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
 
+RUN echo "set(CMAKE_SYSTEM_NAME Linux)" > /tmp/toolchain.cmake && \
+    echo "set(CMAKE_SYSTEM_PROCESSOR ${ARCH})" >> /tmp/toolchain.cmake && \
+    echo "set(CMAKE_C_COMPILER gcc)" >> /tmp/toolchain.cmake && \
+    echo "set(CMAKE_CXX_COMPILER g++)" >> /tmp/toolchain.cmake && \
+    echo "set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")" >> /tmp/toolchain.cmake && \
+    echo "set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")" >> /tmp/toolchain.cmake
+
 RUN export LIBJPEG_TURBO_VERSION=2.1.91 && cd /tmp && \
     wget https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/${LIBJPEG_TURBO_VERSION}.tar.gz && \
     tar xzvf ${LIBJPEG_TURBO_VERSION}.tar.gz && cd libjpeg-turbo-${LIBJPEG_TURBO_VERSION} && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_SHARED=FALSE -DENABLE_STATIC=TRUE && \
+    mkdir rel_build && cd rel_build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/tmp/toolchain.cmake \
+          -DCMAKE_INSTALL_PREFIX=/usr/local \
+          -DENABLE_SHARED=FALSE -DENABLE_STATIC=TRUE \
+          .. && \
     make -j8 && make install && \
     cd && rm -rf /tmp/${LIBJPEG_TURBO_VERSION}.tar.gz /tmp/libjpeg-turbo-${LIBJPEG_TURBO_VERSION}
 
-RUN export LIBTIFF_VERSION=4.5.0; cd /tmp && wget https://download.osgeo.org/libtiff/tiff-${LIBTIFF_VERSION}.tar.gz && \
+RUN export LIBTIFF_VERSION=4.5.0; cd /tmp && \
+    wget https://download.osgeo.org/libtiff/tiff-${LIBTIFF_VERSION}.tar.gz && \
     tar xzvf tiff-${LIBTIFF_VERSION}.tar.gz && cd tiff-${LIBTIFF_VERSION} && \
-    mkdir rel_build && cd rel_build && cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local -Djbig=OFF .. && \
+    mkdir rel_build && cd rel_build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/tmp/toolchain.cmake \
+          -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF \
+          -DCMAKE_INSTALL_PREFIX=/usr/local -Djbig=OFF \
+          .. && \
     make -j8 && make install && \
     cd && rm -rf /tmp/tiff-${LIBTIFF_VERSION}.tar.gz /tmp/tiff-${LIBTIFF_VERSION}
+
+RUN export OPENJPEG_VERSION=2.5.0; cd /tmp && \
+    wget https://github.com/uclouvain/openjpeg/archive/refs/tags/v${OPENJPEG_VERSION}.zip && \
+    unzip v${OPENJPEG_VERSION}.zip && cd openjpeg-${OPENJPEG_VERSION} && \
+    mkdir rel_build && cd rel_build && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/tmp/toolchain.cmake \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DBUILD_CODEC=OFF \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DBUILD_STATIC_LIBS=ON \
+      .. && \
+    make -j8 && make install && \
+    cd && rm -rf v${OPENJPEG_VERSION}.zip /tmp/openjpeg-${OPENJPEG_VERSION}
 
 RUN export OPENCV_VERSION=4.7.0 && cd /tmp && \
     wget https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz && \
     tar xzvf ${OPENCV_VERSION}.tar.gz && cd opencv-${OPENCV_VERSION} && mkdir build && cd build && \
     cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_TOOLCHAIN_FILE=$PWD/../platforms/linux/gnu.toolchain.cmake \
       -DVIBRANTE_PDK:STRING=/ \
       -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DBUILD_LIST=core,improc,imgcodecs \
