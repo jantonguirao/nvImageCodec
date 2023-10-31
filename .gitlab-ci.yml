@@ -123,9 +123,8 @@ test:python-integration-tensorflow:
         - build:cuda12.3
     script:
         - nvidia-smi
-        - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
         - python3 -m pip install pytest
-        - python3 -m pip install artifacts/nvidia_nvimgcodec_cu${CUDA_VERSION_MAJOR}-*.whl
+        - python3 -m pip install artifacts/nvidia_nvimgcodec_cu12-*.whl
         - pytest-3 -v -s test/python/integration/test_dlpack_tensorflow.py
 
 test:python-integration-pytorch:
@@ -135,8 +134,7 @@ test:python-integration-pytorch:
         - build:cuda12.3
     script:
         - nvidia-smi
-        - export CUDA_VERSION_MAJOR=$(echo "${CI_JOB_NAME}" | sed 's/.*cuda\([0-9]*\).*/\1/')
-        - python3 -m pip install artifacts/nvidia_nvimgcodec_cu${CUDA_VERSION_MAJOR}-*.whl
+        - python3 -m pip install artifacts/nvidia_nvimgcodec_cu12-*.whl
         - pytest-3 -v -s test/python/integration/test_dlpack_torch.py
 
 test:transcode-cuda11.3:
