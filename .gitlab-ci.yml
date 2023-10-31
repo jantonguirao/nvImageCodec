@@ -125,7 +125,7 @@ test:python-integration-tensorflow:
         - nvidia-smi
         - python3 -m pip install pytest
         - python3 -m pip install artifacts/nvidia_nvimgcodec_cu12-*.whl
-        - pytest-3 -v -s test/python/integration/test_dlpack_tensorflow.py
+        - pytest -v -s test/python/integration/test_dlpack_tensorflow.py
 
 test:python-integration-pytorch:
     extends: .test
@@ -135,7 +135,7 @@ test:python-integration-pytorch:
     script:
         - nvidia-smi
         - python3 -m pip install artifacts/nvidia_nvimgcodec_cu12-*.whl
-        - pytest-3 -v -s test/python/integration/test_dlpack_torch.py
+        - pytest -v -s test/python/integration/test_dlpack_torch.py
 
 test:transcode-cuda11.3:
     extends: .test:transcode
