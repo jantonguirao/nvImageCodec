@@ -128,7 +128,7 @@ docker buildx build \
 ####### TEST IMAGES #######
 
 # CUDA 11.3 (minimum supported)
-export RUNNER_CUDA_113="${REGISTRY_PREFIX}runner-linux-${ARCH}-cuda-11.3:v${VERSION}"
+export RUNNER_CUDA_113="${REGISTRY_PREFIX}runner-cuda-11.3-${ARCH}:v${VERSION}"
 docker buildx build \
     --cache-to type=inline \
     --cache-from type=registry,ref=${RUNNER_CUDA_113} \
@@ -142,7 +142,7 @@ docker buildx build \
     docker
 
 # CUDA 11.8
-export RUNNER_CUDA_118="${REGISTRY_PREFIX}runner-linux-${ARCH}-cuda-11.8:v${VERSION}"
+export RUNNER_CUDA_118="${REGISTRY_PREFIX}runner-cuda-11.8-${ARCH}:v${VERSION}"
 docker buildx build \
     --cache-to type=inline \
     --cache-from type=registry,ref=${RUNNER_CUDA_118} \
@@ -156,7 +156,7 @@ docker buildx build \
     docker
 
 # CUDA 12.1
-export RUNNER_CUDA_121="${REGISTRY_PREFIX}runner-linux-${ARCH}-cuda-12.1:v${VERSION}"
+export RUNNER_CUDA_121="${REGISTRY_PREFIX}runner-cuda-12.1-${ARCH}:v${VERSION}"
 docker buildx build \
     --cache-to type=inline \
     --cache-from type=registry,ref=${RUNNER_CUDA_121} \
