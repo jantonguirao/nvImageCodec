@@ -359,6 +359,7 @@ def test_image_buffer_kind():
       "jpeg2k/cat-1245673_640-12bit.jp2")
      ]
 )
+@t.mark.skipif(not is_nvjpeg2k_supported(), reason="nvjpeg2k encoder not yet supported on aarch64")
 def test_as_images_with_cuda_array_interface(input_images_batch):
     input_images = [os.path.join(img_dir_path, img) for img in input_images_batch]
     ref_images = [cv2.imread(img, cv2.IMREAD_COLOR) for img in input_images]
@@ -366,7 +367,7 @@ def test_as_images_with_cuda_array_interface(input_images_batch):
     nv_ref_images = nvimgcodec.as_images(cp_ref_images)
     encoder = nvimgcodec.Encoder()
     encode_params = nvimgcodec.EncodeParams(jpeg2k_encode_params=nvimgcodec.Jpeg2kEncodeParams(reversible=True))
-    test_encoded_images = encoder.encode(nv_ref_images, codec="jpeg", params=encode_params)
+    test_encoded_images = encoder.encode(nv_ref_images, codec="jpeg2k", params=encode_params)
     test_decoded_images = [cv2.cvtColor(cv2.imdecode(
         np.asarray(bytearray(img)), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
