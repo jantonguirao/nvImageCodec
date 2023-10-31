@@ -86,7 +86,8 @@ To get a local copy up and running follow these steps.
 ### Installation
 
 The following steps describe how to install nvImageCodec from pre-built install packages.
-Choose the installation method that meets your environment needs. The `x` letter in the below command is the build id. It will be 0 when the package is built locally.
+Choose the installation method that meets your environment needs. The `x` letter in the below command is the build id. 
+It will be 0 when the package is built locally.
 
 #### Tar file installation
 
@@ -125,7 +126,7 @@ pip install nvidia_nvimgcodec_cu12-0.2.0.x_beta-py3-none-manylinux2014_x86_64.wh
   - flake8
   - sphinx==4.5.0
 
-Please see also Docerfiles.
+Please see also Dockerfiles.
 
 ### Build
 
