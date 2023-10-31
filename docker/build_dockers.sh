@@ -1,10 +1,9 @@
 #!/bin/bash -ex
 
-export DOCKER_BUILDKIT=${DOCKER_BUILDKIT:-1}
-export VERSION=${VERSION:-6}
-export REGISTRY_PREFIX=${REGISTRY_PREFIX:-"gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/"}
-export PLATFORM=${PLATFORM:-"linux/amd64"}  # or "linux/arm64"
-export ARCH=${ARCH:-"x86_64"}  # or "aarch64"
+export VERSION=${VERSION:-6}  # Update version when changing anything in the Dockerfiles
+
+SCRIPT_DIR=$(dirname $0)
+source ${SCRIPT_DIR}/config-docker.sh || source ${SCRIPT_DIR}/default-config-docker.sh
 
 docker buildx create --name nvimagecodec_builder || echo "nvimagecodec_build already created"
 docker buildx use nvimagecodec_builder

@@ -1,13 +1,11 @@
 #!/bin/bash -ex
 
-BUILDER_CUDA_VERSION="11.8"
-BUILDER_CUDA_SHORT_VER=${BUILDER_CUDA_VERSION//./}
-BUILDER_ARCH="x86_64"
-BUILDER_VERSION="1"
+SCRIPT_DIR=$(dirname $0)
+source ${SCRIPT_DIR}/config-docker.sh || source ${SCRIPT_DIR}/default-config-docker.sh
 
-CUDA_IMAGE="cuda${BUILDER_CUDA_VERSION}.${BUILDER_ARCH}"
-DEPS_IMAGE="nvimgcodec_deps.${BUILDER_ARCH}"
-BUILDER_IMAGE="gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/build-linux-${BUILDER_ARCH}:cuda-${BUILDER_CUDA_VERSION}-v${BUILDER_VERSION}"
+BUILDER_CUDA_VERSION="11.8"
+BUILDER_ARCH="x86_64"
+BUILDER_IMAGE="${REGISTRY_PREFIX}builder-cuda-${BUILDER_CUDA_VERSION}-${BUILDER_ARCH}"
 # Note: Use build_dockers.sh to produce the image if needed
 
 docker run --rm -it -v ${PWD}:/opt/src ${BUILDER_IMAGE} /bin/bash -c \
