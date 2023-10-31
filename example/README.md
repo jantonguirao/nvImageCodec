@@ -11,7 +11,7 @@ These are some sample applications showcasing various nvImageCodec APIs. Sample 
 - NVIIDA driver: 
     - Linux: version 520.56.06 or higher
 - NVIDIA CUDA Toolkit >= 11.8
-- CMake >= 3.13
+- CMake >= 3.18
 - gcc >= 9.4
 - Python Packages:
     - jupyter >= 1.0.0 

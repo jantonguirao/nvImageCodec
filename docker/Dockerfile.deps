@@ -16,17 +16,17 @@ RUN cd /tmp && export PATCHELF_VERSION=0.17.2 && export PATCHELF_ARCH=${ARCH} &&
     mv bin/patchelf /usr/local/bin/ && \
     cd
 
-RUN export CMAKE_VERSION=3.24.1 \
-      && wget https://github.com/Kitware/CMake/releases/download/v3.24.1/cmake-3.24.1-linux-${ARCH}.sh \
+RUN export CMAKE_VERSION=3.18.0 \
+      && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-${ARCH}.sh \
         -q -O /tmp/cmake-install.sh \
       && chmod u+x /tmp/cmake-install.sh \
-      && mkdir /opt/cmake-3.24.1 \
-      && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-3.24.1 \
-      && rm /tmp/cmake-install.sh \
-      && rm -f /usr/local/bin/cmake \
+      && mkdir /opt/cmake-${CMAKE_VERSION} \
+      && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-${CMAKE_VERSION} \
+      && rm -f /tmp/cmake-install.sh \
+      && rm -f /usr/local/bin/*cmake* \
       && rm -f /usr/local/bin/cpack \
       && rm -f /usr/local/bin/ctest \
-      && ln -s /opt/cmake-3.24.1/bin/* /usr/local/bin
+      && ln -s /opt/cmake-${CMAKE_VERSION}/bin/* /usr/local/bin
 
 RUN echo "set(CMAKE_SYSTEM_NAME Linux)" > /tmp/toolchain.cmake && \
     echo "set(CMAKE_SYSTEM_PROCESSOR ${ARCH})" >> /tmp/toolchain.cmake && \

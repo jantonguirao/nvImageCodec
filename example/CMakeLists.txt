@@ -15,7 +15,7 @@
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     # Build as a stand-alone samples project
-    cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
+    cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
     project(nvimgcodec_samples LANGUAGES CXX CUDA)
 
     set(CMAKE_CXX_STANDARD 17)
