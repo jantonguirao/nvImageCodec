@@ -16,7 +16,7 @@ RUN cd /tmp && export PATCHELF_VERSION=0.17.2 && export PATCHELF_ARCH=${ARCH} &&
     mv bin/patchelf /usr/local/bin/ && \
     cd
 
-RUN export CMAKE_VERSION=3.18.0 \
+RUN export CMAKE_VERSION=3.24.3 \
       && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-${ARCH}.sh \
         -q -O /tmp/cmake-install.sh \
       && chmod u+x /tmp/cmake-install.sh \
