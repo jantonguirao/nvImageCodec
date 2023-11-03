@@ -60,7 +60,13 @@ copy_from_private_to_public() {
     --exclude=.gitlab \
     --exclude=docker/config-docker.sh \
     --exclude=tools/populate_public_repo.sh \
+    --exclude=docs \
+    --exclude=docker/LICENSE.txt \
+    --exclude=docker/LICENSE.txt_PUBLIC \
     $NVIMGCODEC_PRIVATE_ROOT/ $NVIMGCODEC_PUBLIC_ROOT/
+
+    # Copy public license file with changing name
+    cp $NVIMGCODEC_PRIVATE_ROOT/LICENSE.txt_PUBLIC $CUQUANTUM_PUBLIC_ROOT/LICENSE.txt
 
     # Make additional scans for potential files or changes to exclude
     echo "Checking for potential keywords and files to exclude ..."
