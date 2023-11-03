@@ -12,7 +12,8 @@
 [![CMake](https://img.shields.io/badge/CMake-v3.24-%23008FBA?logo=cmake)](https://cmake.org/)
                                                                                                         
 
-The nvImageCodec is an open-source library of accelerated codecs with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
+The nvImageCodec is an open-source library of accelerated codecs with unified interface.
+It is designed as a framework for extension modules which delivers codec plugins.
 
 This nvImageCodec release includes the following key features:
 
@@ -74,7 +75,7 @@ To get a local copy up and running follow these steps.
 
 ### Pre-requisites
 
--  Linux distro:
+- Linux distro:
    - Ubuntu x86_64 >= 20.04
    - WSL2 with Ubuntu >= 20.04 (tested with 20.04)
 - NVIDIA driver >= 520.56.06
@@ -92,17 +93,17 @@ It will be 0 when the package is built locally.
 #### Tar file installation
 
 ```
-tar -xvf nvimgcodec-0.2.0.x_beta-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
+tar -xvf nvimgcodec-0.2.0.x-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
 ```
 
 #### DEB File Installation
 ```
-sudo apt-get install -y ./nvimgcodec-0.2.0.x_beta-cuda12-x86_64-linux-lib.deb
+sudo apt-get install -y ./nvimgcodec-0.2.0.x-cuda12-x86_64-linux-lib.deb
 ```
 #### Python WHL File Installation
 
 ```
-pip install nvidia_nvimgcodec_cu12-0.2.0.x_beta-py3-none-manylinux2014_x86_64.whl
+pip install nvidia_nvimgcodec_cu12-0.2.0.x-py3-none-manylinux2014_x86_64.whl
 ```
 
 ## Build and install from Sources
@@ -207,7 +208,7 @@ Run Python API tests
 First install python wheel. You would also need to have installed all Python tests dependencies (see Dockerfiles). 
 
 ```
-pip install nvidia_nvimgcodec_cu12-0.2.0.x_beta-py3-none-manylinux2014_x86_64.whl
+pip install nvidia_nvimgcodec_cu12-0.2.0.x-py3-none-manylinux2014_x86_64.whl
 ```
 
 Run tests
