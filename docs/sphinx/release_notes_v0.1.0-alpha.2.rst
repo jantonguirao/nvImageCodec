@@ -56,12 +56,6 @@ This section highlights the compute stack nvImageCodec has been tested on
 
 Refer to documentation of the sample applications for dependencies.
 
-Known Issues and limitations
-----------------------------
-* Temporally 3rd party extensions are linked statically with particular codec libraries
-* Temporally nvJpeg2000 extension is linked statically with nvJpeg2000 codec library 
-* 3rd party extensions are excluded from EA packages 
-
 License
 -------
 Nvidia Software Evaluation License
