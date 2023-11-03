@@ -160,7 +160,7 @@ install(
 
 # License file
 install(
-    FILES "${CMAKE_SOURCE_DIR}/LICENSE.txt"
+    FILES "${CMAKE_SOURCE_DIR}/LICENSE.txt" "${CMAKE_SOURCE_DIR}/Acknowledgements.txt"
     DESTINATION "."
     COMPONENT lib
 )
@@ -175,7 +175,7 @@ install(
 )
 
 # Config
-#   * <prefix>/cmake/nvimgcodec/nvimgcodecTargets.cmake
+# * <prefix>/cmake/nvimgcodec/nvimgcodecTargets.cmake
 install(
     EXPORT "${TARGETS_EXPORT_NAME}"
     NAMESPACE "${namespace}"
