@@ -13,30 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME nvbmp_ext)  
+set(NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME nvbmp_ext)
 
 set(NVIMGCODEC_NVBMP_EXT_SRC
-      nvbmp_ext.cpp
-      encoder.cpp
-      decoder.cpp
+        nvbmp_ext.cpp
+        encoder.cpp
+        decoder.cpp
 )
-    
+
 add_library(${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME} SHARED ${NVIMGCODEC_NVBMP_EXT_SRC} ext_module.cpp)
 add_library(${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME}_static STATIC ${NVIMGCODEC_NVBMP_EXT_SRC})
 
 if(UNIX)
-        set_target_properties(${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME} PROPERTIES
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
+        set_target_properties(${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME} ${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME}_static PROPERTIES
                 POSITION_INDEPENDENT_CODE ON
                 VERSION ${PROJECT_VERSION}
                 NO_SONAME OFF)
 else()
-set_target_properties(${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME} PROPERTIES 
-        POSITION_INDEPENDENT_CODE ON 
-        VERSION ${PROJECT_VERSION}
-        OUTPUT_NAME ${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME}_${PROJECT_VERSION_MAJOR}
-        ARCHIVE_OUTPUT_NAME ${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME})
+        set_target_properties(${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME} PROPERTIES
+                POSITION_INDEPENDENT_CODE ON
+                VERSION ${PROJECT_VERSION}
+                OUTPUT_NAME ${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME}_${PROJECT_VERSION_MAJOR}
+                ARCHIVE_OUTPUT_NAME ${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME})
 endif()
-
 
 if(UNIX)
         install(TARGETS ${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME} ${NVIMGCODEC_NVBMP_EXT_LIBRARY_NAME}_static
@@ -53,4 +53,3 @@ else()
                 PUBLIC_HEADER DESTINATION include COMPONENT lib
         )
 endif()
-
