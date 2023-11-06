@@ -279,8 +279,8 @@ void DecoderWorker::processBatch(std::unique_ptr<Work<nvimgcodecDecodeParams_t>>
         move_work_to_fallback(fallback_work.get(), work.get(), mask);
         if (!fallback_work->empty()) {
             for (auto idx : fallback_work->indices_) {
-                NVIMGCODEC_LOG_WARNING(logger_, "[" << decoder_->decoderId() << "]"
-                                                 << " decode #" << idx << " fallback");
+                NVIMGCODEC_LOG_INFO(logger_, "[" << decoder_->decoderId() << "]"
+                                                 << " canDecode #" << idx << " fallback");
             }
             // if all samples go to the fallback, we can afford using the current thread
             bool fallback_immediate = immediate && work->code_streams_.empty();
