@@ -73,7 +73,7 @@ Additionally as a fallback there are following 3rd party codec extensions:
 
 .. toctree::
    :caption: Beginner's Guide
-   :maxdepth: 4
+   :maxdepth: 3
    :hidden:
    
    Installation <installation>
@@ -81,7 +81,7 @@ Additionally as a fallback there are following 3rd party codec extensions:
 
 .. toctree::
    :caption: API Reference
-   :maxdepth: 2
+   :maxdepth: 3
    :hidden:
 
    C API <c_api>  
@@ -92,7 +92,7 @@ Additionally as a fallback there are following 3rd party codec extensions:
    :maxdepth: 1
    :hidden:
 
-   0.2.0 <release_notes_v0.2.0>
+   0.2.0-beta.1 <release_notes_v0.2.0>
    0.1.0-alpha.2 <release_notes_v0.1.0-alpha.2>
    0.1.0-alpha.1 <release_notes_v0.1.0-alpha.1>  
 
