@@ -103,4 +103,5 @@ Additionally as a fallback there are following 3rd party codec extensions:
    
    GitHub <https://github.com/NVIDIA/nvImageCodec>  
    Reporting vulnerabilities <security>
+   Acknowledgements <acknowledgements>
    License <license>

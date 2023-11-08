@@ -1,7 +1,7 @@
 This software includes third-party components under the following licenses:
 
 GoogleTest
-========================
+--------------------------------------
 
 Copyright 2008, Google Inc.
 All rights reserved.
@@ -11,14 +11,14 @@ modification, are permitted provided that the following conditions are
 met:
 
     * Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
+    notice, this list of conditions and the following disclaimer.
     * Redistributions in binary form must reproduce the above
-copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the
-distribution.
+    copyright notice, this list of conditions and the following disclaimer
+    in the documentation and/or other materials provided with the
+    distribution.
     * Neither the name of Google Inc. nor the names of its
-contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
@@ -33,7 +33,7 @@ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 pybind11
-========================
+--------------------------------------
 
 Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>, All rights reserved.
 
@@ -66,7 +66,7 @@ Please also refer to the file CONTRIBUTING.md, which clarifies licensing of
 external contributions to this project including patches, pull requests, etc.
 
 OpenCV
-========================
+--------------------------------------
 
 By downloading, copying, installing or using the software you agree to this license.
 If you do not agree to this license, do not download, install,
@@ -111,7 +111,7 @@ or tort (including negligence or otherwise) arising in any way out of
 the use of this software, even if advised of the possibility of such damage.
 
 libjpeg-turbo Licenses
-======================
+--------------------------------------
 
 libjpeg-turbo is covered by three compatible BSD-style open source licenses:
 
@@ -132,7 +132,7 @@ libjpeg-turbo is covered by three compatible BSD-style open source licenses:
 
 
 Complying with the libjpeg-turbo Licenses
-=========================================
+-----------------------------------------
 
 This section provides a roll-up of the libjpeg-turbo licensing terms, to the
 best of our understanding.
@@ -200,7 +200,7 @@ best of our understanding.
 
 
 The Modified (3-clause) BSD License
-===================================
+------------------------------------
 
 Copyright (C)\<YEAR\> \<AUTHOR\>.  All Rights Reserved.
 
@@ -229,7 +229,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 The zlib License
-================
+--------------------------------------
 
 Copyright (C) \<YEAR\>, \<AUTHOR\>.
 
@@ -250,7 +250,7 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.     
 
 NVIDIA nvJPEG
-========================
+--------------------------------------
 
 SOFTWARE LICENSE AGREEMENT
 (April 19, 2018 version)
@@ -523,7 +523,7 @@ amendment or waiver under this Agreement shall be in writing and signed by
 representatives of both parties.
 
 CMake 3.24
-========================
+--------------------------------------
 
 CMake - Cross Platform Makefile Generator
 Copyright 2000-2017 Kitware, Inc. and Contributors
@@ -650,7 +650,7 @@ CMake was initially developed by Kitware with the following sponsorship:
  * Kitware, Inc.
 
 manylinux
-========================
+--------------------------------------
 The MIT License (MIT)
 
 Copyright (c) 2016 manylinux
@@ -674,7 +674,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Boost preprocessor
-========================
+--------------------------------------
 
 Boost Software License - Version 1.0 - August 17th, 2003
 
@@ -701,7 +701,7 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 
 DLPack
-========================
+--------------------------------------
 
                                  Apache License
                            Version 2.0, January 2004
@@ -906,7 +906,7 @@ DLPack
    limitations under the License.
 
 libtiff (http://libtiff.org/)
-========================
+--------------------------------------
 
 Copyright (c) 1988-1997 Sam Leffler
 Copyright (c) 1991-1997 Silicon Graphics, Inc.
@@ -931,7 +931,7 @@ LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 OF THIS SOFTWARE.
 
 OpenJPEG (https://www.openjpeg.org/)
-========================
+--------------------------------------
 
 The copyright in this software is being made available under the 2-clauses
 BSD License, included below. This software may be subject to other third
@@ -972,7 +972,7 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 NVTX
-========================
+--------------------------------------
  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -1193,7 +1193,7 @@ the License, but only in their entirety and only with respect to the Combined
 Software.  
 
 nvJPEG2000
-========================
+--------------------------------------
 LICENSE AGREEMENT FOR NVIDIA SOFTWARE DEVELOPMENT KITS
 
 This license agreement, including exhibits attached (“Agreement”) is a legal agreement between you and NVIDIA Corporation (“NVIDIA”) and governs your use of a NVIDIA software development kit (“SDK”).
