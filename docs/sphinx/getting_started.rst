@@ -21,6 +21,13 @@ Getting Started
 
 This section guides you step-by-step how to decode and encode images on the GPU using the nvImageCodec APIs. Before getting started, please review the :ref:`pre-requisites <prerequisites>`. Once reviewed, head over to the :ref:`samples <samples>`' section which showcases various nvImageCodec samples.
 
+.. note:: Throughout this document, the terms "CPU" and "Host" are used synonymously. Similarly, the terms "GPU" and "Device" are synonymous.
+
+Thread Safety
+-------------
+
+Not all nvImageCodec types are thread safe. For user-provided allocators (fields in ``nvimgcodecExecutionParams_t`` structure), the user needs to ensure thread safety. 
+
 .. _prerequisites:
 
 Pre-requisites
@@ -29,16 +36,15 @@ Pre-requisites
 Following are the required dependencies to compile nvImageCodec samples.
 
 * Ubuntu >= 20.04
-* CUDA driver >= 11.8
+* NVIDIA driver >= 520.56.06
 * CUDA Toolit >= 11.8
 * Supported systems:
-    * Windows >= 10
-    * Linux (Ubuntu >= 18.04, RHEL >= 7, and other PEP599 manylinux 2014 compatible platforms)
+    * Linux (Ubuntu >= 20.04, RHEL >= 7, and other PEP599 manylinux 2014 compatible platforms)
     * WSL2 with Ubuntu >= 20.04
 
 C++ Samples' Dependencies:
 
-* CMake >= 3.14
+* CMake >= 3.24
 * gcc >= 9.4
 
 Python Samples' Dependencies:
@@ -57,10 +63,10 @@ Samples
 The next section documents the samples showing various use cases across two different types APIs available to consume nvImageCodec functionality:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
-    C <samples/c_samples>
-    Python <samples/python_samples>
+    C API samples <samples/c_samples>
+    Python API samples <samples/python_samples>
 
 Refer to the :ref:`Installation` docs for the sample installation guide using ``*.deb`` or ``*.tar`` installers.
 Refer to the sample README for instructions to compile samples from the source.

@@ -17,8 +17,8 @@
 .. _all_python_samples:
 
 
-Python
-----------------
+Python API samples
+------------------
 
 The following samples demonstrates the use of nvImageCodec Python API:
 
