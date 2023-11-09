@@ -85,6 +85,7 @@ SRGB, 3 channel image in planar format, without chroma subsampling and output bu
    }
 
    output_image_info.buffer_size = output_image_info.plane_info[0].row_stride * image_info.plane_info[0].height * image_info.num_planes;
+   output_image_info.cuda_stream = 0; // It is possible to assign cuda stream which will be used for synchronization. Here we assume it is default stream.
 
    cudaMalloc(&output_image_info.buffer,  output_image_info.buffer_size);
 
@@ -124,16 +125,19 @@ In below snippet we just set flag for allowing apply exif orientation.
 
 8. Schedule decoding.
 
-One of the parameters of this function is `cudaStream_t <https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1ge15d9c8b7a240312b533d6122558085a>`__.
-If a stream identifier is passed then the API will use it to issue the asychronous cuda calls. :code:`cudaDeviceSynchronize()` is 
-required to complete the decoding process since :code:`nvjpeg2kDecode` is asychronous with respect to the host.
-
 .. code-block:: cpp
 
     nvimgcodecFuture_t decode_future;
     nvimgcodecDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &decode_future);
 
 9. Wait for decoding to finish and check its status.
+
+One of the fields in :code:`nvimgcodecImageInfo_t` is `cudaStream_t <https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__TYPES.html#group__CUDART__TYPES_1ge15d9c8b7a240312b533d6122558085a>`__,
+which the library uses to issue the asynchronous CUDA calls. To complete the decoding process, you need to call :code:`cudaDeviceSynchronize()` because 
+:code:`nvimgcodecDecoderDecode` is asynchronous with respect to the host.
+Alternatively, you can use  :code:`cudaStreamSynchronize` to synchronize with a specific CUDA stream.
+Moreover, if you want to process the decoded image on the GPU, you can skip the synchronization here and use the CUDA stream defined in 
+:code:`nvimgcodecImageInfo_t` to schedule further image processing on the GPU, which will occur after decoding.
 
 .. code-block:: cpp
 
