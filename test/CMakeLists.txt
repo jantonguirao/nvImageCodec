@@ -82,6 +82,9 @@ foreach(testapp nvimgcodec_tests)
         ${GTEST_INCLUDE_DIRS}
     )
 
+    target_link_libraries(${testapp} PRIVATE "-pie")
+    set_target_properties(${testapp} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
     if(UNIX)
         set(PTHREAD pthread)
     endif()

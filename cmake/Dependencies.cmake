@@ -23,7 +23,7 @@ if (BUILD_TEST)
   check_and_add_cmake_submodule(${PROJECT_SOURCE_DIR}/external/googletest EXCLUDE_FROM_ALL)
   include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/external/googletest/googletest/include)
   include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/external/googletest/googlemock/include)
-  set_target_properties(gtest PROPERTIES POSITION_INDEPENDENT_CODE ON)
+  set_target_properties(gtest gmock PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
 function(CUDA_find_library out_path lib_name)
