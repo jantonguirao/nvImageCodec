@@ -14,9 +14,6 @@
   # See the License for the specific language governing permissions and
   # limitations under the License.  
 
-.. _license:
+.. _security:
 
-License
-=======
-
-.. include:: ../../LICENSE.txt
+.. include:: ../../SECURITY.rst

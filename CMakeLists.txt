@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.24 FATAL_ERROR)
 
 set(NVIMGCODEC_PROJECT_NAME "nvimgcodec")
 set(NVIMGCODEC_VERSION "0.2.0")

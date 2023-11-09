@@ -269,8 +269,7 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
     nvimgcodecCodeStreamCreateToFile(
         instance, &output_code_stream, output_path.string().c_str(), &out_image_info);
 
-    nvimgcodecEncoder_t encoder = nullptr;
-    const char* options = nullptr;
+    nvimgcodecEncoder_t encoder;
     nvimgcodecEncoderCreate(instance, &encoder, &exec_params, nullptr);
 
     nvimgcodecFuture_t encode_future;

@@ -46,12 +46,6 @@ This section highlights the compute stack nvImageCodec has been tested on
 
 * Ubuntu x86 >= 20.04
 * CUDA driver >= 11.8
-
-
-Known Issues
-------------
-* Temporally 3rd party extensions are linked statically with particular codec libraries
-* Temporally nvJpeg2000 extension is linked statically with nvJpeg2000 codec library 
  
 
 License

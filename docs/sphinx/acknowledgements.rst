@@ -14,9 +14,11 @@
   # See the License for the specific language governing permissions and
   # limitations under the License.  
 
-.. _license:
 
-License
-=======
+.. _acknowledgements:
 
-.. include:: ../../LICENSE.txt
+Acknowledgements
+================
+   
+.. literalinclude:: ../../Acknowledgements.txt
+    :language: text

@@ -51,6 +51,7 @@ make_directory("${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec/extensions")
 configure_file("__init__.py.in" "${CMAKE_CURRENT_BINARY_DIR}/nvidia/nvimgcodec/__init__.py")
 configure_file("setup.py.in" "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/MANIFEST.in" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+file(COPY "${PROJECT_SOURCE_DIR}/Acknowledgements.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 file(COPY "${PROJECT_SOURCE_DIR}/LICENSE.txt" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_custom_target(copy_libs_to_python_dir ALL DEPENDS nvimgcodec_python)
