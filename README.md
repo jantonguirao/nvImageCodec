@@ -75,9 +75,11 @@ To get a local copy up and running follow these steps.
 
 ### Pre-requisites
 
+This section describes the recommended dependencies to use nvImageCodec.
+
 - Linux distro:
    - Ubuntu x86_64 >= 20.04
-   - WSL2 with Ubuntu >= 20.04 (tested with 20.04)
+   - WSL2 with Ubuntu >= 20.04
 - NVIDIA driver >= 520.56.06
 - CUDA Toolkit > = 11.8
 - GCC >= 9.4

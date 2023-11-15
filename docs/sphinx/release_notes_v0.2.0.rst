@@ -19,7 +19,7 @@
 v0.2.0
 ==============
 
-nvImageCodec-0.2.0 is the first public release of the library.
+nvImageCodec v0.2.0-beta.1 is the first public release of the library.
 
 Key Features and Enhancements
 -----------------------------
@@ -35,11 +35,11 @@ This nvImageCodec release includes the following key features and enhancements:
     * Added simple sample C API usage
     * Added Python sample Jupyter notebooks to documentation  
 * C API improvements
-    * Adjust cvcuda types
+    * Adjusted cvcuda types adapter
     * Improved error handling and reporting 
     * Custom Executor can now be defined per Decoder/Encoder
     * Added possibility to pre-allocate resources
-    * Added nvjpeg_extra_flags option
+    * Added support for nvjpeg extra_flags option
 * Python API improvements
     * Added support for Python 3.12 and deprecated Python 3.7  
     * Added support for DL-pack
@@ -49,5 +49,5 @@ This nvImageCodec release includes the following key features and enhancements:
     * Added allow_any_depth to decode parameters
     * Added possibility to specify number of CPU threads to use in decoder/encoder
     * Added precision attribute to Image
-    * Added __enter__ and __exit__ to Decoder and Encoder so they can be easily used with with statement 
+    * Added __enter__ and __exit__ to Decoder and Encoder so they can be easily used with python "with" statement 
     * Python decode function now can convert to interleaved RGB and 8 bits by default

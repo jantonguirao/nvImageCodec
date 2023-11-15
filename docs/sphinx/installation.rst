@@ -22,16 +22,21 @@ Installation
 Pre-requisites
 --------------
 
-This section describes the recommended dependencies to use nvImageCodec
+This section describes the recommended dependencies to use nvImageCodec.
 
-* Ubuntu >= 20.04
-* CUDA driver >= 11.8
+* Linux distro:
+    * Ubuntu x86_64 >= 20.04
+    * WSL2 with Ubuntu >= 20.04
+* NVIDIA driver >= 520.56.06
 * CUDA Toolit >= 11.8
+* GCC >= 9.4
+* Python >= 3.8
+* cmake >= 3.24
 
 Setup
 -----
 
-The following steps describe how to install nvImageCodec from pre-built install packages. Choose the installation method that meets your environment needs.
+The following steps describe how to install nvImageCodec from pre-built install packages. Choose the installation method that meets your environment needs. The `x` letter in the below command is the build id. It will be 0 when the package is built locally.
 
 Download the nvImageCodec tar/deb package from `here <https://github.com/NVIDIA/nvImageCodec/releases>`_
 
@@ -41,11 +46,7 @@ Download the nvImageCodec tar/deb package from `here <https://github.com/NVIDIA/
 
     Unzip the nvImageCodec runtime and developer package: ::
 
-        tar -xvf nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
-
-    Optionally Unzip the tests. ::
-
-        tar -xvf nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-tests.tar.gz -C /opt/nvidia/
+        tar -xvf nvimgcodec-0.2.0.x-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
 
 * Debian Local Installation
 
@@ -53,15 +54,11 @@ Download the nvImageCodec tar/deb package from `here <https://github.com/NVIDIA/
 
     Install the nvImageCodec runtime and developer package: ::
 
-        sudo apt-get install -y ./nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-lib.deb
-
-    Optionally install the tests. ::
-
-        sudo apt-get install -y ./nvimgcodec-0.1.0_alpha.1-cuda12-x86_64-linux-tests.deb
+        sudo apt-get install -y ./nvimgcodec-0.2.0.x-cuda12-x86_64-linux-lib.deb
 
 * Python WHL File Installation. ::
 
-    pip install nvidia_nvimgcodec_cuda120-0.1.0-py3-none-manylinux2014_x86_64.whl
+    pip install nvidia_nvimgcodec_cu12-0.2.0.x-py3-none-manylinux2014_x86_64.whl
 
 * Running the samples. ::
 
