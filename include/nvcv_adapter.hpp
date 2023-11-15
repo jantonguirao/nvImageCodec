@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-//Compatibility: CV-CUDA v0 .3.0 Beta
-
 #pragma once
 
 #include <map>
@@ -431,6 +429,7 @@ nvimgcodecStatus_t ImageData2Imageinfo(nvimgcodecImageInfo_t* image_info, const 
         CHECK_NVCV(nvcvImageFormatGetSwizzle(image_data.format, &swizzle));
         if (swizzle == NVCV_SWIZZLE_0000)
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
+        
 
         const NVCVImageBufferStrided& strided = image_data.buffer.strided;
         image_info->num_planes = strided.numPlanes;
@@ -452,8 +451,18 @@ nvimgcodecStatus_t ImageData2Imageinfo(nvimgcodecImageInfo_t* image_info, const 
             if (image_info->plane_info[p].sample_type == NVIMGCODEC_SAMPLE_DATA_TYPE_UNSUPPORTED)
                 return NVIMGCODEC_STATUS_INVALID_PARAMETER;
             int32_t num_channels;
-            CHECK_NVCV(nvcvImageFormatGetPlaneNumChannels(image_data.format, p, &num_channels));
-            image_info->plane_info[p].num_channels = num_channels;
+            {
+                CHECK_NVCV(nvcvImageFormatGetPlaneNumChannels(image_data.format, p, &num_channels));
+                NVCVExtraChannelInfo exChannelInfo;
+                CHECK_NVCV(nvcvImageFormatGetExtraChannelInfo(image_data.format, &exChannelInfo));
+                // cvcuda supports different data kind for regular and extra channels but nvimgcodecs does not.
+                if (p == 0 && ((bpp != exChannelInfo.bitsPerPixel) || (data_kind != exChannelInfo.datakind))) 
+                    return NVIMGCODEC_STATUS_IMPLEMENTATION_UNSUPPORTED;
+                // TODO uncomment this later when alpha type is supported in nvimgcodecs
+                //NVCVAlphaType alpha_type; 
+                //CHECK_NVCV(nvcvImageFormatGetAlphaType(image_data.format, &alpha_type));
+            }            
+            image_info->plane_info[p].num_channels = num_channels + (p == 0 ? exChannelInfo.numChannels : 0); 
             ptr += image_info->plane_info[p].height * image_info->plane_info[p].row_stride;
         }
 
@@ -510,8 +519,29 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
     auto [packing0, packing1, packing2, packing3] = loc2ext_packing(image_info);
     if (packing0 == NVCV_PACKING_0 && packing1 == NVCV_PACKING_0 && packing2 == NVCV_PACKING_0 && packing3 == NVCV_PACKING_0)
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
-    image_data->format = NVCV_DETAIL_MAKE_FMTTYPE(
-        color_model, color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3);
+    
+    // more than 4 channels are only supported in the case of interleaved/packed format. 
+    // planar format with >4 channels are yet not supported in cvcuda
+    NVCVExtraChannelInfo exChannelInfo;
+    // 4 regular channels (color + alpha/black) are supported
+    exChannelInfo.numChannels = 4 - image_info.plane_info[0].num_channels; 
+    exChannelInfo.bitsPerPixel = image_info.plane_info[0].precision;
+    exChannelInfo.datakind = data_kind;
+    // placeholders until nvimgcodecs supports these
+    exChannelInfo.channelType = NVCV_EXTRA_CHANNEL_U; 
+    auto alpha_type = NVCV_ALPHA_ASSOCIATED; 
+    
+    if (color_model == NVCV_COLOR_MODEL_YCbCr)
+        CHECK_NVCV(nvcvMakeYCbCrImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
+    if (color_model == NVCV_COLOR_MODEL_GRAY ||
+        color_model == NVCV_COLOR_MODEL_RGB  ||
+        color_model == NVCV_COLOR_MODEL_CMYK)
+        CHECK_NVCV(nvcvMakeColorImageFormat(&(image_data->format), color_model, color_spec, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
+    if (color_model == NVCV_COLOR_MODEL_YCCK)
+        return NVIMGCODEC_STATUS_IMPLEMENTATION_UNSUPPORTED;
+
+    //image_data->format = NVCV_DETAIL_MAKE_FMTTYPE(
+    //    color_model, color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, num_extra_channels);
     return NVIMGCODEC_STATUS_SUCCESS;
 }
 
