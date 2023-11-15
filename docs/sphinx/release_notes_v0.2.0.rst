@@ -16,10 +16,12 @@
 
 .. _v0.2.0:
 
-v0.2.0
+v0.2.0-beta.1
 ==============
 
-nvImageCodec v0.2.0-beta.1 is the first public release of the library.
+nvImageCodec v0.2.0-beta.1 is the first public release of the library. 
+
+This software is in beta version, which means it is still undergoing testing and development before its official release. It may contain bugs, errors, or incomplete features that could affect its performance and functionality. By using this software, you agree to accept the risks and limitations associated with beta software. We appreciate your feedback and suggestions to help us improve this software, but we do not guarantee that we will implement them or that the software will meet your expectations. Please use this software at your own discretion and responsibility.
 
 Key Features and Enhancements
 -----------------------------
