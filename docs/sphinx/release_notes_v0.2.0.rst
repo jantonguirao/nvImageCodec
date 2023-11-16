@@ -16,10 +16,12 @@
 
 .. _v0.2.0:
 
-v0.2.0
+v0.2.0-beta.1
 ==============
 
-nvImageCodec-0.2.0 is the first public release of the library.
+nvImageCodec v0.2.0-beta.1 is the first public release of the library. 
+
+This software is in beta version, which means it is still undergoing testing and development before its official release. It may contain bugs, errors, or incomplete features that could affect its performance and functionality. By using this software, you agree to accept the risks and limitations associated with beta software. We appreciate your feedback and suggestions to help us improve this software, but we do not guarantee that we will implement them or that the software will meet your expectations. Please use this software at your own discretion and responsibility.
 
 Key Features and Enhancements
 -----------------------------
@@ -35,11 +37,11 @@ This nvImageCodec release includes the following key features and enhancements:
     * Added simple sample C API usage
     * Added Python sample Jupyter notebooks to documentation  
 * C API improvements
-    * Adjust cvcuda types
+    * Adjusted cvcuda types adapter
     * Improved error handling and reporting 
     * Custom Executor can now be defined per Decoder/Encoder
     * Added possibility to pre-allocate resources
-    * Added nvjpeg_extra_flags option
+    * Added support for nvjpeg extra_flags option
 * Python API improvements
     * Added support for Python 3.12 and deprecated Python 3.7  
     * Added support for DL-pack
@@ -49,5 +51,5 @@ This nvImageCodec release includes the following key features and enhancements:
     * Added allow_any_depth to decode parameters
     * Added possibility to specify number of CPU threads to use in decoder/encoder
     * Added precision attribute to Image
-    * Added __enter__ and __exit__ to Decoder and Encoder so they can be easily used with with statement 
+    * Added __enter__ and __exit__ to Decoder and Encoder so they can be easily used with python "with" statement 
     * Python decode function now can convert to interleaved RGB and 8 bits by default

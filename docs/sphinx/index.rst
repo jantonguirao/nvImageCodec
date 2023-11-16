@@ -16,7 +16,7 @@
 
 NVIDIA nvImageCodec
 ======================================
-The nvImageCodec is a library of accelerated codec with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
+The nvImageCodec is a library of accelerated codecs with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
 
 This nvImageCodec release includes the following key features:
 
