@@ -94,6 +94,7 @@ class NvJpegHwDecoderPlugin
         nvjpegPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcodecFrameworkDesc_t* framework_;
         std::unique_ptr<DecodeState> decode_state_batch_;
+        std::vector<std::vector<unsigned char>> code_stream_buffers_;
         std::vector<std::unique_ptr<ParseState>> parse_state_;
         const nvimgcodecExecutionParams_t* exec_params_;
         unsigned int num_hw_engines_;

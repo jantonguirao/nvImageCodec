@@ -82,6 +82,13 @@ nvimgcodecStatus_t NvJpegHwDecoderPlugin::Decoder::canDecode(nvimgcodecProcessin
             *status = NVIMGCODEC_PROCESSING_STATUS_CODEC_UNSUPPORTED;
             return NVIMGCODEC_STATUS_SUCCESS;
         }
+
+        static const std::set<nvimgcodecChromaSubsampling_t> supported_css{NVIMGCODEC_SAMPLING_444, NVIMGCODEC_SAMPLING_422,
+            NVIMGCODEC_SAMPLING_420, NVIMGCODEC_SAMPLING_440, NVIMGCODEC_SAMPLING_GRAY};
+        if (supported_css.find(cs_image_info.chroma_subsampling) == supported_css.end()) {
+            *status |= NVIMGCODEC_PROCESSING_STATUS_SAMPLING_UNSUPPORTED;
+        }
+
         nvjpegDecodeParams_t nvjpeg_params_;
         XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle_, &nvjpeg_params_));
         std::unique_ptr<std::remove_pointer<nvjpegDecodeParams_t>::type, decltype(&nvjpegDecodeParamsDestroy)> nvjpeg_params(
@@ -519,7 +526,7 @@ nvimgcodecStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
         auto& handle = decode_state_batch_->handle_;
 
         std::set<cudaStream_t> sync_streams;
-
+        code_stream_buffers_.resize(nsamples);
         for (int i = 0; i < nsamples; i++) {
             XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle, &batched_nvjpeg_params[i]));
             batched_nvjpeg_params_ptrs.emplace_back(batched_nvjpeg_params[i], &nvjpegDecodeParamsDestroy);
@@ -594,9 +601,26 @@ nvimgcodecStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
             nvjpeg_format = nvimgcodec_to_nvjpeg_format(image_info.sample_format);
 
             size_t encoded_stream_data_size = 0;
-            io_stream->size(io_stream->instance, &encoded_stream_data_size);
             void* encoded_stream_data = nullptr;
-            io_stream->map(io_stream->instance, &encoded_stream_data, 0, encoded_stream_data_size);
+            io_stream->size(io_stream->instance, &encoded_stream_data_size);
+ 
+            void* mapped_encoded_stream_data = nullptr;
+            io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
+
+            if (!mapped_encoded_stream_data) {
+                io_stream->seek(io_stream->instance, 0, SEEK_SET);
+                size_t read_nbytes = 0;
+                code_stream_buffers_[i].resize(encoded_stream_data_size);
+                io_stream->read(io_stream->instance, &read_nbytes, &code_stream_buffers_[i][0], encoded_stream_data_size);
+                if (read_nbytes != encoded_stream_data_size) {
+                    NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected end-of-stream");
+                    return NVIMGCODEC_STATUS_BAD_CODESTREAM;
+                }
+                encoded_stream_data = &code_stream_buffers_[i][0];
+
+            } else {
+                encoded_stream_data = mapped_encoded_stream_data;
+            }
 
             batched_bitstreams.push_back(static_cast<const unsigned char*>(encoded_stream_data));
             batched_bitstreams_size.push_back(encoded_stream_data_size);
