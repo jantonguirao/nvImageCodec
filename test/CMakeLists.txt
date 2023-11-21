@@ -123,6 +123,7 @@ foreach(testapp nvimgcodec_tests)
         list(APPEND TARGET_LIBS ${TIFF_LIBRARY})
         endif()
         list(APPEND TARGET_LIBS ${JPEG_LIBRARY})
+        list(APPEND TARGET_LIBS ${ZLIB_LIBRARY})
     endif()
 
     if (BUILD_OPENCV_EXT)

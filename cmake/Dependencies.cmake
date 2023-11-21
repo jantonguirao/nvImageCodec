@@ -65,6 +65,14 @@ else()
     include_directories(SYSTEM ${TIFF_INCLUDE_DIR})
 endif()
 
+find_package(ZLIB REQUIRED)
+
+if(NOT DEFINED ZLIB_LIBRARY)
+    message(WARNING "zlib not found")
+else()
+    message("Using zlib at ${ZLIB_LIBRARY}")
+endif()
+
 find_package(JPEG 62 REQUIRED) # 1.5.3 version
 if(NOT DEFINED JPEG_LIBRARY)
     message(WARNING "libjpeg-turbo not found - disabled")
@@ -95,7 +103,7 @@ if (NOT DEFINED OpenCV_VERSION)
     endif()
 endif()
 
-##################################################################
+# #################################################################
 # Boost preprocessor
-##################################################################
+# #################################################################
 include_directories(${PROJECT_SOURCE_DIR}/external/boost/preprocessor/include)

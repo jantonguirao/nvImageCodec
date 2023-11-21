@@ -53,6 +53,9 @@ class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
         std::string dec_options{":fancy_upsampling=0 nvjpeg_cuda_decoder:hybrid_huffman_threshold=0"};
         nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
         exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
+        exec_params.num_backends = 1;
+        exec_params.backends = backends_.data();
+
         ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderCreate(instance_, &decoder_, &exec_params, dec_options.c_str()));
         params_ = {NVIMGCODEC_STRUCTURE_TYPE_DECODE_PARAMS, sizeof(nvimgcodecDecodeParams_t), 0};
         params_.apply_exif_orientation= 1;
@@ -68,6 +71,8 @@ class NvJpegExtDecoderTestBase : public NvJpegExtTestBase
 
     nvimgcodecDecoder_t decoder_;
     nvimgcodecDecodeParams_t params_;
+    std::vector<nvimgcodecBackend_t> backends_{{NVIMGCODEC_STRUCTURE_TYPE_BACKEND, sizeof(nvimgcodecBackend_t), 0,
+        NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU, {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), 0, 1}}};
 };
 
 class NvJpegExtDecoderTestSingleImage : public NvJpegExtDecoderTestBase,
