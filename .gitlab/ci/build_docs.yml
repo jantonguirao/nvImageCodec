@@ -8,7 +8,7 @@
 
 docs:
     stage: build_docs
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v7
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v8
     tags:
         - docker
     dependencies:
@@ -23,7 +23,7 @@ docs:
         - tar -zcvf nvimgcodec-docs.tar.gz --directory=docs/sphinx/_build/ html/
 pages:
     stage: deploy
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v7
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v8
     tags:
         - docker
     dependencies:

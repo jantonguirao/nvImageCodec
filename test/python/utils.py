@@ -86,4 +86,4 @@ def compare_host_images(test_images, ref_images):
         compare_image(test_img, ref_img)
 
 def is_nvjpeg2k_supported():
-    return os.system('uname -m') != 'aarch64'
+    return True
