@@ -17,8 +17,14 @@ from __future__ import annotations
 import numpy as np
 import pytest as t
 from nvidia import nvimgcodec
-import torch
+try:
+    import torch
+    has_torch = torch.cuda.is_available()
+except:
+    print("Torch with CUDA is not available, will skip related tests")
+    has_torch = False
 
+@t.mark.skipif(not has_torch, reason="Torch with CUDA is not available")
 @t.mark.parametrize("shape,dtype", [
     ((640, 480, 3), np.int8),
     ((640, 480, 3), np.uint8),
@@ -46,6 +52,7 @@ def test_dlpack_import_from_torch(shape, dtype):
     
     assert (host_array == torch.from_dlpack(img).cpu().numpy()).all()
 
+@t.mark.skipif(not has_torch, reason="Torch with CUDA is not available")
 @t.mark.parametrize("shape,dtype",
                     [
                         ((640, 480, 3), np.int8),
