@@ -59,15 +59,9 @@ constexpr auto ext2loc_color_spec(NVCVColorSpec in)
     case NVCV_COLOR_SPEC_UNDEFINED:
         return NVIMGCODEC_COLORSPEC_UNSUPPORTED;
     case NVCV_COLOR_SPEC_sRGB:
-        return NVIMGCODEC_COLORSPEC_SRGB;
-    case NVCV_COLOR_SPEC_GRAY:
-       return NVIMGCODEC_COLORSPEC_GRAY;
+        return NVIMGCODEC_COLORSPEC_SRGB;    
     case NVCV_COLOR_SPEC_sYCC:
-        return NVIMGCODEC_COLORSPEC_SYCC;
-    case NVCV_COLOR_SPEC_CMYK:
-       return NVIMGCODEC_COLORSPEC_CMYK;
-    case NVCV_COLOR_SPEC_YCCK:
-       return NVIMGCODEC_COLORSPEC_YCCK;
+        return NVIMGCODEC_COLORSPEC_SYCC;    
     default:
         return NVIMGCODEC_COLORSPEC_UNSUPPORTED;
     }
@@ -270,14 +264,12 @@ constexpr auto loc2ext_color_spec(nvimgcodecColorSpec_t in)
         return NVCV_COLOR_SPEC_UNDEFINED;
     case NVIMGCODEC_COLORSPEC_SRGB:
         return NVCV_COLOR_SPEC_sRGB;
-    case NVIMGCODEC_COLORSPEC_GRAY:
-        return NVCV_COLOR_SPEC_GRAY;
     case NVIMGCODEC_COLORSPEC_SYCC:
         return NVCV_COLOR_SPEC_sYCC;
+    case NVIMGCODEC_COLORSPEC_GRAY:
     case NVIMGCODEC_COLORSPEC_CMYK:
-        return NVCV_COLOR_SPEC_CMYK;
     case NVIMGCODEC_COLORSPEC_YCCK:
-        return NVCV_COLOR_SPEC_YCCK; 
+        return NVCV_COLOR_SPEC_UNDEFINED;
     case NVIMGCODEC_COLORSPEC_UNSUPPORTED:
         return NVCV_COLOR_SPEC_UNDEFINED;
     default:
@@ -293,13 +285,13 @@ constexpr auto loc2ext_color_model(nvimgcodecColorSpec_t in)
     case NVIMGCODEC_COLORSPEC_SRGB:
         return NVCV_COLOR_MODEL_RGB;
     case NVIMGCODEC_COLORSPEC_GRAY:
-        return NVCV_COLOR_MODEL_GRAY;
-    case NVIMGCODEC_COLORSPEC_SYCC:
         return NVCV_COLOR_MODEL_YCbCr;
     case NVIMGCODEC_COLORSPEC_CMYK:
         return NVCV_COLOR_MODEL_CMYK;
     case NVIMGCODEC_COLORSPEC_YCCK:
         return NVCV_COLOR_MODEL_YCCK;
+    case NVIMGCODEC_COLORSPEC_SYCC:
+        return NVCV_COLOR_MODEL_YCbCr;
     case NVIMGCODEC_COLORSPEC_UNSUPPORTED:
         return NVCV_COLOR_MODEL_UNDEFINED;
     default:
@@ -505,13 +497,11 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
         ptr += image_info.plane_info[p].height * image_info.plane_info[p].row_stride;
     }
 
-    auto color_spec = loc2ext_color_spec(image_info.color_spec);
-    if (color_spec == NVCV_COLOR_SPEC_UNDEFINED)
+    if (image_info.color_spec == NVIMGCODEC_COLORSPEC_UNSUPPORTED || image_info.color_spec == NVIMGCODEC_COLORSPEC_UNKNOWN)
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
+    auto color_spec = loc2ext_color_spec(image_info.color_spec);            
+    auto color_model = loc2ext_color_model(image_info.color_spec);    
     auto css = loc2ext_css(image_info.chroma_subsampling);
-    auto color_model = loc2ext_color_model(image_info.color_spec);
-    if (color_model == NVCV_COLOR_MODEL_UNDEFINED)
-        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     auto data_kind = loc2ext_data_kind(image_info.plane_info[0].sample_type);
     auto swizzle = loc2ext_swizzle(image_info.sample_format);
     if (swizzle == NVCV_SWIZZLE_0000)
@@ -531,17 +521,19 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
     exChannelInfo.channelType = NVCV_EXTRA_CHANNEL_U; 
     auto alpha_type = NVCV_ALPHA_ASSOCIATED; 
     
-    if (color_model == NVCV_COLOR_MODEL_YCbCr)
+    if (image_info.color_spec == NVIMGCODEC_COLORSPEC_SYCC)        
         CHECK_NVCV(nvcvMakeYCbCrImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
-    if (color_model == NVCV_COLOR_MODEL_GRAY ||
-        color_model == NVCV_COLOR_MODEL_RGB  ||
-        color_model == NVCV_COLOR_MODEL_CMYK)
-        CHECK_NVCV(nvcvMakeColorImageFormat(&(image_data->format), color_model, color_spec, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
-    if (color_model == NVCV_COLOR_MODEL_YCCK)
-        return NVIMGCODEC_STATUS_IMPLEMENTATION_UNSUPPORTED;
-
-    //image_data->format = NVCV_DETAIL_MAKE_FMTTYPE(
-    //    color_model, color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, num_extra_channels);
+    if (image_info.color_spec == NVIMGCODEC_COLORSPEC_GRAY)
+    {
+        if (!(packing1 == NVCV_PACKING0 && packing2 == NVCV_PACKING0 && packing3 ==  NVCV_PACKING0)) // if image is gray scale, then we require planes 1,2,3 to have NVCV_PACKING0
+            return NVIMGCODEC_STATUS_INVALID_PARAMETER;
+        CHECK_NVCV(nvcvMakeYCbCrImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
+    }
+    if (image_info.color_spec == NVIMGCODEC_COLOR_SPEC_SRGB ||
+        image_info.color_spec == NVIMGCODEC_COLOR_SPEC_CMYK ||
+        image_info.color_spec == NVIMGCODEC_COLOR_SPEC_YCCK)
+        CHECK_NVCV(nvcvMakeColorImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
+    
     return NVIMGCODEC_STATUS_SUCCESS;
 }
 
