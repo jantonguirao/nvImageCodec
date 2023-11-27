@@ -42,13 +42,6 @@ check_cxx_source_compiles(
   }"
   NVJPEG_REDUCED_MEMORY_ZERO_COPY_SUPPORTED)
 
-check_cxx_source_compiles(
-  "#include <nvjpeg.h>
-  int main(){
-    return NVJPEG_FLAGS_FUSED_IDCT;
-  }"
-  NVJPEG_FUSED_IDCT_SUPPORTED)
-
 include(CheckCXXSymbolExists)
 check_cxx_symbol_exists(nvjpegBufferDeviceResize "nvjpeg.h" NVJPEG_BUFFER_RESIZE_API)
 if (NVJPEG_BUFFER_RESIZE_API)
@@ -74,14 +67,6 @@ if (NVJPEG_REDUCED_MEMORY_ZERO_COPY_SUPPORTED)
 else()
   message("nvJPEG reduced memory zero copy NOT supported")
   add_definitions(-DNVJPEG_REDUCED_MEMORY_ZERO_COPY_SUPPORTED=0)
-endif()
-
-if (NVJPEG_FUSED_IDCT_SUPPORTED)
-  message("nvJPEG fused IDCT supported")
-  add_definitions(-DNVJPEG_FUSED_IDCT_SUPPORTED=1)
-else()
-  message("nvJPEG fused IDCT NOT supported")
-  add_definitions(-DNVJPEG_FUSED_IDCT_SUPPORTED=0)
 endif()
 
 add_library(${NVIMGCODEC_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCODEC_NVJPEG_EXT_SRC} ext_module.cpp)
