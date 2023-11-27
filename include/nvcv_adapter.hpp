@@ -522,18 +522,27 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
     auto alpha_type = NVCV_ALPHA_ASSOCIATED; 
     
     if (image_info.color_spec == NVIMGCODEC_COLORSPEC_SYCC)        
-        CHECK_NVCV(nvcvMakeYCbCrImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
-    if (image_info.color_spec == NVIMGCODEC_COLORSPEC_GRAY)
     {
-        if (!(packing1 == NVCV_PACKING0 && packing2 == NVCV_PACKING0 && packing3 ==  NVCV_PACKING0)) // if image is gray scale, then we require planes 1,2,3 to have NVCV_PACKING0
+        CHECK_NVCV(nvcvMakeYCbCrImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
+    }        
+    else if (image_info.color_spec == NVIMGCODEC_COLORSPEC_GRAY)
+    {
+        // if image is gray scale, then we require planes 1,2,3 to have NVCV_PACKING0
+        if (!(packing1 == NVCV_PACKING0 && packing2 == NVCV_PACKING0 && packing3 ==  NVCV_PACKING0)) 
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         CHECK_NVCV(nvcvMakeYCbCrImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
     }
-    if (image_info.color_spec == NVIMGCODEC_COLOR_SPEC_SRGB ||
-        image_info.color_spec == NVIMGCODEC_COLOR_SPEC_CMYK ||
-        image_info.color_spec == NVIMGCODEC_COLOR_SPEC_YCCK)
-        CHECK_NVCV(nvcvMakeColorImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
-    
+    else if (image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB ||
+        image_info.color_spec == NVIMGCODEC_COLORSPEC_CMYK ||
+        image_info.color_spec == NVIMGCODEC_COLORSPEC_YCCK)
+    {
+        CHECK_NVCV(nvcvMakeColorImageFormat(&(image_data->format), color_model, color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
+    }
+    else
+    {
+        return NVIMGCODEC_STATUS_INVALID_PARAMETER;
+    }
+
     return NVIMGCODEC_STATUS_SUCCESS;
 }
 
