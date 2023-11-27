@@ -60,6 +60,7 @@ copy_from_private_to_public() {
     --exclude=.gitlab \
     --exclude=docker/config-docker.sh \
     --exclude=tools/populate_public_repo.sh \
+    --exclude=tools/arch_3rd_party_oss.sh \
     --exclude=docs \
     --exclude=LICENSE.txt \
     --exclude=LICENSE.txt_PUBLIC \
