@@ -31,7 +31,7 @@ This section describes the recommended dependencies to use nvImageCodec.
 * CUDA Toolit >= 11.8
 * GCC >= 9.4
 * Python >= 3.8
-* cmake >= 3.24
+* cmake >= 3.18
 
 Setup
 -----
