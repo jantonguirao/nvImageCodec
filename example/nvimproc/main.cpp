@@ -47,7 +47,7 @@ namespace fs = std::filesystem;
  *
  * Input Batch Tensor -> Crop -> Resize -> WriteImage
  * 
- * Compatibility: CV-CUDA v0.3.0 Beta
+ * Compatibility: CV-CUDA v0.4.0 Beta
  * 
  */
 
@@ -323,12 +323,18 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
     decode_one_image(instance, params, image_names, NVIMGCODEC_SAMPLEFORMAT_P_RGB, &image_data, &tensor_data, stream);
     if (0) { // Example for image creation
         nvcv::ImageDataStridedCuda imageDataStridedCuda(image_data);
-        nvcv::ImageWrapData inImage(imageDataStridedCuda);
-        nvcv::TensorWrapImage decodedTensor(inImage);
+        NVCVImageHandle img_handle = nullptr;
+        nvcvImageWrapDataConstruct(&imageDataStridedCuda.cdata(), nullptr, nullptr, &img_handle);
+        nvcv::Image inImage(std::move(img_handle));
+        NVCVTensorHandle handle;
+        nvcvTensorWrapImageConstruct(inImage.handle(), &handle);
+        nvcv::Tensor decodedTensor(std::move(handle));
     }
 
     nvcv::TensorDataStridedCuda tensorDataStridedCuda(tensor_data);
-    nvcv::TensorWrapData decodedTensor(tensorDataStridedCuda);
+    NVCVTensorHandle handle;
+    nvcvTensorWrapDataConstruct(&tensorDataStridedCuda.cdata(), nullptr, nullptr, &handle);
+    nvcv::Tensor decodedTensor(std::move(handle));
 
     // tag: Create operator input tensor in RGB interleaved format
     nvcv::Tensor inTensor(1, {static_cast<int>(tensor_data.shape[3]), static_cast<int>(tensor_data.shape[2])}, nvcv::FMT_RGB8);
