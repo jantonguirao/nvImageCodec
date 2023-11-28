@@ -80,10 +80,10 @@ constexpr auto ext2loc_css(NVCVChromaSubsampling in)
         return NVIMGCODEC_SAMPLING_420;
     case NVCV_CSS_440:
        return NVIMGCODEC_SAMPLING_440;
-    //case NVCV_CSS_411:
-    //    return NVIMGCODEC_SAMPLING_411;
+    case NVCV_CSS_411:
+        return NVIMGCODEC_SAMPLING_411;
     //case NVCV_CSS_410:
-    //   return NVIMGCODEC_SAMPLING_410;
+    //    return NVIMGCODEC_SAMPLING_410;
     // case :
     //    return NVIMGCODEC_SAMPLING_GRAY; //TODO
     case NVCV_CSS_410R:
