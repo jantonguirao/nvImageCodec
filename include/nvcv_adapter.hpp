@@ -512,7 +512,8 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
     auto swizzle = loc2ext_swizzle(image_info.sample_format);
     if (swizzle == NVCV_SWIZZLE_0000)
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
-    auto [packing0, packing1, packing2, packing3] = loc2ext_packing(image_info);
+    NVCVPacking packing0, packing1, packing2, packing3;
+    std::tie(packing0, packing1, packing2, packing3) = loc2ext_packing(image_info);
     if (packing0 == NVCV_PACKING_0 && packing1 == NVCV_PACKING_0 && packing2 == NVCV_PACKING_0 && packing3 == NVCV_PACKING_0)
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     
