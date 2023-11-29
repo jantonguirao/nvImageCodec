@@ -4,13 +4,12 @@
 
 ![Version](https://img.shields.io/badge/Version-v0.2.0--beta-blue)
 
-![Platform](https://img.shields.io/badge/Platform-linux--64_%7C_win--64_wsl2-gray)
+![Platform](https://img.shields.io/badge/Platform-linux--x86__64_%7C_linux--aarch64_%7C_windows--64_wsl2-gray)
 
-[![Cuda](https://img.shields.io/badge/CUDA-v11.8-%2376B900?logo=nvidia)](https://developer.nvidia.com/cuda-toolkit-archive)
-[![GCC](https://img.shields.io/badge/GCC-v9.4-yellow)](https://gcc.gnu.org/gcc-9/)
-[![Python](https://img.shields.io/badge/python-v3.8_%7c_v3.9_%7c_v3.10%7c_v3.11%7c_v3.12-blue?logo=python)](https://www.python.org/)
-[![CMake](https://img.shields.io/badge/CMake-v3.24-%23008FBA?logo=cmake)](https://cmake.org/)
-                                                                                                        
+[![Cuda](https://img.shields.io/badge/CUDA-v11.8_%7c_v12.3-%2376B900?logo=nvidia)](https://developer.nvidia.com/cuda-toolkit-archive)
+[![GCC](https://img.shields.io/badge/GCC->=v9.0-yellow)](https://gcc.gnu.org/gcc-9/)
+[![Python](https://img.shields.io/badge/python-v3.8_%7c_v3.9_%7c_v3.10_%7c_v3.11_%7c_v3.12-blue?logo=python)](https://www.python.org/)
+[![CMake](https://img.shields.io/badge/CMake->=v3.18-%23008FBA?logo=cmake)](https://cmake.org/)
 
 The nvImageCodec is an open-source library of accelerated codecs with unified interface.
 It is designed as a framework for extension modules which delivers codec plugins.
