@@ -61,7 +61,7 @@ constexpr auto ext2loc_color_spec(NVCVColorSpec color_spec, NVCVColorModel color
         return NVIMGCODEC_COLORSPEC_SYCC;
     else if (color_model == NVCV_COLOR_MODEL_RGB && color_spec == NVCV_COLOR_SPEC_sRGB)
         return NVIMGCODEC_COLORSPEC_SRGB;
-    else if (color_model == NVCV_COLOR_MODEL_YCbCr && color_spec == NVCV_COLOR_SPEC_UNDEFINED && num_total_channels == 1)
+    else if (color_model == NVCV_COLOR_MODEL_YCbCr && num_total_channels == 1)
         return NVIMGCODEC_COLORSPEC_GRAY;    
     else
         return NVIMGCODEC_COLORSPEC_UNSUPPORTED;    
