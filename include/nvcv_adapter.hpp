@@ -55,18 +55,16 @@ constexpr auto ext2loc_buffer_kind(NVCVImageBufferType in_kind)
     }
 }
 
-constexpr auto ext2loc_color_spec(NVCVColorSpec in)
+constexpr auto ext2loc_color_spec(NVCVColorSpec color_spec, NVCVColorModel color_model, int num_total_channels)
 {
-    switch (in) {
-    case NVCV_COLOR_SPEC_UNDEFINED:
-        return NVIMGCODEC_COLORSPEC_UNSUPPORTED;
-    case NVCV_COLOR_SPEC_sRGB:
-        return NVIMGCODEC_COLORSPEC_SRGB;    
-    case NVCV_COLOR_SPEC_sYCC:
-        return NVIMGCODEC_COLORSPEC_SYCC;    
-    default:
-        return NVIMGCODEC_COLORSPEC_UNSUPPORTED;
-    }
+    if (color_model == NVCV_COLOR_MODEL_YCbCr && color_spec == NVCV_COLOR_SPEC_sYCC)
+        return NVIMGCODEC_COLORSPEC_SYCC;
+    else if (color_model == NVCV_COLOR_MODEL_RGB && color_spec == NVCV_COLOR_SPEC_sRGB)
+        return NVIMGCODEC_COLORSPEC_SRGB;
+    else if (color_model == NVCV_COLOR_MODEL_YCbCr && num_total_channels == 1)
+        return NVIMGCODEC_COLORSPEC_GRAY;    
+    else
+        return NVIMGCODEC_COLORSPEC_UNSUPPORTED;    
 };
 
 constexpr auto ext2loc_css(NVCVChromaSubsampling in)
@@ -432,6 +430,7 @@ nvimgcodecStatus_t ImageData2Imageinfo(nvimgcodecImageInfo_t* image_info, const 
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         image_info->buffer = reinterpret_cast<void*>(ptr);
 
+        int num_total_channels = 0;
         for (int32_t p = 0; p < strided.numPlanes; ++p) {
             if (strided.planes[p].basePtr != ptr) //Accept only contignous memory
                 return NVIMGCODEC_STATUS_INVALID_PARAMETER;
@@ -447,6 +446,7 @@ nvimgcodecStatus_t ImageData2Imageinfo(nvimgcodecImageInfo_t* image_info, const 
             int32_t num_channels;
             
             CHECK_NVCV(nvcvImageFormatGetPlaneNumChannels(image_data.format, p, &num_channels));
+            num_total_channels += num_channels;
             NVCVExtraChannelInfo exChannelInfo;
             CHECK_NVCV(nvcvImageFormatGetExtraChannelInfo(image_data.format, &exChannelInfo));
             // cvcuda supports different data kind for regular and extra channels but nvimgcodecs does not.
@@ -461,8 +461,10 @@ nvimgcodecStatus_t ImageData2Imageinfo(nvimgcodecImageInfo_t* image_info, const 
         }
 
         NVCVColorSpec color_spec;
+        NVCVColorModel color_model;
         CHECK_NVCV(nvcvImageFormatGetColorSpec(image_data.format, &color_spec));
-        image_info->color_spec = ext2loc_color_spec(color_spec);
+        CHECK_NVCV(nvcvImageFormatGetColorModel(image_data.format, &color_model));        
+        image_info->color_spec = ext2loc_color_spec(color_spec, color_model, num_total_channels);
         if (image_info->color_spec == NVIMGCODEC_COLORSPEC_UNSUPPORTED)
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
 
@@ -490,6 +492,7 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
     }
     NVCVImageBufferStrided& strided = image_data->buffer.strided;
     strided.numPlanes = image_info.num_planes;
+    int num_total_channels = 0;    
     NVCVByte* ptr = reinterpret_cast<NVCVByte*>(image_info.buffer);
     for (int32_t p = 0; p < strided.numPlanes; ++p) {
         strided.planes[p].width = image_info.plane_info[p].width;
@@ -497,6 +500,7 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
         strided.planes[p].rowStride = image_info.plane_info[p].row_stride;
         strided.planes[p].basePtr = ptr;
         ptr += image_info.plane_info[p].height * image_info.plane_info[p].row_stride;
+        num_total_channels += image_info.plane_info[p].num_channels;
     }
 
     if (image_info.color_spec == NVIMGCODEC_COLORSPEC_UNSUPPORTED || image_info.color_spec == NVIMGCODEC_COLORSPEC_UNKNOWN)
@@ -508,12 +512,13 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
     auto swizzle = loc2ext_swizzle(image_info.sample_format);
     if (swizzle == NVCV_SWIZZLE_0000)
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
-    auto [packing0, packing1, packing2, packing3] = loc2ext_packing(image_info);
+    NVCVPacking packing0, packing1, packing2, packing3;
+    std::tie(packing0, packing1, packing2, packing3) = loc2ext_packing(image_info);
     if (packing0 == NVCV_PACKING_0 && packing1 == NVCV_PACKING_0 && packing2 == NVCV_PACKING_0 && packing3 == NVCV_PACKING_0)
         return NVIMGCODEC_STATUS_INVALID_PARAMETER;
     
     // more than 4 channels are only supported in the case of interleaved/packed format. 
-    // planar format with >4 channels are yet not supported in cvcuda
+    // planar format with >4 channels are yet not supported in cvcuda    
     NVCVExtraChannelInfo exChannelInfo;
     // 4 regular channels (color + alpha/black) are supported
     exChannelInfo.numChannels = image_info.plane_info[0].num_channels - 4;
@@ -522,7 +527,7 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
     exChannelInfo.datakind = data_kind;
     // placeholders until nvimgcodecs supports these
     exChannelInfo.channelType = NVCV_EXTRA_CHANNEL_U; 
-    auto alpha_type = NVCV_ALPHA_ASSOCIATED; 
+    NVCVAlphaType alpha_type = NVCV_ALPHA_ASSOCIATED; 
     
     if (image_info.color_spec == NVIMGCODEC_COLORSPEC_SYCC)        
     {
@@ -530,10 +535,11 @@ nvimgcodecStatus_t ImageInfo2ImageData(NVCVImageData* image_data, const nvimgcod
     }        
     else if (image_info.color_spec == NVIMGCODEC_COLORSPEC_GRAY)
     {
-        // if image is gray scale, then we require planes 1,2,3 to have NVCV_PACKING0
-        if (!(packing1 == NVCV_PACKING_0 && packing2 == NVCV_PACKING_0 && packing3 ==  NVCV_PACKING_0)) 
+        // if image is gray scale, then we require planes 1,2,3 to have NVCV_PACKING0        
+        if (!(num_total_channels == 1 && packing1 == NVCV_PACKING_0 && packing2 == NVCV_PACKING_0 &&
+              packing3 == NVCV_PACKING_0 && swizzle == NVCV_SWIZZLE_X000 && css == NVCV_CSS_NONE)) 
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
-        CHECK_NVCV(nvcvMakeYCbCrImageFormat(&(image_data->format), color_spec, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
+        CHECK_NVCV(nvcvMakeYCbCrImageFormat(&(image_data->format), NVCV_COLOR_SPEC_UNDEFINED, css, NVCV_MEM_LAYOUT_PITCH_LINEAR, data_kind, swizzle, packing0, packing1, packing2, packing3, alpha_type, &exChannelInfo));
     }
     else if (image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB)
     {
