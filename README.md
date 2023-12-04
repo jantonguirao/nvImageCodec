@@ -135,7 +135,7 @@ Please see also Dockerfiles.
 ```
 git lfs clone https://github.com/NVIDIA/nvImageCodec.git
 cd nvimagecodec
-git submodule update --init --recursive --remote
+git submodule update --init --recursive --depth 1
 mkdir build
 cd build
 export CUDACXX=nvcc
