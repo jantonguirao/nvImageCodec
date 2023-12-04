@@ -8,6 +8,8 @@ FROM ${BUILDER_EXTRA_DEPS} as extra_deps
 FROM ${FROM_IMAGE_NAME}
 
 ARG ARCH=x86_64
+ARG CC=gcc
+ARG CXX=g++
 
 # patchelf Needed to patch rpath of dependencies in bundle-wheel.sh
 RUN cd /tmp && export PATCHELF_VERSION=0.17.2 && export PATCHELF_ARCH=${ARCH} && \
@@ -28,97 +30,12 @@ RUN export CMAKE_VERSION=3.24.3 \
       && rm -f /usr/local/bin/ctest \
       && ln -s /opt/cmake-${CMAKE_VERSION}/bin/* /usr/local/bin
 
-RUN echo "set(CMAKE_SYSTEM_NAME Linux)" > /tmp/toolchain.cmake && \
-    echo "set(CMAKE_SYSTEM_PROCESSOR ${ARCH})" >> /tmp/toolchain.cmake && \
-    echo "set(CMAKE_C_COMPILER gcc)" >> /tmp/toolchain.cmake && \
-    echo "set(CMAKE_CXX_COMPILER g++)" >> /tmp/toolchain.cmake && \
-    echo "set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")" >> /tmp/toolchain.cmake && \
-    echo "set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")" >> /tmp/toolchain.cmake
-
-RUN export LIBJPEG_TURBO_VERSION=2.1.91 && cd /tmp && \
-    wget https://github.com/libjpeg-turbo/libjpeg-turbo/archive/refs/tags/${LIBJPEG_TURBO_VERSION}.tar.gz && \
-    tar xzvf ${LIBJPEG_TURBO_VERSION}.tar.gz && cd libjpeg-turbo-${LIBJPEG_TURBO_VERSION} && \
-    mkdir rel_build && cd rel_build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/tmp/toolchain.cmake \
-          -DCMAKE_INSTALL_PREFIX=/usr/local \
-          -DENABLE_SHARED=FALSE -DENABLE_STATIC=TRUE \
-          .. && \
-    make -j8 && make install && \
-    cd && rm -rf /tmp/${LIBJPEG_TURBO_VERSION}.tar.gz /tmp/libjpeg-turbo-${LIBJPEG_TURBO_VERSION}
-
-RUN export LIBTIFF_VERSION=4.5.0; cd /tmp && \
-    wget https://download.osgeo.org/libtiff/tiff-${LIBTIFF_VERSION}.tar.gz && \
-    tar xzvf tiff-${LIBTIFF_VERSION}.tar.gz && cd tiff-${LIBTIFF_VERSION} && \
-    mkdir rel_build && cd rel_build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/tmp/toolchain.cmake \
-          -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF \
-          -DCMAKE_INSTALL_PREFIX=/usr/local -Djbig=OFF \
-          .. && \
-    make -j8 && make install && \
-    cd && rm -rf /tmp/tiff-${LIBTIFF_VERSION}.tar.gz /tmp/tiff-${LIBTIFF_VERSION}
-
-RUN export OPENJPEG_VERSION=2.5.0; cd /tmp && \
-    wget https://github.com/uclouvain/openjpeg/archive/refs/tags/v${OPENJPEG_VERSION}.zip && \
-    unzip v${OPENJPEG_VERSION}.zip && cd openjpeg-${OPENJPEG_VERSION} && \
-    mkdir rel_build && cd rel_build && \
-    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=/tmp/toolchain.cmake \
-      -DCMAKE_INSTALL_PREFIX=/usr/local \
-      -DBUILD_CODEC=OFF \
-      -DBUILD_SHARED_LIBS=OFF \
-      -DBUILD_STATIC_LIBS=ON \
-      .. && \
-    make -j8 && make install && \
-    cd && rm -rf v${OPENJPEG_VERSION}.zip /tmp/openjpeg-${OPENJPEG_VERSION}
-
-RUN export OPENCV_VERSION=4.7.0 && cd /tmp && \
-    wget https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz && \
-    tar xzvf ${OPENCV_VERSION}.tar.gz && cd opencv-${OPENCV_VERSION} && mkdir build && cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_TOOLCHAIN_FILE=$PWD/../platforms/linux/gnu.toolchain.cmake \
-      -DVIBRANTE_PDK:STRING=/ \
-      -DCMAKE_INSTALL_PREFIX=/usr/local \
-      -DBUILD_LIST=core,improc,imgcodecs \
-      -DBUILD_SHARED_LIBS=OFF \
-      -DWITH_ADE=OFF \
-      -DWITH_CUDA=OFF \
-      -DWITH_1394=OFF \
-      -DWITH_IPP=OFF \
-      -DWITH_OPENCL=OFF \
-      -DWITH_GTK=OFF \
-      -DBUILD_JPEG=OFF \
-      -DWITH_JPEG=ON \
-      -DBUILD_TIFF=OFF \
-      -DWITH_TIFF=ON \
-      -DBUILD_JASPER=OFF \
-      -DBUILD_DOCS=OFF \
-      -DBUILD_TESTS=OFF \
-      -DBUILD_PERF_TESTS=OFF \
-      -DBUILD_PNG=ON \
-      -DWITH_WEBP=ON \
-      -DBUILD_opencv_cudalegacy=OFF \
-      -DBUILD_opencv_stitching=OFF \
-      -DWITH_TBB=OFF \
-      -DWITH_QUIRC=OFF \
-      -DWITH_OPENMP=OFF \
-      -DWITH_PTHREADS_PF=OFF \
-      -DBUILD_EXAMPLES=OFF \
-      -DBUILD_opencv_java=OFF \
-      -DBUILD_opencv_python2=OFF \
-      -DBUILD_opencv_python3=OFF \
-      -DWITH_PROTOBUF=OFF \
-      -DWITH_FFMPEG=OFF \
-      -DWITH_GSTREAMER=OFF \
-      -DWITH_GSTREAMER_0_10=OFF \
-      -DWITH_VTK=OFF \
-      -DWITH_OPENEXR=OFF \
-      -DINSTALL_C_EXAMPLES=OFF \
-      -DINSTALL_TESTS=OFF \
-      -DVIBRANTE=TRUE \
-      -DWITH_CSTRIPES=OFF \
-      -DCMAKE_PREFIX_PATH=${INSTALL_PREFIX} \
-      VERBOSE=1 .. && \
-      make -j8 && make install && \
-      cd && rm -rf /tmp/${OPENCV_VERSION}.tar.gz /tmp/opencv-${OPENCV_VERSION}
+# run in /bin/bash to have more advanced features supported like list
+ADD external /opt/src/external
+RUN /bin/bash -c \
+    'export CC_COMP=${CC}                                                                           && \
+     export CXX_COMP=${CXX}                                                                         && \
+    pushd /opt/src && external/build_deps.sh && popd'
 
 # Python
 ARG PYVER=3.8

@@ -66,11 +66,17 @@ else()
 endif()
 
 find_package(ZLIB REQUIRED)
-
 if(NOT DEFINED ZLIB_LIBRARY)
-    message(WARNING "zlib not found")
+    message(FATAL_ERROR "zlib not found")
 else()
     message("Using zlib at ${ZLIB_LIBRARY}")
+endif()
+
+find_package(ZSTD REQUIRED)
+if(NOT DEFINED ZSTD_LIBRARY)
+    message(FATAL_ERROR "zstd not found")
+else()
+    message("Using zstd at ${ZSTD_LIBRARY}")
 endif()
 
 find_package(JPEG 62 REQUIRED) # 1.5.3 version

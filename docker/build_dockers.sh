@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-export VERSION=${VERSION:-8}  # Update version when changing anything in the Dockerfiles
+export VERSION=${VERSION:-9}  # Update version when changing anything in the Dockerfiles
 
 SCRIPT_DIR=$(dirname $0)
 source ${SCRIPT_DIR}/config-docker.sh || source ${SCRIPT_DIR}/default-config-docker.sh
@@ -21,7 +21,7 @@ docker buildx build \
     --build-arg "FROM_IMAGE_NAME=quay.io/pypa/manylinux2014_${ARCH}" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # Manylinux2014 with GCC 10
 export MANYLINUX_GCC10="${REGISTRY_PREFIX}manylinux2014_${ARCH}.gcc10"
@@ -33,7 +33,7 @@ docker buildx build \
     --build-arg "FROM_IMAGE_NAME=quay.io/pypa/manylinux2014_${ARCH}" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # CUDA 11.8.0
 export CUDA_118="${REGISTRY_PREFIX}cuda11.8-${ARCH}"
@@ -44,7 +44,7 @@ docker buildx build \
     -f docker/Dockerfile.cuda118.${ARCH}.deps \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # CUDA 12.3.0
 export CUDA_123="${REGISTRY_PREFIX}cuda12.3-${ARCH}"
@@ -55,7 +55,7 @@ docker buildx build \
     -f docker/Dockerfile.cuda123.${ARCH}.deps \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # GCC 9 (minimum supported)
 export DEPS_GCC9="${REGISTRY_PREFIX}nvimgcodec_deps-${ARCH}-gcc9"
@@ -68,7 +68,7 @@ docker buildx build \
     --build-arg "ARCH=${ARCH}" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # GCC 10
 export DEPS_GCC10="${REGISTRY_PREFIX}nvimgcodec_deps-${ARCH}"
@@ -81,7 +81,7 @@ docker buildx build \
     --build-arg "ARCH=${ARCH}" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 ####### BUILDER IMAGES #######
 
@@ -96,7 +96,7 @@ docker buildx build \
     --build-arg "CUDA_IMAGE=${CUDA_118}" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # GCC 10, CUDA 11.8
 export BUILDER_CUDA_118="${REGISTRY_PREFIX}builder-cuda-11.8-${ARCH}"
@@ -109,7 +109,7 @@ docker buildx build \
     --build-arg "CUDA_IMAGE=${CUDA_118}" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # GCC 10, CUDA 12.3
 export BUILDER_CUDA_123="${REGISTRY_PREFIX}builder-cuda-12.3-${ARCH}"
@@ -122,7 +122,7 @@ docker buildx build \
     --build-arg "CUDA_IMAGE=${CUDA_123}" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 ####### TEST IMAGES #######
 
@@ -138,7 +138,7 @@ docker buildx build \
     --build-arg "VER_UBUNTU=20.04" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # CUDA 11.8
 export RUNNER_CUDA_118="${REGISTRY_PREFIX}runner-cuda-11.8-${ARCH}"
@@ -152,7 +152,7 @@ docker buildx build \
     --build-arg "VER_UBUNTU=20.04" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
 
 # CUDA 12.1
 export RUNNER_CUDA_121="${REGISTRY_PREFIX}runner-cuda-12.1-${ARCH}"
@@ -166,4 +166,4 @@ docker buildx build \
     --build-arg "VER_UBUNTU=20.04" \
     --platform ${PLATFORM} \
     --push \
-    docker
+    .
