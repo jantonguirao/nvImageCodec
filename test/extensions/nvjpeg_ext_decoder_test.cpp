@@ -200,5 +200,66 @@ INSTANTIATE_TEST_SUITE_P(NVJPEG_DECODE_CYMK_AND_YCCK_WITH_VALID_SRGB_OUTPUT_FORM
          Values(NVIMGCODEC_SAMPLEFORMAT_P_UNCHANGED),
          Values(NVIMGCODEC_COLORSPEC_UNCHANGED)));
 
+class NvJpegExtLosslessDecoderTestSingleImage :
+    public NvJpegExtDecoderTestBase,
+    public NvJpegTestBase,
+    public TestWithParam<std::tuple<const char*, nvimgcodecColorSpec_t, nvimgcodecSampleFormat_t, nvimgcodecChromaSubsampling_t>>
+{
+  public:
+    virtual ~NvJpegExtLosslessDecoderTestSingleImage() = default;
+
+  protected:
+    void SetUp() override
+    {
+        image_file_ = std::get<0>(GetParam());
+        color_spec_ = std::get<1>(GetParam());
+        sample_format_ = std::get<2>(GetParam());
+        chroma_subsampling_ = std::get<3>(GetParam());
+        NvJpegExtDecoderTestBase::SetUp();
+        NvJpegTestBase::SetUp();
+    }
+
+    virtual void TearDown()
+    {
+        NvJpegTestBase::TearDown();
+        NvJpegExtDecoderTestBase::TearDown();
+    }
+
+    nvimgcodecColorSpec_t output_color_spec_ = NVIMGCODEC_COLORSPEC_UNCHANGED;
+};
+
+TEST_P(NvJpegExtLosslessDecoderTestSingleImage, LosslessJpegValidFormatAndParameters)
+{
+    LoadImageFromFilename(instance_, in_code_stream_, resources_dir + image_file_);
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecCodeStreamGetImageInfo(in_code_stream_, &image_info_));
+    PrepareImageForFormat();
+
+    nvimgcodecImageInfo_t out_image_info(image_info_);
+    out_image_info.plane_info[0].sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16;
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecImageCreate(instance_, &out_image_, &out_image_info));
+    streams_.push_back(in_code_stream_);
+    images_.push_back(out_image_);
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecDecoderDecode(decoder_, streams_.data(), images_.data(), 1, &params_, &future_));
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureWaitForAll(future_));
+    cudaDeviceSynchronize();
+    nvimgcodecProcessingStatus_t status;
+    size_t status_size;
+    ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureGetProcessingStatus(future_, &status, &status_size));
+    ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, status);
+    ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, 1);
+}
+
+static const char* css_lossless_filenames[] = {"/jpeg/lossless/cat-1245673_640_grayscale_16bit.jpg",
+    "/jpeg/lossless/cat-3449999_640_grayscale_12bit.jpg",
+    "/jpeg/lossless/cat-3449999_640_grayscale_16bit.jpg",
+    "/jpeg/lossless/cat-3449999_640_grayscale_8bit.jpg"};
+
+INSTANTIATE_TEST_SUITE_P(NVJPEG_LOSSLESS_DECODE_VARIOUS_CHROMA_WITH_VALID_SRGB_OUTPUT_FORMATS,
+    NvJpegExtLosslessDecoderTestSingleImage,
+    Combine(::testing::ValuesIn(css_lossless_filenames),
+        Values(NVIMGCODEC_COLORSPEC_SRGB),
+        Values(NVIMGCODEC_SAMPLEFORMAT_P_Y, NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED),
+        Values(NVIMGCODEC_SAMPLING_NONE)));
+
 // clang-format on
 }} // namespace nvimgcodec::test
