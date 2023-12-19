@@ -41,9 +41,22 @@ set(SRCS
     imgproc/math_util_test.cc
 )
 
+include(CheckCXXSourceCompiles)
+set(CMAKE_REQUIRED_INCLUDES "${CUDAToolkit_INCLUDE_DIRS}")
+set(CMAKE_REQUIRED_LIBRARIES "CUDA::nvjpeg")
+check_cxx_source_compiles(
+  "#include <nvjpeg.h>
+  int main(){
+    return NVJPEG_BACKEND_LOSSLESS_JPEG;
+  }"
+  NVJPEG_LOSSLESS_SUPPORTED)
+
 if (BUILD_NVJPEG_EXT)
     list(APPEND SRCS extensions/nvjpeg_ext_encoder_test.cpp)
     list(APPEND SRCS extensions/nvjpeg_ext_decoder_test.cpp)
+    if(NVJPEG_LOSSLESS_SUPPORTED)
+        list(APPEND SRCS extensions/nvjpeg_ext_lossless_decoder_test.cpp)
+    endif()
 endif()
 
 
