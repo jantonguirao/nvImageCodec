@@ -119,7 +119,6 @@ TEST_P(NvJpegExtLosslessDecoderTestSingleImage, LosslessJpegValidFormatAndParame
     size_t status_size;
     ASSERT_EQ(NVIMGCODEC_STATUS_SUCCESS, nvimgcodecFutureGetProcessingStatus(future_, &status, &status_size));
     ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, status);
-    ASSERT_EQ(NVIMGCODEC_PROCESSING_STATUS_SUCCESS, 1);
 }
 
 static const char* css_lossless_filenames[] = {"/jpeg/lossless/cat-1245673_640_grayscale_16bit.jpg",
