@@ -24,14 +24,15 @@ export CUDA_VERSION=$(echo $(ls /usr/local/cuda/lib64/libcudart.so*)  | sed 's/.
 export CONDA_OVERRIDE_CUDA=${CUDA_VERSION}
 
 CONDA_BUILD_OPTIONS="--python=${PYVER} --exclusive-config-file config/conda_build_config.yaml"
-CONDA_PREFIX=${CONDA_PREFIX:-/root/miniconda3}
+CONDA_PREFIX=${CONDA_PREFIX:-$(dirname $CONDA_EXE)/..}
 
 # Adding conda-forge channel for dependencies
 conda config --add channels conda-forge
+conda config --add channels nvidia
 conda config --add channels local
 
 conda build ${CONDA_BUILD_OPTIONS} recipe
 
 # Copying the artifacts from conda prefix
 mkdir -p ${ROOT_DIR}/artifacts
-cp ${CONDA_PREFIX}/conda-bld/*/nvidia-dali*.tar.bz2 ${ROOT_DIR}/artifacts
+cp ${CONDA_PREFIX}/conda-bld/*/nvidia-nvimagecodec*.tar.bz2 ${ROOT_DIR}/artifacts

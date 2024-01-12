@@ -36,6 +36,7 @@ export PATH=/usr/local/cuda/bin:${PATH}
 # Building third party dependencies
 cd $SRC_DIR
 export INSTALL_PREFIX=$BUILD_PREFIX
+export CMAKE_PREFIX_PATH=$BUILD_PREFIX
 bash -ex ./external/build_deps.sh
 
 # Create build directory for cmake and enter it
@@ -43,8 +44,6 @@ mkdir $SRC_DIR/build
 cd $SRC_DIR/build
 # Build
 cmake -DCUDA_TARGET_ARCHS=${CUDA_TARGET_ARCHS}            \
-      -DCMAKE_PREFIX_PATH="$PREFIX"                       \
-      -DCMAKE_INSTALL_PREFIX=$PREFIX                      \
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE:-Release}     \
       -DTIMESTAMP=${TIMESTAMP}                            \
       -DGIT_SHA=${GIT_SHA}                                \
