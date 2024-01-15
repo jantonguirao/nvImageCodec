@@ -12,6 +12,7 @@ export CONDA_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && 
 export ROOT_DIR="${CONDA_DIR}/.."
 export VERSION=$(grep -Po 'set\(NVIMGCODEC_VERSION "\K[^"]*' ${ROOT_DIR}/CMakeLists.txt)
 export BUILD_FLAVOR=${BUILD_FLAVOR:-""}  # nightly, weekly
+export BUILD_ID=${BUILD_ID:-$EPOCHSECONDS}
 export GIT_SHA=$(git rev-parse HEAD)
 export TIMESTAMP=$(date +%Y%m%d)
 export VERSION_SUFFIX=$(if [ "${BUILD_FLAVOR}" != "" ]; then \

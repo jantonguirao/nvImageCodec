@@ -50,8 +50,17 @@ cmake -DCUDA_TARGET_ARCHS=${CUDA_TARGET_ARCHS}            \
       ..
 make -j"$(nproc --all)"
 
+# set RPATH of binaries to $ORIGIN, $ORIGIN$UPDIRS
+PKGNAME_PATH=$PWD/python/nvidia/nvimgcodec
+find $PKGNAME_PATH -type f -name "*.so*" -o -name "*.bin" | while read FILE; do
+    UPDIRS=$(dirname $(echo "$FILE" | sed "s|$PKGNAME_PATH||") | sed 's/[^\/][^\/]*/../g')
+    echo "Setting rpath of $FILE to '\$ORIGIN:\$ORIGIN$UPDIRS'"
+    patchelf --set-rpath "\$ORIGIN:\$ORIGIN$UPDIRS" $FILE
+    patchelf --print-rpath $FILE
+done
+
 # pip install
-$PYTHON -m pip install $SRC_DIR/build/python
+$PYTHON -m pip install --no-deps --ignore-installed -v $SRC_DIR/build/python
 
 # Build tensorflow plugin
 export LD_LIBRARY_PATH="$PREFIX/lib:$LD_LIBRARY_PATH"

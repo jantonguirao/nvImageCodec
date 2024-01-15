@@ -1,4 +1,3 @@
-# (C) Copyright IBM Corp. 2019. All Rights Reserved.
 # Copyright (c) 2024, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,7 +17,7 @@ package:
   version: {{ environ.get('BUILD_VERSION', '') }}
 
 source:
-  # Beware: Only commited files are used
+  # Beware: Only committed files are used
   - git_url: ../..
 
 build:
@@ -47,3 +46,10 @@ requirements:
   run:
     - python
     - future
+about:
+  home: https://github.com/NVIDIA/DALI  # TODO(janton): write nvImageCodec repo
+  license: Apache-2.0 license
+  license_family: APACHE
+  license_file:
+    - ../../LICENSE.txt
+    - ../../Acknowledgements.txt
