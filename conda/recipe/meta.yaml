@@ -47,7 +47,7 @@ requirements:
     - python
     - future
 about:
-  home: https://github.com/NVIDIA/DALI  # TODO(janton): write nvImageCodec repo
+  home: https://github.com/NVIDIA/nvImageCodec
   license: Apache-2.0 license
   license_family: APACHE
   license_file:

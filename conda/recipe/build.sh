@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -ex
 #
 # (C) Copyright NVIDIA CORPORATION. 2024. All rights reserved.
 #
@@ -50,19 +50,10 @@ cmake -DCUDA_TARGET_ARCHS=${CUDA_TARGET_ARCHS}            \
       ..
 make -j"$(nproc --all)"
 
-# set RPATH of binaries to $ORIGIN, $ORIGIN$UPDIRS
-PKGNAME_PATH=$PWD/python/nvidia/nvimgcodec
-find $PKGNAME_PATH -type f -name "*.so*" -o -name "*.bin" | while read FILE; do
-    UPDIRS=$(dirname $(echo "$FILE" | sed "s|$PKGNAME_PATH||") | sed 's/[^\/][^\/]*/../g')
-    echo "Setting rpath of $FILE to '\$ORIGIN:\$ORIGIN$UPDIRS'"
-    patchelf --set-rpath "\$ORIGIN:\$ORIGIN$UPDIRS" $FILE
-    patchelf --print-rpath $FILE
-done
-
 # pip install
 $PYTHON -m pip install --no-deps --ignore-installed -v $SRC_DIR/build/python
 
 # Build tensorflow plugin
-export LD_LIBRARY_PATH="$PREFIX/lib:$LD_LIBRARY_PATH"
+#export LD_LIBRARY_PATH="$PREFIX/lib:$LD_LIBRARY_PATH"
 NVIMGCODEC_PATH=$($PYTHON -c 'import nvidia.nvimgcodec as nvimgcodec; import os; print(os.path.dirname(nvimgcodec.__file__))')
 echo "NVIMGCODEC_PATH is ${NVIMGCODEC_PATH}"
