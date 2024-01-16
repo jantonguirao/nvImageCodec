@@ -1,12 +1,13 @@
 #!/bin/bash -ex
 #
-# (C) Copyright NVIDIA CORPORATION. 2024. All rights reserved.
+# SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -53,7 +54,6 @@ make -j"$(nproc --all)"
 # pip install
 $PYTHON -m pip install --no-deps --ignore-installed -v $SRC_DIR/build/python
 
-# Build tensorflow plugin
-#export LD_LIBRARY_PATH="$PREFIX/lib:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="$PREFIX/lib:$LD_LIBRARY_PATH"
 NVIMGCODEC_PATH=$($PYTHON -c 'import nvidia.nvimgcodec as nvimgcodec; import os; print(os.path.dirname(nvimgcodec.__file__))')
 echo "NVIMGCODEC_PATH is ${NVIMGCODEC_PATH}"
