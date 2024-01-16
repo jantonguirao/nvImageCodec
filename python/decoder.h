@@ -29,6 +29,7 @@
 #include "image.h"
 #include "decode_params.h"
 #include "backend.h"
+#include "code_stream.h"
 
 namespace nvimgcodec {
 
@@ -49,10 +50,12 @@ class Decoder
     py::object decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream);
     py::object decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream);
     py::object decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream);
+    py::object decode(std::shared_ptr<CodeStream> data, std::optional<DecodeParams> params, intptr_t cuda_stream);
 
     std::vector<py::object> decode(const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream);
     std::vector<py::object> decode(const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
     std::vector<py::object> decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
+    std::vector<py::object> decode(const std::vector<std::shared_ptr<CodeStream>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
 
     py::object enter();
     void exit(const std::optional<pybind11::type>& exc_type, const std::optional<pybind11::object>& exc_value,
