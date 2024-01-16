@@ -313,6 +313,8 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
     module.path_ = modulePath;
     try {
         module.lib_handle_ = library_loader_->loadLibrary(modulePath);
+        if (!module.lib_handle_)
+            throw std::runtime_error(dlerror());
     } catch (const std::runtime_error& e) {
         NVIMGCODEC_LOG_ERROR(logger_, "Could not load extension module library. Error: " << e.what());
         return;
