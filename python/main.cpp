@@ -30,6 +30,7 @@
 #include "code_stream.h"
 #include "color_spec.h"
 #include "decode_params.h"
+#include "decode_source.h"
 #include "decoder.h"
 #include "encode_params.h"
 #include "encoder.h"
@@ -81,6 +82,7 @@ PYBIND11_MODULE(nvimgcodec_impl, m)
     EncodeParams::exportToPython(m);
     CodeStream::exportToPython(m, module.instance_);
     Region::exportToPython(m);
+    DecodeSource::exportToPython(m);
     Image::exportToPython(m);
     Decoder::exportToPython(m, module.instance_, module.logger_.get());
     Encoder::exportToPython(m, module.instance_, module.logger_.get());

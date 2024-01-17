@@ -18,42 +18,31 @@
 #pragma once
 
 #include <nvimgcodec.h>
-
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <memory>
+#include "code_stream.h"
+#include "region.h"
 
 namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
 
-class Region
+class DecodeSource
 {
   public:
-    operator nvimgcodecRegion_t() const { return region; }
+    DecodeSource(const CodeStream* code_stream,
+                 std::optional<Region> region = {});
+    ~DecodeSource();
 
+    const CodeStream* code_stream() const;
+    std::optional<Region> region() const;
     static void exportToPython(py::module& m);
 
-    int ndim() const {
-      return region.ndim;
-    }
-
-    py::tuple start() const {
-      auto ret = py::tuple(ndim());
-      for (int i = 0; i < ndim(); i++) {
-        ret[i] = region.start[i];
-      }
-      return ret;
-    }
-
-    py::tuple end() const {
-      auto ret = py::tuple(ndim());
-      for (int i = 0; i < ndim(); i++) {
-        ret[i] = region.end[i];
-      }
-      return ret;
-    }
-
-    nvimgcodecRegion_t region = {NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 0};
+  private:
+    const CodeStream* code_stream_;
+    std::optional<Region> region_;
 };
 
 } // namespace nvimgcodec

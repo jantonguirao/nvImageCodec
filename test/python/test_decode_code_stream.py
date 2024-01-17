@@ -31,13 +31,13 @@ filenames = [
 def test_decode_single_file():
     decoder = nvimgcodec.Decoder()
     fpath = os.path.join(img_dir_path, filenames[0])
-    code_stream0 = nvimgcodec.CodeStream.CreateFromFile(fpath)
+    code_stream0 = nvimgcodec.CodeStream.FromFile(fpath)
     img0 = decoder.decode(code_stream0).cpu()
 
-    code_stream1 = nvimgcodec.CodeStream.CreateFromHostMem(open(fpath, 'rb').read())
+    code_stream1 = nvimgcodec.CodeStream.FromHostMem(open(fpath, 'rb').read())
     img1 = decoder.decode(code_stream1).cpu()
 
-    code_stream2 = nvimgcodec.CodeStream.CreateFromHostMem(np.fromfile(fpath, dtype=np.uint8))
+    code_stream2 = nvimgcodec.CodeStream.FromHostMem(np.fromfile(fpath, dtype=np.uint8))
     img2 = decoder.decode(code_stream2).cpu()
 
     np.testing.assert_allclose(img0, img1)
@@ -51,17 +51,30 @@ def test_decode_single_file():
     np.testing.assert_allclose(img1, img3)
     np.testing.assert_allclose(img2, img3)
 
+def test_decode_roi():
+    decoder = nvimgcodec.Decoder()
+    fpath = os.path.join(img_dir_path, filenames[0])
+    code_stream = nvimgcodec.CodeStream.FromFile(fpath)
+    roi = nvimgcodec.Region(10, 20, code_stream.height-10, code_stream.width-20)
+
+    dec_src = nvimgcodec.DecodeSource(code_stream, roi)
+    
+    img = np.array(decoder.decode(code_stream).cpu())
+    img_roi = np.array(decoder.decode(dec_src).cpu())
+
+    np.testing.assert_allclose(img_roi, img[roi.start[0]:roi.end[0], roi.start[1]:roi.end[1]])
+
 def test_decode_batch():
     decoder = nvimgcodec.Decoder()
     fpaths = [os.path.join(img_dir_path, f) for f in filenames]
 
-    code_streams0 = [nvimgcodec.CodeStream.CreateFromFile(fpath) for fpath in fpaths]
+    code_streams0 = [nvimgcodec.CodeStream.FromFile(fpath) for fpath in fpaths]
     imgs0 =[img.cpu() for img in decoder.decode(code_streams0)]
     
-    code_streams1 = [nvimgcodec.CodeStream.CreateFromHostMem(open(fpath, 'rb').read()) for fpath in fpaths]
+    code_streams1 = [nvimgcodec.CodeStream.FromHostMem(open(fpath, 'rb').read()) for fpath in fpaths]
     imgs1 =[img.cpu() for img in decoder.decode(code_streams1)]
     
-    code_streams2 = [nvimgcodec.CodeStream.CreateFromHostMem(np.fromfile(fpath, dtype=np.uint8)) for fpath in fpaths]
+    code_streams2 = [nvimgcodec.CodeStream.FromHostMem(np.fromfile(fpath, dtype=np.uint8)) for fpath in fpaths]
     imgs2 =[img.cpu() for img in decoder.decode(code_streams2)]
 
     for img0, img1 in zip(imgs0, imgs1):
@@ -80,3 +93,22 @@ def test_decode_batch():
         np.testing.assert_allclose(img1, img3)
     for img2, img3 in zip(imgs2, imgs3):
         np.testing.assert_allclose(img2, img3)
+
+def test_decode_batch_roi():
+    decoder = nvimgcodec.Decoder()
+    fpaths = [os.path.join(img_dir_path, f) for f in filenames]
+    code_streams = [nvimgcodec.CodeStream.FromFile(fpath) for fpath in fpaths]
+    rois = [
+        nvimgcodec.Region(10, 20, cs.height-10, cs.width-20)
+        for cs in code_streams
+    ]
+    dec_srcs = [
+        nvimgcodec.DecodeSource(cs, roi)
+        for cs, roi in zip(code_streams, rois)
+    ]
+    
+    imgs = [np.array(img.cpu()) for img in decoder.decode(code_streams)]
+    imgs_roi = [np.array(img.cpu()) for img in decoder.decode(dec_srcs)]
+
+    for img, img_roi, roi in zip(imgs, imgs_roi, rois):
+        np.testing.assert_allclose(img_roi, img[roi.start[0]:roi.end[0], roi.start[1]:roi.end[1]])
