@@ -86,77 +86,93 @@ Decoder::~Decoder()
 {
 }
 
-py::object Decoder::decode(std::shared_ptr<CodeStream> data, std::optional<DecodeParams> params, intptr_t cuda_stream)
+py::object Decoder::decode(const CodeStream* data, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<std::shared_ptr<CodeStream>> code_streams;
-    code_streams.push_back(data);
+    std::vector<nvimgcodecCodeStream_t> code_streams;
+    code_streams.push_back(data->handle());
     std::vector<py::object> images = decode(code_streams, params, cuda_stream);
     return images.size() == 1 ? images[0] : py::none();
 }
 
 py::object Decoder::decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<std::shared_ptr<CodeStream>> code_streams;
-    code_streams.reserve(1);
-    code_streams.push_back(CodeStream::CreateFromFile(instance_, file_name.c_str()));
-    std::vector<py::object> images = decode(code_streams, params, cuda_stream);
-    return images.size() == 1 ? images[0] : py::none();
+    std::unique_ptr<CodeStream> code_stream(
+        CodeStream::CreateFromFile(instance_, file_name.c_str())
+    );
+    return decode(code_stream.get(), params, cuda_stream);
 }
 
 py::object Decoder::decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<std::shared_ptr<CodeStream>> code_streams;
-    code_streams.reserve(1);
-    code_streams.push_back(CodeStream::CreateFromHostMem(instance_, data));
-    std::vector<py::object> images = decode(code_streams, params, cuda_stream);
-    return images.size() == 1 ? images[0] : py::none();
+    std::unique_ptr<CodeStream> code_stream(
+        CodeStream::CreateFromHostMem(instance_, data)
+    );
+    return decode(code_stream.get(), params, cuda_stream);
 }
 
 py::object Decoder::decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<std::shared_ptr<CodeStream>> code_streams;
-    code_streams.reserve(1);
-    code_streams.push_back(CodeStream::CreateFromHostMem(instance_, data));
-    std::vector<py::object> images = decode(code_streams, params, cuda_stream);
-    return images.size() == 1 ? images[0] : py::none();
+    std::unique_ptr<CodeStream> code_stream(
+        CodeStream::CreateFromHostMem(instance_, data)
+    );
+    return decode(code_stream.get(), params, cuda_stream);
 }
 
 std::vector<py::object> Decoder::decode(
     const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<std::shared_ptr<CodeStream>> code_streams;
+    std::vector<std::unique_ptr<CodeStream>> code_streams;
     code_streams.reserve(file_names.size());
-    for (auto& fname : file_names)
-        code_streams.push_back(CodeStream::CreateFromFile(instance_, fname.c_str()));
+    for (auto& fname : file_names) {
+        code_streams.emplace_back(CodeStream::CreateFromFile(instance_, fname.c_str()));
+    }
     return decode(code_streams, params, cuda_stream);
 }
 
 std::vector<py::object> Decoder::decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<std::shared_ptr<CodeStream>> code_streams;
+    std::vector<std::unique_ptr<CodeStream>> code_streams;
     code_streams.reserve(data_list.size());
-    for (auto& data : data_list)
-        code_streams.push_back(CodeStream::CreateFromHostMem(instance_, data));
+    for (auto& data : data_list) {
+        code_streams.emplace_back(CodeStream::CreateFromHostMem(instance_, data));
+    }
     return decode(code_streams, params, cuda_stream);
 }
 
 std::vector<py::object> Decoder::decode(
     const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::vector<std::shared_ptr<CodeStream>> code_streams;
+    std::vector<std::unique_ptr<CodeStream>> code_streams;
     code_streams.reserve(data_list.size());
-    for (auto& data : data_list)
-        code_streams.push_back(CodeStream::CreateFromHostMem(instance_, data));
+    for (auto& data : data_list) {
+        code_streams.emplace_back(CodeStream::CreateFromHostMem(instance_, data));
+    }
     return decode(code_streams, params, cuda_stream);
 }
 
 std::vector<py::object> Decoder::decode(
-    const std::vector<std::shared_ptr<CodeStream>>& code_streams_arg, std::optional<DecodeParams> params_opt, intptr_t cuda_stream)
+    const std::vector<std::unique_ptr<CodeStream>>& code_streams_arg, std::optional<DecodeParams> params_opt, intptr_t cuda_stream)
 {
     std::vector<nvimgcodecCodeStream_t> code_streams;
     code_streams.reserve(code_streams_arg.size());
-    for (auto& cs: code_streams_arg)
+    for (auto& cs : code_streams_arg)
         code_streams.push_back(cs->handle());
+    return decode(code_streams, params_opt, cuda_stream);
+}
+
+std::vector<py::object> Decoder::decode(
+    const std::vector<const CodeStream*>& code_streams_arg, std::optional<DecodeParams> params_opt, intptr_t cuda_stream)
+{
+    std::vector<nvimgcodecCodeStream_t> code_streams;
+    code_streams.reserve(code_streams_arg.size());
+    for (auto& cs : code_streams_arg)
+        code_streams.push_back(cs->handle());
+    return decode(code_streams, params_opt, cuda_stream);
+}
+
+std::vector<py::object> Decoder::decode(
+    const std::vector<nvimgcodecCodeStream_t>& code_streams, std::optional<DecodeParams> params_opt, intptr_t cuda_stream)
+{
     std::vector<nvimgcodecImage_t> images(code_streams.size());
     std::vector<py::object> py_images;
     py_images.reserve(code_streams.size());
@@ -305,7 +321,7 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogg
             )pbdoc",
             "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
-        .def("decode", py::overload_cast<std::shared_ptr<CodeStream>, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
+        .def("decode", py::overload_cast<const CodeStream*, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
             R"pbdoc(
             Executes decoding of data.
 
@@ -375,7 +391,7 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogg
         )pbdoc",
             "file_name"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
 
-        .def("decode", py::overload_cast<const std::vector<std::shared_ptr<CodeStream>>&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
+        .def("decode", py::overload_cast<const std::vector<const CodeStream*>&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
             R"pbdoc(
 
             Executes NumPy array batch decoding.

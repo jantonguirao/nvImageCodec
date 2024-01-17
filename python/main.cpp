@@ -40,6 +40,7 @@
 #include "jpeg2k_prog_order.h"
 #include "jpeg_encode_params.h"
 #include "module.h"
+#include "region.h"
 
 #include <iostream>
 
@@ -78,9 +79,10 @@ PYBIND11_MODULE(nvimgcodec_impl, m)
     JpegEncodeParams::exportToPython(m);
     Jpeg2kEncodeParams::exportToPython(m);
     EncodeParams::exportToPython(m);
+    CodeStream::exportToPython(m, module.instance_);
+    Region::exportToPython(m);
     Image::exportToPython(m);
     Decoder::exportToPython(m, module.instance_, module.logger_.get());
     Encoder::exportToPython(m, module.instance_, module.logger_.get());
     Module::exportToPython(m, module.instance_);
-    CodeStream::exportToPython(m, module.instance_);
 }

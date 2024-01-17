@@ -31,13 +31,23 @@ using namespace py::literals;
 class CodeStream
 {
   public:
-    static std::shared_ptr<CodeStream> CreateFromFile(nvimgcodecInstance_t instance, const char* file_name);
-    static std::shared_ptr<CodeStream> CreateFromHostMem(nvimgcodecInstance_t instance, const unsigned char* data, size_t length);
-    static std::shared_ptr<CodeStream> CreateFromHostMem(nvimgcodecInstance_t instance, py::bytes);
-    static std::shared_ptr<CodeStream> CreateFromHostMem(nvimgcodecInstance_t instance, py::array_t<uint8_t>);
+    static CodeStream* CreateFromFile(nvimgcodecInstance_t instance, const char* file_name);
+    static CodeStream* CreateFromHostMem(nvimgcodecInstance_t instance, const unsigned char* data, size_t length);
+    static CodeStream* CreateFromHostMem(nvimgcodecInstance_t instance, py::bytes);
+    static CodeStream* CreateFromHostMem(nvimgcodecInstance_t instance, py::array_t<uint8_t>);
     static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
-    nvimgcodecCodeStream_t handle();
+    nvimgcodecCodeStream_t handle() const;
+
+    // TODO(janton): Add image info getters
+
     CodeStream();
+
+    CodeStream(CodeStream&&) = default;
+    CodeStream& operator=(CodeStream&&) = default;
+
+    CodeStream(const CodeStream&) = delete;
+    CodeStream& operator=(CodeStream const&) = delete;
+
     ~CodeStream();
 
   private:
