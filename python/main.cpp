@@ -82,7 +82,7 @@ PYBIND11_MODULE(nvimgcodec_impl, m)
     EncodeParams::exportToPython(m);
     CodeStream::exportToPython(m, module.instance_);
     Region::exportToPython(m);
-    DecodeSource::exportToPython(m);
+    DecodeSource::exportToPython(m, module.instance_);
     Image::exportToPython(m);
     Decoder::exportToPython(m, module.instance_, module.logger_.get());
     Encoder::exportToPython(m, module.instance_, module.logger_.get());

@@ -21,28 +21,28 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl/filesystem.h>
 #include <memory>
+#include <sstream>
 
 namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
-
 class CodeStream
 {
   public:
-    static CodeStream* FromFile(nvimgcodecInstance_t instance, const char* file_name);
-    static CodeStream* FromHostMem(nvimgcodecInstance_t instance, const unsigned char* data, size_t length);
-    static CodeStream* FromHostMem(nvimgcodecInstance_t instance, py::bytes);
-    static CodeStream* FromHostMem(nvimgcodecInstance_t instance, py::array_t<uint8_t>);
+    CodeStream(nvimgcodecInstance_t instance, const std::filesystem::path& filename);
+    CodeStream(nvimgcodecInstance_t instance, const unsigned char* data, size_t length);
+    CodeStream(nvimgcodecInstance_t instance, py::bytes);
+    CodeStream(nvimgcodecInstance_t instance, py::array_t<uint8_t>);
     static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
     nvimgcodecCodeStream_t handle() const;
 
     int width() const;
     int height() const;
     int channels() const;
-    py::object shape() const;
-    py::object dtype() const;
+    py::dtype dtype() const;
     int precision() const;
     std::string codec_name() const;
 
@@ -67,5 +67,7 @@ class CodeStream
     py::bytes data_ref_bytes_;
     py::array_t<uint8_t> data_ref_arr_;
 };
+
+std::ostream& operator<<(std::ostream& os, const CodeStream& cs);
 
 } // namespace nvimgcodec

@@ -86,34 +86,24 @@ Decoder::~Decoder()
 {
 }
 
-py::object Decoder::decode(const std::string& file_name, std::optional<DecodeParams> params, intptr_t cuda_stream)
+py::object Decoder::read(const std::filesystem::path& filepath, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::unique_ptr<CodeStream> code_stream(
-        CodeStream::FromFile(instance_, file_name.c_str())
-    );
-    return decode(code_stream.get(), params, cuda_stream);
+    DecodeSource dec_src(std::make_unique<CodeStream>(instance_, filepath));
+    return decode(&dec_src, params, cuda_stream);
 }
 
-py::object Decoder::decode(py::bytes data, std::optional<DecodeParams> params, intptr_t cuda_stream)
+std::vector<py::object> Decoder::read(
+    const std::vector<std::filesystem::path>& filepaths, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
-    std::unique_ptr<CodeStream> code_stream(
-        CodeStream::FromHostMem(instance_, data)
-    );
-    return decode(code_stream.get(), params, cuda_stream);
-}
-
-py::object Decoder::decode(py::array_t<uint8_t> data, std::optional<DecodeParams> params, intptr_t cuda_stream)
-{
-    std::unique_ptr<CodeStream> code_stream(
-        CodeStream::FromHostMem(instance_, data)
-    );
-    return decode(code_stream.get(), params, cuda_stream);
-}
-
-py::object Decoder::decode(const CodeStream* data, std::optional<DecodeParams> params, intptr_t cuda_stream)
-{
-    std::vector<py::object> images = decode(std::vector<nvimgcodecCodeStream_t>{data->handle()}, no_regions(1), params, cuda_stream);
-    return images.size() == 1 ? images[0] : py::none();
+    std::vector<DecodeSource> dec_srcs;
+    std::vector<const DecodeSource*> dec_src_ptrs;
+    dec_srcs.reserve(filepaths.size());
+    dec_src_ptrs.reserve(filepaths.size());
+    for (const auto& fpath : filepaths) {
+        dec_srcs.push_back(DecodeSource(std::make_unique<CodeStream>(instance_, fpath)));
+        dec_src_ptrs.push_back(&dec_srcs.back());
+    }
+    return decode(dec_src_ptrs, params, cuda_stream);
 }
 
 py::object Decoder::decode(const DecodeSource* data, std::optional<DecodeParams> params, intptr_t cuda_stream)
@@ -121,62 +111,6 @@ py::object Decoder::decode(const DecodeSource* data, std::optional<DecodeParams>
     std::vector<py::object> images =
         decode(std::vector<nvimgcodecCodeStream_t>{data->code_stream()->handle()}, std::vector<std::optional<Region>>{data->region()}, params, cuda_stream);
     return images.size() == 1 ? images[0] : py::none();
-}
-
-std::vector<py::object> Decoder::decode(
-    const std::vector<std::string>& file_names, std::optional<DecodeParams> params, intptr_t cuda_stream)
-{
-    std::vector<std::unique_ptr<CodeStream>> code_streams;
-    code_streams.reserve(file_names.size());
-    for (auto& fname : file_names) {
-        code_streams.emplace_back(CodeStream::FromFile(instance_, fname.c_str()));
-    }
-    return decode(code_streams, no_regions(file_names.size()), params, cuda_stream);
-}
-
-std::vector<py::object> Decoder::decode(const std::vector<py::bytes>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream)
-{
-    std::vector<std::unique_ptr<CodeStream>> code_streams;
-    code_streams.reserve(data_list.size());
-    for (auto& data : data_list) {
-        code_streams.emplace_back(CodeStream::FromHostMem(instance_, data));
-    }
-    return decode(code_streams, no_regions(data_list.size()), params, cuda_stream);
-}
-
-std::vector<py::object> Decoder::decode(
-    const std::vector<py::array_t<uint8_t>>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream)
-{
-    std::vector<std::unique_ptr<CodeStream>> code_streams;
-    code_streams.reserve(data_list.size());
-    for (auto& data : data_list) {
-        code_streams.emplace_back(CodeStream::FromHostMem(instance_, data));
-    }
-    return decode(code_streams, no_regions(data_list.size()), params, cuda_stream);
-}
-
-std::vector<py::object> Decoder::decode(
-    const std::vector<std::unique_ptr<CodeStream>>& code_streams_arg, 
-    std::vector<std::optional<Region>> rois_opt,
-    std::optional<DecodeParams> params_opt, intptr_t cuda_stream)
-{
-    std::vector<nvimgcodecCodeStream_t> code_streams;
-    code_streams.reserve(code_streams_arg.size());
-    for (auto& cs : code_streams_arg)
-        code_streams.push_back(cs->handle());
-    return decode(code_streams, rois_opt, params_opt, cuda_stream);
-}
-
-std::vector<py::object> Decoder::decode(
-    const std::vector<const CodeStream*>& code_streams_arg, 
-    std::optional<DecodeParams> params_opt,
-    intptr_t cuda_stream)
-{
-    std::vector<nvimgcodecCodeStream_t> code_streams;
-    code_streams.reserve(code_streams_arg.size());
-    for (auto& cs : code_streams_arg)
-        code_streams.push_back(cs->handle());
-    return decode(code_streams, no_regions(code_streams_arg.size()), params_opt, cuda_stream);
 }
 
 std::vector<py::object> Decoder::decode(
@@ -364,101 +298,28 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogg
             )pbdoc",
             "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
-        .def("decode", py::overload_cast<const CodeStream*, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
-            R"pbdoc(
-            Executes decoding of data from a code stream handle.
 
-            Args:
-                data: code stream object.
-
-                params: Decode parameters.
-
-                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-
-            Returns:
-                nvimgcodec.Image or None if the image cannot be decoded because of any reason.
-
-            )pbdoc",
-            "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
-        .def("decode", py::overload_cast<const DecodeSource*, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
-            R"pbdoc(
-            Executes decoding of data from a DecodeSource handle (code stream handle and an optional region of interest).
-
-            Args:
-                data: decode source object.
-
-                params: Decode parameters.
-
-                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-
-            Returns:
-                nvimgcodec.Image or None if the image cannot be decoded because of any reason.
-
-            )pbdoc",
-            "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
-
-        .def("decode", py::overload_cast<py::bytes, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
-            R"pbdoc(
-            Executes decoding from a bytes object containing the encoded stream.
-
-            Note: Using v objects explicitly is preferred.
-
-            Args:
-                data: Buffer with bytes to decode.
-
-                params: Decode parameters.
-
-                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-
-            Returns:
-                nvimgcodec.Image or None if the image cannot be decoded because of any reason.
-
-            )pbdoc",
-            "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
-
-        .def("decode", py::overload_cast<py::array_t<uint8_t>, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
-            R"pbdoc(
-            Executes decoding from a NumPy array containing the encoded stream.
-
-            Note: Using `DecodeSource`/`CodeStream` objects explicitly is preferred.
-
-            Args:
-                data: Numpy array with bytes to decode.
-           
-                params: Decode parameters.
-           
-                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-           
-            Returns:
-                nvimgcodec.Image or None if the image cannot be decoded because of any reason.
-
-            )pbdoc",
-            "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
-
-        .def("read", py::overload_cast<const std::string&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode), R"pbdoc(
+        .def("read", py::overload_cast<const std::filesystem::path&, std::optional<DecodeParams>, intptr_t>(&Decoder::read), R"pbdoc(
             Executes decoding from a filename.
 
-            Note: Using `DecodeSource`/`CodeStream` objects explicitly is preferred.
-
             Args:
-                file_name: File name to decode.
+                path: File path to decode.
 
                 params: Decode parameters.
-                
+
                 cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-            
+
             Returns:
                 nvimgcodec.Image or None if the image cannot be decoded because of any reason.
         )pbdoc",
-            "file_name"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
+            "path"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
 
-        .def("decode", py::overload_cast<const std::vector<const CodeStream*>&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
+        .def("read", py::overload_cast<const std::vector<std::filesystem::path>&, std::optional<DecodeParams>, intptr_t>(&Decoder::read),
             R"pbdoc(
-
-            Executes decoding from a batch of code stream handles.
+            Executes decoding from a batch of file paths.
 
             Args:
-                data: List of CodeStream objects
+                path: List of file paths to decode.
 
                 params: Decode parameters.
 
@@ -466,8 +327,27 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogg
 
             Returns:
                 List of decoded nvimgcodec.Image's
+
             )pbdoc",
-            "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
+            "paths"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
+
+
+        .def("decode", py::overload_cast<const DecodeSource*, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
+            R"pbdoc(
+            Executes decoding of data from a DecodeSource handle (code stream handle and an optional region of interest).
+
+            Args:
+                src: decode source object.
+
+                params: Decode parameters.
+
+                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
+
+            Returns:
+                nvimgcodec.Image or None if the image cannot be decoded because of any reason.
+
+            )pbdoc",
+            "src"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
 
         .def("decode", py::overload_cast<const std::vector<const DecodeSource*>&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
             R"pbdoc(
@@ -475,7 +355,7 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogg
             Executes decoding from a batch of DecodeSource handles (code stream handle and an optional region of interest).
 
             Args:
-                data: List of DecodeSource objects
+                srcs: List of DecodeSource objects
 
                 params: Decode parameters.
 
@@ -484,61 +364,8 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogg
             Returns:
                 List of decoded nvimgcodec.Image's
             )pbdoc",
-            "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
+            "srcs"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
 
-        .def("decode", py::overload_cast<const std::vector<py::array_t<uint8_t>>&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
-            R"pbdoc(
-
-            Executes decoding from a batch of numpy arrays containing the encoded streams.
-
-            Note: Using `DecodeSource`/`CodeStream` objects explicitly is preferred.
-
-            Args:
-                data: List of NumPy arrays with bytes to decode.
-                
-                params: Decode parameters.
-                
-                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-
-            Returns:
-                List of decoded nvimgcodec.Image's
-            )pbdoc",
-            "data"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
-
-        .def("decode", py::overload_cast<const std::vector<py::bytes>&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
-            R"pbdoc(
-            Executes decoding from a batch of bytes objects containing the encoded streams.
-
-            Note: Using `CodeStream` objects explicitly is preferred.
-
-            Args:
-                file_names: List of buffers with code streams to decode.
-
-                params: Decode parameters.
-                
-                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-            
-            Returns:
-                List of decoded nvimgcodec.Image's
-
-            )pbdoc",
-            "file_names"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
-        .def("read", py::overload_cast<const std::vector<std::string>&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
-            R"pbdoc(
-            Executes decoding from a batch of filenames.
-
-            Args:
-                data_list: List of file names to decode.
-
-                params: Decode parameters.
-
-                cuda_stream: An optional cudaStream_t represented as a Python integer, upon which synchronization must take place.
-
-            Returns:
-                List of decoded nvimgcodec.Image's
-
-            )pbdoc",
-            "data_list"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
         .def("__enter__", &Decoder::enter, "Enter the runtime context related to this decoder.")
         .def("__exit__", &Decoder::exit, "Exit the runtime context related to this decoder and releases allocated resources.",
             "exc_type"_a = py::none(), "exc_value"_a = py::none(), "traceback"_a = py::none());

@@ -21,6 +21,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <memory>
+#include <sstream>
 #include "code_stream.h"
 #include "region.h"
 
@@ -32,17 +33,30 @@ using namespace py::literals;
 class DecodeSource
 {
   public:
-    DecodeSource(const CodeStream* code_stream,
+    DecodeSource(std::unique_ptr<CodeStream> code_stream,
+                 std::optional<Region> region = {});
+    DecodeSource(const CodeStream* code_stream_ptr,
                  std::optional<Region> region = {});
     ~DecodeSource();
 
+    DecodeSource(DecodeSource&&) = default;
+    DecodeSource& operator=(DecodeSource&&) = default;
+
+    DecodeSource(const DecodeSource&) = delete;
+    DecodeSource& operator=(DecodeSource const&) = delete;
+
     const CodeStream* code_stream() const;
     std::optional<Region> region() const;
-    static void exportToPython(py::module& m);
+
+    static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
 
   private:
-    const CodeStream* code_stream_;
+    std::unique_ptr<CodeStream> code_stream_;  // owned by this instance
+    const CodeStream* code_stream_ptr_ = nullptr;  // externally provided
     std::optional<Region> region_;
 };
+
+
+std::ostream& operator<<(std::ostream& os, const DecodeSource& ds);
 
 } // namespace nvimgcodec

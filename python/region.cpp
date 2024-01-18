@@ -16,9 +16,8 @@
  */
 
 #include "region.h"
-
 #include <iostream>
-
+#include <sstream>
 #include "error_handling.h"
 
 namespace nvimgcodec {
@@ -26,16 +25,15 @@ namespace nvimgcodec {
 template <typename Container>
 Region CreateRegion(Container&& start, Container&& end) {
     Region ret;
-    auto& region = ret.region;
-    int ndim = region.ndim = start.size();
+    int ndim = ret.impl_.ndim = start.size();
     if (start.size() != end.size() && (!start.empty() && !end.empty())) {
         throw std::runtime_error("Dimension mismatch");
     } else if (ndim > NVIMGCODEC_MAX_NUM_DIM) {
         throw std::runtime_error("Too many dimensions: " + std::to_string(ndim));
     }
     for (int i = 0; i < ndim; i++) {
-        region.start[i] = start[i];
-        region.end[i] = end[i];
+        ret.impl_.start[i] = start[i];
+        ret.impl_.end[i] = end[i];
     }
     return ret;
 }
@@ -63,7 +61,32 @@ void Region::exportToPython(py::module& m)
         }), "start"_a, "end"_a)
         .def_property_readonly("ndim", &Region::ndim)
         .def_property_readonly("start", &Region::start)
-        .def_property_readonly("end", &Region::end);
+        .def_property_readonly("end", &Region::end)
+        .def("__repr__", [](const Region* r) {
+            std::stringstream ss;
+            ss << *r;
+            return ss.str();
+        });
+}
+
+std::ostream& operator<<(std::ostream& os, const Region& r)
+{
+    os << "Region("
+       << "start=";
+    auto print_tuple = [](std::ostream& os, const int* data, size_t ndim) {
+        os << "(";
+        for (size_t d = 0; d < ndim; d++) {
+            if (d > 0)
+                os << ", ";
+            os << data[d];
+        }
+        os << ")";
+    };
+    print_tuple(os, r.impl_.start, r.impl_.ndim);
+    os << " end=";
+    print_tuple(os, r.impl_.end, r.impl_.ndim);
+    os << ")";
+    return os;
 }
 
 } // namespace nvimgcodec
