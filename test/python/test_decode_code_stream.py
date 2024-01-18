@@ -31,13 +31,13 @@ filenames = [
 def test_decode_single_file():
     decoder = nvimgcodec.Decoder()
     fpath = os.path.join(img_dir_path, filenames[0])
-    code_stream0 = nvimgcodec.CodeStream.FromFile(fpath)
+    code_stream0 = nvimgcodec.CodeStream.from_file(fpath)
     img0 = decoder.decode(code_stream0).cpu()
 
-    code_stream1 = nvimgcodec.CodeStream.FromHostMem(open(fpath, 'rb').read())
+    code_stream1 = nvimgcodec.CodeStream.from_host_mem(open(fpath, 'rb').read())
     img1 = decoder.decode(code_stream1).cpu()
 
-    code_stream2 = nvimgcodec.CodeStream.FromHostMem(np.fromfile(fpath, dtype=np.uint8))
+    code_stream2 = nvimgcodec.CodeStream.from_host_mem(np.fromfile(fpath, dtype=np.uint8))
     img2 = decoder.decode(code_stream2).cpu()
 
     np.testing.assert_allclose(img0, img1)
@@ -54,7 +54,7 @@ def test_decode_single_file():
 def test_decode_roi():
     decoder = nvimgcodec.Decoder()
     fpath = os.path.join(img_dir_path, filenames[0])
-    code_stream = nvimgcodec.CodeStream.FromFile(fpath)
+    code_stream = nvimgcodec.CodeStream.from_file(fpath)
     roi = nvimgcodec.Region(10, 20, code_stream.height-10, code_stream.width-20)
 
     dec_src = nvimgcodec.DecodeSource(code_stream, roi)
@@ -68,13 +68,13 @@ def test_decode_batch():
     decoder = nvimgcodec.Decoder()
     fpaths = [os.path.join(img_dir_path, f) for f in filenames]
 
-    code_streams0 = [nvimgcodec.CodeStream.FromFile(fpath) for fpath in fpaths]
+    code_streams0 = [nvimgcodec.CodeStream.from_file(fpath) for fpath in fpaths]
     imgs0 =[img.cpu() for img in decoder.decode(code_streams0)]
     
-    code_streams1 = [nvimgcodec.CodeStream.FromHostMem(open(fpath, 'rb').read()) for fpath in fpaths]
+    code_streams1 = [nvimgcodec.CodeStream.from_host_mem(open(fpath, 'rb').read()) for fpath in fpaths]
     imgs1 =[img.cpu() for img in decoder.decode(code_streams1)]
     
-    code_streams2 = [nvimgcodec.CodeStream.FromHostMem(np.fromfile(fpath, dtype=np.uint8)) for fpath in fpaths]
+    code_streams2 = [nvimgcodec.CodeStream.from_host_mem(np.fromfile(fpath, dtype=np.uint8)) for fpath in fpaths]
     imgs2 =[img.cpu() for img in decoder.decode(code_streams2)]
 
     for img0, img1 in zip(imgs0, imgs1):
@@ -97,7 +97,7 @@ def test_decode_batch():
 def test_decode_batch_roi():
     decoder = nvimgcodec.Decoder()
     fpaths = [os.path.join(img_dir_path, f) for f in filenames]
-    code_streams = [nvimgcodec.CodeStream.FromFile(fpath) for fpath in fpaths]
+    code_streams = [nvimgcodec.CodeStream.from_file(fpath) for fpath in fpaths]
     rois = [
         nvimgcodec.Region(10, 20, cs.height-10, cs.width-20)
         for cs in code_streams

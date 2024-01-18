@@ -123,7 +123,7 @@ std::string CodeStream::codec_name() const {
 void CodeStream::exportToPython(py::module& m, nvimgcodecInstance_t instance)
 {
     py::class_<CodeStream>(m, "CodeStream")
-        .def_static("FromFile", [instance](const char* filename) { return FromFile(instance, filename); }, R"pbdoc(
+        .def_static("from_file", [instance](const char* filename) { return FromFile(instance, filename); }, R"pbdoc(
             s a code stream from a file path.
 
             Args:
@@ -132,7 +132,7 @@ void CodeStream::exportToPython(py::module& m, nvimgcodecInstance_t instance)
             Returns:
                 A code stream instance
             )pbdoc")
-        .def_static("FromHostMem", [instance](py::bytes data) { return FromHostMem(instance, data); }, R"pbdoc(
+        .def_static("from_host_mem", [instance](py::bytes data) { return FromHostMem(instance, data); }, R"pbdoc(
             s a code stream from an encoded stream in host memory.
 
             Note: The user is responsible for keeping `data` available throughout the lifetime of the code stream.
@@ -143,7 +143,7 @@ void CodeStream::exportToPython(py::module& m, nvimgcodecInstance_t instance)
             Returns:
                 A code stream instance
             )pbdoc")
-        .def_static("FromHostMem", [instance](py::array_t<uint8_t> arr) { return FromHostMem(instance, arr); }, R"pbdoc(
+        .def_static("from_host_mem", [instance](py::array_t<uint8_t> arr) { return FromHostMem(instance, arr); }, R"pbdoc(
             s a code stream from a numpy array containing an encoded stream raw data.
 
             Note: The user is responsible for keeping `data` available throughout the lifetime of the code stream.
