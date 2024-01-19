@@ -18,8 +18,8 @@
 #pragma once
 
 #include <nvimgcodec.h>
-
 #include <pybind11/pybind11.h>
+#include <sstream>
 
 namespace nvimgcodec {
 
@@ -29,16 +29,18 @@ using namespace py::literals;
 class Region
 {
   public:
+    operator nvimgcodecRegion_t() const { return impl_; }
+
     static void exportToPython(py::module& m);
 
     int ndim() const {
-      return region.ndim;
+      return impl_.ndim;
     }
 
     py::tuple start() const {
       auto ret = py::tuple(ndim());
       for (int i = 0; i < ndim(); i++) {
-        ret[i] = region.start[i];
+        ret[i] = impl_.start[i];
       }
       return ret;
     }
@@ -46,12 +48,15 @@ class Region
     py::tuple end() const {
       auto ret = py::tuple(ndim());
       for (int i = 0; i < ndim(); i++) {
-        ret[i] = region.end[i];
+        ret[i] = impl_.end[i];
       }
       return ret;
     }
 
-    nvimgcodecRegion_t region = {NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 0};
+    nvimgcodecRegion_t impl_ = {NVIMGCODEC_STRUCTURE_TYPE_REGION, sizeof(nvimgcodecRegion_t), nullptr, 0};
 };
+
+std::ostream& operator<<(std::ostream& os, const Region& r);
+
 
 } // namespace nvimgcodec

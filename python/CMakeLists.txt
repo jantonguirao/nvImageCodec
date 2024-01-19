@@ -24,6 +24,7 @@ set(PY_NVIMGCODEC_SRCS
     main.cpp
     module.cpp
     image.cpp
+    decode_source.cpp
     decoder.cpp
     encoder.cpp
     decode_params.cpp

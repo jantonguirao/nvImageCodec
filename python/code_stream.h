@@ -21,24 +21,30 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl/filesystem.h>
 #include <memory>
+#include <sstream>
 
 namespace nvimgcodec {
 
 namespace py = pybind11;
 using namespace py::literals;
-
 class CodeStream
 {
   public:
-    static CodeStream* CreateFromFile(nvimgcodecInstance_t instance, const char* file_name);
-    static CodeStream* CreateFromHostMem(nvimgcodecInstance_t instance, const unsigned char* data, size_t length);
-    static CodeStream* CreateFromHostMem(nvimgcodecInstance_t instance, py::bytes);
-    static CodeStream* CreateFromHostMem(nvimgcodecInstance_t instance, py::array_t<uint8_t>);
+    CodeStream(nvimgcodecInstance_t instance, const std::filesystem::path& filename);
+    CodeStream(nvimgcodecInstance_t instance, const unsigned char* data, size_t length);
+    CodeStream(nvimgcodecInstance_t instance, py::bytes);
+    CodeStream(nvimgcodecInstance_t instance, py::array_t<uint8_t>);
     static void exportToPython(py::module& m, nvimgcodecInstance_t instance);
     nvimgcodecCodeStream_t handle() const;
 
-    // TODO(janton): Add image info getters
+    int width() const;
+    int height() const;
+    int channels() const;
+    py::dtype dtype() const;
+    int precision() const;
+    std::string codec_name() const;
 
     CodeStream();
 
@@ -51,11 +57,17 @@ class CodeStream
     ~CodeStream();
 
   private:
+    const nvimgcodecImageInfo_t& ImageInfo() const;
+    mutable nvimgcodecImageInfo_t info_{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
+    mutable bool info_read_ = false;
+
     nvimgcodecCodeStream_t code_stream_;
     // Using those to keep a reference to the argument data,
     // so that they are kept alive throughout the lifetime of the object
     py::bytes data_ref_bytes_;
     py::array_t<uint8_t> data_ref_arr_;
 };
+
+std::ostream& operator<<(std::ostream& os, const CodeStream& cs);
 
 } // namespace nvimgcodec
