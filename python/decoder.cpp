@@ -86,30 +86,10 @@ Decoder::~Decoder()
 {
 }
 
-py::object Decoder::read(const std::filesystem::path& filepath, std::optional<DecodeParams> params, intptr_t cuda_stream)
-{
-    DecodeSource dec_src(std::make_unique<CodeStream>(instance_, filepath));
-    return decode(&dec_src, params, cuda_stream);
-}
-
-std::vector<py::object> Decoder::read(
-    const std::vector<std::filesystem::path>& filepaths, std::optional<DecodeParams> params, intptr_t cuda_stream)
-{
-    std::vector<DecodeSource> dec_srcs;
-    std::vector<const DecodeSource*> dec_src_ptrs;
-    dec_srcs.reserve(filepaths.size());
-    dec_src_ptrs.reserve(filepaths.size());
-    for (const auto& fpath : filepaths) {
-        dec_srcs.push_back(DecodeSource(std::make_unique<CodeStream>(instance_, fpath)));
-        dec_src_ptrs.push_back(&dec_srcs.back());
-    }
-    return decode(dec_src_ptrs, params, cuda_stream);
-}
-
 py::object Decoder::decode(const DecodeSource* data, std::optional<DecodeParams> params, intptr_t cuda_stream)
 {
     std::vector<py::object> images =
-        decode(std::vector<nvimgcodecCodeStream_t>{data->code_stream()->handle()}, std::vector<std::optional<Region>>{data->region()}, params, cuda_stream);
+        decode_impl(std::vector<nvimgcodecCodeStream_t>{data->code_stream()->handle()}, std::vector<std::optional<Region>>{data->region()}, params, cuda_stream);
     return images.size() == 1 ? images[0] : py::none();
 }
 
@@ -126,10 +106,10 @@ std::vector<py::object> Decoder::decode(
         code_streams.push_back(ds->code_stream()->handle());
         rois.push_back(ds->region());
     }
-    return decode(code_streams, rois, params_opt, cuda_stream);
+    return decode_impl(code_streams, rois, params_opt, cuda_stream);
 }
 
-std::vector<py::object> Decoder::decode(
+std::vector<py::object> Decoder::decode_impl(
     const std::vector<nvimgcodecCodeStream_t>& code_streams,
     std::vector<std::optional<Region>> rois,
     std::optional<DecodeParams> params_opt,
@@ -299,7 +279,7 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogg
             "device_id"_a = NVIMGCODEC_DEVICE_CURRENT, "max_num_cpu_threads"_a = 0, "backend_kinds"_a = py::none(),
             "options"_a = ":fancy_upsampling=0")
 
-        .def("read", py::overload_cast<const std::filesystem::path&, std::optional<DecodeParams>, intptr_t>(&Decoder::read), R"pbdoc(
+        .def("read", py::overload_cast<const DecodeSource*, std::optional<DecodeParams>, intptr_t>(&Decoder::decode), R"pbdoc(
             Executes decoding from a filename.
 
             Args:
@@ -314,7 +294,7 @@ void Decoder::exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogg
         )pbdoc",
             "path"_a, "params"_a = py::none(), "cuda_stream"_a = 0)
 
-        .def("read", py::overload_cast<const std::vector<std::filesystem::path>&, std::optional<DecodeParams>, intptr_t>(&Decoder::read),
+        .def("read", py::overload_cast<const std::vector<const DecodeSource*>&, std::optional<DecodeParams>, intptr_t>(&Decoder::decode),
             R"pbdoc(
             Executes decoding from a batch of file paths.
 

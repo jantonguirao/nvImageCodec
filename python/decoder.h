@@ -48,18 +48,9 @@ class Decoder
         std::optional<std::vector<nvimgcodecBackendKind_t>> backend_kinds, const std::string& options);
     ~Decoder();
 
-    py::object read(const std::filesystem::path& filepath, std::optional<DecodeParams> params, intptr_t cuda_stream);
-    std::vector<py::object> read(
-        const std::vector<std::filesystem::path>& filepaths, std::optional<DecodeParams> params, intptr_t cuda_stream);
-
     py::object decode(const DecodeSource* data, std::optional<DecodeParams> params, intptr_t cuda_stream);
     std::vector<py::object> decode(
         const std::vector<const DecodeSource*>& data_list, std::optional<DecodeParams> params, intptr_t cuda_stream);
-
-    std::vector<py::object> decode(const std::vector<std::unique_ptr<CodeStream>>& data_list, std::vector<std::optional<Region>> rois,
-        std::optional<DecodeParams> params, intptr_t cuda_stream);
-    std::vector<py::object> decode(const std::vector<nvimgcodecCodeStream_t>& code_streams, std::vector<std::optional<Region>> rois,
-        std::optional<DecodeParams> params, intptr_t cuda_stream);
 
     py::object enter();
     void exit(const std::optional<pybind11::type>& exc_type, const std::optional<pybind11::object>& exc_value,
@@ -68,6 +59,9 @@ class Decoder
     static void exportToPython(py::module& m, nvimgcodecInstance_t instance, ILogger* logger);
 
   private:
+    std::vector<py::object> decode_impl(const std::vector<nvimgcodecCodeStream_t>& code_streams, std::vector<std::optional<Region>> rois,
+        std::optional<DecodeParams> params, intptr_t cuda_stream);
+
     std::vector<std::optional<Region>> no_regions(int sz) {
       return std::vector<std::optional<Region>>(sz);
     }
