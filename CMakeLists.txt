@@ -31,7 +31,11 @@ if (NOT ARCH)
 endif()
 
 if (NOT NVIMGCODEC_WHL_PLATFORM_NAME)
-    set(NVIMGCODEC_WHL_PLATFORM_NAME "manylinux2014_${ARCH}")
+    if(UNIX)
+        set(NVIMGCODEC_WHL_PLATFORM_NAME "manylinux2014_${ARCH}")
+    else()
+        set(NVIMGCODEC_WHL_PLATFORM_NAME "win-amd64")
+    endif()
 endif()
 
 if(NOT BUILD_ID)

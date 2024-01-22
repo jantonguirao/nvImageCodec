@@ -25,8 +25,8 @@ echo "%SOURCE_DIR%"
 
 set PATH=%PATH%;%SOURCE_DIR%\install\include;%SOURCE_DIR%\install\lib;%SOURCE_DIR%\install\x64\vc16\staticlib
 
-cmake -DNVJPEG2K_LIBRARY=C:\NVIDIA_nvJPEG2K\v0.7\lib\11\nvjpeg2k.lib ^
- -DNVJPEG2K_INCLUDE=C:\NVIDIA_nvJPEG2K\v0.7\include ^
+cmake -DNVJPEG2K_LIBRARY=c:\libnvjpeg_2k-windows-x86_64-0.7.5.32-archive\lib\11\nvjpeg2k.lib ^
+ -DNVJPEG2K_INCLUDE=c:\libnvjpeg_2k-windows-x86_64-0.7.5.32-archive\include ^
  -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ^
  -S %SOURCE_DIR% ^
  -B %BUILD_DIR% ^
@@ -39,6 +39,15 @@ if %errorlevel% neq 0 exit /b %errorlevel%
 pushd %SOURCE_DIR%\build
 
 cmake --build . --config Release
+
+cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+REM mkdir %WHL_OUTDIR%
+REM copy *.tar.gz *.deb %WHL_OUTDIR%/
+
+REM if %BUILD_WHEEL% == "ON"  (
+    cmake --build . --target wheel
+REM    copy python/*.whl %WHL_OUTDIR%/
+REM )
 
 popd
 
