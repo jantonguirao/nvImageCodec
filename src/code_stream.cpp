@@ -53,7 +53,7 @@ void CodeStream::parse()
 
 void CodeStream::parseFromFile(const std::string& file_name)
 {
-    io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, false, false);
+    io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, true, false);
     parse();
 }
 
@@ -64,7 +64,7 @@ void CodeStream::parseFromMem(const unsigned char* data, size_t size)
 }
 void CodeStream::setOutputToFile(const char* file_name)
 {
-    io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, false, true);
+    io_stream_ = io_stream_factory_->createFileIoStream(file_name, false, true, true);
 }
 
 void CodeStream::setOutputToHostMem(void* ctx, nvimgcodecResizeBufferFunc_t resize_buffer_func)

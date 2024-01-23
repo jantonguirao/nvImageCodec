@@ -16,7 +16,7 @@
  */
 #include "std_file_io_stream.h"
 
-//#include "mmaped_file_io_stream.h"
+#include "mmaped_file_io_stream.h"
 #include <cassert>
 
 namespace nvimgcodec {
@@ -33,24 +33,10 @@ std::unique_ptr<FileIoStream> FileIoStream::open(
     }
 
     if (use_mmap) {
-        assert(!"TODO");
-        return std::unique_ptr<FileIoStream>(new StdFileIoStream(processed_uri, to_write));
-        // return std::unique_ptr<FileIoStream>(new MmapedFileIoStream(processed_uri,
-        // read_ahead));
+        return std::unique_ptr<FileIoStream>(new MmapedFileIoStream(processed_uri, read_ahead));
     } else {
         return std::unique_ptr<FileIoStream>(new StdFileIoStream(processed_uri, to_write));
     }
-}
-
-bool FileIoStream::reserveFileMappings(unsigned int num)
-{
-    return false;
-    //MmapedFileIoStream::reserveFileMappings(num);
-}
-
-void FileIoStream::freeFileMappings(unsigned int num)
-{
-    //MmapedFileIoStream::freeFileMappings(num);
 }
 
 } // namespace nvimgcodec

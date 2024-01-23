@@ -380,14 +380,16 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
             }
             unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-            nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;
-            size_t encoded_stream_data_size = 0;
-            io_stream->size(io_stream->instance, &encoded_stream_data_size);
-            void* encoded_stream_data = nullptr;
-            void* mapped_encoded_stream_data = nullptr;
-            io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
-            if (!mapped_encoded_stream_data) {
-                if (parse_state->buffer_.size() != encoded_stream_data_size) {
+            if (parse_state->code_stream_ != code_stream) {
+                nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;
+                size_t encoded_stream_data_size = 0;
+                io_stream->size(io_stream->instance, &encoded_stream_data_size);
+                void* encoded_stream_data = nullptr;
+                void* mapped_encoded_stream_data = nullptr;
+                parse_state->buffer_.clear();
+                io_stream->map(io_stream->instance, &mapped_encoded_stream_data, 0, encoded_stream_data_size);
+                if (!mapped_encoded_stream_data) {
+                    nvtx3::scoped_range marker{"buffer read"};
                     parse_state->buffer_.resize(encoded_stream_data_size);
                     io_stream->seek(io_stream->instance, 0, SEEK_SET);
                     size_t read_nbytes = 0;
@@ -397,21 +399,19 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                         image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
                         return;
                     }
+                    encoded_stream_data = &parse_state->buffer_[0];
                 } else {
                     encoded_stream_data = mapped_encoded_stream_data;
                 }
-                encoded_stream_data = &parse_state->buffer_[0];
-            } else {
-                encoded_stream_data = mapped_encoded_stream_data;
-            }
-
-            {
-                nvtx3::scoped_range marker{"nvjpeg2kStreamParse"};
-                XM_CHECK_NVJPEG2K(nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data),
-                    encoded_stream_data_size, false, false, parse_state->nvjpeg2k_stream_));
-            }
-            if (mapped_encoded_stream_data) {
-                io_stream->unmap(io_stream->instance, &mapped_encoded_stream_data, encoded_stream_data_size);
+                {
+                    nvtx3::scoped_range marker{"nvjpeg2kStreamParse"};
+                    XM_CHECK_NVJPEG2K(nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(encoded_stream_data),
+                        encoded_stream_data_size, false, false, parse_state->nvjpeg2k_stream_));
+                }
+                parse_state->code_stream_ = code_stream;
+                if (mapped_encoded_stream_data) {
+                    io_stream->unmap(io_stream->instance, &mapped_encoded_stream_data, encoded_stream_data_size);
+                }
             }
 
             nvjpeg2kImageInfo_t jpeg2k_info;

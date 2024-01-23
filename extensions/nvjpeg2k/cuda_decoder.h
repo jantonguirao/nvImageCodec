@@ -47,6 +47,7 @@ class NvJpeg2kDecoderPlugin
         const nvimgcodecFrameworkDesc_t* framework_;
         nvjpeg2kStream_t nvjpeg2k_stream_;
         std::vector<unsigned char> buffer_;
+        nvimgcodecCodeStreamDesc_t* code_stream_ = nullptr;
     };
 
     struct DecodeState

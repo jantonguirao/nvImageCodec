@@ -38,6 +38,7 @@ class NvJpegCudaDecoderPlugin
     {
         nvjpegJpegStream_t nvjpeg_stream_;
         std::vector<unsigned char> buffer_;
+        nvimgcodecCodeStreamDesc_t* code_stream_ = nullptr;
     };
 
     struct DecodeState

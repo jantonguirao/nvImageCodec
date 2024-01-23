@@ -29,6 +29,7 @@ set(NVIMGCODEC_SRCS
     image_parser.cpp
     code_stream.cpp
     file_io_stream.cpp
+    mmaped_file_io_stream.cpp
     std_file_io_stream.cpp
     image.cpp
     image_parser_factory.cpp
