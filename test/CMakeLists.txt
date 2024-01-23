@@ -89,9 +89,9 @@ endif()
 set(FILESTOPACK nvimgcodec_tests)
 
 
-    if(WIN32)
-        set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr --compiler-options \" /Zc:preprocessor  \"  ")
-    endif()
+if(WIN32)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr --compiler-options \" /Zc:preprocessor  \"  ")
+endif()
 
 add_executable(nvimgcodec_tests ${SRCS})
 foreach(testapp nvimgcodec_tests)

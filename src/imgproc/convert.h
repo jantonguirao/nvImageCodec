@@ -181,7 +181,7 @@ NVIMGCODEC_HOST_DEV constexpr T clamp(U value) {
 }
 
 namespace detail {
-    #ifdef __CUDA_ARCH__
+#ifdef __CUDA_ARCH__
 
 inline __device__ int cuda_round_helper(float f, int) {  // NOLINT
   return __float2int_rn(f);
@@ -219,7 +219,7 @@ inline __device__ long cuda_round_helper(double f, long) {  // NOLINT
 inline __device__ unsigned long cuda_round_helper(double f, unsigned long) {  // NOLINT
   return sizeof(unsigned long) == sizeof(unsigned int) ? __double2uint_rn(f) : __double2ull_rd(f+0.5f);  // NOLINT
 }
-    #endif
+#endif
 
 template <typename Out, typename In,
   bool OutIsFP = std::is_floating_point<Out>::value,

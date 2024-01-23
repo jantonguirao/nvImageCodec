@@ -23,7 +23,7 @@
 #include <string>
 #include "nvjpeg2k.h"
 
-    namespace nvjpeg2k {
+namespace nvjpeg2k {
 
 class NvJpeg2kEncoderPlugin
 {
