@@ -29,7 +29,6 @@ set(NVIMGCODEC_SRCS
     image_parser.cpp
     code_stream.cpp
     file_io_stream.cpp
-    mmaped_file_io_stream.cpp
     std_file_io_stream.cpp
     image.cpp
     image_parser_factory.cpp
@@ -57,6 +56,10 @@ set(NVIMGCODEC_SRCS
     decoder_worker.cpp
     encoder_worker.cpp
 )
+
+if(UNIX)
+  list(APPEND NVIMGCODEC_SRCS mmaped_file_io_stream.cpp)
+endif()
 
 # Build the library
 message(STATUS "props ProductVersionFiles ${ProductVersionFiles}")

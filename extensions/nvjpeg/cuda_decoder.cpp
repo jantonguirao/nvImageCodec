@@ -415,7 +415,6 @@ nvimgcodecStatus_t NvJpegCudaDecoderPlugin::Decoder::decode(int sample_idx, bool
         nvtx3::scoped_range marker{"nvjpeg_cuda decode " + std::to_string(sample_idx)};
         auto* decode_state = reinterpret_cast<NvJpegCudaDecoderPlugin::DecodeState*>(context);
         nvimgcodecCodeStreamDesc_t* code_stream = decode_state->samples_[sample_idx].code_stream;
-        nvimgcodecIoStreamDesc_t* io_stream = code_stream->io_stream;
         nvimgcodecImageDesc_t* image = decode_state->samples_[sample_idx].image;
         const nvimgcodecDecodeParams_t* params = decode_state->samples_[sample_idx].params;
         auto& handle = decode_state->handle_;
