@@ -31,7 +31,11 @@ if (NOT ARCH)
 endif()
 
 if (NOT NVIMGCODEC_WHL_PLATFORM_NAME)
-    set(NVIMGCODEC_WHL_PLATFORM_NAME "manylinux2014_${ARCH}")
+    if(UNIX)
+        set(NVIMGCODEC_WHL_PLATFORM_NAME "manylinux2014_${ARCH}")
+    else()
+        set(NVIMGCODEC_WHL_PLATFORM_NAME "win-amd64")
+    endif()
 endif()
 
 if(NOT BUILD_ID)
@@ -69,7 +73,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 if(WIN32)
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
   # XXX: cmake appends /MT after /MD that produces D9025 warnings about overriding flags, hence...
   string(REGEX REPLACE "/MD " "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
   string(REGEX REPLACE "/MDd " "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
@@ -183,9 +186,9 @@ endif()
 CUDA_get_cmake_cuda_archs(CMAKE_CUDA_ARCHITECTURES ${CUDA_targeted_archs})
 message(STATUS "Generated CMAKE_CUDA_ARCHITECTURES: ${CMAKE_CUDA_ARCHITECTURES}")
 
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --compiler-options \"-fvisibility=hidden -Wno-free-nonheap-object\" --Wno-deprecated-gpu-targets -Xfatbin -compress-all")
-
 if(WIN32)
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --Wno-deprecated-gpu-targets -Xfatbin -compress-all")
+
     include(third_party/generate_product_version)
 
     generate_product_version(ProductVersionFiles
@@ -195,6 +198,9 @@ if(WIN32)
         VERSION_PATCH ${CMAKE_PROJECT_VERSION_PATCH}
         VERSION_REVISION ${CMAKE_PROJECT_VERSION_TWEAK}
         COMPANY_NAME NVIDIA Corporation)
+elseif()
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --compiler-options \"-fvisibility=hidden -Wno-free-nonheap-object\" --Wno-deprecated-gpu-targets -Xfatbin -compress-all")
+
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
