@@ -985,6 +985,7 @@ extern "C"
         void* struct_next;                     /**< Is NULL or a pointer to an extension structure type. */
 
         void* instance; /**< Code stream description instance pointer which will be passed back in functions */
+        uint64_t id;  /** <Generated id that uniquely identifies the instance */
 
         nvimgcodecIoStreamDesc_t* io_stream; /**< I/O stream which works as a source or sink of code stream bytes */
 
