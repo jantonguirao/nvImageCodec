@@ -786,17 +786,23 @@ void DecoderImpl::decodeImpl(SampleCtx& sample)
         switch (image_info.plane_info[0].sample_type) {
         case NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8:
             res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            break;
         case NVIMGCODEC_SAMPLE_DATA_TYPE_INT8:
             res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            break;
         case NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16:
             res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            break;
         case NVIMGCODEC_SAMPLE_DATA_TYPE_INT16:
             res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            break;
         case NVIMGCODEC_SAMPLE_DATA_TYPE_FLOAT32:
             res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            break;
         default:
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Invalid data type: " << image_info.plane_info[0].sample_type);
             res = NVIMGCODEC_PROCESSING_STATUS_SAMPLE_TYPE_UNSUPPORTED;
+            break;
         }
         image->imageReady(image->instance, res);
     } catch (const std::runtime_error& e) {
@@ -804,7 +810,6 @@ void DecoderImpl::decodeImpl(SampleCtx& sample)
         image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
         return;
     }
-    image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_SUCCESS);
 }
 
 nvimgcodecStatus_t DecoderImpl::decodeBatch(
