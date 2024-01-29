@@ -18,7 +18,7 @@ from setuptools import setup, find_packages
 setup(name='nvidia-nvimgcodec@NVIMGCODEC_FLAVOR_MINUS@-cu@CUDA_VERSION_MAJOR@',
       description='NVIDIA nvimgcodec @NVIMGCODEC_FLAVOR@ for CUDA @CUDA_VERSION_MAJOR@. Git SHA: @GIT_SHA@',
           long_description='''NVIDIA nvimgcodec
-===========
+=================
 
 nvImageCodec is a library of accelerated codec with unified interface. It is designed as a framework for extension modules which delivers codec plugins.
 ''',
