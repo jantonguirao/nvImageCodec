@@ -68,6 +68,9 @@ nvimgcodecCodeStream_t CodeStream::handle() const {
 
 const nvimgcodecImageInfo_t& CodeStream::ImageInfo() const {
     if (!info_read_) {
+        jp2_info_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_IMAGE_INFO, sizeof(nvimgcodecJpeg2kImageInfo_t), nullptr, 0, 0, 0, 0};
+        info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), static_cast<void*>(&jp2_info_)};
+
         auto ret = nvimgcodecCodeStreamGetImageInfo(code_stream_, &info_);
         if (ret != NVIMGCODEC_STATUS_SUCCESS)
             throw std::runtime_error("Failed to get image info");
@@ -86,6 +89,30 @@ int CodeStream::width() const {
     auto& info = ImageInfo();
     assert(info.num_planes > 0);
     return info.plane_info[0].width;
+}
+
+std::optional<int> CodeStream::tile_height() const {
+    auto& info = ImageInfo();
+    assert(info.struct_next == &jp2_info_);
+    return jp2_info_.tile_height > 0 ? jp2_info_.tile_height : std::optional<int>{};
+}
+
+std::optional<int> CodeStream::tile_width() const {
+    auto& info = ImageInfo();
+    assert(info.struct_next == &jp2_info_);
+    return jp2_info_.tile_width > 0 ? jp2_info_.tile_width : std::optional<int>{};
+}
+
+std::optional<int> CodeStream::num_tiles_y() const {
+    auto& info = ImageInfo();
+    assert(info.struct_next == &jp2_info_);
+    return jp2_info_.num_tiles_y > 0 ? jp2_info_.num_tiles_y : std::optional<int>{};
+}
+
+std::optional<int> CodeStream::num_tiles_x() const {
+    auto& info = ImageInfo();
+    assert(info.struct_next == &jp2_info_);
+    return jp2_info_.num_tiles_x > 0 ? jp2_info_.num_tiles_x : std::optional<int>{};
 }
 
 int CodeStream::channels() const {
@@ -133,6 +160,10 @@ void CodeStream::exportToPython(py::module& m, nvimgcodecInstance_t instance)
         .def_property_readonly("precision", &CodeStream::precision, R"pbdoc(Maximum number of significant bits in data type. Value 0 
         means that precision is equal to data type bit depth)pbdoc")
         .def_property_readonly("codec_name", &CodeStream::codec_name, R"pbdoc(Image format)pbdoc")
+        .def_property_readonly("num_tiles_y", &CodeStream::num_tiles_y)
+        .def_property_readonly("num_tiles_x", &CodeStream::num_tiles_x)
+        .def_property_readonly("tile_height", &CodeStream::tile_height)
+        .def_property_readonly("tile_width", &CodeStream::tile_width)
         .def("__repr__", [](const CodeStream* cs) {
             std::stringstream ss;
             ss << *cs;
@@ -151,8 +182,20 @@ std::ostream& operator<<(std::ostream& os, const CodeStream& cs)
         << " width=" << cs.width()
         << " channels=" << cs.channels()
         << " dtype=" << dtype_to_str(cs.dtype())
-        << " precision=" << cs.precision()
-        << ")";
+        << " precision=" << cs.precision();
+    auto num_tiles_y = cs.num_tiles_y();
+    if (num_tiles_y)
+        os << " num_tiles_y=" << num_tiles_y.value();
+    auto num_tiles_x = cs.num_tiles_x();
+    if (num_tiles_x)
+        os << " num_tiles_x=" << num_tiles_x.value();
+    auto tile_height = cs.tile_height();
+    if (tile_height)
+        os << " tile_height=" << tile_height.value();
+    auto tile_width = cs.tile_width();
+    if (tile_width)
+        os << " tile_width=" << tile_width.value();
+    os << ")";
     return os;
 }
 
