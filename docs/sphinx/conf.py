@@ -29,7 +29,7 @@ os.environ["PYNVIMGCODEC_EXAMPLES_RESOURCES_DIR"] = "../../../example/assets/ima
 # -- Project information -----------------------------------------------------
 
 project = 'nvImageCodec'
-copyright = '2023, NVIDIA Corporation & Affiliates'
+copyright = '2023 - 2024, NVIDIA Corporation & Affiliates'
 author = 'NVIDIA Corporation'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -50,6 +50,7 @@ author = 'NVIDIA Corporation'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    "sphinxcontrib.jquery",
     'sphinx.ext.ifconfig',
     'sphinx.ext.autodoc',
     'sphinx.ext.napoleon',

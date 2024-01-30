@@ -68,50 +68,74 @@ Additionally as a fallback there are following 3rd party codec extensions:
    - CPU webp decoder
 
 
-## Getting Started
-
-To get a local copy up and running follow these steps.
-
-### Pre-requisites
+## Pre-requisites
 
 This section describes the recommended dependencies to use nvImageCodec.
 
 - Linux distro:
-   - Ubuntu x86_64 >= 20.04
-   - WSL2 with Ubuntu >= 20.04
+   - x86_64
+     - Debian 11, 12
+     - Fedora 39
+     - RHEL 8, 9
+     - OpenSUSE 15
+     - SLES 15
+     - Ubuntu 20.04, 22.04
+     - WSL2 Ubuntu 20.04
+   - arm64-sbsa
+      - RHEL 8, 9
+      - SLES 15
+      - Ubuntu 20.04, 22.04
 - NVIDIA driver >= 520.56.06
 - CUDA Toolkit > = 11.8
-- GCC >= 9.4
 - Python >= 3.8
-- cmake >= 3.18
 
-### Installation
+## Install nvImageCodec library
 
-The following steps describe how to install nvImageCodec from pre-built install packages.
-Choose the installation method that meets your environment needs. The `x` letter in the below command is the build id. 
-It will be 0 when the package is built locally.
+You can download and install the appropriate built binary packages from the [nvImageCodec Developer Page](https://developer.nvidia.com/nvimgcodec-downloads) or install nvImageCodec Python from PyPI as it is described below.
 
-#### Tar file installation
+### nvImageCodec Python for CUDA 11.x
 
 ```
-tar -xvf nvimgcodec-0.2.0.x-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
+pip install nvidia-nvimgcodec-cu11
 ```
 
-#### DEB File Installation
-```
-sudo apt-get install -y ./nvimgcodec-0.2.0.x-cuda12-x86_64-linux-lib.deb
-```
-#### Python WHL File Installation
+### nvImageCodec Python for CUDA 12.x
 
 ```
-pip install nvidia_nvimgcodec_cu12-0.2.0.x-py3-none-manylinux2014_x86_64.whl
+pip install nvidia-nvimgcodec-cu12
 ```
+
+### Optional installation of nvJPEG library
+
+If you do not have CUDA Toolkit installed, or you would like install nvJPEG library independently, you can use the instructions described below.
+
+Install the nvidia-pyindex module
+
+```
+pip install nvidia-pyindex
+```
+
+Install nvJPEG for CUDA 11.x
+
+```
+pip install nvidia-nvjpeg-cu11
+```
+
+Install nvJPEG for CUDA 12.x
+
+```
+pip install nvidia-nvjpeg-cu12
+```
+
+### Documentation
+
+[NVIDIA nvImageCodec Documentation](https://docs.nvidia.com/cuda/nvimagecodec/)
 
 ## Build and install from Sources
 
 ### Additional pre-requisites
-- git
-- git lfs (images used for testing are stored as lfs files)
+- GCC >= 9.4
+- cmake >= 3.18
 - patchelf >= 0.17.2
 - Dependencies for extensions. If you would not like to build particular extension you can skip it.
   - nvJPEG2000 >= 0.7.0
@@ -166,6 +190,25 @@ cd build
 cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=Release
 ```
 This will generate in build directory *.zip or *tar.xz files
+
+
+## Installation from locally built packages
+
+#### Tar file installation
+
+```
+tar -xvf nvimgcodec-0.2.0.0-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
+```
+
+#### DEB File Installation
+```
+sudo apt-get install -y ./nvimgcodec-0.2.0.0-cuda12-x86_64-linux-lib.deb
+```
+#### Python WHL File Installation
+
+```
+pip install nvidia_nvimgcodec_cu12-0.2.0-py3-none-manylinux2014_x86_64.whl
+```
 
 ### Installation from sources
 

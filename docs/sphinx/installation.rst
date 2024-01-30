@@ -25,41 +25,50 @@ Pre-requisites
 This section describes the recommended dependencies to use nvImageCodec.
 
 * Linux distro:
-    * Ubuntu x86_64 >= 20.04
-    * WSL2 with Ubuntu >= 20.04
+   * x86_64
+      * Debian 11, 12
+      * Fedora 39
+      * RHEL 8, 9
+      * OpenSUSE 15
+      * SLES 15
+      * Ubuntu 20.04, 22.04
+      * WSL2 Ubuntu 20.04
+   * arm64-sbsa
+      * RHEL 8, 9
+      * SLES 15
+      * Ubuntu 20.04, 22.04
 * NVIDIA driver >= 520.56.06
-* CUDA Toolit >= 11.8
-* GCC >= 9.4
+* CUDA Toolkit > = 11.8
 * Python >= 3.8
+* GCC >= 9.4
 * cmake >= 3.18
 
-Setup
------
+Install nvImageCodec library
+----------------------------
 
-The following steps describe how to install nvImageCodec from pre-built install packages. Choose the installation method that meets your environment needs. The `x` letter in the below command is the build id. It will be 0 when the package is built locally.
+You can download and install the appropriate built binary packages from the `nvImageCodec Developer Page <https://developer.nvidia.com/nvimgcodec-downloads>`_ or install nvImageCodec Python from PyPI as it is described below.
 
-Download the nvImageCodec tar/deb package from `here <https://github.com/NVIDIA/nvImageCodec/releases>`_
+* nvImageCodec Python for CUDA 11.x ::
 
-* Tar File Installation
+    pip install nvidia-nvimgcodec-cu11
 
-    Navigate to directory containing the nvImageCodec tar file.
+* nvImageCodec Python for CUDA 12.x ::
 
-    Unzip the nvImageCodec runtime and developer package: ::
+    pip install nvidia-nvimgcodec-cu12
 
-        tar -xvf nvimgcodec-0.2.0.x-cuda12-x86_64-linux-lib.tar.gz -C /opt/nvidia/
+Optional installation of nvJPEG library
+---------------------------------------
 
-* Debian Local Installation
+If you do not have CUDA Toolkit installed, or you would like install nvJPEG library independently, you can use the instructions described below.
 
-    Navigate to directory containing the nvImageCodec tar file.
+* Install the nvidia-pyindex module ::
 
-    Install the nvImageCodec runtime and developer package: ::
+    pip install nvidia-pyindex
 
-        sudo apt-get install -y ./nvimgcodec-0.2.0.x-cuda12-x86_64-linux-lib.deb
+* Install nvJPEG for CUDA 11.x ::
 
-* Python WHL File Installation. ::
+    pip install nvidia-nvjpeg-cu11
 
-    pip install nvidia_nvimgcodec_cu12-0.2.0.x-py3-none-manylinux2014_x86_64.whl
+* Install nvJPEG for CUDA 12.x ::
 
-* Running the samples. ::
-
-    Follow the instructions written in the README.md file of the samples directory.
+    pip install nvidia-nvjpeg-cu12
