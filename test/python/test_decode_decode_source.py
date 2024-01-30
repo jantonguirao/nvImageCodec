@@ -26,6 +26,7 @@ filenames = [
     "jpeg/padlock-406986_640_420.jpg",
     "jpeg/padlock-406986_640_422.jpg",
     "jpeg/padlock-406986_640_440.jpg",
+    "jpeg2k/cat-111793_640.jp2",
 ]
 
 def test_decode_single_file():
@@ -119,3 +120,16 @@ def test_decode_batch_roi():
 
     for img, img_roi, roi in zip(imgs, imgs_roi, rois):
         np.testing.assert_allclose(img_roi, img[roi.start[0]:roi.end[0], roi.start[1]:roi.end[1]])
+
+@t.mark.parametrize("fname", ["jpeg/padlock-406986_640_440.jpg",
+                              "jpeg2k/cat-111793_640.jp2"])
+def test_decode_repeat_code_stream(fname):
+    decoder = nvimgcodec.Decoder(max_num_cpu_threads=1)  # One thread to force a single instance of parsed stream
+    fpaths = [os.path.join(img_dir_path, f) for f in filenames]
+    code_stream = nvimgcodec.CodeStream(fpaths[0])
+
+    img0 = decoder.decode(code_stream)
+    imgs1 = decoder.decode([code_stream, code_stream])
+
+    for img1 in imgs1:
+        np.testing.assert_allclose(img0.cpu(), img1.cpu())

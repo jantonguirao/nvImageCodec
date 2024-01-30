@@ -21,9 +21,11 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 #include <pybind11/stl/filesystem.h>
 #include <memory>
 #include <sstream>
+#include <optional>
 
 namespace nvimgcodec {
 
@@ -42,6 +44,12 @@ class CodeStream
     int width() const;
     int height() const;
     int channels() const;
+
+    std::optional<int> num_tiles_x() const;
+    std::optional<int> num_tiles_y() const;
+    std::optional<int> tile_width() const;
+    std::optional<int> tile_height() const;
+
     py::dtype dtype() const;
     int precision() const;
     std::string codec_name() const;
@@ -58,7 +66,8 @@ class CodeStream
 
   private:
     const nvimgcodecImageInfo_t& ImageInfo() const;
-    mutable nvimgcodecImageInfo_t info_{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
+    mutable nvimgcodecJpeg2kImageInfo_t jp2_info_{NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_IMAGE_INFO, sizeof(nvimgcodecJpeg2kImageInfo_t), 0};
+    mutable nvimgcodecImageInfo_t info_{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), static_cast<void*>(&jp2_info_)};
     mutable bool info_read_ = false;
 
     nvimgcodecCodeStream_t code_stream_;

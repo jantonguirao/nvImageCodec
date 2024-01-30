@@ -57,6 +57,10 @@ set(NVIMGCODEC_SRCS
     encoder_worker.cpp
 )
 
+if(UNIX)
+  list(APPEND NVIMGCODEC_SRCS mmaped_file_io_stream.cpp)
+endif()
+
 # Build the library
 message(STATUS "props ProductVersionFiles ${ProductVersionFiles}")
 
