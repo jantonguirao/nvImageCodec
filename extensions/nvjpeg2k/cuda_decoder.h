@@ -89,10 +89,10 @@ class NvJpeg2kDecoderPlugin
             const char* id, const nvimgcodecFrameworkDesc_t* framework, const nvimgcodecExecutionParams_t* exec_params, const char* options);
         ~Decoder();
 
-        nvimgcodecStatus_t canDecodeImpl(StreamCtx& ctx);
+        nvimgcodecStatus_t canDecodeImpl(CodeStreamCtx& ctx);
         nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
             nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
-        void decodeImpl(SampleCtx& ctx, int tid);
+        void decodeImpl(BatchItemCtx& ctx, int tid);
         nvimgcodecStatus_t decodeBatch(
             nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
         nvjpeg2kHandle_t getNvjpeg2kHandle();
@@ -116,7 +116,7 @@ class NvJpeg2kDecoderPlugin
         std::vector<PerThreadResources> per_thread_;
         PerTileResourcesPool per_tile_res_;
 
-        StreamCtxManager streams_;
+        CodeStreamCtxManager code_stream_mgr_;
    };
 
     nvimgcodecStatus_t create(

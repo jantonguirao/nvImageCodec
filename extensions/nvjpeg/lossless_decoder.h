@@ -51,7 +51,7 @@ class NvJpegLosslessDecoderPlugin
             const char* options = nullptr);
         ~Decoder();
 
-        nvimgcodecStatus_t canDecodeImpl(StreamCtx& ctx, nvjpegJpegStream_t& nvjpeg_stream);
+        nvimgcodecStatus_t canDecodeImpl(CodeStreamCtx& ctx, nvjpegJpegStream_t& nvjpeg_stream);
         nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
             nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
         nvimgcodecStatus_t decodeBatch(
@@ -72,7 +72,7 @@ class NvJpegLosslessDecoderPlugin
         nvjpegJpegState_t state_;
         cudaStream_t stream_;
         cudaEvent_t event_;
-        StreamCtxManager streams_;
+        CodeStreamCtxManager code_stream_mgr_;
 
         std::vector<nvjpegJpegStream_t> nvjpeg_streams_;
         const nvimgcodecExecutionParams_t* exec_params_;

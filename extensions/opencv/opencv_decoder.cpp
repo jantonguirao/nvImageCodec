@@ -153,11 +153,11 @@ struct DecoderImpl
     DecoderImpl(const char* plugin_id, const nvimgcodecFrameworkDesc_t* framework, const nvimgcodecExecutionParams_t* exec_params);
     ~DecoderImpl();
 
-    nvimgcodecStatus_t canDecodeImpl(StreamCtx& ctx);
+    nvimgcodecStatus_t canDecodeImpl(CodeStreamCtx& ctx);
     nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
         nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
-    void decodeImpl(SampleCtx& sample);
+    void decodeImpl(BatchItemCtx& batch_item);
     nvimgcodecStatus_t decodeBatch(
         nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
@@ -171,7 +171,7 @@ struct DecoderImpl
     const nvimgcodecFrameworkDesc_t* framework_;
     const nvimgcodecExecutionParams_t* exec_params_;
 
-    StreamCtxManager streams_;
+    CodeStreamCtxManager code_stream_mgr_;
 };
 
 OpenCVDecoderPlugin::OpenCVDecoderPlugin(const std::string& codec_name, const nvimgcodecFrameworkDesc_t* framework)
@@ -188,7 +188,7 @@ nvimgcodecDecoderDesc_t* OpenCVDecoderPlugin::getDecoderDesc()
     return &decoder_desc_;
 }
 
-nvimgcodecStatus_t DecoderImpl::canDecodeImpl(StreamCtx& ctx)
+nvimgcodecStatus_t DecoderImpl::canDecodeImpl(CodeStreamCtx& ctx)
 {
     try {
         NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "can_decode");
@@ -209,9 +209,9 @@ nvimgcodecStatus_t DecoderImpl::canDecodeImpl(StreamCtx& ctx)
             strcmp(cs_image_info.codec_name, "webp") == 0;
 
         for (size_t i = 0; i < ctx.size(); i++) {
-            auto *status = &ctx.samples_[i]->processing_status;
-            auto *image = ctx.samples_[i]->image;
-            const auto *params = ctx.samples_[i]->params;
+            auto *status = &ctx.batch_items_[i]->processing_status;
+            auto *image = ctx.batch_items_[i]->image;
+            const auto *params = ctx.batch_items_[i]->params;
 
             XM_CHECK_NULL(status);
             XM_CHECK_NULL(image);
@@ -287,15 +287,15 @@ nvimgcodecStatus_t DecoderImpl::canDecode(nvimgcodecProcessingStatus_t* status, 
         XM_CHECK_NULL(params);
 
         // Groups samples belonging to the same stream
-        streams_.feedSamples(code_streams, images, batch_size, params);
+        code_stream_mgr_.feedSamples(code_streams, images, batch_size, params);
 
         auto task = [](int tid, int sample_idx, void* context) {
             auto this_ptr = reinterpret_cast<DecoderImpl*>(context);
-            this_ptr->canDecodeImpl(*this_ptr->streams_[sample_idx]);
+            this_ptr->canDecodeImpl(*this_ptr->code_stream_mgr_[sample_idx]);
         };
-        BlockParallelExec(this, task, streams_.size(), exec_params_);
+        BlockParallelExec(this, task, code_stream_mgr_.size(), exec_params_);
         for (int i = 0; i < batch_size; i++) {
-            status[i] = streams_.get_sample(i).processing_status;
+            status[i] = code_stream_mgr_.get_batch_item(i).processing_status;
         }
     } catch (const std::runtime_error& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not check if opencv can decode - " << e.what());
@@ -369,12 +369,12 @@ nvimgcodecStatus_t DecoderImpl::static_destroy(nvimgcodecDecoder_t decoder)
     return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-void DecoderImpl::decodeImpl(SampleCtx& sample)
+void DecoderImpl::decodeImpl(BatchItemCtx& batch_item)
 {
-    NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "decode #"+ std::to_string(sample.batch_idx));
-    nvtx3::scoped_range marker{"opencv decode " + std::to_string(sample.batch_idx)};
-    auto* image = sample.image;
-    const auto* params = sample.params;
+    NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "decode #"+ std::to_string(batch_item.index));
+    nvtx3::scoped_range marker{"opencv decode " + std::to_string(batch_item.index)};
+    auto* image = batch_item.image;
+    const auto* params = batch_item.params;
 
     try {
 
@@ -405,8 +405,8 @@ void DecoderImpl::decodeImpl(SampleCtx& sample)
         if (info.plane_info[0].sample_type != NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8)
             flags |= cv::IMREAD_ANYDEPTH;
 
-        const uint8_t* encoded_data = static_cast<const uint8_t*>(sample.stream->encoded_stream_data_);
-        size_t encoded_length = sample.stream->encoded_stream_data_size_;
+        const uint8_t* encoded_data = static_cast<const uint8_t*>(batch_item.code_stream_ctx->encoded_stream_data_);
+        size_t encoded_length = batch_item.code_stream_ctx->encoded_stream_data_size_;
         auto decoded = cv::imdecode(cv::_InputArray(encoded_data, encoded_length), flags);
         if (decoded.data == nullptr) {
             image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
@@ -476,16 +476,16 @@ nvimgcodecStatus_t DecoderImpl::decodeBatch(
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         }
 
-        streams_.feedSamples(code_streams, images, batch_size, params);
-        for (size_t i = 0; i < streams_.size(); i++) {
-            streams_[i]->load();
+        code_stream_mgr_.feedSamples(code_streams, images, batch_size, params);
+        for (size_t i = 0; i < code_stream_mgr_.size(); i++) {
+            code_stream_mgr_[i]->load();
         }
 
         auto executor = exec_params_->executor;
         auto task = [](int tid, int sample_idx, void* context) -> void {
             auto* this_ptr = reinterpret_cast<DecoderImpl*>(context);
-            auto& sample = this_ptr->streams_.get_sample(sample_idx);
-            this_ptr->decodeImpl(sample);
+            auto& batch_item = this_ptr->code_stream_mgr_.get_batch_item(sample_idx);
+            this_ptr->decodeImpl(batch_item);
         };
         if (batch_size == 1) {
             task(0, 0, this);

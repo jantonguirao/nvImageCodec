@@ -51,7 +51,7 @@ nvimgcodecDecoderDesc_t* NvJpegCudaDecoderPlugin::getDecoderDesc()
     return &decoder_desc_;
 }
 
-nvimgcodecStatus_t Decoder::canDecodeImpl(StreamCtx& ctx)
+nvimgcodecStatus_t Decoder::canDecodeImpl(CodeStreamCtx& ctx)
 {
     try {
         NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "can_decode ");
@@ -72,9 +72,9 @@ nvimgcodecStatus_t Decoder::canDecodeImpl(StreamCtx& ctx)
         bool supported_encoding = encodings_.find(cs_jpeg_image_info.encoding) != encodings_.end();
 
         for (size_t i = 0; i < ctx.size(); i++) {
-            auto *status = &ctx.samples_[i]->processing_status;
-            auto *image = ctx.samples_[i]->image;
-            const auto *params = ctx.samples_[i]->params;
+            auto *status = &ctx.batch_items_[i]->processing_status;
+            auto *image = ctx.batch_items_[i]->image;
+            const auto *params = ctx.batch_items_[i]->params;
 
             XM_CHECK_NULL(status);
             XM_CHECK_NULL(image);
@@ -146,15 +146,15 @@ nvimgcodecStatus_t Decoder::canDecode(nvimgcodecProcessingStatus_t* status, nvim
         XM_CHECK_NULL(params);
 
         // Groups samples belonging to the same stream
-        streams_.feedSamples(code_streams, images, batch_size, params);
+        code_stream_mgr_.feedSamples(code_streams, images, batch_size, params);
 
         auto task = [](int tid, int sample_idx, void* context) {
             auto this_ptr = reinterpret_cast<Decoder*>(context);
-            this_ptr->canDecodeImpl(*this_ptr->streams_[sample_idx]);
+            this_ptr->canDecodeImpl(*this_ptr->code_stream_mgr_[sample_idx]);
         };
-        BlockParallelExec(this, task, streams_.size(), exec_params_);
+        BlockParallelExec(this, task, code_stream_mgr_.size(), exec_params_);
         for (int i = 0; i < batch_size; i++) {
-            status[i] = streams_.get_sample(i).processing_status;
+            status[i] = code_stream_mgr_.get_batch_item(i).processing_status;
         }
     } catch (const NvJpegException& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not check if nvjpeg can decode - " << e.info());
@@ -379,12 +379,12 @@ nvimgcodecStatus_t Decoder::static_destroy(nvimgcodecDecoder_t decoder)
     return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-void Decoder::decodeImpl(SampleCtx& sample, PerThreadResources& t)
+void Decoder::decodeImpl(BatchItemCtx& batch_item, PerThreadResources& t)
 {
-    nvtx3::scoped_range marker{"nvjpeg_cuda decode " + std::to_string(sample.batch_idx)};
-    StreamCtx* stream_ctx = sample.stream;
-    nvimgcodecImageDesc_t* image = sample.image;
-    const nvimgcodecDecodeParams_t* params = sample.params;
+    nvtx3::scoped_range marker{"nvjpeg_cuda decode " + std::to_string(batch_item.index)};
+    CodeStreamCtx* stream_ctx = batch_item.code_stream_ctx;
+    nvimgcodecImageDesc_t* image = batch_item.image;
+    const nvimgcodecDecodeParams_t* params = batch_item.params;
     t.current_page_idx = (t.current_page_idx + 1) % 2;
     int page_idx = t.current_page_idx;
     auto& p = t.pages_[page_idx];
@@ -515,15 +515,15 @@ nvimgcodecStatus_t Decoder::decodeBatch(
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         }
 
-        streams_.feedSamples(code_streams, images, batch_size, params);
-        for (size_t i = 0; i < streams_.size(); i++) {
-            streams_[i]->load();
+        code_stream_mgr_.feedSamples(code_streams, images, batch_size, params);
+        for (size_t i = 0; i < code_stream_mgr_.size(); i++) {
+            code_stream_mgr_[i]->load();
         }
 
         auto task = [](int tid, int sample_idx, void* context) -> void {
             auto* this_ptr = reinterpret_cast<Decoder*>(context);
-            auto& sample = this_ptr->streams_.get_sample(sample_idx);
-            this_ptr->decodeImpl(sample, this_ptr->per_thread_[tid]);
+            auto& batch_item = this_ptr->code_stream_mgr_.get_batch_item(sample_idx);
+            this_ptr->decodeImpl(batch_item, this_ptr->per_thread_[tid]);
         };
 
         if (batch_size == 1) {

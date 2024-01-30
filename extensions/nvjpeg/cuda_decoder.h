@@ -74,11 +74,11 @@ struct Decoder
         const char* options = nullptr);
     ~Decoder();
 
-    nvimgcodecStatus_t canDecodeImpl(StreamCtx& ctx);
+    nvimgcodecStatus_t canDecodeImpl(CodeStreamCtx& ctx);
     nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
         nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
-    void decodeImpl(SampleCtx& sample, PerThreadResources& t);
+    void decodeImpl(BatchItemCtx& batch_item, PerThreadResources& t);
     nvimgcodecStatus_t decodeBatch(
         nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
@@ -102,7 +102,7 @@ struct Decoder
     const nvimgcodecExecutionParams_t* exec_params_;
     size_t gpu_hybrid_huffman_threshold_ = DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD;
 
-    StreamCtxManager streams_;
+    CodeStreamCtxManager code_stream_mgr_;
 };
 
 class NvJpegCudaDecoderPlugin

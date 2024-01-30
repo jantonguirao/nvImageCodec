@@ -52,7 +52,7 @@ nvimgcodecDecoderDesc_t* NvJpeg2kDecoderPlugin::getDecoderDesc()
     return &decoder_desc_;
 }
 
-nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecodeImpl(StreamCtx& ctx)
+nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecodeImpl(CodeStreamCtx& ctx)
 {
     try {
         NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "can_decode ");
@@ -63,9 +63,9 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecodeImpl(StreamCtx& ctx)
         bool is_jpeg2k = strcmp(cs_image_info.codec_name, "jpeg2k") == 0;
 
         for (size_t i = 0; i < ctx.size(); i++) {
-            auto *status = &ctx.samples_[i]->processing_status;
-            auto *image = ctx.samples_[i]->image;
-            const auto *params = ctx.samples_[i]->params;
+            auto *status = &ctx.batch_items_[i]->processing_status;
+            auto *image = ctx.batch_items_[i]->image;
+            const auto *params = ctx.batch_items_[i]->params;
 
             XM_CHECK_NULL(status);
             XM_CHECK_NULL(image);
@@ -132,15 +132,15 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcodecProcessin
         XM_CHECK_NULL(params);
 
         // Groups samples belonging to the same stream
-        streams_.feedSamples(code_streams, images, batch_size, params);
+        code_stream_mgr_.feedSamples(code_streams, images, batch_size, params);
 
         auto task = [](int tid, int sample_idx, void* context) {
             auto this_ptr = reinterpret_cast<Decoder*>(context);
-            this_ptr->canDecodeImpl(*this_ptr->streams_[sample_idx]);
+            this_ptr->canDecodeImpl(*this_ptr->code_stream_mgr_[sample_idx]);
         };
-        BlockParallelExec(this, task, streams_.size(), exec_params_);
+        BlockParallelExec(this, task, code_stream_mgr_.size(), exec_params_);
         for (int i = 0; i < batch_size; i++) {
-            status[i] = streams_.get_sample(i).processing_status;
+            status[i] = code_stream_mgr_.get_batch_item(i).processing_status;
         }
     } catch (const NvJpeg2kException& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not check if nvjpeg2k can decode - " << e.info());
@@ -328,15 +328,15 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::static_destroy(nvimgcodecDeco
     return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(SampleCtx& sample, int tid)
+void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int tid)
 {
-    int sample_idx = sample.batch_idx;
+    int sample_idx = batch_item.index;
     nvtx3::scoped_range marker{"nvjpeg2k decode " + std::to_string(sample_idx)};
     auto& t = per_thread_[tid];
     auto& per_tile_res = per_tile_res_;
     auto jpeg2k_state = t.state_;
-    nvimgcodecImageDesc_t* image = sample.image;
-    const nvimgcodecDecodeParams_t* params = sample.params;
+    nvimgcodecImageDesc_t* image = batch_item.image;
+    const nvimgcodecDecodeParams_t* params = batch_item.params;
     void* decode_tmp_buffer = nullptr;
     size_t decode_tmp_buffer_sz = 0;
     try {
@@ -350,11 +350,12 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(SampleCtx& sample, int tid)
         }
         unsigned char* device_buffer = reinterpret_cast<unsigned char*>(image_info.buffer);
 
-        if (sample.stream->code_stream_id_ != t.parsed_stream_id_) {
+        if (batch_item.code_stream_ctx->code_stream_id_ != t.parsed_stream_id_) {
             nvtx3::scoped_range marker{"nvjpegJpegStreamParse"};
-            XM_CHECK_NVJPEG2K(nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(sample.stream->encoded_stream_data_),
-                sample.stream->encoded_stream_data_size_, false, false, t.nvjpeg2k_stream_));
-            t.parsed_stream_id_ = sample.stream->code_stream_id_;
+            XM_CHECK_NVJPEG2K(
+                nvjpeg2kStreamParse(handle_, static_cast<const unsigned char*>(batch_item.code_stream_ctx->encoded_stream_data_),
+                    batch_item.code_stream_ctx->encoded_stream_data_size_, false, false, t.nvjpeg2k_stream_));
+            t.parsed_stream_id_ = batch_item.code_stream_ctx->code_stream_id_;
         }
 
         nvjpeg2kImageInfo_t jpeg2k_info;
@@ -414,7 +415,7 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(SampleCtx& sample, int tid)
         size_t bits_per_sample = bytes_per_sample << 3;
 
         nvimgcodecImageInfo_t cs_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-        sample.stream->code_stream_->getImageInfo(sample.stream->code_stream_->instance, &cs_image_info);
+        batch_item.code_stream_ctx->code_stream_->getImageInfo(batch_item.code_stream_ctx->code_stream_->instance, &cs_image_info);
         bool convert_interleaved = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB ||
                                    (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_UNCHANGED && num_components > 1);
         bool convert_gray =
@@ -668,15 +669,15 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decodeBatch(
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
         }
 
-        streams_.feedSamples(code_streams, images, batch_size, params);
-        for (size_t i = 0; i < streams_.size(); i++) {
-            streams_[i]->load();
+        code_stream_mgr_.feedSamples(code_streams, images, batch_size, params);
+        for (size_t i = 0; i < code_stream_mgr_.size(); i++) {
+            code_stream_mgr_[i]->load();
         }
 
         auto task = [](int tid, int sample_idx, void* context) -> void {
             auto* this_ptr = reinterpret_cast<NvJpeg2kDecoderPlugin::Decoder*>(context);
-            auto& sample = this_ptr->streams_.get_sample(sample_idx);
-            this_ptr->decodeImpl(sample, tid);
+            auto& batch_item = this_ptr->code_stream_mgr_.get_batch_item(sample_idx);
+            this_ptr->decodeImpl(batch_item, tid);
         };
 
         if (batch_size == 1) {

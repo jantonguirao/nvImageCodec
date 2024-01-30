@@ -92,25 +92,25 @@ int CodeStream::width() const {
 }
 
 std::optional<int> CodeStream::tile_height() const {
-    auto& info = ImageInfo();
+    [[maybe_unused]] auto& info = ImageInfo();
     assert(info.struct_next == &jp2_info_);
     return jp2_info_.tile_height > 0 ? jp2_info_.tile_height : std::optional<int>{};
 }
 
 std::optional<int> CodeStream::tile_width() const {
-    auto& info = ImageInfo();
+    [[maybe_unused]] auto& info = ImageInfo();
     assert(info.struct_next == &jp2_info_);
     return jp2_info_.tile_width > 0 ? jp2_info_.tile_width : std::optional<int>{};
 }
 
 std::optional<int> CodeStream::num_tiles_y() const {
-    auto& info = ImageInfo();
+    [[maybe_unused]] auto& info = ImageInfo();
     assert(info.struct_next == &jp2_info_);
     return jp2_info_.num_tiles_y > 0 ? jp2_info_.num_tiles_y : std::optional<int>{};
 }
 
 std::optional<int> CodeStream::num_tiles_x() const {
-    auto& info = ImageInfo();
+    [[maybe_unused]] auto& info = ImageInfo();
     assert(info.struct_next == &jp2_info_);
     return jp2_info_.num_tiles_x > 0 ? jp2_info_.num_tiles_x : std::optional<int>{};
 }

@@ -36,11 +36,11 @@ struct DecoderImpl
         std::string options);
     ~DecoderImpl();
 
-    nvimgcodecStatus_t canDecodeImpl(StreamCtx& ctx);
+    nvimgcodecStatus_t canDecodeImpl(CodeStreamCtx& ctx);
     nvimgcodecStatus_t canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
         nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
     
-    void decodeImpl(SampleCtx&);
+    void decodeImpl(BatchItemCtx&);
     nvimgcodecStatus_t decodeBatch(
         nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
@@ -56,7 +56,7 @@ struct DecoderImpl
     const nvimgcodecFrameworkDesc_t* framework_;
     const nvimgcodecExecutionParams_t* exec_params_;
 
-    StreamCtxManager streams_;
+    CodeStreamCtxManager code_stream_mgr_;
 
     // Options
     bool fancy_upsampling_;
@@ -75,7 +75,7 @@ nvimgcodecDecoderDesc_t* LibjpegTurboDecoderPlugin::getDecoderDesc()
     return &decoder_desc_;
 }
 
-nvimgcodecStatus_t DecoderImpl::canDecodeImpl(StreamCtx& ctx)
+nvimgcodecStatus_t DecoderImpl::canDecodeImpl(CodeStreamCtx& ctx)
 {
     try {
         NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "can_decode");
@@ -89,10 +89,10 @@ nvimgcodecStatus_t DecoderImpl::canDecodeImpl(StreamCtx& ctx)
         bool is_jpeg = strcmp(cs_image_info.codec_name, "jpeg") == 0;
 
         for (size_t i = 0; i < ctx.size(); i++) {
-            auto& sample = *ctx.samples_[i];
-            auto *status = &sample.processing_status;
-            auto *image = sample.image;
-            const auto *params = sample.params;
+            auto& batch_item = *ctx.batch_items_[i];
+            auto *status = &batch_item.processing_status;
+            auto *image = batch_item.image;
+            const auto *params = batch_item.params;
 
             XM_CHECK_NULL(status);
             XM_CHECK_NULL(image);
@@ -157,15 +157,15 @@ nvimgcodecStatus_t DecoderImpl::canDecode(nvimgcodecProcessingStatus_t* status, 
         XM_CHECK_NULL(params);
 
         // Groups samples belonging to the same stream
-        streams_.feedSamples(code_streams, images, batch_size, params);
+        code_stream_mgr_.feedSamples(code_streams, images, batch_size, params);
 
         auto task = [](int tid, int stream_idx, void* context) {
             auto this_ptr = reinterpret_cast<DecoderImpl*>(context);
-            this_ptr->canDecodeImpl(*this_ptr->streams_[stream_idx]);
+            this_ptr->canDecodeImpl(*this_ptr->code_stream_mgr_[stream_idx]);
         };
-        BlockParallelExec(this, task, streams_.size(), exec_params_);
+        BlockParallelExec(this, task, code_stream_mgr_.size(), exec_params_);
         for (int i = 0; i < batch_size; i++) {
-            status[i] = streams_.get_sample(i).processing_status;
+            status[i] = code_stream_mgr_.get_batch_item(i).processing_status;
         }
     } catch (const std::runtime_error& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not check if libjpeg_turbo can decode - " << e.what());
@@ -270,11 +270,11 @@ nvimgcodecStatus_t DecoderImpl::static_destroy(nvimgcodecDecoder_t decoder)
 }
 
 
-void DecoderImpl::decodeImpl(SampleCtx& sample)
+void DecoderImpl::decodeImpl(BatchItemCtx& batch_item)
 {
-    nvtx3::scoped_range marker{"libjpeg_turbo decode " + std::to_string(sample.batch_idx)};
-    StreamCtx *ctx = sample.stream;
-    auto *image = sample.image;
+    nvtx3::scoped_range marker{"libjpeg_turbo decode " + std::to_string(batch_item.index)};
+    CodeStreamCtx *ctx = batch_item.code_stream_ctx;
+    auto *image = batch_item.image;
     try {
         libjpeg_turbo::UncompressFlags flags;
         nvimgcodecImageInfo_t info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
@@ -389,15 +389,15 @@ nvimgcodecStatus_t DecoderImpl::decodeBatch(
         auto executor = exec_params_->executor;
         XM_CHECK_NULL(executor)
 
-        streams_.feedSamples(code_streams, images, batch_size, params);
-        for (size_t i = 0; i < streams_.size(); i++) {
-            streams_[i]->load();
+        code_stream_mgr_.feedSamples(code_streams, images, batch_size, params);
+        for (size_t i = 0; i < code_stream_mgr_.size(); i++) {
+            code_stream_mgr_[i]->load();
         }
 
         auto task = [](int tid, int sample_idx, void* context) -> void {
             auto* this_ptr = reinterpret_cast<DecoderImpl*>(context);
-            auto& sample = this_ptr->streams_.get_sample(sample_idx);
-            this_ptr->decodeImpl(sample);
+            auto& batch_item = this_ptr->code_stream_mgr_.get_batch_item(sample_idx);
+            this_ptr->decodeImpl(batch_item);
         };
 
         if (batch_size == 1) {

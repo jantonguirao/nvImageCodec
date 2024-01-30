@@ -26,14 +26,14 @@
 #include "nvimgcodec.h"
 #include <iostream>
 
-struct StreamCtx;
+struct CodeStreamCtx;
 
 /**
- * @brief Context for a single sample
+ * @brief Context for a single sample in a batch
  */
-struct SampleCtx {
-    StreamCtx* stream;
-    int batch_idx;
+struct BatchItemCtx {
+    CodeStreamCtx* code_stream_ctx;
+    int index;
     nvimgcodecImageDesc_t* image;
     nvimgcodecProcessingStatus_t processing_status;
     const nvimgcodecDecodeParams_t* params;
@@ -42,13 +42,14 @@ struct SampleCtx {
 /** 
  * @brief Context for a single encoded stream
  */
-struct StreamCtx {
+struct CodeStreamCtx {
     // Code stream pointer;
     nvimgcodecCodeStreamDesc_t* code_stream_;
     // Unique stream id
     uint64_t code_stream_id_;
 
-    std::vector<SampleCtx*> samples_;
+    // Samples in the batch that are decoded from this code stream
+    std::vector<BatchItemCtx*> batch_items_;
 
     // Pointer and size of encoded stream (could point to buffer if the io stream can't be mapped)
     void* encoded_stream_data_ = nullptr;
@@ -58,21 +59,21 @@ struct StreamCtx {
     std::vector<unsigned char> buffer_;
 
     size_t size() const {
-        return samples_.size();
+        return batch_items_.size();
     }
     
     void reset() {
-        setStream(nullptr);
+        setCodeStream(nullptr);
     }
 
-    void clearSamples() {
-        samples_.clear();
+    void clearBatchItems() {
+        batch_items_.clear();
     }
 
-    void setStream(nvimgcodecCodeStreamDesc_t* code_stream) {
+    void setCodeStream(nvimgcodecCodeStreamDesc_t* code_stream) {
         bool same_stream = code_stream == code_stream_ && code_stream->id == code_stream_->id;
         if (!same_stream) {
-            clearSamples();
+            clearBatchItems();
             code_stream_ = code_stream;
             code_stream_id_ = code_stream ? code_stream->id : 0;
             encoded_stream_data_ = nullptr;
@@ -105,26 +106,26 @@ struct StreamCtx {
         return true;
     }
 
-    void addSample(SampleCtx* sample)
+    void addBatchItem(BatchItemCtx* batch_item)
     {
-        samples_.push_back(sample);
+        batch_items_.push_back(batch_item);
     }
 };
 
 
-struct StreamCtxManager {
-    using StreamCtxPtr = std::shared_ptr<StreamCtx>;
+struct CodeStreamCtxManager {
+    using CodeStreamCtxPtr = std::shared_ptr<CodeStreamCtx>;
 
-    StreamCtxPtr getFreeCtx() {
+    CodeStreamCtxPtr acquireCtx() {
         if (free_ctx_.empty())
-            return std::make_shared<StreamCtx>();
+            return std::make_shared<CodeStreamCtx>();
 
         auto ret = std::move(free_ctx_.back());
         free_ctx_.pop_back();
         return ret;
     }
 
-    void releaseCtx(StreamCtxPtr&& ctx) {
+    void releaseCtx(CodeStreamCtxPtr&& ctx) {
         assert(ctx);
         ctx->reset();
         free_ctx_.push_back(std::move(ctx));
@@ -133,34 +134,34 @@ struct StreamCtxManager {
     void feedSamples(nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images,
         int batch_size, const nvimgcodecDecodeParams_t* params)
     {
-        samples_.clear();
-        samples_.resize(batch_size);
+        batch_.clear();
+        batch_.resize(batch_size);
 
-        std::map<uint64_t, StreamCtxPtr> new_stream_ctx;
-        for (int sample_idx = 0; sample_idx < batch_size; sample_idx++) {
-            auto *cs = code_streams[sample_idx];
+        std::map<uint64_t, CodeStreamCtxPtr> new_stream_ctx;
+        for (int index = 0; index < batch_size; index++) {
+            auto *cs = code_streams[index];
             auto &ctx = new_stream_ctx[cs->id];
             if (!ctx) {  // if not seen in this iteration
                 auto it = stream_ctx_.find(cs->id);  // look for it in the last iteration ctx
                 if (it != stream_ctx_.end()) {
                     ctx = std::move(it->second);
                 } else {
-                    ctx = getFreeCtx();
+                    ctx = acquireCtx();
                 }
-                ctx->clearSamples();
+                ctx->clearBatchItems();
             }
 
             // Set stream if needed
-            ctx->setStream(cs);
+            ctx->setCodeStream(cs);
 
             // Append current sample to the stream context
-            auto &sample = samples_[sample_idx];
-            sample.stream = ctx.get();
-            sample.batch_idx = sample_idx;
-            sample.image = images[sample_idx];
-            sample.processing_status = NVIMGCODEC_PROCESSING_STATUS_UNKNOWN;
-            sample.params = params;
-            ctx->addSample(&sample);
+            auto &batch_item = batch_[index];
+            batch_item.code_stream_ctx = ctx.get();
+            batch_item.index = index;
+            batch_item.image = images[index];
+            batch_item.processing_status = NVIMGCODEC_PROCESSING_STATUS_UNKNOWN;
+            batch_item.params = params;
+            ctx->addBatchItem(&batch_item);
         }
 
         // we used the ones we were interested in, we can release the rest to the pool
@@ -182,21 +183,21 @@ struct StreamCtxManager {
         return stream_ctx_view_.size();
     }
 
-    StreamCtxPtr& operator[](size_t index) {
+    CodeStreamCtxPtr& operator[](size_t index) {
         return stream_ctx_view_[index];
     }
 
-    StreamCtxPtr& get_by_stream_id(uint64_t stream_id) {
+    CodeStreamCtxPtr& get_by_stream_id(uint64_t stream_id) {
         return stream_ctx_[stream_id];
     }
 
-    SampleCtx& get_sample(int sample_idx) {
-        return samples_[sample_idx];
+    BatchItemCtx& get_batch_item(int index) {
+        return batch_[index];
     }
 
   private:
-    std::map<uint64_t, StreamCtxPtr> stream_ctx_;
-    std::vector<StreamCtxPtr> free_ctx_;
-    std::vector<StreamCtxPtr> stream_ctx_view_;
-    std::vector<SampleCtx> samples_;
+    std::map<uint64_t, CodeStreamCtxPtr> stream_ctx_;
+    std::vector<CodeStreamCtxPtr> free_ctx_;
+    std::vector<CodeStreamCtxPtr> stream_ctx_view_;
+    std::vector<BatchItemCtx> batch_;
 };
