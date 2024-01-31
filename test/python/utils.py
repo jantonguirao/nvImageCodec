@@ -26,6 +26,9 @@ def get_nvjpeg_ver():
     try:
         nvjpeg_libname = f'libnvjpeg.so'
         nvjpeg_lib = c.CDLL(nvjpeg_libname)
+        nvjpeg_lib.nvjpegGetProperty(0, c.byref(nvjpeg_ver_major))
+        nvjpeg_lib.nvjpegGetProperty(1, c.byref(nvjpeg_ver_minor))
+        nvjpeg_lib.nvjpegGetProperty(2, c.byref(nvjpeg_ver_patch))
     except:
         for file in os.listdir("/usr/local/cuda/lib64/"):
             try:
