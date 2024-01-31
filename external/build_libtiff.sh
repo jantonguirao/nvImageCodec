@@ -41,7 +41,6 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake \
       -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=OFF \
       -Dtiff-docs=OFF \
       -Djbig=OFF \
-      -Dlzma=OFF \
       ..
 make -j"$(grep ^processor /proc/cpuinfo | wc -l)"
 make install
