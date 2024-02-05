@@ -486,9 +486,9 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
                 }
             }
             row_nbytes = width * bytes_per_sample;
-            component_nbytes = height * row_nbytes;
-            out_row_nbytes = width * out_bytes_per_sample;
-            out_component_nbytes = height * out_row_nbytes;
+            component_nbytes = (size_t)height * row_nbytes;
+            out_row_nbytes = (size_t)width * out_bytes_per_sample;
+            out_component_nbytes = (size_t)height * out_row_nbytes;
         }
 
         if (image_info.buffer_size < out_component_nbytes * image_info.num_planes) {

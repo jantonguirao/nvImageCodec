@@ -142,7 +142,7 @@ void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcodecImag
         image_info->plane_info[c].row_stride = pitch_in_bytes;
         image_info->plane_info[c].sample_type = sample_type;
         image_info->plane_info[c].num_channels = image_info->plane_info[0].num_channels;
-        buffer_size += image_info->plane_info[c].row_stride * image_info->plane_info[0].height;
+        buffer_size += (size_t)image_info->plane_info[c].row_stride * (size_t)image_info->plane_info[0].height;
     }
     py::tuple tdata = iface["data"].cast<py::tuple>();
     void* buffer = PyLong_AsVoidPtr(tdata[0].ptr());
