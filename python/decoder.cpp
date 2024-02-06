@@ -196,7 +196,7 @@ std::vector<py::object> Decoder::decode_impl(
             image_info.plane_info[c].sample_type = sample_type;
             image_info.plane_info[c].precision = precision;
             image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
-            buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[c].height;
+            buffer_size += (size_t)image_info.plane_info[c].row_stride * (size_t)image_info.plane_info[c].height;
         }
         image_info.buffer = nullptr;
         image_info.buffer_size = buffer_size;

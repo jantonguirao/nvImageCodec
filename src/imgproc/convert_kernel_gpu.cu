@@ -220,7 +220,7 @@ void LaunchConvertNormKernelImpl(const nvimgcodecImageInfo_t& out_info, const nv
     in.channels = in_c;
     if (IsPlanar(in_format)) {
         in.strides = {1, w};
-        in.channel_stride = w*h;
+        in.channel_stride = (size_t)w*(size_t)h;
     } else {
         in.strides = {in_c, w*in_c};
         in.channel_stride = 1;
