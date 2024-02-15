@@ -66,6 +66,7 @@ copy_from_private_to_public() {
     --exclude=docs \
     --exclude=LICENSE.txt \
     --exclude=LICENSE.txt_PUBLIC \
+    --exclude=.nspect-vuln-allowlist.toml \
     $NVIMGCODEC_PRIVATE_ROOT/ $NVIMGCODEC_PUBLIC_ROOT/
 
     # Copy public license file with changing name

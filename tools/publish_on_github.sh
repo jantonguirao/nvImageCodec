@@ -52,6 +52,7 @@ copy_from_private_to_public() {
     --exclude=.gitlab-ci.yml \
     --exclude=.githooks \
     --exclude=.gitlab \
+    --exclude=.nspect-vuln-allowlist.toml \
     $NVIMGCODEC_PUBLIC_TMP/ $NVIMGCODEC_GITHUB_ROOT/
 
     # Prompt for checking in

@@ -1,0 +1,13 @@
+version = "1.0.0"
+
+[oss]
+
+[oss.excluded]
+
+[[oss.excluded.directories]]
+paths = ['external/opencv/platforms/android']
+comment = 'Only x86 build configuration is used for OpenCV, not Android one'
+
+[[oss.excluded.directories]]
+paths = ['external/opencv/modules/java']
+comment = 'OpenCV is used as a native library and no JAVA bindings are used by this project'
