@@ -11,3 +11,11 @@ comment = 'Only x86 build configuration is used for OpenCV, not Android one'
 [[oss.excluded.directories]]
 paths = ['external/opencv/modules/java']
 comment = 'OpenCV is used as a native library and no JAVA bindings are used by this project'
+
+[[oss.excluded.directories]]
+paths = ['external/opencv/samples']
+comment = 'OpenCV samples'
+
+[[oss.excluded.directories]]
+paths = ['external/opencv/3rdparty/libjpeg-turbo']
+comment = 'OpenCV libjpeg-turbo dependency is not used, as we build our own'
