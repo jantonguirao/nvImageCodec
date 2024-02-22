@@ -458,13 +458,18 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
                 return;
             }
         }
+        auto region = image_info.region;
         bool has_roi = params->enable_roi && image_info.region.ndim > 0;
+        uint32_t roi_y_begin = has_roi ? static_cast<uint32_t>(image_info.region.start[0]) : 0;
+        uint32_t roi_x_begin = has_roi ? static_cast<uint32_t>(image_info.region.start[1]) : 0;
+        uint32_t roi_y_end = has_roi ? static_cast<uint32_t>(image_info.region.end[0]) : jpeg2k_info.image_height;
+        uint32_t roi_x_end = has_roi ? static_cast<uint32_t>(image_info.region.end[1]) : jpeg2k_info.image_width;
+        uint32_t roi_height = roi_y_end - roi_y_begin;
+        uint32_t roi_width = roi_x_end - roi_x_begin;
+
         if (has_roi) {
-            auto region = image_info.region;
             NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_,
                 "Setting up ROI :" << region.start[0] << ", " << region.start[1] << ", " << region.end[0] << ", " << region.end[1]);
-            uint32_t roi_width = region.end[1] - region.start[1];
-            uint32_t roi_height = region.end[0] - region.start[0];
             XM_CHECK_NVJPEG2K(
                 nvjpeg2kDecodeParamsSetDecodeArea(decode_params, region.start[1], region.end[1], region.start[0], region.end[0]));
             for (size_t p = 0; p < image_info.num_planes; p++) {
@@ -545,20 +550,15 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
         // Waits for GPU stage from previous iteration (on this thread)
         XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 
-        uint32_t roi_y_begin = has_roi ? static_cast<uint32_t>(image_info.region.start[0]) : 0;
-        uint32_t roi_x_begin = has_roi ? static_cast<uint32_t>(image_info.region.start[1]) : 0;
-        uint32_t roi_y_end = has_roi ? static_cast<uint32_t>(image_info.region.end[0]) : jpeg2k_info.image_height;
-        uint32_t roi_x_end = has_roi ? static_cast<uint32_t>(image_info.region.end[1]) : jpeg2k_info.image_width;
-
         auto dec_image_info = cs_image_info;
         dec_image_info.buffer = decode_buffer;
         dec_image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
         dec_image_info.buffer_size = component_nbytes * num_components;
         if (has_roi) {
-            for (int p = 0; p < dec_image_info.num_planes; p++) {
+            for (size_t p = 0; p < dec_image_info.num_planes; p++) {
                 auto& info = dec_image_info.plane_info[p];
-                info.height = roi_y_end - roi_y_begin;
-                info.width = roi_x_end - roi_x_begin;
+                info.height = roi_height;
+                info.width = roi_width;
                 info.row_stride = row_nbytes;
             }
         }
