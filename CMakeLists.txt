@@ -15,6 +15,8 @@
 
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
+include(CMakeDependentOption)
+
 set(NVIMGCODEC_PROJECT_NAME "nvimgcodec")
 set(NVIMGCODEC_VERSION "0.2.0")
 
@@ -93,9 +95,12 @@ option(BUILD_LIBTIFF_EXT "Build libtiff extensions module" ON)
 option(BUILD_OPENCV_EXT "Build opencv extensions module" ON)
 option(BUILD_PYTHON "Build Python binding" ON)
 option(BUILD_WHEEL "Build python wheel package" ON)
-option(WITH_DYNAMIC_NVJPEG "Dynamically loads nvjpeg at runtime" ON)
+
+cmake_dependent_option(WITH_DYNAMIC_NVJPEG "Dynamically loads nvjpeg at runtime" ON
+                      "BUILD_NVJPEG_EXT" OFF)
 propagate_option(WITH_DYNAMIC_NVJPEG)
-option(WITH_DYNAMIC_NVJPEG2K "Dynamically loads nvjpeg2k at runtime" OFF)
+cmake_dependent_option(WITH_DYNAMIC_NVJPEG2K "Dynamically loads nvjpeg at runtime" ON
+                      "BUILD_NVJPEG2K_EXT" OFF)
 propagate_option(WITH_DYNAMIC_NVJPEG2K)
 
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
