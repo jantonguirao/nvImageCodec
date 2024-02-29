@@ -313,6 +313,14 @@ void PluginFramework::loadExtModule(const std::string& modulePath)
     module.path_ = modulePath;
     try {
         module.lib_handle_ = library_loader_->loadLibrary(modulePath);
+        if (!module.lib_handle_) {
+#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
+            throw std::runtime_error(dlerror());
+#elif defined(_WIN32) || defined(_WIN64)
+            DWORD err = ::GetLastError();
+            throw std::runtime_error(std::string("Failed to load library: '#" + std::to_string(err) + "'"));
+#endif
+        }
     } catch (const std::runtime_error& e) {
         NVIMGCODEC_LOG_ERROR(logger_, "Could not load extension module library. Error: " << e.what());
         return;
