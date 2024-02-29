@@ -325,9 +325,13 @@ NvJpeg2kDecoderPlugin::DecodeState::~DecodeState()
 {
     for (auto& res : per_thread_) {
         if (res.event_) {
+            XM_CUDA_LOG_DESTROY(cudaEventSynchronize(res.event_));
             XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
         }
         if (res.stream_) {
+            NVIMGCODEC_LOG_WARNING(
+                framework_, plugin_id_, "cudaStreamDestroy thread=" << std::hex << std::this_thread::get_id() << " stream=" << res.stream_);
+            XM_CUDA_LOG_DESTROY(cudaStreamSynchronize(res.stream_));
             XM_CUDA_LOG_DESTROY(cudaStreamDestroy(res.stream_));
         }
         if (res.state_) {
@@ -568,6 +572,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                 if (decode_state->device_allocator_) {
                     decode_state->device_allocator_->device_malloc(
                         decode_state->device_allocator_->device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                    NVIMGCODEC_LOG_WARNING(framework_, plugin_id_, "device_malloc thread=" << std::hex << std::this_thread::get_id() << " tid[" << tid << "] sample["<<sample_idx<<"]: " << (void*) decode_tmp_buffer << " stream=" << t.stream_);
                 } else {
                     XM_CHECK_CUDA(cudaMallocAsync(&decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_));
                 }
@@ -602,6 +607,8 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
             if (!tiled || per_tile_res.size() <= 1 || image_info.color_spec == NVIMGCODEC_COLORSPEC_SYCC) {
                 nvtx3::scoped_range marker{"nvjpeg2kDecodeImage"};
                 NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_, "nvjpeg2kDecodeImage");
+                NVIMGCODEC_LOG_WARNING(framework_, plugin_id_, "nvjpeg2kDecodeImage thread=" << std::hex << std::this_thread::get_id() << " tid[" << tid << "] sample["<<sample_idx<<"] " << (void*) decode_buffer << " stream=" << t.stream_);
+
                 XM_CHECK_NVJPEG2K(nvjpeg2kDecodeImage(
                     handle_, jpeg2k_state, parse_state->nvjpeg2k_stream_, decode_params_raii.get(), &output_image, t.stream_));
             } else {
@@ -683,6 +690,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
                 dec_image_info.buffer = decode_buffer;
                 dec_image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
                 dec_image_info.buffer_size = component_nbytes * num_components;
+                NVIMGCODEC_LOG_WARNING(framework_, plugin_id_, "LaunchConvertNormKernel thread[" << std::hex << std::this_thread::get_id() << "] tid[" << tid << "] sample["<<sample_idx<<"]  stream=" << t.stream_);
                 nvimgcodec::LaunchConvertNormKernel(image_info, dec_image_info, t.stream_);
             }
 
@@ -697,6 +705,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decode(int sample_idx, bool i
         try {
             if (decode_tmp_buffer) {
                 if (decode_state->device_allocator_) {
+                    NVIMGCODEC_LOG_WARNING(framework_, plugin_id_, "device_free thread[" << std::hex << std::this_thread::get_id() << "] tid[" << tid << "] sample["<<sample_idx<<"]  " << (void*) decode_tmp_buffer << " stream=" << t.stream_);
                     decode_state->device_allocator_->device_free(
                         decode_state->device_allocator_->device_ctx, decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
                 } else {

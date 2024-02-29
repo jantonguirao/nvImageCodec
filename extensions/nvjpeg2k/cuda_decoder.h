@@ -96,9 +96,11 @@ class NvJpeg2kDecoderPlugin
             ~PerTileResourcesPool() {
                 for (auto& tile_res : res_) {
                     if (tile_res.event_) {
+                        XM_CUDA_LOG_DESTROY(cudaEventSynchronize(tile_res.event_));
                         XM_CUDA_LOG_DESTROY(cudaEventDestroy(tile_res.event_));
                     }
                     if (tile_res.stream_) {
+                        XM_CUDA_LOG_DESTROY(cudaStreamSynchronize(tile_res.stream_));
                         XM_CUDA_LOG_DESTROY(cudaStreamDestroy(tile_res.stream_));
                     }
                     if (tile_res.state_) {
