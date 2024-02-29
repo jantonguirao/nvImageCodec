@@ -42,9 +42,6 @@ class NvJpeg2kDecoderPlugin
 
     struct PerThreadResources
     {
-        nvjpeg2kDeviceAllocatorV2_t device_allocator_;
-        nvjpeg2kPinnedAllocatorV2_t pinned_allocator_;
-        nvjpeg2kHandle_t handle_;
         cudaStream_t stream_;
         cudaEvent_t event_;
         nvjpeg2kDecodeState_t state_;
@@ -109,6 +106,9 @@ class NvJpeg2kDecoderPlugin
             nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params);
 
         const char* plugin_id_;
+        nvjpeg2kHandle_t handle_;
+        nvjpeg2kDeviceAllocatorV2_t device_allocator_;
+        nvjpeg2kPinnedAllocatorV2_t pinned_allocator_;
         const nvimgcodecFrameworkDesc_t* framework_;
         const nvimgcodecExecutionParams_t* exec_params_;
         int num_parallel_tiles_;
