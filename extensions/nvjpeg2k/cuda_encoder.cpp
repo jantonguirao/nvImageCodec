@@ -258,7 +258,7 @@ NvJpeg2kEncoderPlugin::EncodeState::~EncodeState()
 {
     for (auto& res : per_thread_) {
         if (res.state_) {
-            XM_NVJPEG2K_E_LOG_DESTROY(nvjpeg2kEncodeStateDestroy(res.state_));
+            XM_NVJPEG2K_LOG_DESTROY(nvjpeg2kEncodeStateDestroy(res.state_));
         }
         if (res.event_) {
             XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
@@ -356,7 +356,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     nvjpeg2k_sample_type = NVJPEG2K_UINT16;
                     break;
                 default:
-                    FatalError(NVJPEG2K_STATUS_INVALID_PARAMETER, "Unexpected data type");
+                    throw NvJpeg2kException::FromNvJpeg2kError(NVJPEG2K_STATUS_INVALID_PARAMETER, "data type check");
                 }
 
                 bool interleaved = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB;

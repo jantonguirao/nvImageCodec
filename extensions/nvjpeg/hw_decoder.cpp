@@ -388,7 +388,7 @@ nvimgcodecStatus_t NvJpegHwDecoderPlugin::create(
 
         *decoder = reinterpret_cast<nvimgcodecDecoder_t>(new NvJpegHwDecoderPlugin::Decoder(plugin_id_, framework_, exec_params, options));
     } catch (const NvJpegException& e) {
-        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg decoder - " << e.info());
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg decoder:" << e.info());
         return e.nvimgcodecStatus();
     }
     return NVIMGCODEC_STATUS_SUCCESS;
@@ -412,16 +412,16 @@ NvJpegHwDecoderPlugin::Decoder::~Decoder()
         NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "nvjpeg_destroy");
 
         for (auto& nvjpeg_stream : nvjpeg_streams_)
-            XM_NVJPEG_D_LOG_DESTROY(nvjpegJpegStreamDestroy(nvjpeg_stream));
+            XM_NVJPEG_LOG_DESTROY(nvjpegJpegStreamDestroy(nvjpeg_stream));
         if (event_)
             XM_CUDA_LOG_DESTROY(cudaEventDestroy(event_));
         if (stream_)
             XM_CUDA_LOG_DESTROY(cudaStreamDestroy(stream_));
         if (state_)
-            XM_NVJPEG_D_LOG_DESTROY(nvjpegJpegStateDestroy(state_));
+            XM_NVJPEG_LOG_DESTROY(nvjpegJpegStateDestroy(state_));
 
         if (handle_)
-            XM_NVJPEG_D_LOG_DESTROY(nvjpegDestroy(handle_));
+            XM_NVJPEG_LOG_DESTROY(nvjpegDestroy(handle_));
     } catch (const NvJpegException& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not properly destroy nvjpeg decoder - " << e.info());
     }

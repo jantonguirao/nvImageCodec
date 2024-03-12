@@ -305,7 +305,7 @@ nvimgcodecStatus_t NvJpegCudaDecoderPlugin::create(
 
         *decoder = reinterpret_cast<nvimgcodecDecoder_t>(new Decoder(plugin_id_, framework_, exec_params, options));
     } catch (const NvJpegException& e) {
-        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg decoder - " << e.info());
+        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg decoder:" << e.info());
         return e.nvimgcodecStatus();
     }
     return NVIMGCODEC_STATUS_SUCCESS;
@@ -334,22 +334,22 @@ Decoder::~Decoder()
             for (int page_idx = 0; page_idx < npages; page_idx++) {
                 auto& p = res.pages_[page_idx];
                 if (p.parse_state_.nvjpeg_stream_) {
-                    XM_NVJPEG_D_LOG_DESTROY(nvjpegJpegStreamDestroy(p.parse_state_.nvjpeg_stream_));
+                    XM_NVJPEG_LOG_DESTROY(nvjpegJpegStreamDestroy(p.parse_state_.nvjpeg_stream_));
                 }
                 if (p.pinned_buffer_) {
-                    XM_NVJPEG_D_LOG_DESTROY(nvjpegBufferPinnedDestroy(p.pinned_buffer_));
+                    XM_NVJPEG_LOG_DESTROY(nvjpegBufferPinnedDestroy(p.pinned_buffer_));
                 }
                 for (auto& decoder_data : p.decoder_data) {
                     if (decoder_data.state) {
-                        XM_NVJPEG_D_LOG_DESTROY(nvjpegJpegStateDestroy(decoder_data.state));
+                        XM_NVJPEG_LOG_DESTROY(nvjpegJpegStateDestroy(decoder_data.state));
                     }
                     if (decoder_data.decoder) {
-                        XM_NVJPEG_D_LOG_DESTROY(nvjpegDecoderDestroy(decoder_data.decoder));
+                        XM_NVJPEG_LOG_DESTROY(nvjpegDecoderDestroy(decoder_data.decoder));
                     }
                 }
             }
             if (res.device_buffer_) {
-                XM_NVJPEG_D_LOG_DESTROY(nvjpegBufferDeviceDestroy(res.device_buffer_));
+                XM_NVJPEG_LOG_DESTROY(nvjpegBufferDeviceDestroy(res.device_buffer_));
             }
             if (res.event_) {
                 XM_CUDA_LOG_DESTROY(cudaEventDestroy(res.event_));
@@ -361,7 +361,7 @@ Decoder::~Decoder()
         per_thread_.clear();
 
         if (handle_)
-            XM_NVJPEG_D_LOG_DESTROY(nvjpegDestroy(handle_));
+            XM_NVJPEG_LOG_DESTROY(nvjpegDestroy(handle_));
     } catch (const NvJpegException& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not properly destroy nvjpeg decoder - " << e.info());
     }

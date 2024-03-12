@@ -292,7 +292,7 @@ NvJpeg2kDecoderPlugin::Decoder::~Decoder()
                 XM_CUDA_LOG_DESTROY(cudaStreamDestroy(tile_res.stream_));
             }
             if (tile_res.state_) {
-                XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(tile_res.state_));
+                XM_NVJPEG2K_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(tile_res.state_));
             }
         }
 
@@ -304,10 +304,10 @@ NvJpeg2kDecoderPlugin::Decoder::~Decoder()
                 XM_CUDA_LOG_DESTROY(cudaStreamDestroy(res.stream_));
             }
             if (res.state_) {
-                XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(res.state_));
+                XM_NVJPEG2K_LOG_DESTROY(nvjpeg2kDecodeStateDestroy(res.state_));
             }
             if (res.nvjpeg2k_stream_) {
-                XM_NVJPEG2K_D_LOG_DESTROY(nvjpeg2kStreamDestroy(res.nvjpeg2k_stream_));
+                XM_NVJPEG2K_LOG_DESTROY(nvjpeg2kStreamDestroy(res.nvjpeg2k_stream_));
             }
         }
         if (handle_)

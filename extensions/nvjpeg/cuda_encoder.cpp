@@ -230,7 +230,7 @@ NvJpegCudaEncoderPlugin::Encoder::~Encoder()
         NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "jpeg_destroy_encoder");
     encode_state_batch_.reset();
     if (handle_)
-        XM_NVJPEG_E_LOG_DESTROY(nvjpegDestroy(handle_));
+        XM_NVJPEG_LOG_DESTROY(nvjpegDestroy(handle_));
     } catch (const NvJpegException& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not properly destroy nvjpeg encoder - " << e.info());
     }
@@ -276,7 +276,7 @@ NvJpegCudaEncoderPlugin::EncodeState::~EncodeState()
         }
 
         if (res.state_) {
-            XM_NVJPEG_E_LOG_DESTROY(nvjpegEncoderStateDestroy(res.state_));
+            XM_NVJPEG_LOG_DESTROY(nvjpegEncoderStateDestroy(res.state_));
         }
     }
 }

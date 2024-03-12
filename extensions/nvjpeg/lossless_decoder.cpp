@@ -181,7 +181,7 @@ NvJpegLosslessDecoderPlugin::ParseState::ParseState(const char* plugin_id, const
 NvJpegLosslessDecoderPlugin::ParseState::~ParseState()
 {
     if (nvjpeg_stream_) {
-        XM_NVJPEG_D_LOG_DESTROY(nvjpegJpegStreamDestroy(nvjpeg_stream_));
+        XM_NVJPEG_LOG_DESTROY(nvjpegJpegStreamDestroy(nvjpeg_stream_));
     }
 }
 
@@ -250,7 +250,13 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::create(
             reinterpret_cast<nvimgcodecDecoder_t>(new NvJpegLosslessDecoderPlugin::Decoder(plugin_id_, framework_, exec_params, options));
         return NVIMGCODEC_STATUS_SUCCESS;
     } catch (const NvJpegException& e) {
-        NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg lossless decoder - " << e.info());
+        if (e.nvimgcodecStatus() == NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER) {
+            // invalid parameter, probably NVJPEG_BACKEND_LOSSLESS_JPEG not available, only warning message
+            NVIMGCODEC_LOG_WARNING(framework_, plugin_id_, "Could not create nvjpeg lossless decoder: " << e.info());
+        } else {
+            // unexpected error
+            NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg lossless decoder: " << e.info());
+        }
         return e.nvimgcodecStatus();
     }
 }
@@ -272,16 +278,16 @@ NvJpegLosslessDecoderPlugin::Decoder::~Decoder()
     try {
         NVIMGCODEC_LOG_TRACE(framework_, plugin_id_, "nvjpeg_lossless_destroy");
         for (auto& nvjpeg_stream : nvjpeg_streams_)
-            XM_NVJPEG_D_LOG_DESTROY(nvjpegJpegStreamDestroy(nvjpeg_stream));
+            XM_NVJPEG_LOG_DESTROY(nvjpegJpegStreamDestroy(nvjpeg_stream));
         if (event_)
             XM_CUDA_LOG_DESTROY(cudaEventDestroy(event_));
         if (stream_)
             XM_CUDA_LOG_DESTROY(cudaStreamDestroy(stream_));
         if (state_)
-            XM_NVJPEG_D_LOG_DESTROY(nvjpegJpegStateDestroy(state_));
+            XM_NVJPEG_LOG_DESTROY(nvjpegJpegStateDestroy(state_));
 
         if (handle_)
-            XM_NVJPEG_D_LOG_DESTROY(nvjpegDestroy(handle_));
+            XM_NVJPEG_LOG_DESTROY(nvjpegDestroy(handle_));
     } catch (const NvJpegException& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not properly destroy nvjpeg lossless decoder - " << e.info());
     }
