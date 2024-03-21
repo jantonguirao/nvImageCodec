@@ -369,7 +369,14 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
         }
 
         if (batched_bitstreams.size() > 0) {
+            // Synchronize with previous iteration
             XM_CHECK_CUDA(cudaEventSynchronize(event_));
+
+            // Synchronize with user stream (e.g. device buffer could be allocated asynchronously on that stream)
+            for (cudaStream_t stream : sync_streams) {
+                XM_CHECK_CUDA(cudaEventRecord(event_, stream));
+                XM_CHECK_CUDA(cudaStreamWaitEvent(stream_, event_));
+            }
 
             XM_CHECK_NVJPEG(nvjpegDecodeBatchedInitialize(handle_, state_, batched_bitstreams.size(), 1, nvjpeg_format));
 
@@ -377,10 +384,10 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::Decoder::decodeBatch(
                 batched_output.data(), stream_));
 
             XM_CHECK_CUDA(cudaEventRecord(event_, stream_));
-        }
-
-        for (cudaStream_t stream : sync_streams) {
-            XM_CHECK_CUDA(cudaStreamWaitEvent(stream, event_));
+            // Synchronize with user stream
+            for (cudaStream_t stream : sync_streams) {
+                XM_CHECK_CUDA(cudaStreamWaitEvent(stream, event_));
+            }
         }
 
         for (size_t i = 0; i < sample_idxs.size(); i++) {

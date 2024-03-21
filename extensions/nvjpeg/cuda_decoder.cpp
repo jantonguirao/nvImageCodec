@@ -474,6 +474,11 @@ void Decoder::decodeImpl(BatchItemCtx& batch_item, PerThreadResources& t)
             nvjpeg_image.pitch[c] = image_info.plane_info[c].row_stride;
             ptr += nvjpeg_image.pitch[c] * image_info.plane_info[c].height;
         }
+
+        // Synchronize with user stream (e.g. device buffer could be allocated asynchronously on that stream)
+        XM_CHECK_CUDA(cudaEventRecord(t.event_, image_info.cuda_stream));
+        XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
+
         // Waits for GPU stage from previous iteration (on this thread)
         XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 

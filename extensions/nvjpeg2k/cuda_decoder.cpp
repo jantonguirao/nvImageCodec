@@ -503,6 +503,13 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
             return;
         }
 
+        // Waits for GPU stage from previous iteration (on this thread)
+        XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
+
+        // Synchronize thread stream with the user stream
+        XM_CHECK_CUDA(cudaEventRecord(t.event_, image_info.cuda_stream));
+        XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
+
         uint8_t* decode_buffer = nullptr;
         bool needs_convert = convert_gray || convert_interleaved || convert_dtype;
         bool planar_subset = image_info.num_planes > 1 && num_components > image_info.num_planes;
@@ -546,9 +553,6 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
         output_image.num_components = num_components;
         output_image.pixel_data = (void**)&decode_output[0];
         output_image.pitch_in_bytes = &pitch_in_bytes[0];
-
-        // Waits for GPU stage from previous iteration (on this thread)
-        XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 
         auto dec_image_info = cs_image_info;
         dec_image_info.buffer = decode_buffer;
@@ -623,7 +627,7 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
                     // sync with previous tile work
                     XM_CHECK_CUDA(cudaEventSynchronize(tile_res->event_));
 
-                    // sync with thread stream
+                    // sync tile stream with thread stream
                     XM_CHECK_CUDA(cudaEventRecord(tile_res->event_, t.stream_));
                     XM_CHECK_CUDA(cudaStreamWaitEvent(tile_res->stream_, tile_res->event_));
                     {
@@ -632,7 +636,7 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
                         XM_CHECK_NVJPEG2K(nvjpeg2kDecodeTile(handle_, tile_res->state_, t.nvjpeg2k_stream_,
                             decode_params_raii.get(), tile_idx, 0, &output_tile, tile_res->stream_));
                     }
-                    // sync with thread stream
+                    // sync thread stream with tile stream
                     XM_CHECK_CUDA(cudaEventRecord(tile_res->event_, tile_res->stream_));
                     XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, tile_res->event_));
                     // Release tile resources
@@ -646,6 +650,7 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
             nvimgcodec::LaunchConvertNormKernel(image_info, dec_image_info, t.stream_);
         }
 
+        // Synchronize user stream with thread stream
         XM_CHECK_CUDA(cudaEventRecord(t.event_, t.stream_));
         XM_CHECK_CUDA(cudaStreamWaitEvent(image_info.cuda_stream, t.event_));
 
