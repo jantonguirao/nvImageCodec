@@ -503,13 +503,6 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
             return;
         }
 
-        // Waits for GPU stage from previous iteration (on this thread)
-        XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
-
-        // Synchronize thread stream with the user stream
-        XM_CHECK_CUDA(cudaEventRecord(t.event_, image_info.cuda_stream));
-        XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
-
         uint8_t* decode_buffer = nullptr;
         bool needs_convert = convert_gray || convert_interleaved || convert_dtype;
         bool planar_subset = image_info.num_planes > 1 && num_components > image_info.num_planes;
@@ -566,6 +559,13 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
                 info.row_stride = row_nbytes;
             }
         }
+
+        // Waits for GPU stage from previous iteration (on this thread)
+        XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
+
+        // Synchronize thread stream with the user stream
+        XM_CHECK_CUDA(cudaEventRecord(t.event_, image_info.cuda_stream));
+        XM_CHECK_CUDA(cudaStreamWaitEvent(t.stream_, t.event_));
 
         bool tiled = (jpeg2k_info.num_tiles_y > 1 || jpeg2k_info.num_tiles_x > 1);
         if (!tiled || per_tile_res.size() <= 1 || image_info.color_spec == NVIMGCODEC_COLORSPEC_SYCC) {
