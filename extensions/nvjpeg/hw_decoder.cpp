@@ -556,8 +556,17 @@ nvimgcodecStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
         }
 
         try {
+
+
             if (batched_bitstreams.size() > 0) {
+                // Synchronize with previous iteration
                 XM_CHECK_CUDA(cudaEventSynchronize(event_));
+
+                // Synchronize with user stream (e.g. device buffer could be allocated asynchronously on that stream)
+                for (cudaStream_t stream : sync_streams) {
+                    XM_CHECK_CUDA(cudaEventRecord(event_, stream));
+                    XM_CHECK_CUDA(cudaStreamWaitEvent(stream_, event_));
+                }
 
                 XM_CHECK_NVJPEG(nvjpegDecodeBatchedInitialize(handle_, state_, batched_bitstreams.size(), 1, nvjpeg_format));
 
@@ -573,16 +582,16 @@ nvimgcodecStatus_t NvJpegHwDecoderPlugin::Decoder::decodeBatch(
                         batched_output.data(), stream_));
                 }
                 XM_CHECK_CUDA(cudaEventRecord(event_, stream_));
-            }
 
-            // sync with user stream
-            for (cudaStream_t stream : sync_streams) {
-                XM_CHECK_CUDA(cudaStreamWaitEvent(stream, event_));
-            }
+                // sync with the user stream
+                for (cudaStream_t stream : sync_streams) {
+                    XM_CHECK_CUDA(cudaStreamWaitEvent(stream, event_));
+                }
 
-            for (size_t sample_idx = 0; sample_idx < batched_bitstreams.size(); sample_idx++) {
-                nvimgcodecImageDesc_t* image = code_stream_mgr_.get_batch_item(sample_idx).image;
-                image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_SUCCESS);
+                for (size_t sample_idx = 0; sample_idx < batched_bitstreams.size(); sample_idx++) {
+                    nvimgcodecImageDesc_t* image = code_stream_mgr_.get_batch_item(sample_idx).image;
+                    image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_SUCCESS);
+                }
             }
         } catch (const NvJpegException& e) {
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not decode jpeg code stream - " << e.info());
