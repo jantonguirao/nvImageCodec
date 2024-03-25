@@ -261,6 +261,11 @@ for ((i=0;i<${#rec_list[@]};++i)); do
    make_wheel_record $FNAME $RECORD_FILE $TMPDIR &
 done
 wait
+
+# remove the temp lock file from the wheel
+echo "Deleting nvimgcodec_rec.lock..."
+rm -f $TMPDIR/nvimgcodec_rec.lock
+
 echo "$RECORD_FILE,," >> $RECORD_FILE
 echo "Finished generating new record file $RECORD_FILE"
 
