@@ -16,7 +16,8 @@
  */
 
 #include "cuda_encoder.h"
-#include <nvimgcodec.h>
+#include <nvjpeg2k.h>
+#include <nvjpeg2k_version.h>
 #include <cstring>
 #include <future>
 #include <iostream>
@@ -26,10 +27,10 @@
 #include <string>
 #include <vector>
 #include "error_handling.h"
-#include "log.h"
-#include "nvimgcodec_type_utils.h"
-#include "nvjpeg2k.h"
 #include "imgproc/convert_kernel_gpu.h"
+#include "log.h"
+#include "nvimgcodec.h"
+#include "nvimgcodec_type_utils.h"
 
 namespace nvjpeg2k {
 
@@ -446,8 +447,11 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 encode_config.enable_SOP_marker = 0;
                 encode_config.enable_EPH_marker = 0;
                 encode_config.encode_modes = 0;
+#if NVJPEG2K_VER_MAJOR >= 0 && NVJPEG2K_VER_MINOR >= 8
+                encode_config.num_precincts_init = 0;
+#else
                 encode_config.enable_custom_precincts = 0;
-
+#endif
                 fill_encode_config(&encode_config, params);
 
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetEncodeConfig(encode_params.get(), &encode_config));
