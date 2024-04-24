@@ -21,7 +21,7 @@
 #include <nvtx3/nvtx3.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
-#include "convert.h"
+#include "imgproc/convert.h"
 #include "error_handling.h"
 #include "log.h"
 #include "nvimgcodec.h"

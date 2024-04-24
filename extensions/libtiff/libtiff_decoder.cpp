@@ -23,12 +23,13 @@
 
 #define NOMINMAX
 #include <nvtx3/nvtx3.hpp>
-#include "convert.h"
-#include "error_handling.h"
-#include "log.h"
-#include "nvimgcodec.h"
 #include "../utils/parallel_exec.h"
 #include "../utils/stream_ctx.h"
+#include "imgproc/convert.h"
+#include "error_handling.h"
+#include "imgproc/color_space_conversion_impl.h"
+#include "log.h"
+#include "nvimgcodec.h"
 
 namespace libtiff {
 
@@ -653,6 +654,9 @@ nvimgcodecProcessingStatus_t decodeImplTyped2(
             Output* dst = img_out + (tile_begin_y - region_start_y) * stride_y + (tile_begin_x - region_start_x) * stride_x;
             const Input* src = in + (tile_begin_y - tile_y) * tile_stride_y + (tile_begin_x - tile_x) * tile_stride_x;
 
+            using nvimgcodec::ConvertSatNorm;
+            using nvimgcodec::rgb_to_gray;
+            using nvimgcodec::vec;
             switch (image_info.sample_format) {
             case NVIMGCODEC_SAMPLEFORMAT_P_Y:
                 if (info.channels == 1) {
@@ -661,7 +665,7 @@ nvimgcodecProcessingStatus_t decodeImplTyped2(
                         auto* row = plane + i * stride_y;
                         auto* tile_row = src + i * tile_stride_y;
                         for (uint32_t j = 0; j < tile_size_x; j++) {
-                            *(row + j * stride_x) = *(tile_row + j * tile_stride_x);
+                            *(row + j * stride_x) = ConvertSatNorm<Output>(*(tile_row + j * tile_stride_x));
                         }
                     }
                 } else if (info.channels >= 3) {
@@ -677,7 +681,7 @@ nvimgcodecProcessingStatus_t decodeImplTyped2(
                                 auto r = *(pixel + 0);
                                 auto g = *(pixel + 1);
                                 auto b = *(pixel + 2);
-                                *(out_pixel) = 0.299f * r + 0.587f * g + 0.114f * b;
+                                *(out_pixel) = rgb_to_gray<Output>(vec<3, Input>(r, g, b));
                             }
                         }
                     }
@@ -700,7 +704,7 @@ nvimgcodecProcessingStatus_t decodeImplTyped2(
                         auto* row = plane + i * stride_y;
                         auto* tile_row = src + i * tile_stride_y;
                         for (uint32_t j = 0; j < tile_size_x; j++) {
-                            *(row + j * stride_x) = *(tile_row + j * tile_stride_x + c);
+                            *(row + j * stride_x) = ConvertSatNorm<Output>(*(tile_row + j * tile_stride_x + c));
                         }
                     }
                 }
@@ -719,7 +723,7 @@ nvimgcodecProcessingStatus_t decodeImplTyped2(
                             uint32_t out_c = c;
                             if (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_BGR)
                                 out_c = c == 2 ? 0 : c == 0 ? 2 : c;
-                            *(pixel + out_c) = *(tile_pixel + c);
+                            *(pixel + out_c) = ConvertSatNorm<Output>(*(tile_pixel + c));
                         }
                     }
                 }
@@ -788,16 +792,16 @@ void DecoderImpl::decodeImpl(BatchItemCtx& batch_item)
             res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
             break;
         case NVIMGCODEC_SAMPLE_DATA_TYPE_INT8:
-            res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            res = decodeImplTyped<int8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
             break;
         case NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16:
-            res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            res = decodeImplTyped<uint16_t>(plugin_id_, framework_, image_info, tiff.get(), info);
             break;
         case NVIMGCODEC_SAMPLE_DATA_TYPE_INT16:
-            res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            res = decodeImplTyped<int16_t>(plugin_id_, framework_, image_info, tiff.get(), info);
             break;
         case NVIMGCODEC_SAMPLE_DATA_TYPE_FLOAT32:
-            res = decodeImplTyped<uint8_t>(plugin_id_, framework_, image_info, tiff.get(), info);
+            res = decodeImplTyped<float>(plugin_id_, framework_, image_info, tiff.get(), info);
             break;
         default:
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Invalid data type: " << image_info.plane_info[0].sample_type);

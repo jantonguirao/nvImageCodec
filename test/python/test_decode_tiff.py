@@ -33,3 +33,12 @@ def test_decode_tiff_palette():
     delta = np.abs(img_regular.astype('float') - img_palette.astype('float')) / 256
     assert np.quantile(delta, 0.9) < 0.05, "Original and palette TIFF differ significantly"
 
+def test_decode_tiff_uint16():
+    path_u16 = os.path.join(img_dir_path, "tiff/uint16.tiff")
+    path_u16_npy = os.path.join(img_dir_path, "tiff/uint16.npy")
+    params = nvimgcodec.DecodeParams(color_spec=nvimgcodec.ColorSpec.UNCHANGED, allow_any_depth=True)
+    dec = nvimgcodec.Decoder()
+    img_decoded = dec.read(path_u16, params)
+    decoded = np.array(img_decoded.cpu())[: , :, 0]  # nvImageCodec gives an extra dimension
+    reference = np.load(path_u16_npy)
+    np.testing.assert_array_equal(decoded, reference)
