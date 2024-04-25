@@ -17,56 +17,41 @@
 
 #include <cuda.h>
 #include <stdio.h>
-
 #include <mutex>
 #include <string>
 #include <unordered_map>
 #include "library_loader.h"
+#define STR_IMPL_(x) #x      //stringify argument
+#define STR(x) STR_IMPL_(x)  //indirection to expand argument macros
 
 namespace {
 
-
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-
-  #include <dlfcn.h>
-  static const char __NvjpegLibName[] = "libnvjpeg.so";
-  #if CUDA_VERSION_MAJOR >= 12
-  static const char __NvjpegLibNameCuVer[] = "libnvjpeg.so.12";
-  #elif CUDA_VERSION_MAJOR >= 11
-  static const char __NvjpegLibNameCuVer[] = "libnvjpeg.so.11";
-  #else
-  static const char __NvjpegLibNameCuVer[] = "libnvjpeg.so.10";
-  #endif
-
+  static const char* __NvjpegLibNames[] = {
+    "libnvjpeg.so." STR(CUDA_VERSION_MAJOR),
+    "libnvjpeg.so"
+  };
 #elif defined(_WIN32) || defined(_WIN64)
-
-  static const char __NvjpegLibName[] = "nvjpeg.dll";
-
-  #if CUDA_VERSION_MAJOR >= 12
-  static const char __NvjpegLibNameCuVer[] = "nvjpeg64_12.dll";
-  #elif CUDA_VERSION_MAJOR >= 11
-  static const char __NvjpegLibNameCuVer[] = "nvjpeg64_11.dll";
-  #else
-  static const char __NvjpegLibNameCuVer[] = "nvjpeg64_10.dll";
-  #endif
-
+  static const char* __NvjpegLibNames[] = {
+    "nvjpeg64_" STR(CUDA_VERSION_MAJOR) ".dll"
+    "nvjpeg.dll"
+  };
 #endif
-
 
 nvimgcodec::ILibraryLoader::LibraryHandle loadNvjpegLibrary()
 {
     nvimgcodec::LibraryLoader lib_loader;
     nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
-    ret = lib_loader.loadLibrary(__NvjpegLibNameCuVer);
+    for (const char* libname : __NvjpegLibNames) {
+        ret = lib_loader.loadLibrary(libname);
+        if (ret != nullptr)
+            break;
+    }
     if (!ret) {
-        ret = lib_loader.loadLibrary(__NvjpegLibName);
-        if (!ret) {
-#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-            fprintf(stderr, "dlopen libnvjpeg.so failed!. Please install CUDA toolkit or nvJPEG python wheel.");
-#elif defined(_WIN32) || defined(_WIN64)
-            fprintf(stderr, "LoadLibrary nvjpeg.dll failed!. Please install CUDA toolkit or nvJPEG python wheel.");
-#endif
-        }
+        fprintf(stderr,
+            "Failed to load nvjpeg library! "
+            "Please install CUDA toolkit or, if using nvImageCodec's Python distribution, the nvJPEG python wheel "
+            "(e.g. python -m pip nvidia-nvjpeg-cu" STR(CUDA_VERSION_MAJOR) ").\n");
     }
     return ret;
 }
