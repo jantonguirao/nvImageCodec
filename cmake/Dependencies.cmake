@@ -48,7 +48,6 @@ if (BUILD_NVJPEG2K_EXT)
             message(NOTICE "Found nvjpeg2k: " ${NVJPEG2K_LIBRARY})
         endif()
     endif()
-
     if(NOT DEFINED NVJPEG2K_INCLUDE)
         find_path(NVJPEG2K_INCLUDE  NAMES nvjpeg2k.h PATHS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
     endif()
