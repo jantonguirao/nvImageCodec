@@ -16,7 +16,6 @@
  */
 #include <cuda.h>
 #include <stdio.h>
-#include <dlfcn.h>
 #include <mutex>
 #include <string>
 #include <unordered_map>
