@@ -32,6 +32,7 @@
       "nvjpeg2kStreamDestroy": {},
       "nvjpeg2kStreamGetImageComponentInfo": {},
       "nvjpeg2kStreamGetImageInfo": {},
-      "nvjpeg2kStreamParse": {}
+      "nvjpeg2kStreamParse": {},
+      "nvjpeg2kDecodeTile": {}
    }
 }

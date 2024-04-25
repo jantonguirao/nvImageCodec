@@ -21,13 +21,23 @@
 #include <string>
 #include <unordered_map>
 #include "library_loader.h"
+#include <nvjpeg2k_version.h>
+#include <iostream>
+#define STR_IMPL_(x) #x      //stringify argument
+#define STR(x) STR_IMPL_(x)  //indirection to expand argument macros
 
 namespace {
 
 #if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-  static const char __Nvjpeg2kLibName[] = "libnvjpeg2k.so";
+  static const char* __Nvjpeg2kLibNames[] = {
+    "libnvjpeg2k.so." STR(NVJPEG2K_VER_MAJOR),
+    "libnvjpeg2k.so"
+  };
 #elif defined(_WIN32) || defined(_WIN64)
-  static const char __Nvjpeg2kLibName[] = "nvjpeg2k_0.dll";
+  static const char* __Nvjpeg2kLibNames[] = {
+    "nvjpeg2k_" STR(NVJPEG2K_VER_MAJOR) ".dll"
+    "nvjpeg2k.dll"
+  };
 #endif
 
 
@@ -35,19 +45,20 @@ nvimgcodec::ILibraryLoader::LibraryHandle loadNvjpeg2kLibrary()
 {
     nvimgcodec::LibraryLoader lib_loader;
     nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
-    ret = lib_loader.loadLibrary(__Nvjpeg2kLibName);
+    for (const char* libname : __Nvjpeg2kLibNames) {
+        ret = lib_loader.loadLibrary(libname);
+        if (ret != nullptr)
+            break;
+    }
     if (!ret) {
-#if defined(__linux__) || defined(__linux) || defined(linux) || defined(_LINUX)
-        fprintf(stderr, "dlopen libnvjpeg2k.so failed!. Please install nvjpeg2000 (see https://developer.nvidia.com/nvjpeg2000/downloads). "
-            // TODO(janton): Uncomment when available "Alternatively, install nvjpeg2000 as a Python package from pip."
-        );
-#elif defined(_WIN32) || defined(_WIN64)
-        fprintf(stderr, "LoadLibrary nvjpeg2k_0.dll failed!. Please install nvjpeg2000 (see https://developer.nvidia.com/nvjpeg2000/downloads).");
-#endif
+        fprintf(stderr,
+            "Failed to load nvjpeg2k library! Please install nvJPEG2000 (see "
+            "https://docs.nvidia.com/cuda/nvjpeg2000/userguide.html#installing-nvjpeg2000).\n"
+            "Note: If using nvImageCodec's Python distribution, "
+            "it is enough to install the nvJPEG2000 wheel: e.g. `python3 -m pip install nvidia-nvjpeg2k-cu" STR(CUDA_VERSION_MAJOR) "`\n");
     }
     return ret;
 }
-
 }  // namespace
 
 void *Nvjpeg2kLoadSymbol(const char *name) {

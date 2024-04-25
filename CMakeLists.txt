@@ -99,7 +99,7 @@ option(BUILD_WHEEL "Build python wheel package" ON)
 cmake_dependent_option(WITH_DYNAMIC_NVJPEG "Dynamically loads nvjpeg at runtime" ON
                       "BUILD_NVJPEG_EXT" OFF)
 propagate_option(WITH_DYNAMIC_NVJPEG)
-cmake_dependent_option(WITH_DYNAMIC_NVJPEG2K "Dynamically loads nvjpeg2k at runtime" OFF
+cmake_dependent_option(WITH_DYNAMIC_NVJPEG2K "Dynamically loads nvjpeg2k at runtime" ON
                       "BUILD_NVJPEG2K_EXT" OFF)
 propagate_option(WITH_DYNAMIC_NVJPEG2K)
 
