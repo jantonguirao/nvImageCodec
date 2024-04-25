@@ -43,7 +43,8 @@ RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
     numpy \
     scipy \
     scikit-image \
-    pynvml && \
+    pynvml \
+    nvidia-nvjpeg2k-cu${CUDA_VERSION_MAJOR} && \
     rm -rf /root/.cache/pip
 
 WORKDIR /workspace
