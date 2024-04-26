@@ -121,11 +121,12 @@ foreach(testapp nvimgcodec_tests)
 
     if (BUILD_NVJPEG2K_EXT)
         list(APPEND TARGET_LIBS nvjpeg2k_ext_static)
-        list(APPEND TARGET_LIBS ${NVJPEG2K_LIBRARY})
     endif()
 
     if (WITH_DYNAMIC_NVJPEG2K)
         list(APPEND TARGET_LIBS dynlink_nvjpeg2k)
+    else()
+        list(APPEND TARGET_LIBS ${NVJPEG2K_LIBRARY})
     endif()
 
     if (BUILD_LIBJPEG_TURBO_EXT)

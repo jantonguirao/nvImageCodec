@@ -24,6 +24,20 @@ RUN apt-get update \
         doxygen \
     && rm -rf /var/lib/apt/lists/*
 
+RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
+    NVJPEG2K_VERSION=0.8.0.38-1 && \
+    apt-get update && \
+    apt-get install wget software-properties-common -y && \
+    apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/3bf863cc.pub && \
+    add-apt-repository "deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/ /" && \
+    apt-get update && \
+    apt-get install libnvjpeg2k0-dev-cuda-${CUDA_VERSION_MAJOR}=${NVJPEG2K_VERSION} \
+                    libnvjpeg2k0-cuda-${CUDA_VERSION_MAJOR}=${NVJPEG2K_VERSION} \
+                    libnvjpeg2k0-static-cuda-${CUDA_VERSION_MAJOR}=${NVJPEG2K_VERSION} -y && \
+    cp /usr/include/libnvjpeg2k/${CUDA_VERSION_MAJOR}/* /usr/local/cuda/include/ && \
+    cp /usr/lib/x86_64-linux-gnu/libnvjpeg2k/${CUDA_VERSION_MAJOR}/* /usr/local/cuda/lib64/ && \
+    rm -rf /var/lib/apt/lists/*
+
 RUN mkdir cvcuda && \
     cd cvcuda && \
     wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.3.1-beta/nvcv_python-0.3.1_beta-cp38-cp38-linux_x86_64.whl && \
