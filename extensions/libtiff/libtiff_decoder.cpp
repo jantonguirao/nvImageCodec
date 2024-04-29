@@ -719,11 +719,18 @@ nvimgcodecProcessingStatus_t decodeImplTyped2(
                     for (uint32_t j = 0; j < tile_size_x; j++) {
                         auto* pixel = row + j * stride_x;
                         auto* tile_pixel = tile_row + j * tile_stride_x;
-                        for (uint32_t c = 0; c < image_info.plane_info[0].num_channels; c++) {
-                            uint32_t out_c = c;
-                            if (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_BGR)
-                                out_c = c == 2 ? 0 : c == 0 ? 2 : c;
-                            *(pixel + out_c) = ConvertSatNorm<Output>(*(tile_pixel + c));
+                        if (info.channels == 1) {
+                            for (uint32_t c = 0; c < image_info.plane_info[0].num_channels; c++) {
+                                *(pixel + c) = ConvertSatNorm<Output>(*tile_pixel);
+                            }
+                        } else {
+                            assert(info.channels >= image_info.plane_info[0].num_channels);
+                            for (uint32_t c = 0; c < image_info.plane_info[0].num_channels; c++) {
+                                uint32_t out_c = c;
+                                if (image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_BGR)
+                                    out_c = c == 2 ? 0 : c == 0 ? 2 : c;
+                                *(pixel + out_c) = ConvertSatNorm<Output>(*(tile_pixel + c));
+                            }
                         }
                     }
                 }
