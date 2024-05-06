@@ -86,6 +86,7 @@ Additionally as a fallback there are following 3rd party codec extensions:
 
    C API <c_api>  
    Python API <py_api> 
+   Environment variables <environment_variables>
 
 .. toctree::
    :caption: Release Notes
