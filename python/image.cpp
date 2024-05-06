@@ -95,7 +95,7 @@ void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcodecImag
     for (auto& o : shape) {
         vshape.push_back(o.cast<long>());
     }
-    if (vshape.size() < 3) {
+    if (vshape.size() < 2) {
         throw std::runtime_error("Unexpected number of dimensions");
     }
 
@@ -116,7 +116,7 @@ void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcodecImag
         image_info->num_planes = 1;
         image_info->plane_info[0].height = vshape[0];
         image_info->plane_info[0].width = vshape[1];
-        image_info->plane_info[0].num_channels = vshape[2];
+        image_info->plane_info[0].num_channels = vshape.size() == 3 ? vshape[2] : 1;
     } else {
         image_info->num_planes = vshape[0];
         image_info->plane_info[0].height = vshape[1];
