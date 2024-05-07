@@ -22,7 +22,6 @@ RUN NVJPEG2K_VERSION=0.8.0.38-1 && \
     apt-get install libnvjpeg2k0-dev-cuda-${CUDA_VERSION_MAJOR}=${NVJPEG2K_VERSION} \
                     libnvjpeg2k0-cuda-${CUDA_VERSION_MAJOR}=${NVJPEG2K_VERSION} \
                     libnvjpeg2k0-static-cuda-${CUDA_VERSION_MAJOR}=${NVJPEG2K_VERSION} -y && \
-    apt-get install libnvjpeg2k0=${NVJPEG2K_VERSION} libnvjpeg2k-dev=${NVJPEG2K_VERSION} -y && \
     cp /usr/include/libnvjpeg2k/${CUDA_VERSION_MAJOR}/* /usr/local/cuda/include/ && \
     cp /usr/lib/sbsa-linux-gnu/libnvjpeg2k/${CUDA_VERSION_MAJOR}/* /usr/local/cuda/lib64/ && \
     rm -rf /var/lib/apt/lists/*
