@@ -178,3 +178,20 @@ def test_encode_batch_image(tmp_path, input_images_batch, encode_to_data, cuda_s
         np.asarray(bytearray(img)), cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB) for img in test_encoded_images]
 
     compare_host_images(test_decoded_images, ref_images)
+
+def test_encode_jpeg2k_small_image():
+    encoder = nvimgcodec.Encoder()
+    arr = np.zeros((5,5,3), dtype=np.uint8) + 128
+    encoded_image = encoder.encode(arr, codec="jpeg2k")
+    decoder = nvimgcodec.Decoder()
+    arr2 = decoder.decode(encoded_image).cpu()
+    np.testing.assert_array_almost_equal(arr, arr2)
+
+def test_encode_jpeg2k_2d():
+    encoder = nvimgcodec.Encoder()
+    arr = np.zeros((32,32), dtype=np.uint8) + 128
+    encoded_image = encoder.encode(arr, codec="jpeg2k")
+    decoder = nvimgcodec.Decoder()
+    params = nvimgcodec.DecodeParams(color_spec=nvimgcodec.ColorSpec.UNCHANGED, allow_any_depth=True)
+    arr2 = np.array(decoder.decode(encoded_image, params=params).cpu()).squeeze()
+    np.testing.assert_array_almost_equal(arr, arr2)

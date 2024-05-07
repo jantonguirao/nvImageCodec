@@ -14,11 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define NOMINMAX
 #include "cuda_encoder.h"
 #include <nvjpeg2k.h>
 #include <nvjpeg2k_version.h>
 #include <cstring>
+#include <cmath>
 #include <future>
 #include <iostream>
 #include <nvtx3/nvtx3.hpp>
@@ -270,7 +271,7 @@ NvJpeg2kEncoderPlugin::EncodeState::~EncodeState()
     }
 }
 
-static void fill_encode_config(nvjpeg2kEncodeConfig_t* encode_config, const nvimgcodecEncodeParams_t* params)
+static void fill_encode_config(nvjpeg2kEncodeConfig_t* encode_config, const nvimgcodecEncodeParams_t* params, uint32_t height, uint32_t width)
 {
     nvimgcodecJpeg2kEncodeParams_t* j2k_encode_params = static_cast<nvimgcodecJpeg2kEncodeParams_t*>(params->struct_next);
     while (j2k_encode_params && j2k_encode_params->struct_type != NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_ENCODE_PARAMS)
@@ -283,10 +284,8 @@ static void fill_encode_config(nvjpeg2kEncodeConfig_t* encode_config, const nvim
         encode_config->prog_order = static_cast<nvjpeg2kProgOrder>(j2k_encode_params->prog_order);
         encode_config->num_resolutions = j2k_encode_params->num_resolutions;
     }
-    //Assume Gray color space when it is unknown and there is only one component
-    if (encode_config->color_space == NVJPEG2K_COLORSPACE_UNKNOWN && encode_config->num_components == 1) {
-        encode_config->color_space = NVJPEG2K_COLORSPACE_GRAY;
-    }
+    uint32_t max_num_resolutions = static_cast<uint32_t>(log2(static_cast<float>(std::min(height, width)))) + 1;
+    encode_config->num_resolutions = std::min(encode_config->num_resolutions, max_num_resolutions);
 }
 
 static nvjpeg2kColorSpace_t nvimgcodec_to_nvjpeg2k_color_spec(nvimgcodecColorSpec_t nvimgcodec_color_spec)
@@ -370,7 +369,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 std::vector<unsigned char*> encode_input(num_components);
                 std::vector<size_t> pitch_in_bytes(num_components);
 
-                if (interleaved) {
+                if (interleaved && num_components > 1) {
                     size_t row_nbytes = width * bytes_per_sample;
                     size_t component_nbytes = row_nbytes * height;
                     tmp_buffer_sz = component_nbytes * num_components;
@@ -426,7 +425,11 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 
                 nvjpeg2kEncodeConfig_t encode_config;
                 memset(&encode_config, 0, sizeof(encode_config));
-                encode_config.color_space = nvimgcodec_to_nvjpeg2k_color_spec(image_info.color_spec);
+                if (num_components == 1)
+                    encode_config.color_space = NVJPEG2K_COLORSPACE_GRAY;
+                else
+                    encode_config.color_space = nvimgcodec_to_nvjpeg2k_color_spec(image_info.color_spec);
+
                 encode_config.image_width = width;
                 encode_config.image_height = height;
                 encode_config.num_components = num_components; // planar
@@ -452,7 +455,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
 #else
                 encode_config.enable_custom_precincts = 0;
 #endif
-                fill_encode_config(&encode_config, params);
+                fill_encode_config(&encode_config, params, height, width);
 
                 XM_CHECK_NVJPEG2K(nvjpeg2kEncodeParamsSetEncodeConfig(encode_params.get(), &encode_config));
                 if (encode_config.irreversible) {
