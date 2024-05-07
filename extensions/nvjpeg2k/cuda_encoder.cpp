@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#define NOMINMAX
 #include "cuda_encoder.h"
 #include <nvjpeg2k.h>
 #include <nvjpeg2k_version.h>
