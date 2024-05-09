@@ -37,6 +37,7 @@ Fixed Issues
 * Fix encoding single channel images https://github.com/NVIDIA/nvImageCodec/issues/6
 * Fix for passing cuda stream to `__dlpack__` function as a keyword only argument
 * Fix missing synchronization with user cuda stream before decoding
+* Fix shape returns wrong value for host Images
 * Patch libtiff for CVE-2023-52356
 * Patch libtiff for CVE-2023-6277
 * Patch libtiff for CVE-2023-6228
