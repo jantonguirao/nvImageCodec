@@ -71,7 +71,7 @@ void Image::initHostBuffer(nvimgcodecImageInfo_t* image_info)
 {
     unsigned char* buffer;
     CHECK_CUDA(cudaMallocHost((void**)&buffer, image_info->buffer_size));
-    img_host_buffer_ = std::shared_ptr<unsigned char>(buffer, [](unsigned char* buffer) { cudaFreeHost(buffer); });
+    img_buffer_ = std::shared_ptr<unsigned char>(buffer, [](unsigned char* buffer) { cudaFreeHost(buffer); });
     image_info->buffer = buffer;
 }
 

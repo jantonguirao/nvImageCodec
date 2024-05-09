@@ -73,7 +73,6 @@ class Image
     void initHostBuffer(nvimgcodecImageInfo_t* image_info);
 
     nvimgcodecInstance_t instance_;
-    std::shared_ptr<unsigned char> img_host_buffer_;
     std::shared_ptr<unsigned char> img_buffer_;
     std::shared_ptr<std::remove_pointer<nvimgcodecImage_t>::type> image_;
     py::dict array_interface_;
