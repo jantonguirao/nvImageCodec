@@ -48,7 +48,8 @@ class Image
     py::dict array_interface() const;
     py::dict cuda_interface() const;
 
-    py::object shape() const;
+    py::tuple shape() const;
+    py::tuple strides() const;
     py::object dtype() const;
     int precision() const;
 
@@ -63,9 +64,8 @@ class Image
 
   private:
     void initImageInfoFromInterfaceDict(const py::dict& d, nvimgcodecImageInfo_t* image_info);
-    void initInterfaceDictFromImageInfo(const nvimgcodecImageInfo_t& image_info, py::dict* d);
-    void initArrayInterface(const nvimgcodecImageInfo_t& image_info);
-    void initCudaArrayInterface(const nvimgcodecImageInfo_t& image_info);
+    void initInterfaceDictFromImageInfo(py::dict* d) const;
+
     void initCudaEventForDLPack();
     void initDLPack(nvimgcodecImageInfo_t* image_info, py::capsule cap);
     void initBuffer(nvimgcodecImageInfo_t* image_info);
@@ -75,8 +75,6 @@ class Image
     nvimgcodecInstance_t instance_;
     std::shared_ptr<unsigned char> img_buffer_;
     std::shared_ptr<std::remove_pointer<nvimgcodecImage_t>::type> image_;
-    py::dict array_interface_;
-    py::dict cuda_array_interface_;
     std::shared_ptr<DLPackTensor> dlpack_tensor_;
     std::shared_ptr<std::remove_pointer<cudaEvent_t>::type> dlpack_cuda_event_;
 };
