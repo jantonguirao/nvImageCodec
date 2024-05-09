@@ -310,7 +310,6 @@ static nvjpeg2kColorSpace_t nvimgcodec_to_nvjpeg2k_color_spec(nvimgcodecColorSpe
 }
 
 static nvjpeg2kImageType_t to_nvjpeg2k_sample_type(nvimgcodecSampleDataType_t sample_type) {
-    nvjpeg2kImageType_t nvjpeg2k_sample_type;
     switch (sample_type) {
     case NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8:
         return NVJPEG2K_UINT8;
@@ -356,9 +355,7 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                     encode_params_, &nvjpeg2kEncodeParamsDestroy);
 
                 auto sample_type = image_info.plane_info[0].sample_type;
-                size_t bytes_per_sample = sample_type_to_bytes_per_element(sample_type);
                 nvjpeg2kImageType_t nvjpeg2k_sample_type = to_nvjpeg2k_sample_type(sample_type);
-                bool interleaved = image_info.sample_format == NVIMGCODEC_SAMPLEFORMAT_I_RGB;
                 size_t num_components = std::max(image_info.num_planes, image_info.plane_info[0].num_channels);
                 std::vector<nvjpeg2kImageComponentInfo_t> image_comp_info(num_components);
 
@@ -397,10 +394,10 @@ nvimgcodecStatus_t NvJpeg2kEncoderPlugin::Encoder::encode(int sample_idx)
                 encode_config.image_height = height;
                 encode_config.num_components = num_components;
                 encode_config.image_comp_info = image_comp_info.data();
-                if (num_components == 1)
-                    encode_config.mct_mode = 0;
-                else
-                    encode_config.mct_mode = 1;
+                encode_config.mct_mode = ((out_image_info.color_spec == NVIMGCODEC_COLORSPEC_SYCC) ||
+                                             (out_image_info.color_spec == NVIMGCODEC_COLORSPEC_GRAY)) &&
+                                         (image_info.color_spec != NVIMGCODEC_COLORSPEC_SYCC) &&
+                                         (image_info.color_spec != NVIMGCODEC_COLORSPEC_GRAY);
 
                 //Defaults
                 encode_config.stream_type = NVJPEG2K_STREAM_JP2; // the bitstream will be in JP2 container format
