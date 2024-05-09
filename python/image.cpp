@@ -212,7 +212,7 @@ Image::Image(nvimgcodecInstance_t instance, PyObject* o, intptr_t cuda_stream)
             }
         }
         py::object py_cuda_stream = cuda_stream ? py::int_((intptr_t)(cuda_stream)) : py::int_(1);
-        py::capsule cap = tmp.attr("__dlpack__")(py_cuda_stream).cast<py::capsule>();
+        py::capsule cap = tmp.attr("__dlpack__")("stream"_a = py_cuda_stream).cast<py::capsule>();
         initDLPack(&image_info, cap);
     } else {
         throw std::runtime_error("Object does not support neither __cuda_array_interface__ nor __dlpack__");
