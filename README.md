@@ -87,6 +87,7 @@ This section describes the recommended dependencies to use nvImageCodec.
       - Ubuntu 20.04, 22.04
 - NVIDIA driver >= 520.56.06
 - CUDA Toolkit > = 11.8
+- nvJPEG2000 >= 0.8.0
 - Python >= 3.8
 
 ## Install nvImageCodec library
@@ -127,6 +128,22 @@ Install nvJPEG for CUDA 12.x
 pip install nvidia-nvjpeg-cu12
 ```
 
+### Optional installation of nvJPEG2000 library
+
+[nvJPEG2000 library](https://developer.nvidia.com/nvjpeg2000-downloads) can be installed in the system, or installed as a Python package. For the latter, follow the instructions below.
+
+Install nvJPEG2000 for CUDA 11.x
+
+```
+pip install nvidia-nvjpeg2k-cu11
+```
+
+Install nvJPEG2000 for CUDA 12.x
+
+```
+pip install nvidia-nvjpeg2k-cu12
+```
+
 ### Documentation
 
 [NVIDIA nvImageCodec Documentation](https://docs.nvidia.com/cuda/nvimagecodec/)
@@ -138,7 +155,7 @@ pip install nvidia-nvjpeg-cu12
 - cmake >= 3.18
 - patchelf >= 0.17.2
 - Dependencies for extensions. If you would not like to build particular extension you can skip it.
-  - nvJPEG2000 >= 0.7.0
+  - nvJPEG2000 >= 0.8.0
   - libjpeg-turbo >= 2.0.0
   - libtiff >= 4.5.0
   - opencv >= 4.7.0
