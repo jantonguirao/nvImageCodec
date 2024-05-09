@@ -37,9 +37,6 @@ Image::Image(nvimgcodecInstance_t instance, nvimgcodecImageInfo_t* image_info)
     image_ = std::shared_ptr<std::remove_pointer<nvimgcodecImage_t>::type>(
         image, [](nvimgcodecImage_t image) { nvimgcodecImageDestroy(image); });
     dlpack_tensor_ = std::make_shared<DLPackTensor>(*image_info, img_buffer_);
-    if (image_info->buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
-        initCudaEventForDLPack();
-    }
 }
 
 void Image::initBuffer(nvimgcodecImageInfo_t* image_info)
@@ -72,7 +69,7 @@ void Image::initHostBuffer(nvimgcodecImageInfo_t* image_info)
     image_info->buffer = buffer;
 }
 
-void Image::initDLPack(nvimgcodecImageInfo_t* image_info, py::capsule cap)
+void Image::initImageInfoFromDLPack(nvimgcodecImageInfo_t* image_info, py::capsule cap)
 {
     if (auto* tensor = static_cast<DLManagedTensor*>(cap.get_pointer())) {
         check_cuda_buffer(tensor->dl_tensor.data);
@@ -158,7 +155,7 @@ Image::Image(nvimgcodecInstance_t instance, PyObject* o, intptr_t cuda_stream)
     image_info.cuda_stream = reinterpret_cast<cudaStream_t>(cuda_stream);
     if (py::isinstance<py::capsule>(tmp)) {
         py::capsule cap = tmp.cast<py::capsule>();
-        initDLPack(&image_info, cap);
+        initImageInfoFromDLPack(&image_info, cap);
     } else if (hasattr(tmp, "__cuda_array_interface__")) {
         py::dict iface = tmp.attr("__cuda_array_interface__").cast<py::dict>();
 
@@ -210,7 +207,7 @@ Image::Image(nvimgcodecInstance_t instance, PyObject* o, intptr_t cuda_stream)
         }
         py::object py_cuda_stream = cuda_stream ? py::int_((intptr_t)(cuda_stream)) : py::int_(1);
         py::capsule cap = tmp.attr("__dlpack__")("stream"_a = py_cuda_stream).cast<py::capsule>();
-        initDLPack(&image_info, cap);
+        initImageInfoFromDLPack(&image_info, cap);
     } else {
         throw std::runtime_error("Object does not support neither __cuda_array_interface__ nor __dlpack__");
     }
@@ -218,9 +215,6 @@ Image::Image(nvimgcodecInstance_t instance, PyObject* o, intptr_t cuda_stream)
     CHECK_NVIMGCODEC(nvimgcodecImageCreate(instance, &image, &image_info));
     image_ = std::shared_ptr<std::remove_pointer<nvimgcodecImage_t>::type>(
         image, [](nvimgcodecImage_t image) { nvimgcodecImageDestroy(image); });
-    if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
-        initCudaEventForDLPack();
-    }
 }
 
 void Image::initInterfaceDictFromImageInfo(py::dict* d) const
@@ -236,15 +230,6 @@ void Image::initInterfaceDictFromImageInfo(py::dict* d) const
     (*d)["typestr"] = format;
     (*d)["data"] = py::make_tuple(py::reinterpret_borrow<py::object>(PyLong_FromVoidPtr(image_info.buffer)), false);
     (*d)["version"] = 3;
-}
-
-void Image::initCudaEventForDLPack()
-{
-    if (!dlpack_cuda_event_) {
-        cudaEvent_t event;
-        CHECK_CUDA(cudaEventCreate(&event));
-        dlpack_cuda_event_ = std::shared_ptr<std::remove_pointer<cudaEvent_t>::type>(event, [](cudaEvent_t e) { cudaEventDestroy(e); });
-    }
 }
 
 int Image::getWidth() const
@@ -346,27 +331,17 @@ nvimgcodecImage_t Image::getNvImgCdcsImage() const
 
 py::capsule Image::dlpack(py::object stream_obj) const
 {
-    py::capsule cap = dlpack_tensor_->getPyCapsule();
+    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
+    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    std::optional<intptr_t> stream = stream_obj.cast<std::optional<intptr_t>>();
+    intptr_t consumer_stream = stream.has_value() ? *stream : 0;
+
+    py::capsule cap = dlpack_tensor_->getPyCapsule(consumer_stream, image_info.cuda_stream);
     if (std::string(cap.name()) != "dltensor") {
         throw std::runtime_error(
             "Could not get DLTensor capsules. It can be consumed only once, so you might have already constructed a tensor from it once.");
     }
 
-    nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
-
-    // Add synchronisation
-    std::optional<intptr_t> stream = stream_obj.cast<std::optional<intptr_t>>();
-    intptr_t stream_value = stream.has_value() ? *stream : 0;
-    static constexpr intptr_t kDoNotSync = -1; // if provided stream is -1, no stream order should be established;
-    if (stream_value != kDoNotSync) {
-        // the consumer stream should wait for the work on Image stream
-        auto consumer_stream = reinterpret_cast<cudaStream_t>(stream_value);
-        if (consumer_stream != image_info.cuda_stream) {
-            CHECK_CUDA(cudaEventRecord(dlpack_cuda_event_.get(), image_info.cuda_stream));
-            CHECK_CUDA(cudaStreamWaitEvent(consumer_stream, dlpack_cuda_event_.get()));
-        }
-    }
     return cap;
 }
 
