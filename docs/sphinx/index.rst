@@ -93,6 +93,7 @@ Additionally as a fallback there are following 3rd party codec extensions:
    :maxdepth: 1
    :hidden:
 
+   0.3.0-beta.2 <release_notes_v0.3.0>
    0.2.0-beta.1 <release_notes_v0.2.0>
    0.1.0-alpha.2 <release_notes_v0.1.0-alpha.2>
    0.1.0-alpha.1 <release_notes_v0.1.0-alpha.1>  
