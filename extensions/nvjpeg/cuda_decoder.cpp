@@ -397,7 +397,9 @@ void Decoder::decodeImpl(BatchItemCtx& batch_item, PerThreadResources& t)
         XM_CHECK_NVJPEG(nvjpegDecodeParamsCreate(handle_, &nvjpeg_params_));
         std::unique_ptr<std::remove_pointer<nvjpegDecodeParams_t>::type, decltype(&nvjpegDecodeParamsDestroy)> nvjpeg_params(
             nvjpeg_params_, &nvjpegDecodeParamsDestroy);
-        nvjpegOutputFormat_t nvjpeg_format = nvimgcodec_to_nvjpeg_format(image_info.sample_format);
+        int num_channels = std::max(image_info.num_planes, image_info.plane_info[0].num_channels);
+        auto sample_format = num_channels == 1 ? NVIMGCODEC_SAMPLEFORMAT_P_Y : image_info.sample_format;
+        nvjpegOutputFormat_t nvjpeg_format = nvimgcodec_to_nvjpeg_format(sample_format);
         XM_CHECK_NVJPEG(nvjpegDecodeParamsSetOutputFormat(nvjpeg_params.get(), nvjpeg_format));
         int allow_cmyk = (image_info.color_spec != NVIMGCODEC_COLORSPEC_UNCHANGED) &&
                          (image_info.color_spec != NVIMGCODEC_COLORSPEC_CMYK) && ((image_info.color_spec != NVIMGCODEC_COLORSPEC_YCCK));
