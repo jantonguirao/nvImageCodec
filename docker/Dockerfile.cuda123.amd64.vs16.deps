@@ -61,11 +61,11 @@ RUN setx CUDA_PATH "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.3"
 #    nvjpeg2k_installer.exe && `
 #    del /q  nvjpeg2k_installer.exe
 
-RUN curl -SL --output nvjpeg2k_installer.zip https://developer.download.nvidia.com/compute/nvjpeg2000/redist/libnvjpeg_2k/windows-x86_64/libnvjpeg_2k-windows-x86_64-0.7.5.32-archive.zip
+RUN curl -SL --output nvjpeg2k_installer.zip https://developer.download.nvidia.com/compute/nvjpeg2000/redist/libnvjpeg_2k/windows-x86_64/libnvjpeg_2k-windows-x86_64-0.8.0.38-archive.zip
 
 RUN tar -xf  nvjpeg2k_installer.zip 
-RUN move ".\libnvjpeg_2k-windows-x86_64-0.7.5.32-archive" "c:\"
-RUN setx path "%path%;c:\libnvjpeg_2k-windows-x86_64-0.7.5.32-archive"
+RUN move ".\libnvjpeg_2k-windows-x86_64-0.8.0.38-archive" "c:\"
+RUN setx path "%path%;c:\libnvjpeg_2k-windows-x86_64-0.8.0.38-archive"
 RUN del /q  nvjpeg2k_installer.zip
 
 # The LLVM installer

@@ -25,8 +25,8 @@ echo "%SOURCE_DIR%"
 
 set PATH=%PATH%;%SOURCE_DIR%\install\include;%SOURCE_DIR%\install\lib;%SOURCE_DIR%\install\x64\vc16\staticlib
 
-cmake -DNVJPEG2K_LIBRARY=c:\libnvjpeg_2k-windows-x86_64-0.7.5.32-archive\lib\11\nvjpeg2k.lib ^
- -DNVJPEG2K_INCLUDE=c:\libnvjpeg_2k-windows-x86_64-0.7.5.32-archive\include ^
+cmake -DNVJPEG2K_LIBRARY=c:\libnvjpeg_2k-windows-x86_64-0.8.0.38-archive\lib\11\nvjpeg2k.lib ^
+ -DNVJPEG2K_INCLUDE=c:\libnvjpeg_2k-windows-x86_64-0.8.0.38-archive\include ^
  -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ^
  -S %SOURCE_DIR% ^
  -B %BUILD_DIR% ^
