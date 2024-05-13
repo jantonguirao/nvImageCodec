@@ -107,6 +107,9 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
 
 if(WIN32)
     set(CPACK_GENERATOR "ZIP")
+    if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+        set(CMAKE_INSTALL_PREFIX "C:\\Program Files\\nvimgcodec_cuda${CUDA_VERSION_MAJOR}" CACHE PATH "where nvImageCodec will be installed" FORCE)
+    endif()
 else()
     set(CPACK_GENERATOR "TGZ;DEB")
 
