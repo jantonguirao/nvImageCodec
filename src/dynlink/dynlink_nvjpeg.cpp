@@ -33,7 +33,7 @@ namespace {
   };
 #elif defined(_WIN32) || defined(_WIN64)
   static const char* __NvjpegLibNames[] = {
-    "nvjpeg64_" STR(CUDA_VERSION_MAJOR) ".dll"
+    "nvjpeg64_" STR(CUDA_VERSION_MAJOR) ".dll",
     "nvjpeg.dll"
   };
 #endif
