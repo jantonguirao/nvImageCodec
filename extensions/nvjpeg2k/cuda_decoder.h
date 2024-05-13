@@ -112,6 +112,8 @@ class NvJpeg2kDecoderPlugin
         const nvimgcodecFrameworkDesc_t* framework_;
         const nvimgcodecExecutionParams_t* exec_params_;
         int num_parallel_tiles_;
+        std::optional<size_t> device_mem_padding_;
+        std::optional<size_t> pinned_mem_padding_;
 
         std::vector<PerThreadResources> per_thread_;
         PerTileResourcesPool per_tile_res_;

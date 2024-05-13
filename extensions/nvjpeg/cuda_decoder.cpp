@@ -194,6 +194,16 @@ void Decoder::parseOptions(const char* options)
         std::istringstream value(value_str);
         if (option == "hybrid_huffman_threshold") {
             value >> gpu_hybrid_huffman_threshold_;
+        } else if (option == "device_memory_padding") {
+            size_t padding_value = 0;
+            value >> padding_value;
+            device_mem_padding_ = padding_value;
+        } else if (option == "host_memory_padding") {
+            size_t padding_value = 0;
+            value >> padding_value;
+            pinned_mem_padding_ = padding_value;
+        } else if (option == "preallocate_buffers") {
+            value >> preallocate_buffers_;
         }
     }
 }
@@ -206,6 +216,13 @@ Decoder::Decoder(
     , framework_(framework)
     , exec_params_(exec_params)
 {
+    parseOptions(options);
+
+    if (!device_mem_padding_.has_value() && exec_params_->device_allocator && exec_params_->device_allocator->device_mem_padding != 0)
+        device_mem_padding_ = exec_params_->device_allocator->device_mem_padding;
+    if (!pinned_mem_padding_.has_value() && exec_params_->device_allocator && exec_params_->pinned_allocator->pinned_mem_padding != 0)
+        pinned_mem_padding_ = exec_params_->pinned_allocator->pinned_mem_padding;
+
     bool use_nvjpeg_create_ex_v2 = false;
     if (nvjpegIsSymbolAvailable("nvjpegCreateExV2")) {
         if (exec_params_->device_allocator && exec_params_->device_allocator->device_malloc &&
@@ -213,8 +230,8 @@ Decoder::Decoder(
             device_allocator_.dev_ctx = exec_params_->device_allocator->device_ctx;
             device_allocator_.dev_malloc = exec_params_->device_allocator->device_malloc;
             device_allocator_.dev_free = exec_params_->device_allocator->device_free;
-            if (exec_params_->device_allocator->device_mem_padding > 0)
-                device_mem_padding_ = exec_params_->device_allocator->device_mem_padding;
+        } else {
+            device_mem_padding_ = 0;
         }
 
         if (exec_params_->pinned_allocator && exec_params_->pinned_allocator->pinned_malloc &&
@@ -222,15 +239,15 @@ Decoder::Decoder(
             pinned_allocator_.pinned_ctx = exec_params_->pinned_allocator->pinned_ctx;
             pinned_allocator_.pinned_malloc = exec_params_->pinned_allocator->pinned_malloc;
             pinned_allocator_.pinned_free = exec_params_->pinned_allocator->pinned_free;
-            if (exec_params_->pinned_allocator->pinned_mem_padding > 0)
-                pinned_mem_padding_ = exec_params_->pinned_allocator->pinned_mem_padding;
+        } else {
+            device_mem_padding_ = 0;
         }
         use_nvjpeg_create_ex_v2 =
             device_allocator_.dev_malloc && device_allocator_.dev_free && pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free;
     }
 
     unsigned int nvjpeg_flags = get_nvjpeg_flags("nvjpeg_cuda_decoder", options);
-    parseOptions(options);
+
 
     if (use_nvjpeg_create_ex_v2) {
         XM_CHECK_NVJPEG(nvjpegCreateExV2(NVJPEG_BACKEND_DEFAULT, &device_allocator_, &pinned_allocator_, nvjpeg_flags, &handle_));
@@ -238,11 +255,11 @@ Decoder::Decoder(
         XM_CHECK_NVJPEG(nvjpegCreateEx(NVJPEG_BACKEND_DEFAULT, nullptr, nullptr, nvjpeg_flags, &handle_));
     }
 
-    if (exec_params_->device_allocator && (exec_params_->device_allocator->device_mem_padding != 0)) {
-        XM_CHECK_NVJPEG(nvjpegSetDeviceMemoryPadding(exec_params_->device_allocator->device_mem_padding, handle_));
+    if (device_mem_padding_.has_value() && device_mem_padding_.value() > 0) {
+        XM_CHECK_NVJPEG(nvjpegSetDeviceMemoryPadding(device_mem_padding_.value(), handle_));
     }
-    if (exec_params_->pinned_allocator && (exec_params_->pinned_allocator->pinned_mem_padding != 0)) {
-        XM_CHECK_NVJPEG(nvjpegSetPinnedMemoryPadding(exec_params_->pinned_allocator->pinned_mem_padding, handle_));
+    if (pinned_mem_padding_.has_value() && pinned_mem_padding_.value() > 0) {
+        XM_CHECK_NVJPEG(nvjpegSetPinnedMemoryPadding(pinned_mem_padding_.value(), handle_));
     }
 
     auto executor = exec_params_->executor;
@@ -268,10 +285,15 @@ Decoder::Decoder(
             if (pinned_allocator_.pinned_malloc && pinned_allocator_.pinned_free) {
                 XM_CHECK_NVJPEG(nvjpegBufferPinnedCreateV2(handle_, &pinned_allocator_, &p.pinned_buffer_));
 #if NVJPEG_BUFFER_RESIZE_API
-                if (pinned_mem_padding_ > 0 && nvjpegIsSymbolAvailable("nvjpegBufferPinnedResize")) {
-                    NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_,
-                        "Preallocating pinned buffer (thread#" << i << " page#" << page_idx << ") size=" << pinned_mem_padding_);
-                    XM_CHECK_NVJPEG(nvjpegBufferPinnedResize(p.pinned_buffer_, pinned_mem_padding_, res.stream_));
+                if (preallocate_buffers_ && pinned_mem_padding_ > 0) {
+                    if (nvjpegIsSymbolAvailable("nvjpegBufferPinnedResize")) {
+                        NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_,
+                            "Preallocating pinned buffer (thread#" << i << " page#" << page_idx
+                                                                   << ") size=" << pinned_mem_padding_.value());
+                        XM_CHECK_NVJPEG(nvjpegBufferPinnedResize(p.pinned_buffer_, pinned_mem_padding_.value(), res.stream_));
+                    } else {
+                        NVIMGCODEC_LOG_WARNING(framework_, plugin_id_, "nvjpegBufferPinnedResize not available. Skip preallocation");
+                    }
                 }
 #endif
             } else {
@@ -282,10 +304,15 @@ Decoder::Decoder(
         if (device_allocator_.dev_malloc && device_allocator_.dev_free) {
             XM_CHECK_NVJPEG(nvjpegBufferDeviceCreateV2(handle_, &device_allocator_, &res.device_buffer_));
 #if NVJPEG_BUFFER_RESIZE_API
-        if (pinned_mem_padding_ > 0 && nvjpegIsSymbolAvailable("nvjpegBufferDeviceResize")) {
-            NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_, "Preallocating device buffer (thread#" << i << ") size=" << device_mem_padding_);
-            XM_CHECK_NVJPEG(nvjpegBufferDeviceResize(res.device_buffer_, device_mem_padding_, res.stream_));
-        }
+            if (preallocate_buffers_ && pinned_mem_padding_ > 0) {
+                if (nvjpegIsSymbolAvailable("nvjpegBufferDeviceResize")) {
+                    NVIMGCODEC_LOG_DEBUG(
+                        framework_, plugin_id_, "Preallocating device buffer (thread#" << i << ") size=" << device_mem_padding_.value());
+                    XM_CHECK_NVJPEG(nvjpegBufferDeviceResize(res.device_buffer_, device_mem_padding_.value(), res.stream_));
+                } else {
+                    NVIMGCODEC_LOG_WARNING(framework_, plugin_id_, "nvjpegBufferDeviceResize not available. Skip preallocation");
+                }
+            }
 #endif
         } else {
             XM_CHECK_NVJPEG(nvjpegBufferDeviceCreate(handle_, nullptr, &res.device_buffer_));

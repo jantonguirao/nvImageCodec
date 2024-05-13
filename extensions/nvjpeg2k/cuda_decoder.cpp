@@ -23,11 +23,11 @@
 #include <future>
 #include <iostream>
 #include <memory>
+#include <nvtx3/nvtx3.hpp>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <vector>
-
-#include <nvtx3/nvtx3.hpp>
 #include "log.h"
 
 #include "cuda_decoder.h"
@@ -180,6 +180,14 @@ void NvJpeg2kDecoderPlugin::Decoder::parseOptions(const char* options)
         std::istringstream value(value_str);
         if (option == "num_parallel_tiles") {
             value >> num_parallel_tiles_;
+        } else if (option == "device_memory_padding") {
+            size_t padding_value = 0;
+            value >> padding_value;
+            device_mem_padding_ = padding_value;
+        } else if (option == "host_memory_padding") {
+            size_t padding_value = 0;
+            value >> padding_value;
+            pinned_mem_padding_ = padding_value;
         }
     }
 }
@@ -212,11 +220,16 @@ NvJpeg2kDecoderPlugin::Decoder::Decoder(
         XM_CHECK_NVJPEG2K(nvjpeg2kCreateSimple(&handle_));
     }
 
-    if (exec_params_->device_allocator && (exec_params_->device_allocator->device_mem_padding != 0)) {
-        XM_CHECK_NVJPEG2K(nvjpeg2kSetDeviceMemoryPadding(exec_params_->device_allocator->device_mem_padding, handle_));
+    if (!device_mem_padding_.has_value() && exec_params_->device_allocator && exec_params_->device_allocator->device_mem_padding != 0)
+        device_mem_padding_ = exec_params_->device_allocator->device_mem_padding;
+    if (!pinned_mem_padding_.has_value() && exec_params_->device_allocator && exec_params_->pinned_allocator->pinned_mem_padding != 0)
+        pinned_mem_padding_ = exec_params_->pinned_allocator->pinned_mem_padding;
+
+    if (device_mem_padding_.has_value() && device_mem_padding_.value() > 0) {
+        XM_CHECK_NVJPEG2K(nvjpeg2kSetDeviceMemoryPadding(device_mem_padding_.value(), handle_));
     }
-    if (exec_params_->pinned_allocator && (exec_params_->pinned_allocator->pinned_mem_padding != 0)) {
-        XM_CHECK_NVJPEG2K(nvjpeg2kSetPinnedMemoryPadding(exec_params_->pinned_allocator->pinned_mem_padding, handle_));
+    if (pinned_mem_padding_.has_value() && pinned_mem_padding_.value() > 0) {
+        XM_CHECK_NVJPEG2K(nvjpeg2kSetPinnedMemoryPadding(pinned_mem_padding_.value(), handle_));
     }
 
     int device_id = exec_params_->device_id;

@@ -93,15 +93,15 @@ struct Decoder
     const char* plugin_id_;
     nvjpegHandle_t handle_;
     nvjpegDevAllocatorV2_t device_allocator_;
-    size_t device_mem_padding_ = 0;
     nvjpegPinnedAllocatorV2_t pinned_allocator_;
-    size_t pinned_mem_padding_ = 0;
     const nvimgcodecFrameworkDesc_t* framework_;
     std::vector<PerThreadResources> per_thread_;
 
     const nvimgcodecExecutionParams_t* exec_params_;
     size_t gpu_hybrid_huffman_threshold_ = DEFAULT_GPU_HYBRID_HUFFMAN_THRESHOLD;
-
+    bool preallocate_buffers_ = true;
+    std::optional<size_t> device_mem_padding_;
+    std::optional<size_t> pinned_mem_padding_;
     CodeStreamCtxManager code_stream_mgr_;
 };
 
