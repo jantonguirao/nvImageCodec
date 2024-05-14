@@ -24,7 +24,7 @@ pushd build_dir
 
 cmake -DCMAKE_BUILD_TYPE=Release ^
       -DCMAKE_INSTALL_PREFIX=%INSTALL_PREFIX% ^
-      -DBUILD_SHARED_LIBS=ON ^
+      -DBUILD_SHARED_LIBS=OFF ^
       -Djbig=OFF ^
       -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL ^
       -G %GENERATOR% ^
