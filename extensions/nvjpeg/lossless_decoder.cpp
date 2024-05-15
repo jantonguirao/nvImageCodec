@@ -251,8 +251,8 @@ nvimgcodecStatus_t NvJpegLosslessDecoderPlugin::create(
         return NVIMGCODEC_STATUS_SUCCESS;
     } catch (const NvJpegException& e) {
         if (e.nvimgcodecStatus() == NVIMGCODEC_STATUS_EXTENSION_INVALID_PARAMETER) {
-            // invalid parameter, probably NVJPEG_BACKEND_LOSSLESS_JPEG not available, only warning message
-            NVIMGCODEC_LOG_WARNING(framework_, plugin_id_, "Could not create nvjpeg lossless decoder: " << e.info());
+            // invalid parameter, probably NVJPEG_BACKEND_LOSSLESS_JPEG not available, only info message
+            NVIMGCODEC_LOG_INFO(framework_, plugin_id_, "Could not create nvjpeg lossless decoder: " << e.info());
         } else {
             // unexpected error
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg lossless decoder: " << e.info());
