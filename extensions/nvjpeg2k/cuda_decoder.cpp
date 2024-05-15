@@ -463,7 +463,7 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected number of channels");
             image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
             return;
-        } else if (native_interleaved && image_info.plane_info[0].num_channels != 3) {
+        } else if (native_interleaved && image_info.plane_info[0].num_channels != num_components) {
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected number of channels");
             image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
             return;
