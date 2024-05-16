@@ -12,6 +12,7 @@
       "nvjpeg2kDecodeParamsCreate": {},
       "nvjpeg2kDecodeParamsDestroy": {},
       "nvjpeg2kDecodeParamsSetDecodeArea": {},
+      "nvjpeg2kDecodeParamsSetOutputFormat": {},
       "nvjpeg2kDecodeParamsSetRGBOutput": {},
       "nvjpeg2kDecodeStateCreate": {},
       "nvjpeg2kDecodeStateDestroy": {},

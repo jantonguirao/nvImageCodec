@@ -262,3 +262,18 @@ def test_encode_with_as_images_from_cuda_array_interface(input_images_batch):
 
     compare_host_images(test_decoded_images, ref_images)
 
+
+def test_encode_jpeg_gray():
+    img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../resources"))
+    fname = os.path.join(img_dir_path, 'bmp/cat-111793_640_grayscale.bmp')
+    decoder = nvimgcodec.Decoder()
+    params1 = nvimgcodec.DecodeParams(color_spec=nvimgcodec.ColorSpec.GRAY, allow_any_depth=True)
+    arr = np.array(decoder.read(fname, params=params1).cpu())
+    assert arr.shape[-1] == 1
+    encoder = nvimgcodec.Encoder()
+    arr2 = encoder.encode(arr, codec="jpeg")
+    params3 = nvimgcodec.DecodeParams(color_spec=nvimgcodec.ColorSpec.UNCHANGED)
+    arr3 = np.array(decoder.decode(arr2, params=params3).cpu())
+    assert arr3.shape == arr.shape, f"{arr3.shape} != {arr.shape}"
+    ref = np.expand_dims(np.array(cv2.imdecode(np.asarray(bytearray(arr2)), cv2.IMREAD_GRAYSCALE)), -1)
+    np.testing.assert_allclose(ref, arr3, atol=1)

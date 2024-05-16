@@ -130,22 +130,89 @@ def test_decode_single_image_common(tmp_path, input_img_file, input_format, back
 def test_decode_single_image_cuda12_only(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads):
     decode_single_image_test(tmp_path, input_img_file, input_format, backends, max_num_cpu_threads)
 
+def get_opencv_reference(input_img_path, color_spec, any_depth=False):
+    flags = None
+    if color_spec == nvimgcodec.ColorSpec.RGB:
+        flags = cv2.IMREAD_COLOR
+    elif color_spec == nvimgcodec.ColorSpec.UNCHANGED:
+        # UNCHANGED actually implies ANYDEPTH and we don't want that
+        # we only want 'UNCHANGED' behavior to get the alpha channel, so limiting to that case
+        if any_depth or 'alpha' in input_img_path:
+            flags = cv2.IMREAD_UNCHANGED
+        elif 'gray' in input_img_path:
+            # We want grayscale samples to be decoded to grayscale when "unchanged"
+            flags = cv2.IMREAD_GRAYSCALE
+        else:
+            flags = cv2.IMREAD_COLOR
+    elif color_spec == nvimgcodec.ColorSpec.GRAY:
+        flags = cv2.IMREAD_GRAYSCALE
+    if any_depth:
+        flags = flags | cv2.IMREAD_ANYDEPTH
+    ref_img = cv2.imread(input_img_path, flags)
+
+    has_alpha = len(ref_img.shape) == 3 and ref_img.shape[-1] == 4
+    if has_alpha:
+        ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGRA2RGBA)
+    elif len(ref_img.shape) == 3 and ref_img.shape[-1] == 3:
+        ref_img = cv2.cvtColor(ref_img, cv2.COLOR_BGR2RGB)
+    elif len(ref_img.shape) == 2:
+        ref_img = ref_img.reshape(ref_img.__array_interface__['shape'][0:2] + (1,))
+    return ref_img
 
 @t.mark.parametrize(
     "input_img_file",
-    ["jpeg2k/tiled-cat-1046544_640_gray.jp2",])
-def test_decode_single_image_unchanged(input_img_file):
+    ["jpeg/padlock-406986_640_410.jpg",
+    "jpeg/padlock-406986_640_411.jpg",
+    "jpeg/padlock-406986_640_420.jpg",
+    "jpeg/padlock-406986_640_422.jpg",
+    "jpeg/padlock-406986_640_440.jpg",
+    "jpeg/padlock-406986_640_444.jpg",
+    "jpeg/padlock-406986_640_gray.jpg",
+    "jpeg/progressive-subsampled-imagenet-n02089973_1957.jpg",
+    "jpeg/exif/padlock-406986_640_horizontal.jpg",
+    "jpeg/exif/padlock-406986_640_mirror_horizontal_rotate_270.jpg",
+    "jpeg/exif/padlock-406986_640_rotate_90.jpg",
+
+    "jpeg2k/tiled-cat-1046544_640_gray.jp2",
+    "jpeg2k/with_alpha/cat-111793_640-alpha.jp2",
+    "jpeg2k/cat-1046544_640.jp2",
+    "jpeg2k/tiled-cat-1046544_640.jp2",
+    "jpeg2k/cat-111793_640-16bit.jp2",
+    "jpeg2k/cat-1245673_640-12bit.jp2"])
+@t.mark.parametrize(
+    "color_spec",
+    [nvimgcodec.ColorSpec.RGB,
+     nvimgcodec.ColorSpec.UNCHANGED,
+     nvimgcodec.ColorSpec.GRAY])
+def test_decode_color_spec(input_img_file, color_spec):
+    debug = False
     input_img_path = os.path.join(img_dir_path, input_img_file)
     decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
-    test_img = decoder.read(input_img_path, params=nvimgcodec.DecodeParams(
-        color_spec=nvimgcodec.ColorSpec.UNCHANGED, allow_any_depth=True))
-    ref_img = cv2.imread(input_img_path, cv2.IMREAD_UNCHANGED)
-
+    params = nvimgcodec.DecodeParams(
+        color_spec=color_spec, allow_any_depth=False, apply_exif_orientation=True)
+    test_img = decoder.read(input_img_path, params=params)
     test_img = np.asarray(test_img.cpu())
-
-    test_img = test_img.reshape(test_img.__array_interface__['shape'][0:2])
-
+    ref_img = get_opencv_reference(input_img_path, color_spec)
+    if debug:
+        cv2.imwrite("ref.bmp", ref_img)
+        cv2.imwrite("test.bmp", test_img)
+    assert test_img.shape == ref_img.shape, f"{test_img.shape} != {ref_img.shape}"
     compare_host_images([test_img], [ref_img])
+    if color_spec == nvimgcodec.ColorSpec.GRAY:
+        assert test_img.shape[-1] == 1
+    elif color_spec == nvimgcodec.ColorSpec.RGB:
+        assert test_img.shape[-1] == 3
+    else:
+        assert color_spec == nvimgcodec.ColorSpec.UNCHANGED
+        if 'gray' in input_img_file:
+            expected_nchannels = 1
+        elif 'alpha' in input_img_file:
+            expected_nchannels = 4
+        else:
+            expected_nchannels = 3
+        assert expected_nchannels == test_img.shape[-1]
+
+test_decode_color_spec("jpeg2k/cat-1046544_640.jp2", nvimgcodec.ColorSpec.RGB)
 
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
@@ -211,10 +278,12 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
     [("jpeg2k/tiled-cat-1046544_640_gray.jp2", 0),
      ("jpeg2k/cat-111793_640-16bit.jp2", 0),
      ("jpeg2k/cat-1245673_640-12bit.jp2", 12)])
-def test_decode_image_with_precision(input_img_file, precision):
+def test_decode_image_check_precision(input_img_file, precision):
     input_img_path = os.path.join(img_dir_path, input_img_file)
     decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
     test_img = decoder.read(input_img_path, params=nvimgcodec.DecodeParams(
-        color_spec=nvimgcodec.ColorSpec.UNCHANGED, allow_any_depth=True))
-
+        color_spec=nvimgcodec.ColorSpec.UNCHANGED, allow_any_depth=True, apply_exif_orientation=False))
     assert test_img.precision == precision
+    test_img = np.asarray(test_img.cpu())
+    ref_img = get_opencv_reference(input_img_path, nvimgcodec.ColorSpec.UNCHANGED, True)
+    compare_host_images([test_img], [ref_img])
