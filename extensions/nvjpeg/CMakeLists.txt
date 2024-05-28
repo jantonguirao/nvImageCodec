@@ -88,7 +88,7 @@ else()
 endif()
 
 if(UNIX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden -Wl,--exclude-libs,ALL")
   set_target_properties(${NVIMGCODEC_NVJPEG_EXT_LIBRARY_NAME} ${NVIMGCODEC_NVJPEG_EXT_LIBRARY_NAME}_static PROPERTIES
     POSITION_INDEPENDENT_CODE ON
     VERSION ${PROJECT_VERSION}
