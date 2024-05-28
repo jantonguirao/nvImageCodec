@@ -27,7 +27,7 @@ target_link_libraries(${NVIMGCODEC_LIBTIFF_EXT_LIBRARY_NAME} PUBLIC ${TIFF_LIBRA
 target_link_libraries(${NVIMGCODEC_LIBTIFF_EXT_LIBRARY_NAME}_static PUBLIC ${TIFF_LIBRARY} ${TIFF_LIBRARY_DEPS})
 
 if(UNIX)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden -Wl,--exclude-libs,ALL")
   set_target_properties(${NVIMGCODEC_LIBTIFF_EXT_LIBRARY_NAME} ${NVIMGCODEC_LIBTIFF_EXT_LIBRARY_NAME}_static PROPERTIES
     POSITION_INDEPENDENT_CODE ON
     PREFIX ""
