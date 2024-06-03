@@ -34,7 +34,7 @@ namespace {
   };
 #elif defined(_WIN32) || defined(_WIN64)
   static const char* __Nvjpeg2kLibNames[] = {
-    "nvjpeg2k_" STR(NVJPEG2K_VER_MAJOR) ".dll"
+    "nvjpeg2k_" STR(NVJPEG2K_VER_MAJOR) ".dll",
     "nvjpeg2k.dll"
   };
 #endif
