@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-export VERSION=${VERSION:-11}  # Update version when changing anything in the Dockerfiles
+export VERSION=${VERSION:-12}  # Update version when changing anything in the Dockerfiles
 
 SCRIPT_DIR=$(dirname $0)
 source ${SCRIPT_DIR}/config-docker.sh || source ${SCRIPT_DIR}/default-config-docker.sh
