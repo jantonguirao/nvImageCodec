@@ -43,7 +43,6 @@ set(SRCS
 
 include(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_INCLUDES "${CUDAToolkit_INCLUDE_DIRS}")
-set(CMAKE_REQUIRED_LIBRARIES "CUDA::nvjpeg")
 check_cxx_source_compiles(
   "#include <nvjpeg.h>
   int main(){
