@@ -124,6 +124,19 @@ docker buildx build \
     --push \
     .
 
+# Cross-compiling host=x86_64 target=L4T
+if [ "$ARCH" == "x86_64" ]; then
+    export BUILDER_CUDA_TEGRA_122="${REGISTRY_PREFIX}builder-cuda-12.2-cross-tegra-aarch64-linux"
+    docker buildx build \
+        --cache-to type=inline \
+        --cache-from type=registry,ref=${BUILDER_CUDA_TEGRA_122} \
+        -t ${BUILDER_CUDA_TEGRA_122} -t ${BUILDER_CUDA_TEGRA_122}:v${VERSION} \
+        -f docker/Dockerfile.tegra-aarch64-linux.builder \
+        --platform ${PLATFORM} \
+        --push \
+        .
+fi
+
 ####### TEST IMAGES #######
 
 # CUDA 11.3 (minimum supported)

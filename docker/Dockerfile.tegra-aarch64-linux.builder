@@ -1,10 +1,10 @@
-ARG AARCH64_BASE_IMAGE=nvidia/cuda:11.8.0-devel-ubuntu20.04
+ARG AARCH64_BASE_IMAGE=nvidia/cuda:12.2.0-devel-ubuntu20.04
 FROM ${AARCH64_BASE_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-ARG CUDA_CROSS_VERSION=11-8
-ARG CUDA_CROSS_VERSION_DOT=11.8
+ARG CUDA_CROSS_VERSION=12-2
+ARG CUDA_CROSS_VERSION_DOT=12.2
 
 ENV CUDA_CROSS_VERSION=${CUDA_CROSS_VERSION}
 ENV CUDA_CROSS_VERSION_DOT=${CUDA_CROSS_VERSION_DOT}
@@ -115,18 +115,23 @@ WORKDIR /opt/nvimagecodec/${BUILD_DIR}
 # 72 : Volta  - gv11b/Tegra (Jetson AGX Xavier)
 # 87 : Ampere - ga10b,ga10c/Tegra (Jetson AGX Orin)
 
-CMD ARCH=aarch64-linux                      \
-    TEST_BUNDLED_LIBS=NO                    \
-    NVIDIA_BUILD_ID=${NVIDIA_BUILD_ID:-0}   \
-    WHL_PLATFORM_NAME=manylinux2014_aarch64 \
-    BUNDLE_PATH_PREFIX="/usr/aarch64-linux-gnu" \
-    EXTRA_CMAKE_OPTIONS="-DCMAKE_TOOLCHAIN_FILE:STRING=$PWD/../platforms/aarch64-linux/aarch64-linux.toolchain.cmake \
-                        -DCMAKE_COLOR_MAKEFILE=ON                                                      \
-                        -DCMAKE_CUDA_COMPILER=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/bin/nvcc       \
-                        -DCUDA_HOST=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}                          \
-                        -DCUDA_TARGET=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/targets/aarch64-linux  \
-                        -DCMAKE_PREFIX_PATH=/usr/aarch64-linux-gnu/                                    \
-                        -DCUDA_TARGET_ARCHS=72;87 "                                                    \
-    /opt/nvimagecodec/docker/build_helper.sh                    && \
-    rm -rf /opt/nvimagecodec/${DALI_BUILD_DIR}/nvidia*          && \
+ARG NVIDIA_BUILD_ID=0
+ENV NVIDIA_BUILD_ID=${NVIDIA_BUILD_ID}
+
+ENV ARCH=aarch64-linux
+ENV TEST_BUNDLED_LIBS=NO
+ENV WHL_PLATFORM_NAME=manylinux2014_aarch64
+ENV BUNDLE_PATH_PREFIX="/usr/aarch64-linux-gnu"
+ENV EXTRA_CMAKE_OPTIONS="\
+-DCMAKE_TOOLCHAIN_FILE:STRING=../platforms/aarch64-linux/aarch64-linux.toolchain.cmake \
+-DCMAKE_COLOR_MAKEFILE=ON                                                      \
+-DCMAKE_CUDA_COMPILER=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/bin/nvcc       \
+-DCUDA_HOST=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}                          \
+-DCUDA_TARGET=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/targets/aarch64-linux  \
+-DCMAKE_PREFIX_PATH=/usr/aarch64-linux-gnu/                                    \
+-DCUDA_TARGET_ARCHS=72;87"
+
+CMD mkdir -p /opt/nvimagecodec/${BUILD_DIR} && \
+    source /opt/nvimagecodec/docker/build_helper.sh && \
+    rm -rf nvidia* && \
     cp -r /wheelhouse /opt/nvimagecodec/
