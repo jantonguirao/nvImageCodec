@@ -15,9 +15,11 @@ REM limitations under the License.
 
 REM zstandard compression library
 
+set CURRDIR=%cd%
+
 pushd external\zstd
 REM https://github.com/facebook/zstd/issues/3999
-patch -p1 < $CURRDIR/external/patches/zstd-fix-windows-rc-compile.patch
+patch -p1 < %CURRDIR%/external/patches/zstd-fix-windows-rc-compile.patch
 
 mkdir build_dir
 pushd build_dir
