@@ -79,7 +79,7 @@ RUN curl -SL --output python-3.9.6-amd64.exe https://www.python.org/ftp/python/3
     del /q python-3.9.6-amd64.exe
 
 RUN python -m pip install --upgrade pip
-RUN python -m pip install setuptools wheel clang==14.0 libclang==14.0.1
+RUN python -m pip install setuptools wheel clang==14.0 libclang==14.0.1 patch
 
 # Define the entry point for the docker container.
 # This entry point starts the developer command prompt and launches the PowerShell shell.
