@@ -129,7 +129,7 @@ ENV EXTRA_CMAKE_OPTIONS="\
 -DCUDA_HOST=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}                          \
 -DCUDA_TARGET=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/targets/aarch64-linux  \
 -DCMAKE_PREFIX_PATH=/usr/aarch64-linux-gnu/                                    \
--DCUDA_TARGET_ARCHS=72;87"
+-DCUDA_TARGET_ARCHS:STRING=72;87"
 
 CMD mkdir -p /opt/nvimagecodec/${BUILD_DIR} && \
     source /opt/nvimagecodec/docker/build_helper.sh && \
