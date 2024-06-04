@@ -1,9 +1,13 @@
-ARG AARCH64_BASE_IMAGE=nvidia/cuda:11.8.0-devel-ubuntu20.04
+ARG AARCH64_BASE_IMAGE=nvidia/cuda:12.2.0-devel-ubuntu20.04
 FROM ${AARCH64_BASE_IMAGE}
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    CUDA_CROSS_VERSION=11-8 \
-    CUDA_CROSS_VERSION_DOT=11.8
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG CUDA_CROSS_VERSION=12-2
+ARG CUDA_CROSS_VERSION_DOT=12.2
+
+ENV CUDA_CROSS_VERSION=${CUDA_CROSS_VERSION}
+ENV CUDA_CROSS_VERSION_DOT=${CUDA_CROSS_VERSION_DOT}
 
 RUN rm /etc/apt/sources.list.d/cuda.list && \
     apt-key del 7fa2af80 && \
@@ -31,13 +35,12 @@ RUN rm /etc/apt/sources.list.d/cuda.list && \
     python3.8 python3.8-dev \
     python3.9 python3.9-dev python3.9-distutils \
     python3.10 python3.10-dev python3.10-distutils \
-    python3.11 python3.11-dev python3.11-distutils && \
+    python3.11 python3.11-dev python3.11-distutils \
+    python3.12 python3.12-dev python3.12-distutils && \
     apt-key adv --fetch-key http://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
     add-apt-repository 'deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/cross-linux-aarch64/ /' && \
     apt-get update && \
     apt-get install -y cuda-cudart-cross-aarch64-${CUDA_CROSS_VERSION} \
-                       libcufft-cross-aarch64-${CUDA_CROSS_VERSION} \
-                       libcurand-cross-aarch64-${CUDA_CROSS_VERSION} \
                        cuda-driver-cross-aarch64-${CUDA_CROSS_VERSION} \
                        cuda-cccl-cross-aarch64-${CUDA_CROSS_VERSION} \
                        cuda-nvcc-cross-aarch64-${CUDA_CROSS_VERSION} \
@@ -45,11 +48,9 @@ RUN rm /etc/apt/sources.list.d/cuda.list && \
     && \
     rm -rf /var/lib/apt/lists/* && \
     PYTHON_VER=$(python3 -c "import sys;print(f'{sys.version_info[0]}{sys.version_info[1]}')") && \
-    if [ "${PYTHON_VER}" = "36" ]; then \
-        curl -O https://bootstrap.pypa.io/pip/3.6/get-pip.py; \
-    else \
-        curl -O https://bootstrap.pypa.io/get-pip.py; \
-    fi && python3 get-pip.py && rm get-pip.py && \
+    curl -O https://bootstrap.pypa.io/get-pip.py && \
+    python3 get-pip.py && \
+    rm get-pip.py && \
     # decouple libclang and clang installation so libclang changes are not overriden by clang
     pip install clang==14.0 && pip install libclang==14.0.1 flake8 && \
     rm -rf /root/.cache/pip/ && \
@@ -62,32 +63,31 @@ RUN rm /etc/apt/sources.list.d/cuda.list && \
 
 ENV PKG_CONFIG_PATH=/usr/aarch64-linux-gnu/lib/pkgconfig
 
-COPY DALI_DEPS_VERSION /tmp
-
-ARG DALI_DEPS_REPO
-ENV DALI_DEPS_REPO=${DALI_DEPS_REPO:-https://github.com/NVIDIA/DALI_deps}
-
-ARG DALI_DEPS_VERSION_SHA
-ENV DALI_DEPS_VERSION_SHA=${DALI_DEPS_VERSION_SHA}
+RUN export CMAKE_VERSION=3.24.3 \
+      && wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.sh \
+        -q -O /tmp/cmake-install.sh \
+      && chmod u+x /tmp/cmake-install.sh \
+      && mkdir /opt/cmake-${CMAKE_VERSION} \
+      && /tmp/cmake-install.sh --skip-license --prefix=/opt/cmake-${CMAKE_VERSION} \
+      && rm -f /tmp/cmake-install.sh \
+      && rm -f /usr/local/bin/*cmake* \
+      && rm -f /usr/local/bin/cpack \
+      && rm -f /usr/local/bin/ctest \
+      && ln -s /opt/cmake-${CMAKE_VERSION}/bin/* /usr/local/bin
 
 # run in /bin/bash to have more advanced features supported like list
-RUN /bin/bash -c 'DALI_DEPS_VERSION_SHA=${DALI_DEPS_VERSION_SHA:-$(cat /tmp/DALI_DEPS_VERSION)}    && \
-    git clone ${DALI_DEPS_REPO} /tmp/dali_deps                                                     && \
-    cd /tmp/dali_deps                                                                              && \
-    git checkout ${DALI_DEPS_VERSION_SHA}                                                          && \
-    git submodule init                                                                             && \
-    git submodule update --depth 1 --init --recursive                                              && \
+ADD external /opt/src/external
+RUN /bin/bash -c '\
     export CC_COMP=aarch64-linux-gnu-gcc                                                           && \
     export CXX_COMP=aarch64-linux-gnu-g++                                                          && \
     export INSTALL_PREFIX="/usr/aarch64-linux-gnu/"                                                && \
     export HOST_ARCH_OPTION="--host=aarch64-unknown-linux-gnu"                                     && \
     export CMAKE_TARGET_ARCH=aarch64                                                               && \
     export OPENCV_TOOLCHAIN_FILE="linux/aarch64-gnu.toolchain.cmake"                               && \
-    export WITH_FFMPEG=0                                                                           && \
-    /tmp/dali_deps/build_scripts/build_deps.sh && rm -rf /tmp/dali_deps && rm -rf /tmp/DALI_DEPS_VERSION'
+    pushd /opt/src && external/build_deps.sh && popd'
 
 # hack - install cross headers in the default python paths, so host python3-config would point to them
-RUN export PYVERS="3.8.5 3.9.0 3.10.0 3.11.0" && \
+RUN export PYVERS="3.8.5 3.9.0 3.10.0 3.11.0 3.12.0" && \
     for PYVER in ${PYVERS}; do \
         cd /tmp && (curl -L https://www.python.org/ftp/python/${PYVER}/Python-${PYVER}.tgz | tar -xzf - || exit 1) && \
         rm -rf *.tgz && cd Python*                                                                     && \
@@ -101,54 +101,37 @@ RUN export PYVERS="3.8.5 3.9.0 3.10.0 3.11.0" && \
     # hack - patch the host pythonX-config to return --extension-suffix for the target
     find /usr/ -iname x86_64-linux-gnu-python* -exec sed -i "s/\(SO.*\)\(x86_64\)\(.*\)/\1aarch64\3/" {} \;
 
-VOLUME /dali
+VOLUME /opt/nvimagecodec
 
-WORKDIR /dali
+WORKDIR /opt/nvimagecodec
 
 ENV PATH=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/bin:$PATH
 
-ARG DALI_BUILD_DIR=build_aarch64_linux
+ARG BUILD_DIR=build_aarch64_linux
 
-WORKDIR /dali/${DALI_BUILD_DIR}
+WORKDIR /opt/nvimagecodec/${BUILD_DIR}
 
-CMD WERROR=ON           \
-    ARCH=aarch64-linux  \
-    BUILD_TEST=ON       \
-    BUILD_BENCHMARK=OFF \
-    BUILD_NVTX=OFF      \
-    BUILD_LMDB=ON       \
-    BUILD_JPEG_TURBO=ON \
-    BUILD_LIBTIFF=ON    \
-    BUILD_LIBSND=ON     \
-    BUILD_LIBTAR=ON     \
-    BUILD_FFTS=ON       \
-    BUILD_CFITSIO=ON    \
-    BUILD_NVCOMP=OFF    \
-    BUILD_NVJPEG=OFF    \
-    BUILD_NVJPEG2K=OFF  \
-    BUILD_CVCUDA=ON     \
-    BUILD_NVOF=OFF      \
-    BUILD_NVDEC=OFF     \
-    BUILD_NVML=OFF      \
-    VERBOSE_LOGS=OFF    \
-    BUILD_CUFILE=OFF    \
-    TEST_BUNDLED_LIBS=NO\
-    WITH_DYNAMIC_CUDA_TOOLKIT=ON\
-    WITH_DYNAMIC_NVJPEG=ON\
-    WITH_DYNAMIC_CUFFT=ON\
-    WITH_DYNAMIC_NPP=ON \
-    NVIDIA_BUILD_ID=${NVIDIA_BUILD_ID:-0} \
-    WHL_PLATFORM_NAME=manylinux2014_aarch64            \
-    BUNDLE_PATH_PREFIX="/usr/aarch64-linux-gnu"        \
-    EXTRA_CMAKE_OPTIONS="-DCMAKE_TOOLCHAIN_FILE:STRING=$PWD/../platforms/aarch64-linux/aarch64-linux.toolchain.cmake \
-                        -DCMAKE_COLOR_MAKEFILE=ON                                                      \
-                        -DCMAKE_CUDA_COMPILER=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/bin/nvcc       \
-                        -DCUDA_HOST=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}                          \
-                        -DCUDA_TARGET=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/targets/aarch64-linux  \
-                        -DCMAKE_PREFIX_PATH=/usr/aarch64-linux-gnu/ "                                  \
-    /dali/docker/build_helper.sh                    && \
-    rm -rf /dali/${DALI_BUILD_DIR}/nvidia*          && \
-    cd /dali/dali_tf_plugin                         && \
-    bash /dali/dali_tf_plugin/make_dali_tf_sdist.sh && \
-    mv /dali_tf_sdist/*.tar.gz /wheelhouse/         && \
-    cp -r /wheelhouse /dali/
+# CUDA_TARGET_ARCHS
+# 72 : Volta  - gv11b/Tegra (Jetson AGX Xavier)
+# 87 : Ampere - ga10b,ga10c/Tegra (Jetson AGX Orin)
+
+ARG NVIDIA_BUILD_ID=0
+ENV NVIDIA_BUILD_ID=${NVIDIA_BUILD_ID}
+
+ENV ARCH=aarch64-linux
+ENV TEST_BUNDLED_LIBS=NO
+ENV WHL_PLATFORM_NAME=manylinux2014_aarch64
+ENV BUNDLE_PATH_PREFIX="/usr/aarch64-linux-gnu"
+ENV EXTRA_CMAKE_OPTIONS="\
+-DCMAKE_TOOLCHAIN_FILE:STRING=../cmake/aarch64-linux-tegra.toolchain.cmake \
+-DCMAKE_COLOR_MAKEFILE=ON                                                      \
+-DCMAKE_CUDA_COMPILER=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/bin/nvcc       \
+-DCUDA_HOST=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}                          \
+-DCUDA_TARGET=/usr/local/cuda-${CUDA_CROSS_VERSION_DOT}/targets/aarch64-linux  \
+-DCMAKE_PREFIX_PATH=/usr/aarch64-linux-gnu/                                    \
+-DCUDA_TARGET_ARCHS:STRING=72;87"
+
+CMD mkdir -p /opt/nvimagecodec/${BUILD_DIR} && \
+    source /opt/nvimagecodec/docker/build_helper.sh && \
+    rm -rf nvidia* && \
+    cp -r /wheelhouse /opt/nvimagecodec/

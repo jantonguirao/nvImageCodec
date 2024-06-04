@@ -32,7 +32,16 @@ function(CUDA_find_library out_path lib_name)
 endfunction()
 
 find_package(CUDAToolkit REQUIRED)
+
 include_directories(SYSTEM ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+find_path(NVJPEG_INCLUDE
+    NAMES nvjpeg.h
+    PATHS
+        ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+        ${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/include
+)
+include_directories(SYSTEM ${NVJPEG_INCLUDE})
+
 include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/external/NVTX/c/include)
 include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/external/dlpack/include)
 
@@ -47,9 +56,25 @@ if (BUILD_NVJPEG2K_EXT)
         else()
             message(NOTICE "Found nvjpeg2k: " ${NVJPEG2K_LIBRARY})
         endif()
+    else()
+        # Note: We are getting the x86_64 tarball, but we are only interested in the headers.
+        include(FetchContent)
+        FetchContent_Declare(
+            nvjpeg2k_headers
+            URL      https://developer.download.nvidia.com/compute/nvjpeg2000/redist/libnvjpeg_2k/linux-x86_64/libnvjpeg_2k-linux-x86_64-0.8.0.38-archive.tar.xz
+            URL_HASH SHA512=21acc1bfa7b6967fc2240dac9c9041faa6c10c9fe356f754748b6a6154e92031b0e4d8d1a0a1d1cdfb5c68b929126d548e7ea3d321609d339c2a6668281d2180
+        )
+        FetchContent_Populate(nvjpeg2k_headers)
+        set(nvjpeg2k_SEARCH_PATH "${nvjpeg2k_headers_SOURCE_DIR}/include")
     endif()
+
     if(NOT DEFINED NVJPEG2K_INCLUDE)
-        find_path(NVJPEG2K_INCLUDE  NAMES nvjpeg2k.h PATHS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+        find_path(NVJPEG2K_INCLUDE
+            NAMES nvjpeg2k.h
+            PATHS ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}
+                  ${CMAKE_CUDA_COMPILER_TOOLKIT_ROOT}/include
+                  ${nvjpeg2k_SEARCH_PATH}
+        )
     endif()
     message(STATUS "NVJPEG2K_INCLUDE=${NVJPEG2K_INCLUDE}")
     include_directories(SYSTEM ${NVJPEG2K_INCLUDE})

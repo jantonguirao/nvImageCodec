@@ -27,20 +27,12 @@ set(NVIMGCODEC_NVJPEG_EXT_SRC
 
 include(CheckCXXSourceCompiles)
 set(CMAKE_REQUIRED_INCLUDES "${CUDAToolkit_INCLUDE_DIRS}")
-set(CMAKE_REQUIRED_LIBRARIES "CUDA::nvjpeg")
 check_cxx_source_compiles(
   "#include <nvjpeg.h>
   int main(){
     return NVJPEG_BACKEND_LOSSLESS_JPEG;
   }"
   NVJPEG_LOSSLESS_SUPPORTED)
-
-check_cxx_source_compiles(
-  "#include <nvjpeg.h>
-  int main(){
-    return NVJPEG_FLAGS_REDUCED_MEMORY_DECODE_ZERO_COPY;
-  }"
-  NVJPEG_REDUCED_MEMORY_ZERO_COPY_SUPPORTED)
 
 include(CheckCXXSymbolExists)
 check_cxx_symbol_exists(nvjpegBufferDeviceResize "nvjpeg.h" NVJPEG_BUFFER_RESIZE_API)
@@ -59,14 +51,6 @@ endif()
 
 if(NVJPEG_LOSSLESS_SUPPORTED)
   list(APPEND NVIMGCODEC_NVJPEG_EXT_SRC lossless_decoder.cpp)
-endif()
-
-if (NVJPEG_REDUCED_MEMORY_ZERO_COPY_SUPPORTED)
-  message("nvJPEG reduced memory zero copy supported")
-  add_definitions(-DNVJPEG_REDUCED_MEMORY_ZERO_COPY_SUPPORTED=1)
-else()
-  message("nvJPEG reduced memory zero copy NOT supported")
-  add_definitions(-DNVJPEG_REDUCED_MEMORY_ZERO_COPY_SUPPORTED=0)
 endif()
 
 add_library(${NVIMGCODEC_NVJPEG_EXT_LIBRARY_NAME} SHARED ${NVIMGCODEC_NVJPEG_EXT_SRC} ext_module.cpp)
