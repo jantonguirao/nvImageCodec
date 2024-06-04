@@ -21,7 +21,7 @@ set(NVIMGCODEC_PROJECT_NAME "nvimgcodec")
 set(NVIMGCODEC_VERSION "0.2.0")
 
 if (NVIMGCODEC_FLAVOR)
-    set(NVIMGCODEC_FLAVOR "${NVIMGCODEC_FLAVOR} ")  # could be nightly, weekly, etc if necessary
+    set(NVIMGCODEC_FLAVOR "${NVIMGCODEC_FLAVOR}")  # could be nightly, weekly, etc if necessary
     set(NVIMGCODEC_FLAVOR_MINUS "-${NVIMGCODEC_FLAVOR}")  # -nightly, -weekly, etc
 endif()
 
