@@ -111,8 +111,8 @@ docker buildx build \
     --push \
     .
 
-# GCC 10, CUDA 12.3
-export BUILDER_CUDA_125="${REGISTRY_PREFIX}builder-cuda-12.3-${ARCH}"
+# GCC 10, CUDA 12.5
+export BUILDER_CUDA_125="${REGISTRY_PREFIX}builder-cuda-12.5-${ARCH}"
 docker buildx build \
     --cache-to type=inline \
     --cache-from type=registry,ref=${BUILDER_CUDA_125} \
@@ -126,11 +126,11 @@ docker buildx build \
 
 # Cross-compiling host=x86_64 target=L4T
 if [ "$ARCH" == "x86_64" ]; then
-    export BUILDER_CUDA_TEGRA_125="${REGISTRY_PREFIX}builder-cuda-12.5-cross-tegra-aarch64-linux"
+    export BUILDER_CUDA_TEGRA_122="${REGISTRY_PREFIX}builder-cuda-12.2-cross-tegra-aarch64-linux"
     docker buildx build \
         --cache-to type=inline \
-        --cache-from type=registry,ref=${BUILDER_CUDA_TEGRA_125} \
-        -t ${BUILDER_CUDA_TEGRA_125} -t ${BUILDER_CUDA_TEGRA_125}:v${VERSION} \
+        --cache-from type=registry,ref=${BUILDER_CUDA_TEGRA_122} \
+        -t ${BUILDER_CUDA_TEGRA_122} -t ${BUILDER_CUDA_TEGRA_122}:v${VERSION} \
         -f docker/Dockerfile.tegra-aarch64-linux.builder \
         --platform ${PLATFORM} \
         --push \

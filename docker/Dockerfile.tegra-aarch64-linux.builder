@@ -1,16 +1,18 @@
-ARG AARCH64_BASE_IMAGE=nvidia/cuda:12.5.0-devel-ubuntu22.04
+ARG AARCH64_BASE_IMAGE=nvidia/cuda:12.2.0-devel-ubuntu20.04
 FROM ${AARCH64_BASE_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-ARG CUDA_CROSS_VERSION=12-5
-ARG CUDA_CROSS_VERSION_DOT=12.5
+ARG CUDA_CROSS_VERSION=12-2
+ARG CUDA_CROSS_VERSION_DOT=12.2
 
 ENV CUDA_CROSS_VERSION=${CUDA_CROSS_VERSION}
 ENV CUDA_CROSS_VERSION_DOT=${CUDA_CROSS_VERSION_DOT}
 
-RUN apt-get update && apt-get install -y --no-install-recommends wget && \
-    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb && \
+RUN rm /etc/apt/sources.list.d/cuda.list && \
+    apt-key del 7fa2af80 && \
+    apt-get update && apt-get install -y --no-install-recommends wget && \
+    wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-keyring_1.0-1_all.deb && \
     dpkg -i cuda-keyring_1.0-1_all.deb && \
     apt-get update && apt-get install software-properties-common -y --no-install-recommends && \
     add-apt-repository ppa:deadsnakes/ppa -y && \
@@ -36,7 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget && \
     python3.11 python3.11-dev python3.11-distutils \
     python3.12 python3.12-dev python3.12-distutils && \
     apt-key adv --fetch-key http://repo.download.nvidia.com/jetson/jetson-ota-public.asc && \
-    add-apt-repository 'deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/cross-linux-aarch64/ /' && \
+    add-apt-repository 'deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/cross-linux-aarch64/ /' && \
     apt-get update && \
     apt-get install -y cuda-cudart-cross-aarch64-${CUDA_CROSS_VERSION} \
                        cuda-driver-cross-aarch64-${CUDA_CROSS_VERSION} \
