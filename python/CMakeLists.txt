@@ -106,6 +106,7 @@ else()
     add_custom_command(
         TARGET copy_libs_to_python_dir
         COMMAND copy "${PROJECT_BINARY_DIR}\\src\\${CMAKE_BUILD_TYPE}\\nvimgcodec_0.dll" "${CMAKE_CURRENT_BINARY_DIR}\\nvidia\\nvimgcodec" &&
+        copy "${PROJECT_BINARY_DIR}\\python\\${CMAKE_BUILD_TYPE}\\*.pyd" "${CMAKE_CURRENT_BINARY_DIR}\\nvidia\\nvimgcodec" && 
         for /r  "${PROJECT_BINARY_DIR}\\extensions" %%f in \(*.dll\) do xcopy "%%f" "${CMAKE_CURRENT_BINARY_DIR}\\nvidia\\nvimgcodec\\extensions\\" /Y &&
         xcopy "${PROJECT_SOURCE_DIR}\\include\\*.*" "${CMAKE_CURRENT_BINARY_DIR}\\nvidia\\nvimgcodec\\include\\" /S /Y )
 endif()

@@ -40,7 +40,7 @@ class Jpeg2kEncodeParams
     void setJpeg2kReversible(bool reversible) { nvimgcodec_jpeg2k_encode_params_.irreversible = !reversible; }
 
     std::tuple<int, int> getJpeg2kCodeBlockSize(){
-        return std::make_tuple<int, int>(nvimgcodec_jpeg2k_encode_params_.code_block_w, nvimgcodec_jpeg2k_encode_params_.code_block_h);
+        return std::make_tuple<int, int>((int)nvimgcodec_jpeg2k_encode_params_.code_block_w, (int)nvimgcodec_jpeg2k_encode_params_.code_block_h);
     }
     void setJpeg2kCodeBlockSize(std::tuple<int, int> size) {
         nvimgcodec_jpeg2k_encode_params_.code_block_w = std::get<0>(size);
