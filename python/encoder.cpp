@@ -256,7 +256,7 @@ void Encoder::encode(const std::vector<std::string>& file_names, const std::vect
 
         if (codec.empty()) {
             auto file_extension = fs::path(file_names[i]).extension();
-            codec_name = file_ext_to_codec((const char*) file_extension.c_str());
+            codec_name = file_ext_to_codec(file_extension.string().c_str());
             if (codec_name.empty()) {
                 NVIMGCODEC_LOG_WARNING(logger_, "File '" << file_names[i] << "' without extension. As default choosing jpeg codec");
                 codec_name = "jpeg";
