@@ -24,7 +24,7 @@ namespace nvimgcodec {
 
 CodeStream::CodeStream(nvimgcodecInstance_t instance, const std::filesystem::path& filename)
 {
-    auto ret = nvimgcodecCodeStreamCreateFromFile(instance, &code_stream_, filename.c_str());
+    auto ret = nvimgcodecCodeStreamCreateFromFile(instance, &code_stream_, filename.string().c_str());
     if (ret != NVIMGCODEC_STATUS_SUCCESS)
         throw std::runtime_error("Failed to create code stream");
 }

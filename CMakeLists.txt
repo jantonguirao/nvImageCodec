@@ -36,7 +36,7 @@ if (NOT NVIMGCODEC_WHL_PLATFORM_NAME)
     if(UNIX)
         set(NVIMGCODEC_WHL_PLATFORM_NAME "manylinux2014_${ARCH}")
     else()
-        set(NVIMGCODEC_WHL_PLATFORM_NAME "win-amd64")
+        set(NVIMGCODEC_WHL_PLATFORM_NAME "win_amd64")
     endif()
 endif()
 
