@@ -16,7 +16,10 @@ REM limitations under the License.
 set ROOT_DIR=$(pwd)
 set SCRIPT_DIR=external
 set INSTALL_PREFIX=..\..\..\install
-SET GENERATOR="Visual Studio 16 2019"
+
+if "%GENERATOR%" == "" (
+    SET GENERATOR="Visual Studio 17 2022"
+)
 
 echo Install prefix: %INSTALL_PREFIX%
 echo Generator: %GENERATOR%

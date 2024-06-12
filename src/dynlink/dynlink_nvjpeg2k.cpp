@@ -22,6 +22,10 @@
 #include "library_loader.h"
 #include <nvjpeg2k_version.h>
 #include <iostream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 #define STR_IMPL_(x) #x      //stringify argument
 #define STR(x) STR_IMPL_(x)  //indirection to expand argument macros
 
@@ -32,11 +36,43 @@ namespace {
     "libnvjpeg2k.so." STR(NVJPEG2K_VER_MAJOR),
     "libnvjpeg2k.so"
   };
+  fs::path GetDefaultNvJpeg2kPath()
+  {
+      return fs::path();
+  }
 #elif defined(_WIN32) || defined(_WIN64)
   static const char* __Nvjpeg2kLibNames[] = {
     "nvjpeg2k_" STR(NVJPEG2K_VER_MAJOR) ".dll",
     "nvjpeg2k.dll"
   };
+
+  fs::path GetDefaultNvJpeg2kPath()
+  {
+      char dll_path[MAX_PATH];
+      HMODULE hm = NULL;
+
+      if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+              (LPCSTR)&GetDefaultNvJpeg2kPath, &hm) != 0) {
+          if (GetModuleFileName(hm, dll_path, sizeof(dll_path)) != 0) {
+              fs::path path(dll_path);
+              // if this comes from a shared_object like in Python site-packages,
+              // go level up dir and add "nvjpeg2k/bin" to the path
+              // Examples:
+              //  C:/Python39/Lib/site-packages/nvidia/nvimgcodec/extensions//nvjpeg2k_ext_0.dll
+              //                               |
+              //                               V
+              //  C:/Python39/Lib/site-packages/nvidia/nvimgcodec/nvjpeg2k/bin
+              path = path.parent_path();
+              path = path.parent_path();
+              path = path.parent_path();
+              path /= "nvjpeg2k";
+              path /= "bin";
+              return path;
+          }
+      }
+
+      return fs::path();
+  }
 #endif
 
 
@@ -45,6 +81,13 @@ nvimgcodec::ILibraryLoader::LibraryHandle loadNvjpeg2kLibrary()
     nvimgcodec::LibraryLoader lib_loader;
     nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
     for (const char* libname : __Nvjpeg2kLibNames) {
+        fs::path default_path = GetDefaultNvJpeg2kPath();
+        if (!default_path.empty()) {
+            fs::path lib_with_path = default_path / fs::path(libname);
+            ret = lib_loader.loadLibrary(lib_with_path.string());
+            if (ret != nullptr)
+                break;
+        }
         ret = lib_loader.loadLibrary(libname);
         if (ret != nullptr)
             break;
