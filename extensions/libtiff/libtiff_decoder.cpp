@@ -130,7 +130,7 @@ std::unique_ptr<TIFF, void (*)(TIFF*)> OpenTiff(nvimgcodecIoStreamDesc_t* io_str
     if (!tiffptr)
         delete helper;
     if (tiffptr == nullptr)
-        std::runtime_error("Unable to open TIFF image");
+        throw std::runtime_error("Unable to open TIFF image");
     return {tiffptr, &TIFFClose};
 }
 

@@ -93,6 +93,14 @@ nvimgcodecStatus_t GetInfoImpl(
                 uint32_t value_offset = TiffRead<uint32_t, is_little_endian>(io_stream);
                 io_stream->seek(io_stream->instance, value_offset, SEEK_SET);
             }
+
+            if (value_count > NVIMGCODEC_MAX_NUM_PLANES) {
+                NVIMGCODEC_LOG_ERROR(framework, plugin_id,
+                    "Couldn't read TIFF with more than " << NVIMGCODEC_MAX_NUM_PLANES << " components. Got " << value_count
+                                                         << "values for bits per sample tag.");
+                return NVIMGCODEC_STATUS_CODESTREAM_UNSUPPORTED;
+            }
+
             if (value_type == TYPE_WORD) {
                 for (size_t i = 0; i < value_count; i++) {
                     bitdepth[i] = TiffRead<uint16_t, is_little_endian>(io_stream);
@@ -136,6 +144,12 @@ nvimgcodecStatus_t GetInfoImpl(
                 // indicate the actual number of channels. That's why we ignore it for palette images.
                 nchannels = value;
                 samples_per_px_read = true;
+                if (nchannels > NVIMGCODEC_MAX_NUM_PLANES) {
+                    NVIMGCODEC_LOG_ERROR(framework, plugin_id,
+                        "Couldn't read TIFF with more than " << NVIMGCODEC_MAX_NUM_PLANES << " components. Got " << nchannels
+                                                             << " value for samples per pixel tag.");
+                    return NVIMGCODEC_STATUS_CODESTREAM_UNSUPPORTED;
+                }
             } else if (tag_id == PHOTOMETRIC_INTERPRETATION_TAG && value == PHOTOMETRIC_PALETTE) {
                 nchannels = 3;
                 palette_read = true;
