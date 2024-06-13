@@ -24,6 +24,7 @@ namespace nvimgcodec {
 
 CodeStream::CodeStream(nvimgcodecInstance_t instance, const std::filesystem::path& filename)
 {
+    py::gil_scoped_release release;
     auto ret = nvimgcodecCodeStreamCreateFromFile(instance, &code_stream_, filename.string().c_str());
     if (ret != NVIMGCODEC_STATUS_SUCCESS)
         throw std::runtime_error("Failed to create code stream");
@@ -31,6 +32,7 @@ CodeStream::CodeStream(nvimgcodecInstance_t instance, const std::filesystem::pat
 
 CodeStream::CodeStream(nvimgcodecInstance_t instance, const unsigned char * data, size_t len)
 {
+    py::gil_scoped_release release;
     auto ret = nvimgcodecCodeStreamCreateFromHostMem(instance, &code_stream_, data, len);
     if (ret != NVIMGCODEC_STATUS_SUCCESS)
         throw std::runtime_error("Failed to create code stream");
@@ -38,6 +40,7 @@ CodeStream::CodeStream(nvimgcodecInstance_t instance, const unsigned char * data
 
 CodeStream::CodeStream(nvimgcodecInstance_t instance, py::bytes data)
 {
+    py::gil_scoped_release release;
     data_ref_bytes_ = data;
     auto data_view = static_cast<std::string_view>(data_ref_bytes_);
     auto ret = nvimgcodecCodeStreamCreateFromHostMem(instance, &code_stream_, reinterpret_cast<const unsigned char*>(data_view.data()), data_view.size());
@@ -46,6 +49,7 @@ CodeStream::CodeStream(nvimgcodecInstance_t instance, py::bytes data)
 
 CodeStream::CodeStream(nvimgcodecInstance_t instance, py::array_t<uint8_t> arr)
 {
+    py::gil_scoped_release release;
     data_ref_arr_ = arr;
     auto data = data_ref_arr_.unchecked<1>();
     auto ret = nvimgcodecCodeStreamCreateFromHostMem(instance, &code_stream_, data.data(0), data.size());
@@ -70,7 +74,6 @@ const nvimgcodecImageInfo_t& CodeStream::ImageInfo() const {
     if (!info_read_) {
         jp2_info_ = {NVIMGCODEC_STRUCTURE_TYPE_JPEG2K_IMAGE_INFO, sizeof(nvimgcodecJpeg2kImageInfo_t), nullptr, 0, 0, 0, 0};
         info_ = {NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), static_cast<void*>(&jp2_info_)};
-
         auto ret = nvimgcodecCodeStreamGetImageInfo(code_stream_, &info_);
         if (ret != NVIMGCODEC_STATUS_SUCCESS)
             throw std::runtime_error("Failed to get image info");
@@ -80,60 +83,68 @@ const nvimgcodecImageInfo_t& CodeStream::ImageInfo() const {
 }
 
 int CodeStream::height() const {
+    py::gil_scoped_release release;
     auto& info = ImageInfo();
     assert(info.num_planes > 0);
     return info.plane_info[0].height;
 }
 
 int CodeStream::width() const {
+    py::gil_scoped_release release;
     auto& info = ImageInfo();
     assert(info.num_planes > 0);
     return info.plane_info[0].width;
 }
 
 std::optional<int> CodeStream::tile_height() const {
+    py::gil_scoped_release release;
     [[maybe_unused]] auto& info = ImageInfo();
     assert(info.struct_next == &jp2_info_);
     return jp2_info_.tile_height > 0 ? jp2_info_.tile_height : std::optional<int>{};
 }
 
 std::optional<int> CodeStream::tile_width() const {
+    py::gil_scoped_release release;
     [[maybe_unused]] auto& info = ImageInfo();
     assert(info.struct_next == &jp2_info_);
     return jp2_info_.tile_width > 0 ? jp2_info_.tile_width : std::optional<int>{};
 }
 
 std::optional<int> CodeStream::num_tiles_y() const {
+    py::gil_scoped_release release;
     [[maybe_unused]] auto& info = ImageInfo();
     assert(info.struct_next == &jp2_info_);
     return jp2_info_.num_tiles_y > 0 ? jp2_info_.num_tiles_y : std::optional<int>{};
 }
 
 std::optional<int> CodeStream::num_tiles_x() const {
+    py::gil_scoped_release release;
     [[maybe_unused]] auto& info = ImageInfo();
     assert(info.struct_next == &jp2_info_);
     return jp2_info_.num_tiles_x > 0 ? jp2_info_.num_tiles_x : std::optional<int>{};
 }
 
 int CodeStream::channels() const {
+    py::gil_scoped_release release;
     auto& info = ImageInfo();
     return info.num_planes;
 }
 
-py::dtype CodeStream::dtype() const
-{
+py::dtype CodeStream::dtype() const {
+    py::gil_scoped_release release;
     auto& info = ImageInfo();
     std::string format = format_str_from_type(info.plane_info[0].sample_type);
     return py::dtype(format);
 }
 
-int CodeStream::precision() const
-{
+int CodeStream::precision() const {
+    py::gil_scoped_release release;
     auto& info = ImageInfo();
     return info.plane_info[0].precision;
 }
 
 std::string CodeStream::codec_name() const {
+    py::gil_scoped_release release;
     auto& info = ImageInfo();
     return info.codec_name;
 }

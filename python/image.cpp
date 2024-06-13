@@ -30,6 +30,7 @@ namespace nvimgcodec {
 Image::Image(nvimgcodecInstance_t instance, nvimgcodecImageInfo_t* image_info)
     : instance_(instance)
 {
+    py::gil_scoped_release release;
     initBuffer(image_info);
 
     nvimgcodecImage_t image;
@@ -211,6 +212,8 @@ Image::Image(nvimgcodecInstance_t instance, PyObject* o, intptr_t cuda_stream)
     } else {
         throw std::runtime_error("Object does not support neither __cuda_array_interface__ nor __dlpack__");
     }
+
+    py::gil_scoped_release release;
     nvimgcodecImage_t image;
     CHECK_NVIMGCODEC(nvimgcodecImageCreate(instance, &image, &image_info));
     image_ = std::shared_ptr<std::remove_pointer<nvimgcodecImage_t>::type>(
@@ -220,7 +223,10 @@ Image::Image(nvimgcodecInstance_t instance, PyObject* o, intptr_t cuda_stream)
 void Image::initInterfaceDictFromImageInfo(py::dict* d) const
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
     bool is_interleaved = is_sample_format_interleaved(image_info.sample_format) || image_info.num_planes == 1;
     py::object strides_obj = is_interleaved ? py::object(py::none()) : py::object(strides());
@@ -234,12 +240,14 @@ void Image::initInterfaceDictFromImageInfo(py::dict* d) const
 
 int Image::getWidth() const
 {
+    py::gil_scoped_release release;
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.plane_info[0].width;
 }
 int Image::getHeight() const
 {
+    py::gil_scoped_release release;
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
     nvimgcodecImageGetImageInfo(image_.get(), &image_info);
     return image_info.plane_info[0].height;
@@ -268,7 +276,10 @@ py::dict Image::cuda_interface() const
     try {
         initInterfaceDictFromImageInfo(&cuda_array_interface);
         nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+        {
+            py::gil_scoped_release release;
+            nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+        }
         py::object stream = image_info.cuda_stream ? py::int_((intptr_t)(image_info.cuda_stream)) : py::int_(1);
         cuda_array_interface["stream"] = stream;
     } catch (...) {
@@ -280,7 +291,10 @@ py::dict Image::cuda_interface() const
 py::tuple Image::shape() const
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     bool is_interleaved = is_sample_format_interleaved(image_info.sample_format) || image_info.num_planes == 1;
     py::tuple shape_tuple =
         is_interleaved
@@ -292,7 +306,10 @@ py::tuple Image::shape() const
 py::tuple Image::strides() const
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     int bytes_per_element = sample_type_to_bytes_per_element(image_info.plane_info[0].sample_type);
     bool is_interleaved = is_sample_format_interleaved(image_info.sample_format) || image_info.num_planes == 1;
     py::tuple strides_tuple = is_interleaved ? py::make_tuple(image_info.plane_info[0].row_stride,
@@ -305,7 +322,10 @@ py::tuple Image::strides() const
 py::object Image::dtype() const
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     std::string format = format_str_from_type(image_info.plane_info[0].sample_type);
     return py::dtype(format);
 }
@@ -313,14 +333,20 @@ py::object Image::dtype() const
 int Image::precision() const
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     return image_info.plane_info[0].precision;
 }
 
 nvimgcodecImageBufferKind_t Image::getBufferKind() const
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     return image_info.buffer_kind;
 }
 
@@ -332,7 +358,10 @@ nvimgcodecImage_t Image::getNvImgCdcsImage() const
 py::capsule Image::dlpack(py::object stream_obj) const
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     std::optional<intptr_t> stream = stream_obj.cast<std::optional<intptr_t>>();
     intptr_t consumer_stream = stream.has_value() ? *stream : 0;
 
@@ -354,18 +383,22 @@ const py::tuple Image::getDlpackDevice() const
 py::object Image::cpu()
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
-
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
         nvimgcodecImageInfo_t cpu_image_info(image_info);
         cpu_image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST;
         cpu_image_info.buffer = nullptr;
 
         auto image = Image(instance_, &cpu_image_info);
-        CHECK_CUDA(cudaMemcpyAsync(
-            cpu_image_info.buffer, image_info.buffer, image_info.buffer_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
-        CHECK_CUDA(cudaStreamSynchronize(image_info.cuda_stream));
-
+        {
+            py::gil_scoped_release release;
+            CHECK_CUDA(cudaMemcpyAsync(
+                cpu_image_info.buffer, image_info.buffer, image_info.buffer_size, cudaMemcpyDeviceToHost, image_info.cuda_stream));
+            CHECK_CUDA(cudaStreamSynchronize(image_info.cuda_stream));
+        }
         return py::cast(image);
     } else if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
         return py::cast(this);
@@ -377,19 +410,22 @@ py::object Image::cpu()
 py::object Image::cuda(bool synchronize)
 {
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecImageGetImageInfo(image_.get(), &image_info);
-
+    {
+        py::gil_scoped_release release;
+        nvimgcodecImageGetImageInfo(image_.get(), &image_info);
+    }
     if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST) {
         nvimgcodecImageInfo_t cuda_image_info(image_info);
         cuda_image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
         cuda_image_info.buffer = nullptr;
         auto image = Image(instance_, &cuda_image_info);
-
-        CHECK_CUDA(cudaMemcpyAsync(
-            cuda_image_info.buffer, image_info.buffer, image_info.buffer_size, cudaMemcpyHostToDevice, cuda_image_info.cuda_stream));
-        if (synchronize)
-            CHECK_CUDA(cudaStreamSynchronize(cuda_image_info.cuda_stream));
-
+        {
+            py::gil_scoped_release release;
+            CHECK_CUDA(cudaMemcpyAsync(
+                cuda_image_info.buffer, image_info.buffer, image_info.buffer_size, cudaMemcpyHostToDevice, cuda_image_info.cuda_stream));
+            if (synchronize)
+                CHECK_CUDA(cudaStreamSynchronize(cuda_image_info.cuda_stream));
+        }
         return py::cast(image);
     } else if (image_info.buffer_kind == NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE) {
         return py::cast(this);
