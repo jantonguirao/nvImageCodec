@@ -15,7 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 import sys
 import os
-import sphinx_rtd_theme
+import nvidia_sphinx_theme
 
 # For build documentation for nvimgcodec from specif location (default is installed module), 
 # uncomment below line to specify path to nvimgcodec module
@@ -63,7 +63,7 @@ napoleon_google_docstring = True
 napoleon_numpy_docstring = True
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+# templates_path = ['_templates']
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -101,29 +101,31 @@ primary_domain = 'cpp'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = 'nvidia_sphinx_theme'
+
 html_show_sphinx = False
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 html_theme_options = {
-    "collapse_navigation" : False
+    "navbar_start": ["navbar-logo"],
+   # "primary_sidebar_end": [],
 }
+theme_external_links = None
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'nvImageCodecDoc'
 
-def setup(app):
-    app.add_css_file('nvimagecodec_override.css')
 
 # -- Options for BREATHE -------------------------------------------------
 
 breathe_default_project = "nvImageCodec"
 breathe_projects = { "nvImageCodec": "../doxygen/xml" }
+
+favicon_rel_path = "nvidia.ico"
