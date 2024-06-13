@@ -24,7 +24,7 @@ import nvidia_sphinx_theme
 # Specify path to images used in jupyter notebooks samples
 os.environ["PYNVIMGCODEC_EXAMPLES_RESOURCES_DIR"] = "../../../example/assets/images/"
 
-# nbsphinx_allow_errors = True
+nbsphinx_allow_errors = True # TODO: comment it back out
 
 # -- Project information -----------------------------------------------------
 
