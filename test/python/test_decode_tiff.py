@@ -52,8 +52,9 @@ def test_decode_tiff_uint16():
 
 # First the original test from https://gitlab.com/libtiff/libtiff/-/issues/621
 def test_decode_tiff_too_many_planes():
-    assert None == nvimgcodec.Decoder().read(
-        os.path.join(img_dir_path, "tiff/error/too_many_planes.tiff"))
+    with t.raises(RuntimeError) as _:
+        nvimgcodec.Decoder().read(
+            os.path.join(img_dir_path, "tiff/error/too_many_planes.tiff"))
 
 # Now reduce the number of planes to the maximum allowed (32) so that nvimagecodec
 # doesn't throw an error early
