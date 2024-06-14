@@ -1,7 +1,7 @@
 #!/bin/bash
 
-URL="https://sccovlind.nvidia.com:8443"
-STREAM="nvImageCodec"
+URL="https://ipp-coverity-10.nvidia.com:8443"
+STREAM="nvImageCodecs"
 
 if ! type cov-configure >/dev/null 2>&1; then
     echo "[WARNING] Coverity is not installed!!!"
@@ -21,7 +21,7 @@ if [ -d analysis_dir ]; then
 fi
 
 # build
-cov-build --dir analysis_dir make clean all
+cov-build --dir analysis_dir make -j15 clean all
 if [ $? -ne 0 ]; then
     echo "Failed to run cov-build!"
     exit 1
@@ -34,8 +34,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# cov-format-errors --dir analysis_dir --html-output output
+
 # commit
-cov-commit-defects --dir analysis_dir --url $URL --stream $STREAM --certs ../ca-chain.crt --on-new-cert trust --user reporter --password coverity
+# cov-commit-defects --dir analysis_dir --url $URL --stream $STREAM --certs ../ca-chain.crt --on-new-cert trust --user reporter --password coverity # Using local certificate
+cov-commit-defects --dir analysis_dir --url $URL --stream $STREAM --on-new-cert trust --user reporter --password coverity
 if [ $? -ne 0 ]; then
     echo "Failed to run cov-commit-defects!"
     exit 1
