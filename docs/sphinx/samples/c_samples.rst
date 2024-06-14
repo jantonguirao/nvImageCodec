@@ -45,7 +45,7 @@ Lets start with creating :code:`nvimgcodecCodeStream_t` from file.
 .. code-block:: cpp
 
    nvimgcodecCodeStream_t code_stream;
-   nvimgcodecCodeStreamCreateFromFile(instance, &code_stream, "./test.jpg")
+   nvimgcodecCodeStreamCreateFromFile(instance, &code_stream, "./test.jpg");
 
 3. Get image information about compressed image by getting  :code:`nvimgcodecImageInfo_t`` from Code Stream.
 This operation will do minimal parsing of the compressed bitstream but without decoding it.
@@ -53,7 +53,7 @@ This operation will do minimal parsing of the compressed bitstream but without d
 .. code-block:: cpp
 
     nvimgcodecImageInfo_t input_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-    nvimgcodecCodeStreamGetImageInfo(code_stream, &image_info);
+    nvimgcodecCodeStreamGetImageInfo(code_stream, &input_image_info);
 
     std::cout << "Input image info: " << std::endl;
     std::cout << "\t - width:" << input_image_info.plane_info[0].width << std::endl;
@@ -84,7 +84,7 @@ SRGB, 3 channel image in planar format, without chroma subsampling and output bu
       output_image_info.plane_info[c].row_stride = device_pitch_in_bytes;
    }
 
-   output_image_info.buffer_size = output_image_info.plane_info[0].row_stride * image_info.plane_info[0].height * image_info.num_planes;
+   output_image_info.buffer_size = output_image_info.plane_info[0].row_stride * output_image_info.plane_info[0].height * output_image_info.num_planes;
    output_image_info.cuda_stream = 0; // It is possible to assign cuda stream which will be used for synchronization. Here we assume it is default stream.
 
    cudaMalloc(&output_image_info.buffer,  output_image_info.buffer_size);
@@ -191,39 +191,39 @@ The below snippet demonstrates initialization of  :code:`nvimgcodecImageInfo_t` 
 
     nvimgcodecImageInfo_t input_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
 
-    input_image_info->num_planes = 3;
-    input_image_info->plane_info[0].height = /* TODO assign image height */;
-    input_image_info->plane_info[0].width =  /* TODO assign image width */; 
-    input_image_info->plane_info[0].num_channels = 1;
+    input_image_info.num_planes = 3;
+    input_image_info.plane_info[0].height = /* TODO assign image height */;
+    input_image_info.plane_info[0].width =  /* TODO assign image width */;
+    input_image_info.plane_info[0].num_channels = 1;
 
 
-    input_image_info->color_spec = NVIMGCODEC_COLORSPEC_SRGB;
-    input_image_info->sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
-    input_image_info->chroma_subsampling = NVIMGCODEC_SAMPLING_444;
+    input_image_info.color_spec = NVIMGCODEC_COLORSPEC_SRGB;
+    input_image_info.sample_format = NVIMGCODEC_SAMPLEFORMAT_P_RGB;
+    input_image_info.chroma_subsampling = NVIMGCODEC_SAMPLING_444;
 
-    auto sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8
+    auto sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
 
     // For general case, having sample type,  we can calculate bytes per element using formula static_cast<unsigned int>(sample_type) >> (8 + 3);
-    // so shift by 8 since 8..15 bits represents type bitdepth,  then shift by 3 to convert to # bytes 
+    // so shift by 8 since 8..15 bits represents type bitdepth,  then shift by 3 to convert to # bytes
     // here we can simple assign 1 as we assumed type is uint8
-    int bytes_per_element =  1; 
+    int bytes_per_element =  1;
 
-    int pitch_in_bytes = input_image_info->plane_info[0].width * input_image_info->plane_info[0].num_channels * bytes_per_element;
+    int pitch_in_bytes = input_image_info.plane_info[0].width * input_image_info.plane_info[0].num_channels * bytes_per_element;
 
-    int64_t buffer_size = 0;
-    for (size_t p = 0; c < image_info->num_planes; c++) {
-        input_image_info->plane_info[p].width = input_image_info->plane_info[0].width;
-        input_image_info->plane_info[p].height = input_image_info->plane_info[0].height;
-        input_image_info->plane_info[p].row_stride = pitch_in_bytes;
-        input_image_info->plane_info[p].sample_type = sample_type;
-        input_image_info->plane_info[p].num_channels = input_image_info->plane_info[0].num_channels; 
-        input_image_info->plane_info[p].precision = 0;  //Value 0 means that precision is equal to sample type bitdepth (in our case 8 bits)
-        buffer_size += input_image_info->plane_info[c].row_stride * input_image_info->plane_info[0].height;
+    size_t buffer_size = 0;
+    for (size_t p = 0; p < input_image_info.num_planes; p++) {
+        input_image_info.plane_info[p].width = input_image_info.plane_info[0].width;
+        input_image_info.plane_info[p].height = input_image_info.plane_info[0].height;
+        input_image_info.plane_info[p].row_stride = pitch_in_bytes;
+        input_image_info.plane_info[p].sample_type = sample_type;
+        input_image_info.plane_info[p].num_channels = input_image_info.plane_info[0].num_channels;
+        input_image_info.plane_info[p].precision = 0;  //Value 0 means that precision is equal to sample type bitdepth (in our case 8 bits)
+        buffer_size += input_image_info.plane_info[p].row_stride * input_image_info.plane_info[0].height;
     }
 
     input_image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_HOST; //or NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE if image is already in GPU memory
-    input_image_info->buffer = /* TODO assign pointer to host memory where the image data in planar format are stored */;
-    input_image_info->buffer_size = buffer_size;
+    input_image_info.buffer = /* TODO assign pointer to host memory where the image data in planar format are stored */;
+    input_image_info.buffer_size = buffer_size;
     input_image_info.cuda_stream = 0; // It is possible to assign cuda stream which will be used for synchronization. Here we assume it is default stream.
 
 3. Create opaque :code:`nvimgcodecImage_t` type handle to object which will represent our input image. 
@@ -247,10 +247,10 @@ To extend output (compressed) image information with jpeg specific information (
 
     nvimgcodecImageInfo_t out_image_info(input_image_info); 
 
-    strcpy(out_image_info.codec_name,= "jpeg")
+    strcpy(out_image_info.codec_name, "jpeg");
 
     nvimgcodecJpegImageInfo_t jpeg_image_info{NVIMGCODEC_STRUCTURE_TYPE_JPEG_IMAGE_INFO, sizeof(nvimgcodecJpegImageInfo_t), 0};
-    jpeg_image_info->encoding = NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
+    jpeg_image_info.encoding = NVIMGCODEC_JPEG_ENCODING_PROGRESSIVE_DCT_HUFFMAN;
     image_info.struct_next = &jpeg_image_info;
 
 5. Create output code stream.
@@ -258,7 +258,7 @@ To extend output (compressed) image information with jpeg specific information (
 .. code-block:: cpp
 
     nvimgcodecCodeStream_t output_code_stream;
-    nvimgcodecCodeStreamCreateToFile(instance, &output_code_stream, "out.jpg", &out_image_info)
+    nvimgcodecCodeStreamCreateToFile(instance, &output_code_stream, "out.jpg", &out_image_info);
 
 6. Create encoder.
 
@@ -271,7 +271,7 @@ separated list of parameters for specific encoders in format: "<encoder_id>:<par
     nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
 
-    nvimgcodecEncoder_t encoder;;
+    nvimgcodecEncoder_t encoder;
     nvimgcodecEncoderCreate(instance, &encoder, &exec_params, nullptr);
 
 7. Prepare encode parameters.
@@ -301,7 +301,6 @@ For lossy compression we need to specify quality.
     nvimgcodecProcessingStatus_t encode_status;
     nvimgcodecFutureGetProcessingStatus(encode_future, &encode_status, &status_size);
     cudaDeviceSynchronize(); // makes GPU wait until all encoding is finished
-    encode_time = wtime() - encode_time;
     if (encode_status != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during encoding" << std::endl;
     }
@@ -311,9 +310,9 @@ For lossy compression we need to specify quality.
 
 .. code-block:: cpp
 
-    nvimgcodecEncoderDestroy(decoder);
-    nvimgcodecCodeStreamDestroy(code_stream);
-    nvimgcodecImageDestroy(image);
+    nvimgcodecEncoderDestroy(encoder);
+    nvimgcodecCodeStreamDestroy(output_code_stream);
+    nvimgcodecImageDestroy(input_image);
     nvimgcodecInstanceDestroy(instance);
 
 .. toctree::
