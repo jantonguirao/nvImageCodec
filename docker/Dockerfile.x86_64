@@ -49,11 +49,12 @@ RUN mkdir cvcuda && \
     wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.5.0-beta/nvcv-lib-0.5.0_beta-cuda11-x86_64-linux.deb && \
     dpkg -i nvcv-lib-0.5.0_beta-cuda11-x86_64-linux.deb
 
-
+# We install cupy 12.3, beacuse newer version uses jitify to compile kernels just in time which fails in our docker
+# Newever version of docuitls removes functionality used by other packages
 RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
     python3 -m pip install --extra-index-url https://urm.nvidia.com/artifactory/api/pypi/ct-omniverse-pypi-local/simple \
     pytest \
-    cupy-cuda${CUDA_VERSION_MAJOR}x \
+    cupy-cuda${CUDA_VERSION_MAJOR}x==12.3 \
     opencv-python \
     sphinx \
     nvidia-sphinx-theme \
