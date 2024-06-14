@@ -23,7 +23,7 @@ RUN apt-get update \
         make \
         wget \
         doxygen \
-    && rm -rf /var/lib/apt/lists/* 
+    && rm -rf /var/lib/apt/lists/*
 
 RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
     NVJPEG2K_VERSION=0.8.0.38-1 && \
