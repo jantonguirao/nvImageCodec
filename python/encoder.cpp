@@ -158,6 +158,9 @@ void Encoder::encode(const std::vector<Image*>& images, std::optional<EncodePara
 
         create_code_stream(i, out_image_info, &code_streams[i]);
     }
+
+    py::gil_scoped_release release;
+
     nvimgcodecFuture_t encode_future;
     CHECK_NVIMGCODEC(nvimgcodecEncoderEncode(
         encoder_.get(), int_images.data(), code_streams.data(), images.size(), &params.encode_params_, &encode_future));
@@ -166,16 +169,20 @@ void Encoder::encode(const std::vector<Image*>& images, std::optional<EncodePara
     nvimgcodecFutureGetProcessingStatus(encode_future, nullptr, &status_size);
     std::vector<nvimgcodecProcessingStatus_t> encode_status(status_size);
     nvimgcodecFutureGetProcessingStatus(encode_future, &encode_status[0], &status_size);
-    for (size_t i = 0; i < encode_status.size(); ++i) {
-        if (encode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
-             NVIMGCODEC_LOG_WARNING(logger_,"Something went wrong during encoding image #" << i << " it will not be included in output");
-        }
-        post_encode_call_back(i, encode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS, code_streams[i]);
-    }
     nvimgcodecFutureDestroy(encode_future);
-    for (auto& cs : code_streams) {
-        nvimgcodecCodeStreamDestroy(cs);
+
+    {
+        py::gil_scoped_acquire acquire;
+        for (size_t i = 0; i < encode_status.size(); ++i) {
+            if (encode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
+                NVIMGCODEC_LOG_WARNING(logger_, "Something went wrong during encoding image #" << i << " it will not be included in output");
+            }
+            post_encode_call_back(i, encode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS, code_streams[i]);
+        }
     }
+
+    for (auto& cs : code_streams)
+        nvimgcodecCodeStreamDestroy(cs);
 }
 
 std::vector<py::bytes> Encoder::encode(

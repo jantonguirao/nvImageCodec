@@ -118,6 +118,9 @@ std::vector<py::object> Decoder::decode_impl(
     std::vector<nvimgcodecImage_t> images(code_streams.size());
     std::vector<py::object> py_images;
     py_images.reserve(code_streams.size());
+
+    py::gil_scoped_release release;
+
     DecodeParams params = params_opt.has_value() ? params_opt.value() : DecodeParams();
     assert(rois.size() == code_streams.size());
     auto has_any_roi_set = [](const std::vector<std::optional<Region>>& rois) {
@@ -202,10 +205,12 @@ std::vector<py::object> Decoder::decode_impl(
         image_info.buffer_size = buffer_size;
         image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
+        py::gil_scoped_acquire acquire;
         Image img(instance_, &image_info);
         images[i - skip_samples] = img.getNvImgCdcsImage();
         py_images.push_back(py::cast(std::move(img)));
     }
+
     nvimgcodecFuture_t decode_future;
     CHECK_NVIMGCODEC(nvimgcodecDecoderDecode(
         decoder_.get(), code_streams.data(), images.data(), code_streams.size(), &params.decode_params_, &decode_future));
@@ -214,6 +219,9 @@ std::vector<py::object> Decoder::decode_impl(
     nvimgcodecFutureGetProcessingStatus(decode_future, nullptr, &status_size);
     std::vector<nvimgcodecProcessingStatus_t> decode_status(status_size);
     nvimgcodecFutureGetProcessingStatus(decode_future, &decode_status[0], &status_size);
+    nvimgcodecFutureDestroy(decode_future);
+
+    py::gil_scoped_acquire acquire;
     skip_samples = 0;
     for (size_t i = 0; i < decode_status.size(); ++i) {
         if (decode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
@@ -222,7 +230,6 @@ std::vector<py::object> Decoder::decode_impl(
             skip_samples++;
         }
     }
-    nvimgcodecFutureDestroy(decode_future);
     return py_images;
 }
 
