@@ -157,6 +157,8 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
         std::cerr << "Error: Unsupported  file format" << std::endl;
         return EXIT_FAILURE;
     }
+    std::unique_ptr<std::remove_pointer<nvimgcodecCodeStream_t>::type, decltype(&nvimgcodecCodeStreamDestroy)> code_stream_raii(
+            code_stream, &nvimgcodecCodeStreamDestroy);
 
     double parse_time = wtime();
     nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
@@ -207,12 +209,16 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
 
     nvimgcodecImage_t image;
     nvimgcodecImageCreate(instance, &image, &image_info);
+    std::unique_ptr<std::remove_pointer<nvimgcodecImage_t>::type, decltype(&nvimgcodecImageDestroy)> image_raii(
+            image, &nvimgcodecImageDestroy);
 
     nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
     nvimgcodecDecoder_t decoder;
     std::string dec_options{":fancy_upsampling=0"};
     nvimgcodecDecoderCreate(instance, &decoder, &exec_params, dec_options.c_str());
+    std::unique_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type, decltype(&nvimgcodecDecoderDestroy)> decoder_raii(
+            decoder, &nvimgcodecDecoderDestroy);
 
     // warm up
     for (int warmup_iter = 0; warmup_iter < params.warmup; warmup_iter++) {
@@ -237,6 +243,8 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
     nvimgcodecFuture_t decode_future;
     double decode_time = wtime();
     nvimgcodecDecoderDecode(decoder, &code_stream, &image, 1, &decode_params, &decode_future);
+    std::unique_ptr<std::remove_pointer<nvimgcodecFuture_t>::type, decltype(&nvimgcodecFutureDestroy)> decode_future_raii(
+            decode_future, &nvimgcodecFutureDestroy);
 
     size_t status_size;
     nvimgcodecProcessingStatus_t decode_status;
@@ -246,7 +254,6 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
     if (decode_status != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during decoding - processing status: " << decode_status << std::endl;
     }
-    nvimgcodecFutureDestroy(decode_future);
 
     std::cout << "Saving to " << output_path.string() << " file" << std::endl;    
 
@@ -268,13 +275,20 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
     nvimgcodecCodeStream_t output_code_stream;
     nvimgcodecCodeStreamCreateToFile(
         instance, &output_code_stream, output_path.string().c_str(), &out_image_info);
+    std::unique_ptr<std::remove_pointer<nvimgcodecCodeStream_t>::type, decltype(&nvimgcodecCodeStreamDestroy)> output_code_stream_raii(
+            output_code_stream, &nvimgcodecCodeStreamDestroy);
 
     nvimgcodecEncoder_t encoder;
     nvimgcodecEncoderCreate(instance, &encoder, &exec_params, nullptr);
+    std::unique_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type, decltype(&nvimgcodecEncoderDestroy)> encoder_raii(
+            encoder, &nvimgcodecEncoderDestroy);
 
     nvimgcodecFuture_t encode_future;
     double encode_time = wtime();
     nvimgcodecEncoderEncode(encoder, &image, &output_code_stream, 1, &encode_params, &encode_future);
+    std::unique_ptr<std::remove_pointer<nvimgcodecFuture_t>::type, decltype(&nvimgcodecFutureDestroy)> encode_future_raii(
+            encode_future, &nvimgcodecFutureDestroy);
+
 
     nvimgcodecProcessingStatus_t encode_status;
     nvimgcodecFutureGetProcessingStatus(encode_future, &encode_status, &status_size);
@@ -283,20 +297,12 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
     if (encode_status != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
         std::cerr << "Error: Something went wrong during encoding" << std::endl;
     }
-    nvimgcodecFutureDestroy(encode_future);
 
     double total_time = parse_time + decode_time + encode_time;
     std::cout << "Total time spent on transcoding: " << total_time << std::endl;
     std::cout << " - time spent on parsing: " << parse_time << std::endl;
     std::cout << " - time spent on decoding: " << decode_time << std::endl;
     std::cout << " - time spent on encoding (including writting): " << encode_time << std::endl;
-
-    nvimgcodecEncoderDestroy(encoder);
-    nvimgcodecCodeStreamDestroy(output_code_stream);
-
-    nvimgcodecImageDestroy(image);
-    nvimgcodecDecoderDestroy(decoder);
-    nvimgcodecCodeStreamDestroy(code_stream);
 
     CHECK_CUDA(cudaFree(image_info.buffer));
 
@@ -577,6 +583,10 @@ int process_images(nvimgcodecInstance_t instance, fs::path input_path, fs::path 
         double start_decoding_time = wtime();
         CHECK_NVIMGCODEC(
             nvimgcodecDecoderDecode(decoder, in_code_streams.data(), images.data(), params.batch_size, &decode_params, &decode_future));
+        std::unique_ptr<std::remove_pointer<nvimgcodecDecoder_t>::type, decltype(&nvimgcodecDecoderDestroy)> decoder_raii(
+            decoder, &nvimgcodecDecoderDestroy);
+        std::unique_ptr<std::remove_pointer<nvimgcodecFuture_t>::type, decltype(&nvimgcodecFutureDestroy)> decode_future_raii(
+            decode_future, &nvimgcodecFutureDestroy);
 
         size_t status_size;
         nvimgcodecFutureGetProcessingStatus(decode_future, nullptr, &status_size);
@@ -598,15 +608,17 @@ int process_images(nvimgcodecInstance_t instance, fs::path input_path, fs::path 
             }
         }
 
-        nvimgcodecFutureDestroy(decode_future);
-
         ret = prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_code_streams, images,
             encode_params, params, jpeg_image_info, output_path);
+        std::unique_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type, decltype(&nvimgcodecEncoderDestroy)> encoder_raii(
+            encoder, &nvimgcodecEncoderDestroy);
 
         nvimgcodecFuture_t encode_future;
         double start_encoding_time = wtime();
         CHECK_NVIMGCODEC(nvimgcodecEncoderEncode(
             encoder, images.data(), out_code_streams.data(), out_code_streams.size(), &encode_params, &encode_future));
+        std::unique_ptr<std::remove_pointer<nvimgcodecFuture_t>::type, decltype(&nvimgcodecFutureDestroy)> encode_future_raii(
+            encode_future, &nvimgcodecFutureDestroy);
 
         nvimgcodecFutureGetProcessingStatus(encode_future, nullptr, &status_size);
         CHECK_CUDA(cudaDeviceSynchronize());
@@ -618,7 +630,6 @@ int process_images(nvimgcodecInstance_t instance, fs::path input_path, fs::path 
                 std::cerr << "Error: Something went wrong during encoding image #" << i << " it will not be saved" << std::endl;
             }
         }
-        nvimgcodecFutureDestroy(encode_future);
 
         if (warmup < params.warmup) {
             warmup++;
@@ -646,14 +657,6 @@ int process_images(nvimgcodecInstance_t instance, fs::path input_path, fs::path 
         if (image_buffers[i].data) {
             CHECK_CUDA(cudaFree(image_buffers[i].data));
         }
-    }
-
-    if (decoder) {
-        nvimgcodecDecoderDestroy(decoder);
-    }
-
-    if (encoder) {
-        nvimgcodecEncoderDestroy(encoder);
     }
 
     CHECK_CUDA(cudaEventDestroy(startEvent));
