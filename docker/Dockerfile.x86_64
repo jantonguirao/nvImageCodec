@@ -86,7 +86,13 @@ RUN CUDA_VERSION_SHORT=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\.([0-9]+)\..*/\1
 # Tensorflow (only for CUDA 11.8)
 RUN CUDA_VERSION_SHORT=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\.([0-9]+)\..*/\1\2/') && \
     test $CUDA_VERSION_SHORT -eq 118 && \
-        python3 -m pip install tensorflow==2.13.* || \
-        echo "Skipping tensorflow in this image, as it supports only CUDA 11.8";
+        python3 -m pip install tensorflow==2.14.0 || \
+        echo "Skipping tensorflow for CUDA 11.8" && \
+    test $CUDA_VERSION_SHORT -eq 122 && \
+        python3 -m pip install tensorflow==2.15.0 || \
+        echo "Skipping tensorflow for CUDA 12.2" && \
+    test $CUDA_VERSION_SHORT -eq 123 && \
+        python3 -m pip install tensorflow==2.16.1 || \
+        echo "Skipping tensorflow for CUDA 12.3";
 
 WORKDIR /workspace
