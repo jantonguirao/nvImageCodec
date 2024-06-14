@@ -41,13 +41,14 @@ RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
 
 RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
 
-RUN mkdir cvcuda && \
+RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
+    mkdir cvcuda && \
     cd cvcuda && \
     wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.5.0-beta/nvcv_python-0.5.0_beta-cp39-cp39-linux_x86_64.whl && \
     python3 -m pip install ./nvcv_python-0.5.0_beta-cp39-cp39-linux_x86_64.whl && \
     cp /usr/local/lib/python3.9/dist-packages/python/* /usr/local/lib/python3.9/dist-packages/ && \
-    wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.5.0-beta/nvcv-lib-0.5.0_beta-cuda11-x86_64-linux.deb && \
-    dpkg -i nvcv-lib-0.5.0_beta-cuda11-x86_64-linux.deb
+    wget https://github.com/CVCUDA/CV-CUDA/releases/download/v0.5.0-beta/nvcv-lib-0.5.0_beta-cuda${CUDA_VERSION_MAJOR}-x86_64-linux.deb && \
+    dpkg -i nvcv-lib-0.5.0_beta-cuda${CUDA_VERSION_MAJOR}-x86_64-linux.deb
 
 # We install cupy 12.3, beacuse newer version uses jitify to compile kernels just in time which fails in our docker
 # Newever version of docuitls removes functionality used by other packages
