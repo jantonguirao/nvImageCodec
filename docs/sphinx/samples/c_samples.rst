@@ -210,7 +210,7 @@ The below snippet demonstrates initialization of  :code:`nvimgcodecImageInfo_t` 
 
     int pitch_in_bytes = input_image_info->plane_info[0].width * input_image_info->plane_info[0].num_channels * bytes_per_element;
 
-    size_t buffer_size = 0;
+    int64_t buffer_size = 0;
     for (size_t p = 0; c < image_info->num_planes; c++) {
         input_image_info->plane_info[p].width = input_image_info->plane_info[0].width;
         input_image_info->plane_info[p].height = input_image_info->plane_info[0].height;

@@ -130,14 +130,14 @@ void Image::initImageInfoFromInterfaceDict(const py::dict& iface, nvimgcodecImag
 
     int pitch_in_bytes = vstrides.size() > 1 ? (is_interleaved ? vstrides[0] : vstrides[1])
                                              : image_info->plane_info[0].width * image_info->plane_info[0].num_channels * bytes_per_element;
-    size_t buffer_size = 0;
+    int64_t buffer_size = 0;
     for (size_t c = 0; c < image_info->num_planes; c++) {
         image_info->plane_info[c].width = image_info->plane_info[0].width;
         image_info->plane_info[c].height = image_info->plane_info[0].height;
         image_info->plane_info[c].row_stride = pitch_in_bytes;
         image_info->plane_info[c].sample_type = sample_type;
         image_info->plane_info[c].num_channels = image_info->plane_info[0].num_channels;
-        buffer_size += (size_t)image_info->plane_info[c].row_stride * (size_t)image_info->plane_info[0].height;
+        buffer_size += image_info->plane_info[c].row_stride * image_info->plane_info[0].height;
     }
     py::tuple tdata = iface["data"].cast<py::tuple>();
     void* buffer = PyLong_AsVoidPtr(tdata[0].ptr());

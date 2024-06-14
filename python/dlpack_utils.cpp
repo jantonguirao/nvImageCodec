@@ -316,7 +316,7 @@ void DLPackTensor::getImageInfo(nvimgcodecImageInfo_t* image_info)
                                              : dl_managed_tensor_ptr_->dl_tensor.strides[1] * bytes_per_element)
                              //can be NULL, indicating tensor is compact and row - majored
                              : image_info->plane_info[0].width * image_info->plane_info[0].num_channels * bytes_per_element;
-    size_t buffer_size = 0;
+    int64_t buffer_size = 0;
     for (size_t c = 0; c < image_info->num_planes; c++) {
         image_info->plane_info[c].width = image_info->plane_info[0].width;
         image_info->plane_info[c].height = image_info->plane_info[0].height;

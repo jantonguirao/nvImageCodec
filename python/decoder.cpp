@@ -110,19 +110,23 @@ std::vector<py::object> Decoder::decode(
 }
 
 std::vector<py::object> Decoder::decode_impl(
-    const std::vector<nvimgcodecCodeStream_t>& code_streams,
+    const std::vector<nvimgcodecCodeStream_t>& code_streams_arg,
     std::vector<std::optional<Region>> rois,
     std::optional<DecodeParams> params_opt,
     intptr_t cuda_stream)
 {
-    std::vector<nvimgcodecImage_t> images(code_streams.size());
+    size_t orig_nsamples = code_streams_arg.size();
+    assert(rois.size() == orig_nsamples);
+    std::vector<nvimgcodecCodeStream_t> code_streams;
+    code_streams.reserve(orig_nsamples);
+    std::vector<nvimgcodecImage_t> images;
+    images.reserve(orig_nsamples);
     std::vector<py::object> py_images;
-    py_images.reserve(code_streams.size());
+    py_images.reserve(orig_nsamples);
 
     py::gil_scoped_release release;
 
     DecodeParams params = params_opt.has_value() ? params_opt.value() : DecodeParams();
-    assert(rois.size() == code_streams.size());
     auto has_any_roi_set = [](const std::vector<std::optional<Region>>& rois) {
         for (auto& roi : rois)
             if (roi)
@@ -131,15 +135,21 @@ std::vector<py::object> Decoder::decode_impl(
     };
     params.decode_params_.enable_roi = has_any_roi_set(rois);
 
-    size_t skip_samples = 0;
-    for (uint32_t i = 0; i < code_streams.size(); i++) {
+    for (size_t i = 0; i < orig_nsamples; i++) {
+        const auto& code_stream = code_streams_arg[i];
+        const auto& roi = rois[i];
         nvimgcodecImageInfo_t image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), 0};
-        CHECK_NVIMGCODEC(nvimgcodecCodeStreamGetImageInfo(code_streams[i], &image_info));
+        auto ret_getimginfo = nvimgcodecCodeStreamGetImageInfo(code_stream, &image_info);
+        if (ret_getimginfo != NVIMGCODEC_STATUS_SUCCESS) {
+            // not logging here again, the specific error should be logged by the function
+            continue;
+        }
 
         if (image_info.num_planes > NVIMGCODEC_MAX_NUM_PLANES) {
-            NVIMGCODEC_LOG_WARNING(logger_, "Num Components > " << NVIMGCODEC_MAX_NUM_PLANES << "not supported.  It will not be included in output");
-
-            skip_samples++;
+            NVIMGCODEC_LOG_WARNING(logger_, "Number of components exceeds the maximum value allowed by the library: "
+                                                << image_info.num_planes << " > " << NVIMGCODEC_MAX_NUM_PLANES
+                                                << ". If your application requires more components, please report it to "
+                                                   "https://github.com/NVIDIA/nvImageCodec/issues.");
             continue;
         }
 
@@ -179,8 +189,8 @@ std::vector<py::object> Decoder::decode_impl(
 
         int decode_out_height = image_info.plane_info[0].height;
         int decode_out_width = image_info.plane_info[0].width;
-        if (rois[i]) {
-            image_info.region = rois[i].value();
+        if (roi) {
+            image_info.region = roi.value();
             decode_out_height = image_info.region.end[0] - image_info.region.start[0];
             decode_out_width = image_info.region.end[1] - image_info.region.start[1];
         }
@@ -191,7 +201,7 @@ std::vector<py::object> Decoder::decode_impl(
 
         size_t device_pitch_in_bytes = decode_out_width * bytes_per_element * image_info.plane_info[0].num_channels;
 
-        size_t buffer_size = 0;
+        int64_t buffer_size = 0;
         for (uint32_t c = 0; c < image_info.num_planes; ++c) {
             image_info.plane_info[c].height = decode_out_height;
             image_info.plane_info[c].width = decode_out_width;
@@ -199,15 +209,28 @@ std::vector<py::object> Decoder::decode_impl(
             image_info.plane_info[c].sample_type = sample_type;
             image_info.plane_info[c].precision = precision;
             image_info.plane_info[c].num_channels = image_info.plane_info[0].num_channels;
-            buffer_size += (size_t)image_info.plane_info[c].row_stride * (size_t)image_info.plane_info[c].height;
+            buffer_size += image_info.plane_info[c].row_stride * image_info.plane_info[c].height;
         }
         image_info.buffer = nullptr;
         image_info.buffer_size = buffer_size;
         image_info.buffer_kind = NVIMGCODEC_IMAGE_BUFFER_KIND_STRIDED_DEVICE;
 
+        static const char* max_image_size_str = std::getenv("NVIMGCODEC_MAX_IMAGE_SIZE");
+        static const int64_t max_image_sz = max_image_size_str && atol(max_image_size_str);
+        if (max_image_sz > 0 && buffer_size > max_image_sz) {
+            NVIMGCODEC_LOG_WARNING(
+                logger_, "Total image volume (height x width x channels x bytes_per_sample) exceeds the maximum configured value: "
+                             << buffer_size << " > NVIMGCODEC_MAX_IMAGE_SIZE(" << max_image_sz
+                             << "). Use NVIMGCODEC_MAX_IMAGE_SIZE env variable to control this maximum value.");
+            continue;
+        }
+
+        code_streams.push_back(code_stream);
+
         py::gil_scoped_acquire acquire;
+
         Image img(instance_, &image_info);
-        images[i - skip_samples] = img.getNvImgCdcsImage();
+        images.push_back(img.getNvImgCdcsImage());
         py_images.push_back(py::cast(std::move(img)));
     }
 
@@ -222,7 +245,7 @@ std::vector<py::object> Decoder::decode_impl(
     nvimgcodecFutureDestroy(decode_future);
 
     py::gil_scoped_acquire acquire;
-    skip_samples = 0;
+    size_t skip_samples = 0;
     for (size_t i = 0; i < decode_status.size(); ++i) {
         if (decode_status[i] != NVIMGCODEC_PROCESSING_STATUS_SUCCESS) {
             NVIMGCODEC_LOG_WARNING(logger_, "Something went wrong during decoding image #" << i << " it will not be included in output");
