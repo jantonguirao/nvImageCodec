@@ -37,4 +37,7 @@ NVIMGCODEC_MAX_JPEG_SCANS
 
 Maximum allowed number of progressive JPEG scans. Default value is 256. This limit is set to prevent a denial-of-service vulnerability via a crafted JPEG (see https://cure53.de/pentest-report_libjpeg-turbo.pdf)
 
-
+NVIMGCODEC_MAX_IMAGE_SIZE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If specified, it imposes a maximum image volume size (in bytes). This setting is used to prevent malicious attacks where an encoded image can be crafted to represent large image dimensions that will cause an OOM error.
+If the maximum volume in bytes (height * width * num_channels * data_type_size) exceeds this value, an explicit error will triggered before attempting an allocation.
