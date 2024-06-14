@@ -24,10 +24,15 @@ This software is in beta version, which means it is still undergoing testing and
 Key Features and Enhancements
 -----------------------------
 
-* Added support for ROI in Python API  
+* Added support for ROI in Python API https://github.com/NVIDIA/nvImageCodec/issues/4
 * Enable runtime dynamic loading of nvJpeg2000 library
 * Added support for nvJpeg2000 v0.8.0 
 * Added GDPR required links to documentation
+* Limit Global Interpreter Lock (GIL) scope on pybind11 exposed functions
+* Support Windows platform
+* Support Linux for Tegra platform
+* Added NVIMGCODEC_MAX_JPEG_SCANS environment variable to control the maximum allowed number of progressive JPEG scans
+* Added NVIMGCODEC_MAX_IMAGE_SIZE environment variable to control the maximum allowed image size
 
 Fixed Issues
 ------------
@@ -35,6 +40,9 @@ Fixed Issues
 * Fix validation of the whl fails https://github.com/NVIDIA/nvImageCodec/issues/2
 * Fix incorrect decoding of 16-bit TIFF images https://github.com/NVIDIA/nvImageCodec/issues/5
 * Fix encoding single channel images https://github.com/NVIDIA/nvImageCodec/issues/6
+* Fix pip installation for Python higher than 3.12 https://github.com/NVIDIA/nvImageCodec/issues/9
+* Fix build from source for nvjpeg2k v0.8 https://github.com/NVIDIA/nvImageCodec/issues/7
+* Fix single-channel encoding issue https://github.com/NVIDIA/nvImageCodec/issues/6
 * Fix for passing cuda stream to `__dlpack__` function as a keyword only argument
 * Fix missing synchronization with user cuda stream before decoding
 * Fix shape returns wrong value for host Images
