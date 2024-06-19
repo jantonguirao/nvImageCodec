@@ -19,3 +19,7 @@ comment = 'OpenCV samples'
 [[oss.excluded.directories]]
 paths = ['external/opencv/3rdparty/libjpeg-turbo']
 comment = 'OpenCV libjpeg-turbo dependency is not used, as we build our own'
+
+[[oss.excluded.directories]]
+paths = ['external/zlib/msdos']
+comment = 'zlib msdos directory is not used'
