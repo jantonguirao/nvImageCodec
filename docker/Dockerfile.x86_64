@@ -54,12 +54,11 @@ RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
 # Numpy 2.0 was recently release and is not compatibile with newest cupy
 # Newever version of docuitls removes functionality used by other packages
 RUN CUDA_VERSION_MAJOR=$(echo "$VER_CUDA" | sed -E 's/^([0-9]+)\..*/\1/') && \
-    python3 -m pip install --extra-index-url https://urm.nvidia.com/artifactory/api/pypi/ct-omniverse-pypi-local/simple \
+    python3 -m pip install \
     pytest \
     cupy-cuda${CUDA_VERSION_MAJOR}x==12.3 \
     opencv-python \
     sphinx \
-    nvidia-sphinx-theme \
     sphinxcontrib-jquery \
     "docutils<0.21" \
     breathe \

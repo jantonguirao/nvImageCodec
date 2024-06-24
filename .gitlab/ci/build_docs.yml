@@ -1,5 +1,6 @@
 .build-nvimagecodec-docs-script: &build-nvimagecodec-docs-script |
     python3 -m pip install artifacts/nvidia_nvimgcodec_cu11-*.whl
+    python3 -m pip install nvidia-sphinx-theme --extra-index-url https://urm.nvidia.com/artifactory/api/pypi/ct-omniverse-pypi-local/simple
     cd docs/doxygen
     doxygen
     cd ../sphinx
