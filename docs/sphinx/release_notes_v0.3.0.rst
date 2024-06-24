@@ -33,6 +33,7 @@ Key Features and Enhancements
 * Support Linux for Tegra platform
 * Added NVIMGCODEC_MAX_JPEG_SCANS environment variable to control the maximum allowed number of progressive JPEG scans
 * Added NVIMGCODEC_MAX_IMAGE_SIZE environment variable to control the maximum allowed image size
+* Switch to new NVIDIA documentation theme
 
 Fixed Issues
 ------------

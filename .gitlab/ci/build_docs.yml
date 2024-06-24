@@ -1,5 +1,6 @@
 .build-nvimagecodec-docs-script: &build-nvimagecodec-docs-script |
     python3 -m pip install artifacts/nvidia_nvimgcodec_cu11-*.whl
+    python3 -m pip install nvidia-sphinx-theme --extra-index-url https://urm.nvidia.com/artifactory/api/pypi/ct-omniverse-pypi-local/simple
     cd docs/doxygen
     doxygen
     cd ../sphinx
@@ -8,7 +9,7 @@
 
 docs:
     stage: build_docs
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v13
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v14
     tags:
         - docker
     dependencies:
@@ -23,7 +24,7 @@ docs:
         - tar -zcvf nvimgcodec-docs.tar.gz --directory=docs/sphinx/_build/ html/
 pages:
     stage: deploy
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v13
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v14
     tags:
         - docker
     dependencies:
