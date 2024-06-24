@@ -40,18 +40,18 @@ CodeStream::CodeStream(nvimgcodecInstance_t instance, const unsigned char * data
 
 CodeStream::CodeStream(nvimgcodecInstance_t instance, py::bytes data)
 {
-    py::gil_scoped_release release;
     data_ref_bytes_ = data;
     auto data_view = static_cast<std::string_view>(data_ref_bytes_);
+    py::gil_scoped_release release;
     auto ret = nvimgcodecCodeStreamCreateFromHostMem(instance, &code_stream_, reinterpret_cast<const unsigned char*>(data_view.data()), data_view.size());
     if (ret != NVIMGCODEC_STATUS_SUCCESS)
         throw std::runtime_error("Failed to create code stream");}
 
 CodeStream::CodeStream(nvimgcodecInstance_t instance, py::array_t<uint8_t> arr)
 {
-    py::gil_scoped_release release;
     data_ref_arr_ = arr;
     auto data = data_ref_arr_.unchecked<1>();
+    py::gil_scoped_release release;
     auto ret = nvimgcodecCodeStreamCreateFromHostMem(instance, &code_stream_, data.data(0), data.size());
     if (ret != NVIMGCODEC_STATUS_SUCCESS)
         throw std::runtime_error("Failed to create code stream");
