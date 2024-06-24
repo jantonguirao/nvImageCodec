@@ -27,6 +27,7 @@ The following samples demonstrates the use of nvImageCodec Python API:
 
    Basics <nvimgcodec.nblink>
    Batch processing <batch_sample.nblink>
+   Decode source and partial (ROI) decoding <decode_source.nblink>
    CuPy interoperability <cupy_sample.ipynb>
    cuCIM interoperability <cucim_sample.ipynb>
    CV-CUDA interoperability <cvcuda_sample.ipynb>
