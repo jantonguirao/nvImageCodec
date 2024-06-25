@@ -100,7 +100,7 @@ else()
     list(APPEND TIFF_LIBRARY_DEPS ${ZSTD_LIBRARY})
 endif()
 
-find_package(JPEG 62 REQUIRED) # 1.5.3 version
+find_package(JPEG 62) # 1.5.3 version
 if(NOT DEFINED JPEG_LIBRARY)
     message(WARNING "libjpeg-turbo not found - disabled")
     set(BUILD_LIBJPEG_TURBO_EXT OFF CACHE BOOL INTERNAL)
@@ -111,7 +111,7 @@ else()
     list(APPEND TIFF_LIBRARY_DEPS ${JPEG_LIBRARY})
 endif()
 
-find_package(TIFF REQUIRED)
+find_package(TIFF)
 if(NOT DEFINED TIFF_LIBRARY)
     message(WARNING "libtiff not found - disabled")
     set(BUILD_LIBTIFF_EXT OFF CACHE BOOL INTERNAL)
