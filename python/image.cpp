@@ -21,6 +21,8 @@
 
 #include <dlpack/dlpack.h>
 
+#include "cuda_utils.h"
+#include "device_guard.h"
 #include "dlpack_utils.h"
 #include "error_handling.h"
 #include "type_utils.h"
@@ -56,9 +58,23 @@ void Image::initBuffer(nvimgcodecImageInfo_t* image_info)
 void Image::initDeviceBuffer(nvimgcodecImageInfo_t* image_info)
 {
     unsigned char* buffer;
-    CHECK_CUDA(cudaMallocAsync((void**)&buffer, image_info->buffer_size, image_info->cuda_stream));
+    bool use_async_mem_ops = can_use_async_mem_ops(image_info->cuda_stream);
+
+    if (use_async_mem_ops) {
+        CHECK_CUDA(cudaMallocAsync((void**)&buffer, image_info->buffer_size, image_info->cuda_stream));
+    } else {
+        DeviceGuard device_guard(get_stream_device_id(image_info->cuda_stream));
+        CHECK_CUDA(cudaMalloc((void**)&buffer, image_info->buffer_size));
+    }
+
     auto cuda_stream = image_info->cuda_stream;
-    img_buffer_ = std::shared_ptr<unsigned char>(buffer, [cuda_stream](unsigned char* buffer) { cudaFreeAsync(buffer, cuda_stream); });
+    img_buffer_ = std::shared_ptr<unsigned char>(buffer, [cuda_stream, use_async_mem_ops](unsigned char* buffer) {
+        if (use_async_mem_ops) {
+            cudaFreeAsync(buffer, cuda_stream);
+        } else {
+            cudaFree(buffer);
+        }
+    });
     image_info->buffer = buffer;
 }
 

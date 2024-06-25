@@ -54,7 +54,7 @@ build_per_python_lib(nvimgcodec_python
     OUTPUT_NAME nvimgcodec_impl
     OUTPUT_DIR ${PY_NVIMGCODEC_IMPL_OUTPUT_DIR}
     PUBLIC_LIBS nvimgcodec
-    PRIV_LIBS CUDA::cudart_static
+    PRIV_LIBS CUDA::cudart_static dynlink_cuda
     SRC ${PY_NVIMGCODEC_SRCS})
 
 # TODO(janton)

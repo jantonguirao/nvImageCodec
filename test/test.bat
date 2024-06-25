@@ -17,8 +17,8 @@ for %%G in (".\*.whl") do (
     pip install -I %%G
 )
 
-REM pytest -v .\python
-REM if %errorlevel% neq 0 exit /b %errorlevel%
+pytest -v .\python
+if %errorlevel% neq 0 exit /b %errorlevel%
 
 REM pytest -v test_transcode.py
 REM if %errorlevel% neq 0 exit /b %errorlevel%

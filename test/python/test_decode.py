@@ -212,8 +212,6 @@ def test_decode_color_spec(input_img_file, color_spec):
             expected_nchannels = 3
         assert expected_nchannels == test_img.shape[-1]
 
-test_decode_color_spec("jpeg2k/cat-1046544_640.jp2", nvimgcodec.ColorSpec.RGB)
-
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,
                                  [nvimgcodec.Backend(nvimgcodec.GPU_ONLY, load_hint=0.5), nvimgcodec.Backend(
