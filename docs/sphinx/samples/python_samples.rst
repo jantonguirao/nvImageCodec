@@ -33,5 +33,5 @@ The following samples demonstrates the use of nvImageCodec Python API:
    CV-CUDA interoperability <cvcuda_sample.ipynb>
    Tensorflow interoperability <tensorflow_sample.ipynb>
 
-.. 
-   #Classification <python_samples/classification>
+Please see also `CV-CUDA samples <https://cvcuda.github.io/CV-CUDA/samples/python_samples.html>`_ which use nvImageCodec.
+
