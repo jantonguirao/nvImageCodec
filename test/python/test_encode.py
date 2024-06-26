@@ -266,7 +266,10 @@ def test_encode_with_as_images_from_cuda_array_interface(input_images_batch):
 def test_encode_jpeg_gray():
     img_dir_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../resources"))
     fname = os.path.join(img_dir_path, 'bmp/cat-111793_640_grayscale.bmp')
-    decoder = nvimgcodec.Decoder()
+    backends = [nvimgcodec.Backend(nvimgcodec.GPU_ONLY), 
+                nvimgcodec.Backend(nvimgcodec.HYBRID_CPU_GPU),
+                nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]
+    decoder = nvimgcodec.Decoder(backends=backends)
     params1 = nvimgcodec.DecodeParams(color_spec=nvimgcodec.ColorSpec.GRAY, allow_any_depth=True)
     arr = np.array(decoder.read(fname, params=params1).cpu())
     assert arr.shape[-1] == 1
