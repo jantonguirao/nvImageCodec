@@ -141,6 +141,16 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
     }
 }
 
+void generate_backends_without_hw_gpu(std::vector<nvimgcodecBackend_t>& nvimgcds_backends) {
+    nvimgcds_backends.resize(3);
+    nvimgcds_backends[0].kind = NVIMGCODEC_BACKEND_KIND_CPU_ONLY;
+    nvimgcds_backends[0].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+    nvimgcds_backends[1].kind = NVIMGCODEC_BACKEND_KIND_GPU_ONLY;
+    nvimgcds_backends[1].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+    nvimgcds_backends[2].kind = NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU;
+    nvimgcds_backends[2].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+}
+
 int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::path output_path, const CommandLineParams& params)
 {
     std::cout << "Loading " << input_path.string() << " file" << std::endl;
@@ -218,13 +228,7 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
     // vector must exist when we call nvimgcodecDecoderCreate() and nvimgcodecEncoderCreate()
     std::vector<nvimgcodecBackend_t> nvimgcds_backends;
     if (params.skip_hw_gpu_backend) {
-        nvimgcds_backends.resize(3);
-        nvimgcds_backends[0].kind = NVIMGCODEC_BACKEND_KIND_CPU_ONLY;
-        nvimgcds_backends[0].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
-        nvimgcds_backends[1].kind = NVIMGCODEC_BACKEND_KIND_GPU_ONLY;
-        nvimgcds_backends[1].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
-        nvimgcds_backends[2].kind = NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU;
-        nvimgcds_backends[2].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+        generate_backends_without_hw_gpu(nvimgcds_backends);
 
         exec_params.num_backends = nvimgcds_backends.size();
         exec_params.backends = nvimgcds_backends.data();
@@ -476,13 +480,7 @@ int prepare_decode_resources(nvimgcodecInstance_t instance, FileData& file_data,
             // vector must exist when we call nvimgcodecDecoderCreate()
             std::vector<nvimgcodecBackend_t> nvimgcds_backends;
             if (skip_hw_gpu_backend) {
-                nvimgcds_backends.resize(3);
-                nvimgcds_backends[0].kind = NVIMGCODEC_BACKEND_KIND_CPU_ONLY;
-                nvimgcds_backends[0].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
-                nvimgcds_backends[1].kind = NVIMGCODEC_BACKEND_KIND_GPU_ONLY;
-                nvimgcds_backends[1].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
-                nvimgcds_backends[2].kind = NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU;
-                nvimgcds_backends[2].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+                generate_backends_without_hw_gpu(nvimgcds_backends);
 
                 exec_params.num_backends = nvimgcds_backends.size();
                 exec_params.backends = nvimgcds_backends.data();
@@ -536,13 +534,7 @@ int prepare_encode_resources(nvimgcodecInstance_t instance, FileNames& current_n
             // vector must exist when we call nvimgcodecEncoderCreate()
             std::vector<nvimgcodecBackend_t> nvimgcds_backends;
             if (skip_hw_gpu_backend) {
-                nvimgcds_backends.resize(3);
-                nvimgcds_backends[0].kind = NVIMGCODEC_BACKEND_KIND_CPU_ONLY;
-                nvimgcds_backends[0].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
-                nvimgcds_backends[1].kind = NVIMGCODEC_BACKEND_KIND_GPU_ONLY;
-                nvimgcds_backends[1].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
-                nvimgcds_backends[2].kind = NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU;
-                nvimgcds_backends[2].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+                generate_backends_without_hw_gpu(nvimgcds_backends);
 
                 exec_params.num_backends = nvimgcds_backends.size();
                 exec_params.backends = nvimgcds_backends.data();
