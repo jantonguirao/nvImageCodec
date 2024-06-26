@@ -91,12 +91,12 @@ int get_stream_device_id(cudaStream_t stream)
     if (it == handle_to_device_id.end()) {
         int device_count;
         if (cudaGetDeviceCount(&device_count) != cudaSuccess) {
-            std::runtime_error("Unable to get device cound");
+            throw std::runtime_error("Unable to get device count");
         }
         for (int device_ordinal = 0; device_ordinal < device_count; ++device_ordinal) {
             CUdevice device_handle;
             if (cuDeviceGet(&device_handle, device_ordinal) != CUDA_SUCCESS) {
-                std::runtime_error(std::string("Unable to get device handle for device #") + std::to_string(device_ordinal));
+                throw std::runtime_error(std::string("Unable to get device handle for device #") + std::to_string(device_ordinal));
             }
             handle_to_device_id[device_handle] = device_ordinal;
         }

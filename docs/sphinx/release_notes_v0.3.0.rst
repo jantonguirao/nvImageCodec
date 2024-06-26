@@ -31,6 +31,7 @@ Key Features and Enhancements
 * Limit Global Interpreter Lock (GIL) scope on pybind11 exposed functions
 * Support Windows platform
 * Support Linux for Tegra platform
+* Support platforms without stream ordered allocations
 * Added NVIMGCODEC_MAX_JPEG_SCANS environment variable to control the maximum allowed number of progressive JPEG scans
 * Added NVIMGCODEC_MAX_IMAGE_SIZE environment variable to control the maximum allowed image size
 * Switch to new NVIDIA documentation theme

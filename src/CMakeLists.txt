@@ -41,7 +41,6 @@ set(NVIMGCODEC_SRCS
     decode_state_batch.cpp
     encode_state_batch.cpp
     thread_pool.cpp
-    device_guard.cpp
     default_executor.cpp
     builtin_modules.cpp
     parsers/bmp.cpp

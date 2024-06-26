@@ -18,11 +18,11 @@
 #pragma once
 
 #include <cuda.h>
+#include <cuda_runtime.h>
 #include <iostream>
 #include <stdexcept>
-#include "error_handling.h"
 
-namespace nvimgcodec {
+namespace nvimgcodec { namespace {
 
 bool cuInitChecked()
 {
@@ -47,7 +47,10 @@ class DeviceGuard
                 "Failed to load libcuda.so. "
                 "Check your library paths and if the driver is installed correctly.");
         }
-        CHECK_CU(cuCtxGetCurrent(&old_context_));
+
+        if (cuCtxGetCurrent(&old_context_) != CUDA_SUCCESS) {
+            throw std::runtime_error("Unable to get current CUDA context");
+        }
     }
 
     /// @brief Saves current device id, sets a new one and switches back
@@ -62,8 +65,12 @@ class DeviceGuard
                     "Failed to load libcuda.so. "
                     "Check your library paths and if the driver is installed correctly.");
             }
-            CHECK_CU(cuCtxGetCurrent(&old_context_));
-            CHECK_CUDA(cudaSetDevice(new_device));
+            if (cuCtxGetCurrent(&old_context_) != CUDA_SUCCESS) {
+                throw std::runtime_error("Unable to get current CUDA context");
+            }
+            if (cudaSetDevice(new_device) != cudaSuccess) {
+                throw std::runtime_error("Unable to set device");
+            }
         }
     }
 
@@ -81,4 +88,4 @@ class DeviceGuard
     CUcontext old_context_;
 };
 
-} // namespace nvimgcodec
+} } // namespace nvimgcodec

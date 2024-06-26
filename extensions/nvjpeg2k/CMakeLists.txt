@@ -30,9 +30,11 @@ if(NOT WITH_DYNAMIC_NVJPEG2K)
     PUBLIC ${NVJPEG2K_LIBRARY})
 else()
   target_link_libraries(${NVIMGCODEC_NVJPEG2K_EXT_LIBRARY_NAME}
-    PRIVATE dynlink_nvjpeg2k)
+    PRIVATE dynlink_nvjpeg2k dynlink_cuda)
   target_link_libraries(${NVIMGCODEC_NVJPEG2K_EXT_LIBRARY_NAME}
     PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:dynlink_nvjpeg2k>")
+  target_link_libraries(${NVIMGCODEC_NVJPEG2K_EXT_LIBRARY_NAME}
+    PRIVATE "-Wl,--exclude-libs,$<TARGET_FILE_NAME:dynlink_cuda>")
 endif()
 
 target_link_libraries(${NVIMGCODEC_NVJPEG2K_EXT_LIBRARY_NAME} PUBLIC

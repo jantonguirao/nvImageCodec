@@ -21,8 +21,8 @@
 
 #include <dlpack/dlpack.h>
 
-#include "cuda_utils.h"
-#include "device_guard.h"
+#include <imgproc/stream_device.h>
+#include <imgproc/device_guard.h>
 #include "dlpack_utils.h"
 #include "error_handling.h"
 #include "type_utils.h"
@@ -72,6 +72,7 @@ void Image::initDeviceBuffer(nvimgcodecImageInfo_t* image_info)
         if (use_async_mem_ops) {
             cudaFreeAsync(buffer, cuda_stream);
         } else {
+            DeviceGuard device_guard(get_stream_device_id(cuda_stream));
             cudaFree(buffer);
         }
     });
