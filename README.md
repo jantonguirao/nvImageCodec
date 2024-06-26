@@ -260,7 +260,7 @@ cd build
 cmake --install . --config Release --prefix bin
 cd bin/test
 
-LD_LIBRARY_PATH=$PWD/../lib64 pytest -v test_transcoder.py
+LD_LIBRARY_PATH=$PWD/../lib64 pytest -v test_transcode.py
 
 ```
 

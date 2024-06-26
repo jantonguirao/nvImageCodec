@@ -141,6 +141,16 @@ void fill_encode_params(const CommandLineParams& params, fs::path output_path, n
     }
 }
 
+void generate_backends_without_hw_gpu(std::vector<nvimgcodecBackend_t>& nvimgcds_backends) {
+    nvimgcds_backends.resize(3);
+    nvimgcds_backends[0].kind = NVIMGCODEC_BACKEND_KIND_CPU_ONLY;
+    nvimgcds_backends[0].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+    nvimgcds_backends[1].kind = NVIMGCODEC_BACKEND_KIND_GPU_ONLY;
+    nvimgcds_backends[1].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+    nvimgcds_backends[2].kind = NVIMGCODEC_BACKEND_KIND_HYBRID_CPU_GPU;
+    nvimgcds_backends[2].params = {NVIMGCODEC_STRUCTURE_TYPE_BACKEND_PARAMS, sizeof(nvimgcodecBackendParams_t), nullptr, 1.0f};
+}
+
 int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::path output_path, const CommandLineParams& params)
 {
     std::cout << "Loading " << input_path.string() << " file" << std::endl;
@@ -214,6 +224,16 @@ int process_one_image(nvimgcodecInstance_t instance, fs::path input_path, fs::pa
 
     nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
     exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
+
+    // vector must exist when we call nvimgcodecDecoderCreate() and nvimgcodecEncoderCreate()
+    std::vector<nvimgcodecBackend_t> nvimgcds_backends;
+    if (params.skip_hw_gpu_backend) {
+        generate_backends_without_hw_gpu(nvimgcds_backends);
+
+        exec_params.num_backends = nvimgcds_backends.size();
+        exec_params.backends = nvimgcds_backends.data();
+    }
+
     nvimgcodecDecoder_t decoder;
     std::string dec_options{":fancy_upsampling=0"};
     nvimgcodecDecoderCreate(instance, &decoder, &exec_params, dec_options.c_str());
@@ -393,7 +413,7 @@ struct ImageBuffer
 int prepare_decode_resources(nvimgcodecInstance_t instance, FileData& file_data, std::vector<size_t>& file_len,
     std::vector<ImageBuffer>& ibuf, FileNames& current_names, nvimgcodecDecoder_t& decoder, bool& is_host_output, bool& is_device_output,
     std::vector<nvimgcodecCodeStream_t>& code_streams, std::vector<nvimgcodecImage_t>& images, const nvimgcodecDecodeParams_t& decode_params,
-    double& parse_time)
+    double& parse_time, bool skip_hw_gpu_backend)
 {
     parse_time = 0;
     for (uint32_t i = 0; i < file_data.size(); i++) {
@@ -456,6 +476,16 @@ int prepare_decode_resources(nvimgcodecInstance_t instance, FileData& file_data,
             std::string dec_options{":fancy_upsampling=0"};
             nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
             exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
+
+            // vector must exist when we call nvimgcodecDecoderCreate()
+            std::vector<nvimgcodecBackend_t> nvimgcds_backends;
+            if (skip_hw_gpu_backend) {
+                generate_backends_without_hw_gpu(nvimgcds_backends);
+
+                exec_params.num_backends = nvimgcds_backends.size();
+                exec_params.backends = nvimgcds_backends.data();
+            }
+
             CHECK_NVIMGCODEC(nvimgcodecDecoderCreate(instance, &decoder, &exec_params, dec_options.c_str()));
         }
     }
@@ -468,7 +498,7 @@ static std::map<std::string, std::string> codec2ext = {
 int prepare_encode_resources(nvimgcodecInstance_t instance, FileNames& current_names, nvimgcodecEncoder_t& encoder, bool& is_host_input,
     bool& is_device_input, std::vector<nvimgcodecCodeStream_t>& out_code_streams, std::vector<nvimgcodecImage_t>& images,
     const nvimgcodecEncodeParams_t& encode_params, const CommandLineParams& params, nvimgcodecJpegImageInfo_t& jpeg_image_info,
-    fs::path output_path)
+    fs::path output_path, bool skip_hw_gpu_backend)
 {
     for (uint32_t i = 0; i < current_names.size(); i++) {
         fs::path filename = fs::path(current_names[i]).filename();
@@ -500,6 +530,16 @@ int prepare_encode_resources(nvimgcodecInstance_t instance, FileNames& current_n
             const char* options = nullptr;
             nvimgcodecExecutionParams_t exec_params{NVIMGCODEC_STRUCTURE_TYPE_EXECUTION_PARAMS, sizeof(nvimgcodecExecutionParams_t), 0};
             exec_params.device_id = NVIMGCODEC_DEVICE_CURRENT;
+
+            // vector must exist when we call nvimgcodecEncoderCreate()
+            std::vector<nvimgcodecBackend_t> nvimgcds_backends;
+            if (skip_hw_gpu_backend) {
+                generate_backends_without_hw_gpu(nvimgcds_backends);
+
+                exec_params.num_backends = nvimgcds_backends.size();
+                exec_params.backends = nvimgcds_backends.data();
+            }
+
             CHECK_NVIMGCODEC(nvimgcodecEncoderCreate(instance, &encoder, &exec_params, options));
         }
     }
@@ -575,7 +615,7 @@ int process_images(nvimgcodecInstance_t instance, fs::path input_path, fs::path 
 
         double parse_time = 0;
         ret = prepare_decode_resources(instance, file_data, file_len, image_buffers, current_names, decoder, is_host_output,
-            is_device_output, in_code_streams, images, decode_params, parse_time);
+            is_device_output, in_code_streams, images, decode_params, parse_time, params.skip_hw_gpu_backend);
 
         std::cout << "." << std::flush;
 
@@ -609,7 +649,7 @@ int process_images(nvimgcodecInstance_t instance, fs::path input_path, fs::path 
         }
 
         ret = prepare_encode_resources(instance, current_names, encoder, is_host_input, is_device_input, out_code_streams, images,
-            encode_params, params, jpeg_image_info, output_path);
+            encode_params, params, jpeg_image_info, output_path, params.skip_hw_gpu_backend);
         std::unique_ptr<std::remove_pointer<nvimgcodecEncoder_t>::type, decltype(&nvimgcodecEncoderDestroy)> encoder_raii(
             encoder, &nvimgcodecEncoderDestroy);
 
