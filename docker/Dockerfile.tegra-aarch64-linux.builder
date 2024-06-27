@@ -45,6 +45,7 @@ RUN rm /etc/apt/sources.list.d/cuda.list && \
                        cuda-cccl-cross-aarch64-${CUDA_CROSS_VERSION} \
                        cuda-nvcc-cross-aarch64-${CUDA_CROSS_VERSION} \
                        libnpp-cross-aarch64-${CUDA_CROSS_VERSION} \
+                       libnvjpeg-cross-aarch64-${CUDA_CROSS_VERSION} \
     && \
     rm -rf /var/lib/apt/lists/* && \
     PYTHON_VER=$(python3 -c "import sys;print(f'{sys.version_info[0]}{sys.version_info[1]}')") && \
