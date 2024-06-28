@@ -9,7 +9,6 @@ docker buildx create --name nvimagecodec_builder || echo "nvimagecodec_build alr
 docker buildx use nvimagecodec_builder
 docker buildx inspect --bootstrap
 
-
 ####### BASE IMAGES #######
 
 # Manylinux2014 with GCC 9
