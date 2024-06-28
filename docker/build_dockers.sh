@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-export VERSION=${VERSION:-14}  # Update version when changing anything in the Dockerfiles
+export VERSION=${VERSION:-15}  # Update version when changing anything in the Dockerfiles
 
 SCRIPT_DIR=$(dirname $0)
 source ${SCRIPT_DIR}/config-docker.sh || source ${SCRIPT_DIR}/default-config-docker.sh
@@ -8,6 +8,7 @@ source ${SCRIPT_DIR}/config-docker.sh || source ${SCRIPT_DIR}/default-config-doc
 docker buildx create --name nvimagecodec_builder || echo "nvimagecodec_build already created"
 docker buildx use nvimagecodec_builder
 docker buildx inspect --bootstrap
+
 
 ####### BASE IMAGES #######
 
