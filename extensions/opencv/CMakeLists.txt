@@ -24,6 +24,9 @@ add_library(${EXT_LIBRARY_NAME} SHARED ${NVIMGCODEC_OPENCV_EXT_SRC} ext_module.c
 add_library(${EXT_LIBRARY_NAME}_static STATIC ${NVIMGCODEC_OPENCV_EXT_SRC})
 
 target_link_libraries(${EXT_LIBRARY_NAME} PUBLIC ${OpenCV_LIBRARIES})
+target_link_libraries(${EXT_LIBRARY_NAME} PUBLIC ${JPEG_LIBRARY})
+target_link_libraries(${EXT_LIBRARY_NAME} PUBLIC ${TIFF_LIBRARY})
+target_link_libraries(${EXT_LIBRARY_NAME} PUBLIC ${TIFF_LIBRARY_DEPS})
 
 if(UNIX)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden -Wl,--exclude-libs,ALL")
@@ -35,8 +38,6 @@ if(UNIX)
     VERSION ${PROJECT_VERSION}
     NO_SONAME OFF)
 else()
-  target_link_libraries(${EXT_LIBRARY_NAME} PUBLIC ${TIFF_LIBRARY_DEPS})
-
   set_target_properties(${EXT_LIBRARY_NAME} PROPERTIES
     POSITION_INDEPENDENT_CODE ON
     VERSION ${PROJECT_VERSION}
