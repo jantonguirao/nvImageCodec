@@ -16,7 +16,7 @@ set(CMAKE_C_COMPILER_TARGET aarch64)
 add_definitions(-D__AARCH64_GNU__)
 set(CMAKE_LINKER "/usr/bin/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu-ld")
 
-set(LINKER_FLAGS "-Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now,-lc -pthread -lpthread -ldl")
+set(LINKER_FLAGS "-Wl,--gc-sections -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now,-lc -pthread -lpthread -ldl -lrt -lm")
 
 set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".so,.a")

@@ -77,8 +77,8 @@ target_link_libraries(${NVIMGCODEC_LIBRARY_NAME} PRIVATE CUDA::cudart_static dyn
 if(UNIX)
     # CXX flags
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -fvisibility=hidden")
-    target_link_libraries(${NVIMGCODEC_LIBRARY_NAME} PRIVATE dl)
-    target_link_libraries(${NVIMGCODEC_LIBRARY_NAME}_static PRIVATE dl)
+    target_link_libraries(${NVIMGCODEC_LIBRARY_NAME} PRIVATE "${NVIMGCODEC_COMMON_DEPENDENCIES}")
+    target_link_libraries(${NVIMGCODEC_LIBRARY_NAME}_static PRIVATE "${NVIMGCODEC_COMMON_DEPENDENCIES}")
 endif()
 
 
