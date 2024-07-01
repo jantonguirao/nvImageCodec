@@ -146,3 +146,9 @@ endif()
 # Boost preprocessor
 # #################################################################
 include_directories(${PROJECT_SOURCE_DIR}/external/boost/preprocessor/include)
+
+set(NVIMGCODEC_COMMON_DEPENDENCIES "")
+list(APPEND NVIMGCODEC_COMMON_DEPENDENCIES rt)
+list(APPEND NVIMGCODEC_COMMON_DEPENDENCIES pthread)
+list(APPEND NVIMGCODEC_COMMON_DEPENDENCIES m)
+list(APPEND NVIMGCODEC_COMMON_DEPENDENCIES dl)
