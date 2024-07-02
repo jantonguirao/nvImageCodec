@@ -131,9 +131,12 @@ int CodeStream::channels() const {
 }
 
 py::dtype CodeStream::dtype() const {
-    py::gil_scoped_release release;
-    auto& info = ImageInfo();
-    std::string format = format_str_from_type(info.plane_info[0].sample_type);
+    std::string format;
+    {
+        py::gil_scoped_release release;
+        auto& info = ImageInfo();
+        format = format_str_from_type(info.plane_info[0].sample_type);
+    }
     return py::dtype(format);
 }
 
