@@ -67,7 +67,7 @@ class ExtensionTestBase
             image_info_.plane_info[p].row_stride = image_info_.plane_info[0].width;
             image_info_.plane_info[p].num_channels = 1;
             image_info_.plane_info[p].sample_type = NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
-            image_info_.plane_info[p].precision = 0;
+            image_info_.plane_info[p].precision = 8;
         }
         image_info_.buffer_size = image_info_.plane_info[0].height * image_info_.plane_info[0].width * image_info_.num_planes;
         image_buffer_.resize(image_info_.buffer_size);
