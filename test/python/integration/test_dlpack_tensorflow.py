@@ -23,7 +23,7 @@ try:
     import tensorflow as tf
     has_tf = len(tf.config.list_physical_devices('GPU')) > 0
 except:
-    print("Tensorflow not available, will skip related tests")
+    print("Tensorflow is not available, will skip related tests")
     has_tf = False
 
 @t.mark.skipif(not has_tf, reason="Tensorflow with GPU is not available")
