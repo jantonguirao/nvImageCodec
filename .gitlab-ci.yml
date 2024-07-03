@@ -35,18 +35,18 @@ build:cuda11.8:
     extends: .build:nvimagecodec
     variables:
         WITH_DYNAMIC_NVJPEG: "OFF"
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-11.8-x86_64:v14
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-11.8-x86_64:v15
 
 build:cuda12.5:
     extends: .build:nvimagecodec
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-12.5-x86_64:v14
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-12.5-x86_64:v15
 
 build:cuda11.8-gcc9:
     extends: .build:nvimagecodec
     variables:
         WITH_DYNAMIC_NVJPEG: "OFF"
     when: manual
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-11.8-gcc9-x86_64:v14
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/builder-cuda-11.8-gcc9-x86_64:v15
 
 .test:
     stage: test
@@ -83,37 +83,37 @@ build:cuda11.8-gcc9:
 
 test:cuda11.3:
     extends: .test:nvimagecodec
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.3-x86_64:v14
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.3-x86_64:v15
     dependencies:
         - build:cuda11.8
 
 test:cuda11.8:
     extends: .test:nvimagecodec
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v14
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v15
     dependencies:
         - build:cuda11.8
 
 test:cuda12.1:
     extends: .test:nvimagecodec
-    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-12.1-x86_64:v14
+    image: gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-12.1-x86_64:v15
     dependencies:
         - build:cuda12.5
 
 test:python-cuda11.3:
     extends: .test:python
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.3-x86_64:v14
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.3-x86_64:v15
     dependencies:
         - build:cuda11.8
 
 test:python-cuda11.8:
     extends: .test:python
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v14
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v15
     dependencies:
         - build:cuda11.8
 
 test:python-cuda12.1:
     extends: .test:python
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-12.1-x86_64:v14
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-12.1-x86_64:v15
     dependencies:
         - build:cuda12.5
 
@@ -140,19 +140,19 @@ test:python-integration-pytorch:
 
 test:transcode-cuda11.3:
     extends: .test:transcode
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.3-x86_64:v14
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.3-x86_64:v15
     dependencies:
         - build:cuda11.8
 
 test:transcode-cuda11.8:
     extends: .test:transcode
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v14
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-11.8-x86_64:v15
     dependencies:
         - build:cuda11.8
 
 test:transcode-cuda12.1:
     extends: .test:transcode
-    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-12.1-x86_64:v14
+    image:  gitlab-master.nvidia.com:5005/cuda-hpc-libraries/nvimagecodec/runner-cuda-12.1-x86_64:v15
     dependencies:
         - build:cuda12.5
 
