@@ -186,8 +186,8 @@ install(FILES
 if(WIN32)
     install(FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/test.bat
-        ${CMAKE_CURRENT_SOURCE_DIR}/requirements_cu11.txt
-        ${CMAKE_CURRENT_SOURCE_DIR}/requirements_cu12.txt
+        ${CMAKE_CURRENT_SOURCE_DIR}/requirements_win_cu11.txt
+        ${CMAKE_CURRENT_SOURCE_DIR}/requirements_win_cu12.txt
         DESTINATION test
         COMPONENT tests
     )

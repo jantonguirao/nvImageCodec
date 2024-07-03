@@ -77,8 +77,8 @@ nvimgcodec::ILibraryLoader::LibraryHandle loadNvjpegLibrary()
 {
     nvimgcodec::LibraryLoader lib_loader;
     nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
+    auto default_path = GetDefaultNvJpegPath();
     for (const char* libname : __NvjpegLibNames) {
-        auto default_path = GetDefaultNvJpegPath();
         if (!default_path.empty()) {
             fs::path lib_with_path = fs::path(default_path) / fs::path(libname);
             ret = lib_loader.loadLibrary(lib_with_path.string());

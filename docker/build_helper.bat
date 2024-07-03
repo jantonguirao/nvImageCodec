@@ -40,11 +40,11 @@ cmake -DBUILD_ID="%NVIDIA_BUILD_ID%" ^
 
 if %errorlevel% neq 0 exit /b %errorlevel%
 
-pushd %SOURCE_DIR%\build
+pushd %BUILD_DIR%
 
 cmake --build . --config Release --parallel 12
 
-cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+cpack --config CPackConfig.cmake -DCMAKE_BUILD_TYPE=Release
 REM mkdir %WHL_OUTDIR%
 REM copy *.tar.gz *.deb %WHL_OUTDIR%/
 

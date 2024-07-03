@@ -80,8 +80,8 @@ nvimgcodec::ILibraryLoader::LibraryHandle loadNvjpeg2kLibrary()
 {
     nvimgcodec::LibraryLoader lib_loader;
     nvimgcodec::ILibraryLoader::LibraryHandle ret = nullptr;
+    fs::path default_path = GetDefaultNvJpeg2kPath();
     for (const char* libname : __Nvjpeg2kLibNames) {
-        fs::path default_path = GetDefaultNvJpeg2kPath();
         if (!default_path.empty()) {
             fs::path lib_with_path = default_path / fs::path(libname);
             ret = lib_loader.loadLibrary(lib_with_path.string());

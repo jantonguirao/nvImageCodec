@@ -69,7 +69,6 @@ endif()
 
 if(WITH_DYNAMIC_NVJPEG2K)
     set(NVJPEG2K_GENERATED_STUB "${CMAKE_CURRENT_BINARY_DIR}/dynlink_nvjpeg2k_gen.cpp")
-    message (STATUS "DYNLINK uses following python  ${PYTHON_EXECUTABLE}")
     add_custom_command(
         OUTPUT ${NVJPEG2K_GENERATED_STUB}
         COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/stub_generator/stub_codegen.py --unique_prefix=Nvjpeg2k --

@@ -10,9 +10,8 @@ FROM mcr.microsoft.com/windows/servercore:ltsc2019
 # Restore the default Windows shell for correct batch processing.
 SHELL ["cmd", "/S", "/C"]
 
-# Download the Build Tools bootstrapper and the CMake installer
+# Download the Build Tools bootstrapper
 RUN curl -SL --output vs_buildtools.exe https://aka.ms/vs/17/release.ltsc.17.4/vs_buildtools.exe
-RUN curl -SL --output cmake_installer.msi https://github.com/Kitware/CMake/releases/download/v3.29.5/cmake-3.29.5-windows-x86_64.msi
 
 # Install Build Tools with the Microsoft.VisualStudio.Workload.VCTools workload, excluding workloads and components with known issues.
 RUN (start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
@@ -27,9 +26,6 @@ RUN (start /w vs_buildtools.exe --quiet --wait --norestart --nocache `
         --remove Microsoft.VisualStudio.Component.Windows10SDK.14393 `
         --remove Microsoft.VisualStudio.Component.Windows81SDK `
         || IF "%ERRORLEVEL%"=="3010" EXIT 0)
-
-# Install CMake
-RUN msiexec /i cmake_installer.msi /quiet /qn /norestart
 
 # Cleanup
 RUN del /q vs_buildtools.exe
