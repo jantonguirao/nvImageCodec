@@ -217,7 +217,7 @@ The below snippet demonstrates initialization of  :code:`nvimgcodecImageInfo_t` 
         input_image_info.plane_info[p].row_stride = pitch_in_bytes;
         input_image_info.plane_info[p].sample_type = sample_type;
         input_image_info.plane_info[p].num_channels = input_image_info.plane_info[0].num_channels;
-        input_image_info.plane_info[p].precision = 0;  //Value 0 means that precision is equal to sample type bitdepth (in our case 8 bits)
+        input_image_info.plane_info[p].precision = 8;
         buffer_size += input_image_info.plane_info[p].row_stride * input_image_info.plane_info[0].height;
     }
 

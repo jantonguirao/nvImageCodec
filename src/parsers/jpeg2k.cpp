@@ -391,8 +391,7 @@ nvimgcodecStatus_t JPEG2KParserPlugin::Parser::getImageInfo(nvimgcodecImageInfo_
             image_info->plane_info[p].width = DivUp(XSiz - XOSiz, XRSiz[p]);
             image_info->plane_info[p].num_channels = 1;
             image_info->plane_info[p].sample_type = BitsPerComponentToType(Ssiz[p]);
-            image_info->plane_info[p].precision =
-                ((image_info->plane_info[p].sample_type >> 8) & 0xff) == (Ssiz[p] & 0x7F) + 1 ? 0 : (Ssiz[p] & 0x7F) + 1;
+            image_info->plane_info[p].precision = (Ssiz[p] & 0x7F) + 1;
         }
 
         nvimgcodecJpeg2kImageInfo_t* jp2_info = reinterpret_cast<nvimgcodecJpeg2kImageInfo_t*>(image_info->struct_next);

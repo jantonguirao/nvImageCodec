@@ -275,8 +275,8 @@ def test_decode_batch(tmp_path, input_images_batch, input_format, backends, cuda
 
 @t.mark.parametrize(
     "input_img_file, precision",
-    [("jpeg2k/tiled-cat-1046544_640_gray.jp2", 0),
-     ("jpeg2k/cat-111793_640-16bit.jp2", 0),
+    [("jpeg2k/tiled-cat-1046544_640_gray.jp2", 8),
+     ("jpeg2k/cat-111793_640-16bit.jp2", 16),
      ("jpeg2k/cat-1245673_640-12bit.jp2", 12)])
 def test_decode_image_check_precision(input_img_file, precision):
     input_img_path = os.path.join(img_dir_path, input_img_file)

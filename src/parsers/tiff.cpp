@@ -171,6 +171,7 @@ nvimgcodecStatus_t GetInfoImpl(
         info->plane_info[p].num_channels = 1;
         info->plane_info[p].sample_type =
             bitdepth_read && bitdepth[p] == 16 ? NVIMGCODEC_SAMPLE_DATA_TYPE_UINT16 : NVIMGCODEC_SAMPLE_DATA_TYPE_UINT8;
+        info->plane_info[p].precision = bitdepth[p];
     }
     if (nchannels == 1)
         info->sample_format = NVIMGCODEC_SAMPLEFORMAT_P_Y;
