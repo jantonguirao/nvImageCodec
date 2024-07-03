@@ -76,8 +76,8 @@ Consists of externally hosted subrepositories:
 .. _opencv: https://github.com/opencv/opencv/
 .. |opencvlic| replace:: Apache License 2.0
 .. _opencvlic: https://github.com/opencv/opencv/blob/master/LICENSE
-.. |opencvver| replace:: 4.9.0
-.. _opencvver: https://github.com/opencv/opencv/releases/tag/4.9.0
+.. |opencvver| replace:: 4.10.0
+.. _opencvver: https://github.com/opencv/opencv/releases/tag/4.10.0
 
 .. _openjpeg: https://github.com/uclouvain/openjpeg
 .. |openjpeglic| replace:: BSD-2 license
