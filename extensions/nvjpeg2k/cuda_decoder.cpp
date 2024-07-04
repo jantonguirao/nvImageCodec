@@ -28,21 +28,24 @@
 #include <set>
 #include <sstream>
 #include <vector>
-#include "log.h"
 
+#include <imgproc/stream_device.h>
+#include <imgproc/device_guard.h>
+
+#include "log.h"
 #include "cuda_decoder.h"
 #include "error_handling.h"
 
+#include "../utils/parallel_exec.h"
 #include "imgproc/convert_kernel_gpu.h"
 #include "imgproc/sample_format_utils.h"
-#include "../utils/parallel_exec.h"
-
 
 namespace nvjpeg2k {
 
 NvJpeg2kDecoderPlugin::NvJpeg2kDecoderPlugin(const nvimgcodecFrameworkDesc_t* framework)
-    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_, "jpeg2k", NVIMGCODEC_BACKEND_KIND_GPU_ONLY, static_create,
-          Decoder::static_destroy, Decoder::static_can_decode, Decoder::static_decode_batch}
+    : decoder_desc_{NVIMGCODEC_STRUCTURE_TYPE_DECODER_DESC, sizeof(nvimgcodecDecoderDesc_t), NULL, this, plugin_id_, "jpeg2k",
+          NVIMGCODEC_BACKEND_KIND_GPU_ONLY, static_create, Decoder::static_destroy, Decoder::static_can_decode,
+          Decoder::static_decode_batch}
     , framework_(framework)
 {
 }
@@ -63,9 +66,9 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecodeImpl(CodeStreamCtx& 
         bool is_jpeg2k = strcmp(cs_image_info.codec_name, "jpeg2k") == 0;
 
         for (size_t i = 0; i < ctx.size(); i++) {
-            auto *status = &ctx.batch_items_[i]->processing_status;
-            auto *image = ctx.batch_items_[i]->image;
-            const auto *params = ctx.batch_items_[i]->params;
+            auto* status = &ctx.batch_items_[i]->processing_status;
+            auto* image = ctx.batch_items_[i]->image;
+            const auto* params = ctx.batch_items_[i]->params;
 
             XM_CHECK_NULL(status);
             XM_CHECK_NULL(image);
@@ -120,8 +123,8 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecodeImpl(CodeStreamCtx& 
     return NVIMGCODEC_STATUS_SUCCESS;
 }
 
-nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcodecProcessingStatus_t* status, nvimgcodecCodeStreamDesc_t** code_streams,
-    nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
+nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::canDecode(nvimgcodecProcessingStatus_t* status,
+    nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
 {
     try {
         nvtx3::scoped_range marker{"jpeg2k_can_decode"};
@@ -160,10 +163,9 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::static_can_decode(nvimgcodecD
     }
 }
 
-
 void NvJpeg2kDecoderPlugin::Decoder::parseOptions(const char* options)
 {
-    num_parallel_tiles_ = 16;  // default 16 tiles in parallel for all threads
+    num_parallel_tiles_ = 16; // default 16 tiles in parallel for all threads
     std::istringstream iss(options ? options : "");
     std::string token;
     while (std::getline(iss, token, ' ')) {
@@ -271,8 +273,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::create(
         XM_CHECK_NULL(exec_params);
         if (exec_params->device_id == NVIMGCODEC_DEVICE_CPU_ONLY)
             return NVIMGCODEC_STATUS_INVALID_PARAMETER;
-        *decoder =
-            reinterpret_cast<nvimgcodecDecoder_t>(new NvJpeg2kDecoderPlugin::Decoder(plugin_id_, framework_, exec_params, options));
+        *decoder = reinterpret_cast<nvimgcodecDecoder_t>(new NvJpeg2kDecoderPlugin::Decoder(plugin_id_, framework_, exec_params, options));
         return NVIMGCODEC_STATUS_SUCCESS;
     } catch (const NvJpeg2kException& e) {
         NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Could not create nvjpeg2k decoder - " << e.info());
@@ -281,7 +282,7 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::create(
 }
 
 nvimgcodecStatus_t NvJpeg2kDecoderPlugin::static_create(
-        void* instance, nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options)
+    void* instance, nvimgcodecDecoder_t* decoder, const nvimgcodecExecutionParams_t* exec_params, const char* options)
 {
     try {
         XM_CHECK_NULL(instance);
@@ -453,10 +454,11 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
         int rgb_output = image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB || image_info.color_spec == NVIMGCODEC_COLORSPEC_UNKNOWN ||
                          (image_info.color_spec == NVIMGCODEC_COLORSPEC_UNCHANGED && cs_image_info.color_spec == NVIMGCODEC_COLORSPEC_SRGB);
         XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetRGBOutput(decode_params, rgb_output));
-        XM_CHECK_NVJPEG2K(nvjpeg2kDecodeParamsSetOutputFormat(decode_params, native_interleaved ? NVJPEG2K_FORMAT_INTERLEAVED : NVJPEG2K_FORMAT_PLANAR));
+        XM_CHECK_NVJPEG2K(
+            nvjpeg2kDecodeParamsSetOutputFormat(decode_params, native_interleaved ? NVJPEG2K_FORMAT_INTERLEAVED : NVJPEG2K_FORMAT_PLANAR));
 
         if (image_info.num_planes > 1 && num_components < image_info.num_planes) {
-             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected number of planes");
+            NVIMGCODEC_LOG_ERROR(framework_, plugin_id_, "Unexpected number of planes");
             image->imageReady(image->instance, NVIMGCODEC_PROCESSING_STATUS_FAIL);
             return;
         } else if (convert_interleaved && (num_components < image_info.plane_info[0].num_channels && num_components != 1)) {
@@ -509,7 +511,8 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
         size_t planar_row_nbytes = roi_width * bytes_per_sample;
         size_t planar_plane_nbytes = roi_width * roi_height * bytes_per_sample;
 
-        size_t expected_buffer_size = roi_height * roi_width * out_bytes_per_sample * std::max(image_info.num_planes, image_info.plane_info[0].num_channels);
+        size_t expected_buffer_size =
+            roi_height * roi_width * out_bytes_per_sample * std::max(image_info.num_planes, image_info.plane_info[0].num_channels);
         if (image_info.buffer_size < expected_buffer_size) {
             NVIMGCODEC_LOG_ERROR(framework_, plugin_id_,
                 "The provided buffer can't hold the decoded image: " << image_info.buffer_size << " < " << expected_buffer_size);
@@ -532,10 +535,15 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
 
             decode_tmp_buffer_sz = current_offset; // allocate a single chunk of memory for all the temporary buffers we need
             if (device_allocator_.device_malloc) {
-                device_allocator_.device_malloc(
-                    device_allocator_.device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                device_allocator_.device_malloc(device_allocator_.device_ctx, &decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
             } else {
-                XM_CHECK_CUDA(cudaMallocAsync(&decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_));
+                bool use_async_mem_ops = nvimgcodec::can_use_async_mem_ops(t.stream_);
+                if (use_async_mem_ops) {
+                    XM_CHECK_CUDA(cudaMallocAsync(&decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_));
+                } else {
+                    nvimgcodec::DeviceGuard device_guard(nvimgcodec::get_stream_device_id(t.stream_));
+                    XM_CHECK_CUDA(cudaMalloc(&decode_tmp_buffer, decode_tmp_buffer_sz));
+                }
             }
         }
 
@@ -567,7 +575,6 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
         output_image.pixel_data = (void**)&decode_output[0];
         output_image.pitch_in_bytes = &pitch_in_bytes[0];
 
-
         // Waits for GPU stage from previous iteration (on this thread)
         XM_CHECK_CUDA(cudaEventSynchronize(t.event_));
 
@@ -579,8 +586,8 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
         if (!tiled || per_tile_res.size() <= 1 || image_info.color_spec == NVIMGCODEC_COLORSPEC_SYCC) {
             nvtx3::scoped_range marker{"nvjpeg2kDecodeImage"};
             NVIMGCODEC_LOG_DEBUG(framework_, plugin_id_, "nvjpeg2kDecodeImage");
-            XM_CHECK_NVJPEG2K(nvjpeg2kDecodeImage(
-                handle_, jpeg2k_state, t.nvjpeg2k_stream_, decode_params_raii.get(), &output_image, t.stream_));
+            XM_CHECK_NVJPEG2K(
+                nvjpeg2kDecodeImage(handle_, jpeg2k_state, t.nvjpeg2k_stream_, decode_params_raii.get(), &output_image, t.stream_));
         } else {
             std::vector<uint8_t*> tile_decode_output(jpeg2k_info.num_components, nullptr);
             for (uint32_t tile_y = 0; tile_y < jpeg2k_info.num_tiles_y; tile_y++) {
@@ -643,8 +650,8 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
                     {
                         auto tile_idx = tile_y * jpeg2k_info.num_tiles_x + tile_x;
                         nvtx3::scoped_range marker{"nvjpeg2kDecodeTile #" + std::to_string(tile_idx)};
-                        XM_CHECK_NVJPEG2K(nvjpeg2kDecodeTile(handle_, tile_res->state_, t.nvjpeg2k_stream_,
-                            decode_params_raii.get(), tile_idx, 0, &output_tile, tile_res->stream_));
+                        XM_CHECK_NVJPEG2K(nvjpeg2kDecodeTile(handle_, tile_res->state_, t.nvjpeg2k_stream_, decode_params_raii.get(),
+                            tile_idx, 0, &output_tile, tile_res->stream_));
                     }
                     // sync thread stream with tile stream
                     XM_CHECK_CUDA(cudaEventRecord(tile_res->event_, tile_res->stream_));
@@ -658,9 +665,9 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
         if (needs_convert) {
             nvimgcodecImageInfo_t dec_image_info{NVIMGCODEC_STRUCTURE_TYPE_IMAGE_INFO, sizeof(nvimgcodecImageInfo_t), nullptr};
             strcpy(dec_image_info.codec_name, "jpeg2k");
-            dec_image_info.color_spec = NVIMGCODEC_COLORSPEC_UNKNOWN;  // not used by the converter
+            dec_image_info.color_spec = NVIMGCODEC_COLORSPEC_UNKNOWN; // not used by the converter
             dec_image_info.chroma_subsampling = NVIMGCODEC_SAMPLING_NONE;
-            dec_image_info.sample_format = cs_image_info.sample_format;  // original (planar) sample format
+            dec_image_info.sample_format = cs_image_info.sample_format; // original (planar) sample format
             dec_image_info.orientation = image_info.orientation;
             dec_image_info.region.struct_type = NVIMGCODEC_STRUCTURE_TYPE_REGION;
             dec_image_info.region.struct_size = sizeof(nvimgcodecStructureType_t);
@@ -699,10 +706,16 @@ void NvJpeg2kDecoderPlugin::Decoder::decodeImpl(BatchItemCtx& batch_item, int ti
     try {
         if (decode_tmp_buffer) {
             if (device_allocator_.device_free) {
-                device_allocator_.device_free(
-                    device_allocator_.device_ctx, decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
+                device_allocator_.device_free(device_allocator_.device_ctx, decode_tmp_buffer, decode_tmp_buffer_sz, t.stream_);
             } else {
-                XM_CHECK_CUDA(cudaFreeAsync(decode_tmp_buffer, t.stream_));
+                bool use_async_mem_ops = nvimgcodec::can_use_async_mem_ops(t.stream_);
+                if (use_async_mem_ops) {
+                    XM_CHECK_CUDA(cudaFreeAsync(decode_tmp_buffer, t.stream_));
+                } else {
+                    nvimgcodec::DeviceGuard device_guard(nvimgcodec::get_stream_device_id(t.stream_));
+                    XM_CHECK_CUDA(cudaFree(decode_tmp_buffer));
+                }
+
             }
             decode_tmp_buffer = nullptr;
             decode_tmp_buffer_sz = 0;
@@ -754,8 +767,8 @@ nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::decodeBatch(
     }
 }
 
-nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::static_decode_batch(nvimgcodecDecoder_t decoder, nvimgcodecCodeStreamDesc_t** code_streams,
-    nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
+nvimgcodecStatus_t NvJpeg2kDecoderPlugin::Decoder::static_decode_batch(nvimgcodecDecoder_t decoder,
+    nvimgcodecCodeStreamDesc_t** code_streams, nvimgcodecImageDesc_t** images, int batch_size, const nvimgcodecDecodeParams_t* params)
 {
     if (decoder) {
         auto* handle = reinterpret_cast<NvJpeg2kDecoderPlugin::Decoder*>(decoder);

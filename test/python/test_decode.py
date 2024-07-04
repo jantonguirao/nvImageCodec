@@ -187,7 +187,10 @@ def get_opencv_reference(input_img_path, color_spec, any_depth=False):
 def test_decode_color_spec(input_img_file, color_spec):
     debug = False
     input_img_path = os.path.join(img_dir_path, input_img_file)
-    decoder = nvimgcodec.Decoder(options=get_default_decoder_options())
+    backends = [nvimgcodec.Backend(nvimgcodec.GPU_ONLY),
+                nvimgcodec.Backend(nvimgcodec.HYBRID_CPU_GPU),
+                nvimgcodec.Backend(nvimgcodec.CPU_ONLY)]
+    decoder = nvimgcodec.Decoder(options=get_default_decoder_options(), backends=backends)
     params = nvimgcodec.DecodeParams(
         color_spec=color_spec, allow_any_depth=False, apply_exif_orientation=True)
     test_img = decoder.read(input_img_path, params=params)
@@ -211,8 +214,6 @@ def test_decode_color_spec(input_img_file, color_spec):
         else:
             expected_nchannels = 3
         assert expected_nchannels == test_img.shape[-1]
-
-test_decode_color_spec("jpeg2k/cat-1046544_640.jp2", nvimgcodec.ColorSpec.RGB)
 
 @t.mark.parametrize("max_num_cpu_threads", [0, 1, 5])
 @t.mark.parametrize("backends", [None,

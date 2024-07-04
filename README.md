@@ -158,7 +158,7 @@ pip install nvidia-nvjpeg2k-cu12
   - nvJPEG2000 >= 0.8.0
   - libjpeg-turbo >= 2.0.0
   - libtiff >= 4.5.0
-  - opencv >= 4.7.0
+  - opencv >= 4.10.0
 - Python packages: 
   - clang==14.0.1 
   - wheel

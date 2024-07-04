@@ -47,8 +47,8 @@ function(FindPython PYVER)
 
   # Construct the version range string for find_package
   set(version_range "${lower_range_string}...<${upper_range_string}")
-
-  find_package(Python ${version_range} QUIET COMPONENTS Interpreter Development)
+  message(STATUS "Looking for python in range ${version_range}")
+  find_package(Python ${version_range} COMPONENTS Interpreter Development.Module)
 
   # Check if Python is found
   if(Python_FOUND)
