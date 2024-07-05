@@ -37,6 +37,11 @@ This section describes the recommended dependencies to use nvImageCodec.
       * RHEL 8, 9
       * SLES 15
       * Ubuntu 20.04, 22.04
+   * aarch64-jetson (CUDA Toolkit >= 12.0)
+      * Ubuntu 22.04
+* Windows
+   * x86_64
+      * `Microsoft Visual C++ Redistributable <https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170>`_  
 * NVIDIA driver >= 520.56.06
 * CUDA Toolkit > = 11.8
 * Python >= 3.8
@@ -72,3 +77,25 @@ If you do not have CUDA Toolkit installed, or you would like install nvJPEG libr
 * Install nvJPEG for CUDA 12.x ::
 
     pip install nvidia-nvjpeg-cu12
+
+Optional installation of nvJPEG2000 library
+-------------------------------------------
+`nvJPEG2000 library <https://developer.nvidia.com/nvjpeg2000-downloads>`_ can be installed in the system, or installed as a Python package. For the latter, follow the instructions below.
+
+* Install the nvidia-pyindex module ::
+
+    pip install nvidia-pyindex
+
+* Install nvJPEG2000 for CUDA 11.x ::
+
+    pip install nvidia-nvjpeg2k-cu11
+
+* Install nvJPEG2000 for CUDA 12.x ::
+
+    pip install nvidia-nvjpeg2k-cu12
+
+* Install nvJPEG2000 for CUDA 12.x on Tegra platforms ::
+
+    pip install nvidia-nvjpeg2k-tegra-cu12
+
+Please see also `nvJPEG2000 installation documentation <https://docs.nvidia.com/cuda/nvjpeg2000/userguide.html#installing-nvjpeg2000>`_ for more information

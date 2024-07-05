@@ -1,15 +1,18 @@
 # nvImageCodec
 
+![Version](https://img.shields.io/badge/Version-v0.3.0--beta-blue)
 [![License](https://img.shields.io/badge/License-Apache_2.0-yellogreen.svg)](https://opensource.org/licenses/Apache-2.0)
 
-![Version](https://img.shields.io/badge/Version-v0.3.0--beta-blue)
+![Platform](https://img.shields.io/badge/Platform-linux--x86__64_%7C_linux--aarch64_%7C_windows--64_wsl2_%7C_windows--64-blue)
 
-![Platform](https://img.shields.io/badge/Platform-linux--x86__64_%7C_linux--aarch64_%7C_windows--64_wsl2-gray)
-
-[![Cuda](https://img.shields.io/badge/CUDA-v11.8_%7c_v12.3-%2376B900?logo=nvidia)](https://developer.nvidia.com/cuda-toolkit-archive)
+[![Cuda](https://img.shields.io/badge/CUDA-v11.8_%7c_v12.5-%2376B900?logo=nvidia)](https://developer.nvidia.com/cuda-toolkit-archive)
 [![GCC](https://img.shields.io/badge/GCC->=v9.0-yellow)](https://gcc.gnu.org/gcc-9/)
-[![Python](https://img.shields.io/badge/python-v3.8_%7c_v3.9_%7c_v3.10_%7c_v3.11_%7c_v3.12-blue?logo=python)](https://www.python.org/)
 [![CMake](https://img.shields.io/badge/CMake->=v3.18-%23008FBA?logo=cmake)](https://cmake.org/)
+
+
+[![Python](https://img.shields.io/badge/python-v3.8_%7c_v3.9_%7c_v3.10_%7c_v3.11_%7c_v3.12-blue?logo=python)](https://www.python.org/)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/nvidia-nvimgcodec-cu12?pypiBaseUrl=https%3A%2F%2Fpypi.org&label=PyPI&link=https%3A%2F%2Fpypi.org%2Fsearch%2F%3Fq%3Dnvidia-nvimgcodec-cu12)
+
 
 The nvImageCodec is an open-source library of accelerated codecs with unified interface.
 It is designed as a framework for extension modules which delivers codec plugins.
@@ -85,6 +88,11 @@ This section describes the recommended dependencies to use nvImageCodec.
       - RHEL 8, 9
       - SLES 15
       - Ubuntu 20.04, 22.04
+   - aarch64-jetson (CUDA Toolkit >= 12.0)
+      - Ubuntu 22.04
+- Windows
+   - x86_64
+     - [Microsoft Visual C++ Redistributable](https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist?view=msvc-170)   
 - NVIDIA driver >= 520.56.06
 - CUDA Toolkit > = 11.8
 - nvJPEG2000 >= 0.8.0
@@ -144,6 +152,15 @@ Install nvJPEG2000 for CUDA 12.x
 pip install nvidia-nvjpeg2k-cu12
 ```
 
+Install nvJPEG2000 for CUDA 12.x on Tegra platforms
+
+```
+pip install nvidia-nvjpeg2k-tegra-cu12
+```
+
+Please see also [nvJPEG2000 installation documentation](https://docs.nvidia.com/cuda/nvjpeg2000/userguide.html#installing-nvjpeg2000) for more information
+
+
 ### Documentation
 
 [NVIDIA nvImageCodec Documentation](https://docs.nvidia.com/cuda/nvimagecodec/)
@@ -151,9 +168,12 @@ pip install nvidia-nvjpeg2k-cu12
 ## Build and install from Sources
 
 ### Additional pre-requisites
-- GCC >= 9.4
-- cmake >= 3.18
-- patchelf >= 0.17.2
+- Linux
+  - GCC >= 9.4
+  - cmake >= 3.18
+  - patchelf >= 0.17.2
+- Windows
+  - [Microsoft Visual Studio 2022 Build Tools](https://aka.ms/vs/17/release/vs_buildtools.exe)
 - Dependencies for extensions. If you would not like to build particular extension you can skip it.
   - nvJPEG2000 >= 0.8.0
   - libjpeg-turbo >= 2.0.0
@@ -173,6 +193,8 @@ Please see also Dockerfiles.
 
 ### Build
 
+#### Linux
+
 ```
 git lfs clone https://github.com/NVIDIA/nvImageCodec.git
 cd nvimagecodec
@@ -183,12 +205,22 @@ export CUDACXX=nvcc
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make
 ```
-
-#### Build CVCUDA samples
+##### Build CVCUDA samples
 
 To build CV-CUDA samples, additionally CV-CUDA has to be installed and CVCUDA_DIR and NVCV_TYPES_DIR
 need to point folders with *-config.cmake files. Apart of that, BUILD_CVCUDA_SAMPLES variable must be set to ON.
 
+#### Windows
+
+Open Developer Command Prompt for VS 2022
+
+```
+git lfs clone https://github.com/NVIDIA/nvImageCodec.git
+cd nvimagecodec
+git submodule update --init --recursive --depth 1
+.\externa\build_deps.bat
+.\docker\build_helper.bat .\build 12
+```
 
 ## Build Python wheel
 
@@ -196,7 +228,7 @@ After succesfully built project, execute below commands.
 
 ```
 cd build
-make wheel
+cmake --build . --target wheel
 ```
 
 ## Packaging
@@ -232,7 +264,7 @@ pip install nvidia_nvimgcodec_cu12-0.3.0-py3-none-manylinux2014_x86_64.whl
 ##### Linux
 ```
 cd build
-cmake --install . --config Release -prefix /opt/nvidia/nvimgcodec_<major_cuda_ver>
+cmake --install . --config Release --prefix /opt/nvidia/nvimgcodec_<major_cuda_ver>
 ```
 
 After execution there should be:
@@ -245,6 +277,21 @@ Add directory with libnvimgcodec.so to LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/opt/nvidia/nvimgcodec_cuda<major_cuda_ver>/lib64:$LD_LIBRARY_PATH
 ```
 
+##### Windows
+
+Open Developer Command Prompt for VS 2022
+
+```
+cd build
+cmake --install . --config Release --prefix "c:\Program Files\nvimgcodec_cuda<major_cuda_ver>"
+```
+
+After execution there should be:
+
+- all extension modules in c:\Program Files\nvimgcodec_cuda<major_cuda_ver>/extensions (it is default directory for extension discovery)
+- nvimgcodec_0.dll in c:\Program Files\nvimgcodec_cuda<major_cuda_ver>\bin
+
+Add directory with nvimgcodec_0.dll to PATH
 
 ## Testing
 Run CTest to execute L0 and L1 tests
