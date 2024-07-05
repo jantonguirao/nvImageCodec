@@ -227,6 +227,7 @@ std::vector<py::bytes> Encoder::encode(
 
         static unsigned char* resize_buffer_static(void* ctx, size_t bytes)
         {
+            py::gil_scoped_acquire acquire;
             auto handle = reinterpret_cast<PyObjectWrap*>(ctx);
             return handle->getBuffer(bytes);
         }
