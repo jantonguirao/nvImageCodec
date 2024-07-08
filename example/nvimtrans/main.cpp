@@ -29,6 +29,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <sstream>
 #include "command_line_params.h"
 
 
