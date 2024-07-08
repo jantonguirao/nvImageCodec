@@ -50,8 +50,8 @@ def get_cuda_compute_capability(device_id=0):
         handle = pynvml.nvmlDeviceGetHandleByIndex(device_id)
         compute_cap = pynvml.nvmlDeviceGetCudaComputeCapability(handle)
         compute_cap = compute_cap[0] + compute_cap[1] / 10.
-    except ModuleNotFoundError:
-        print("NVML not found")
+    except Exception as e:
+        print(f"Error: {e}")
     return compute_cap
 
 img_dir_path = os.path.abspath(os.path.join(
