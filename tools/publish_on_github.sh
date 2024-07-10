@@ -66,7 +66,7 @@ copy_from_private_to_public() {
     echo "  ./retstore_submodules.sh"
     echo ""
     echo "Modify message as needed and commit"
-    echo "  git commit -m 'Adding code for release v0.3.0 (commit ${nvimgcodec_commit})'"
+    echo "  git commit -m 'Adding code for release (commit ${nvimgcodec_commit})'"
     echo ""    
     echo "Check lfs files"
     echo "  git lfs ls-files"
