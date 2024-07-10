@@ -1,5 +1,5 @@
 ..
-  # SPDX-FileCopyrightText: Copyright (c) 2023 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+  # SPDX-FileCopyrightText: Copyright (c) 2023-2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
   # SPDX-License-Identifier: Apache-2.0
   #
   # Licensed under the Apache License, Version 2.0 (the "License");
@@ -93,6 +93,7 @@ Additionally as a fallback there are following 3rd party codec extensions:
    :maxdepth: 1
    :hidden:
 
+   0.4.0-beta.3 <release_notes_v0.4.0>
    0.3.0-beta.2 <release_notes_v0.3.0>
    0.2.0-beta.1 <release_notes_v0.2.0>
    0.1.0-alpha.2 <release_notes_v0.1.0-alpha.2>
