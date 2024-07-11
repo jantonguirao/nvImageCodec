@@ -59,6 +59,7 @@ copy_from_private_to_public() {
     --exclude=.githooks \
     --exclude=.gitlab \
     --exclude=docker/config-docker.sh \
+    --exclude=docker/config-docker.bat \
     --exclude=tools/populate_public_repo.sh \
     --exclude=tools/arch_3rd_party_oss.sh \
     --exclude=tools/publish_on_github.sh \

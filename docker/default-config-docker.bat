@@ -1,0 +1,2 @@
+set REGISTRY_PREFIX=""
+set ARCH="x86_64"  
