@@ -152,12 +152,3 @@ list(APPEND NVIMGCODEC_COMMON_DEPENDENCIES rt)
 list(APPEND NVIMGCODEC_COMMON_DEPENDENCIES pthread)
 list(APPEND NVIMGCODEC_COMMON_DEPENDENCIES m)
 list(APPEND NVIMGCODEC_COMMON_DEPENDENCIES dl)
-
-# #################################################################
-# Pybind11
-# #################################################################
-# In CMake, if PYBIND11_USE_CROSSCOMPILING is enabled,
-# then CMAKE_CROSSCOMPILING will be respected and will keep pybind11
-# from accessing the interpreter during configuration.
-# This is required for aarch64 build to work
-set(PYBIND11_USE_CROSSCOMPILING ON)

@@ -47,8 +47,8 @@ Consists of externally hosted subrepositories:
 
 .. |pybind11| replace:: pybind11
 .. _pybind11: https://github.com/pybind/pybind11
-.. |pybind11ver| replace:: 2.13.1
-.. _pybind11ver: https://github.com/pybind/pybind11/releases/tag/v2.13.1
+.. |pybind11ver| replace:: Top of tree (from Jul 16, 2024)
+.. _pybind11ver: https://github.com/pybind/pybind11/commit/43de8014f96ab8fc0028f11a26edbcf9b937cd91
 .. |pybind11lic| replace:: BSD 3-Clause License
 .. _pybind11lic: https://github.com/pybind/pybind11/blob/master/LICENSE
 
