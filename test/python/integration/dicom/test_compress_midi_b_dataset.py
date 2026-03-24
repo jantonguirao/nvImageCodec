@@ -182,7 +182,39 @@ def _read_datasets(dicom_files: list) -> list:
     return [pydicom.dcmread(file_path) for file_path in dicom_files]
 
 
+def _compute_series_normal(datasets: list):
+    """
+    Compute the slice-stack normal for a series using cross(row_cosine, col_cosine).
+
+    Returns a unit normal vector if all frames share a consistent ImageOrientationPatient,
+    otherwise returns None.
+    """
+    if not all(hasattr(ds, 'ImageOrientationPatient') for ds in datasets):
+        return None
+    first_iop = list(datasets[0].ImageOrientationPatient)
+    if not all(list(ds.ImageOrientationPatient) == first_iop for ds in datasets):
+        return None
+    orientation = np.array(first_iop, dtype=float).reshape(2, 3)
+    return np.cross(orientation[0], orientation[1])
+
+
 def _sort_datasets(datasets: list) -> list:
+    """Sort datasets by spatial position along the series normal.
+
+    Uses the same normal-projection sort as convert_to_enhanced_dicom so that
+    both the pre-sort and the comparison agree on frame ordering across all
+    acquisition planes (axial, sagittal, coronal, oblique).
+    """
+    normal = _compute_series_normal(datasets)
+    if normal is not None:
+        return sorted(
+            datasets,
+            key=lambda ds: (
+                np.dot(np.array(list(ds.ImagePositionPatient), dtype=float), normal)
+                if hasattr(ds, 'ImagePositionPatient') else 0.0,
+                int(getattr(ds, 'InstanceNumber', 0)),
+            ),
+        )
     return sorted(
         datasets,
         key=lambda ds: (
@@ -357,11 +389,22 @@ def compare_enhanced_dicom_with_originals(
                 )
             normalized_originals.append((z_pos, ds, file_path))
     
-    # Sort by Z position and InstanceNumber
-    normalized_originals.sort(key=lambda x: (
-        x[0],  # Primary: Z position
-        int(getattr(x[1], 'InstanceNumber', 0))  # Secondary: InstanceNumber
-    ))
+    # Sort by projected spatial position along the series normal (same sort as convert_to_enhanced_dicom).
+    # For axial series the normal is [0,0,1] so this equals ascending Z; for sagittal/coronal
+    # series the normal points along X or Y, ensuring consistent ordering regardless of plane.
+    orig_datasets = [x[1] for x in normalized_originals]
+    normal = _compute_series_normal(orig_datasets)
+    if normal is not None:
+        normalized_originals.sort(key=lambda x: (
+            np.dot(np.array(list(x[1].ImagePositionPatient), dtype=float), normal)
+            if hasattr(x[1], 'ImagePositionPatient') else x[0],
+            int(getattr(x[1], 'InstanceNumber', 0)),
+        ))
+    else:
+        normalized_originals.sort(key=lambda x: (
+            x[0],  # Primary: Z position
+            int(getattr(x[1], 'InstanceNumber', 0))  # Secondary: InstanceNumber
+        ))
     
     # Verify frame count matches
     if len(normalized_originals) != num_frames:

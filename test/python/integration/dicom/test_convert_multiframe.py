@@ -78,14 +78,14 @@ def modify_series_attributes(series, **kwargs):
 def ct_series():
     """Create fresh test datasets for each test to avoid pollution."""
     # Create a series of CT slices with different Z positions
-    source_file = pydicom.data.get_testdata_file("CT_small.dcm")
+    source_file = pydicom.data.get_testdata_file("693_UNCI.dcm")
     ds_base = pydicom.dcmread(source_file)
-    
+
     series = []
     for i in range(5):
         ds = copy.deepcopy(ds_base)
         # Modify each frame so that the pixel values are different
-        # (add i to all pixels, which is safe for CT_small.dcm's pixel range)
+        # (add i to all pixels, which is safe for 693_UNCI.dcm's pixel range)
         ds.PixelData = (ds.pixel_array + i).astype(ds.pixel_array.dtype).tobytes()
         # Set required attributes for enhanced conversion
         ds.Modality = "CT"
@@ -145,26 +145,6 @@ def test_preserve_series_uid(ct_series):
     result = convert_to_enhanced_dicom([ct_series])
     assert result[0].SeriesInstanceUID == original_uid
 
-def test_frame_ordering_preserved(ct_series):
-    """Test that frame order is preserved as provided (not automatically sorted)."""
-    # Create series in specific order
-    specific_order = [ct_series[2], ct_series[0], ct_series[4], 
-                        ct_series[1], ct_series[3]]
-    expected_z_order = [10.0, 0.0, 20.0, 5.0, 15.0]  # Z positions in the order provided
-    
-    result = convert_to_enhanced_dicom([specific_order])
-    ds_enhanced = result[0]
-    
-    # Verify frames are in the same order as provided (not sorted by Z)
-    for i, expected_z in enumerate(expected_z_order):
-        frame_item = ds_enhanced.PerFrameFunctionalGroupsSequence[i]
-        actual_z = float(frame_item.PlanePositionSequence[0].ImagePositionPatient[2])
-        assert abs(actual_z - expected_z) < 10**-1, f"Frame {i}: expected Z={expected_z}, got Z={actual_z}"
-        
-        # Verify pixel data matches the expected source frame
-        expected_frame = specific_order[i]
-        np.testing.assert_array_equal(expected_frame.pixel_array, ds_enhanced.pixel_array[i],
-                                        err_msg=f"Frame {i} pixel data doesn't match source")
 
 def test_per_frame_functional_groups(ct_series):
     """Test that per-frame functional groups are correctly populated."""
@@ -443,41 +423,108 @@ def test_invalid_transfer_syntax_raises_error(ct_series):
     assert "not supported" in str(ctx.value).lower()
 
 
-def test_frame_ordering_preserves_frame_acquisition_numbers(ct_series):
-    """Verify frame ordering and per-frame acquisition numbers match the source."""
-    # Create series in specific scrambled order
-    specific_order = [ct_series[2], ct_series[0], ct_series[4], 
-                     ct_series[1], ct_series[3]]
-    expected_z_positions = [10.0, 0.0, 20.0, 5.0, 15.0]
-    expected_instance_numbers = [3, 1, 5, 2, 4]
-    
-    result = convert_to_enhanced_dicom([specific_order])
-    ds_enhanced = result[0]
-    
-    # Verify frames are in the provided order (not auto-sorted)
-    for i in range(len(specific_order)):
-        frame_fg = ds_enhanced.PerFrameFunctionalGroupsSequence[i]
-        
-        # Verify Z position matches expected order
-        actual_z = float(frame_fg.PlanePositionSequence[0].ImagePositionPatient[2])
-        assert abs(actual_z - expected_z_positions[i]) < 10**-1, f"Frame {i}: Z position mismatch"
-        
-        # Verify pixel data matches the expected source frame
-        expected_source = specific_order[i]
-        np.testing.assert_array_equal(expected_source.pixel_array, 
-                                     ds_enhanced.pixel_array[i],
-                                     err_msg=f"Frame {i}: pixel data doesn't match source")
-        
-        # Verify the source frame had the expected InstanceNumber
-        assert expected_source.InstanceNumber == expected_instance_numbers[i], f"Frame {i}: source InstanceNumber mismatch"
+def test_unsorted_input_is_sorted_by_spatial_position(ct_series):
+    """Regression test: unsorted input datasets must be sorted by spatial position.
 
-        # Verify enhanced per-frame metadata preserves acquisition numbers
-        assert hasattr(frame_fg, 'FrameContentSequence'), f"Frame {i}: missing FrameContentSequence"
+    The bug: convert_to_enhanced_dicom accepted pre-loaded datasets in arbitrary
+    order (e.g. filesystem order) and passed them directly to highdicom.
+    highdicom preserves pixel data in input order but writes correct spatial
+    metadata regardless, so frame-by-frame viewers (e.g. OHIF) would display
+    slices out of order.
+
+    The fix: sort by ImagePositionPatient projected onto the slice normal before
+    conversion. This test passes datasets in reverse Z order and asserts the
+    output frames are in ascending Z order, pixel data matches, and
+    FrameAcquisitionNumber reflects the sorted order.
+    """
+    # Pass datasets in reverse spatial order (descending Z)
+    reversed_series = list(reversed(ct_series))
+    sorted_source = sorted(ct_series, key=lambda ds: float(ds.ImagePositionPatient[2]))
+
+    result = convert_to_enhanced_dicom([reversed_series], transfer_syntax_uid=EXPLICIT_VR_LITTLE_ENDIAN)
+    ds_enhanced = assert_single_multiframe(result, len(ct_series))
+
+    # Output frames must be in ascending Z order, regardless of input order
+    z_positions = [
+        float(ds_enhanced.PerFrameFunctionalGroupsSequence[i].PlanePositionSequence[0].ImagePositionPatient[2])
+        for i in range(len(ct_series))
+    ]
+    assert z_positions == sorted(z_positions), (
+        f"Frames are not in ascending spatial order. Z positions: {z_positions}"
+    )
+
+    for i, source_ds in enumerate(sorted_source):
+        frame_fg = ds_enhanced.PerFrameFunctionalGroupsSequence[i]
+
+        # Pixel data must match the spatially-sorted source frames
+        np.testing.assert_array_equal(
+            source_ds.pixel_array,
+            ds_enhanced.pixel_array[i],
+            err_msg=f"Frame {i}: pixel data does not match spatially-sorted source",
+        )
+
+        # FrameAcquisitionNumber must reflect the sorted source InstanceNumber
         frame_content = frame_fg.FrameContentSequence[0]
-        assert hasattr(frame_content, 'FrameAcquisitionNumber'), f"Frame {i}: missing FrameAcquisitionNumber"
-        assert int(frame_content.FrameAcquisitionNumber) == expected_instance_numbers[i], (
-            f"Frame {i}: expected FrameAcquisitionNumber {expected_instance_numbers[i]}, "
+        assert int(frame_content.FrameAcquisitionNumber) == int(source_ds.InstanceNumber), (
+            f"Frame {i}: expected FrameAcquisitionNumber {source_ds.InstanceNumber}, "
             f"got {frame_content.FrameAcquisitionNumber}"
+        )
+
+
+def test_unsorted_sagittal_input_is_sorted_by_spatial_position(ct_series):
+    """Regression test: spatial sort works for non-axial (sagittal) series.
+
+    For sagittal series the slice-stack normal points along X (not Z), so
+    sorting by Z position alone would leave frames in arbitrary order.
+    This test verifies that convert_to_enhanced_dicom correctly sorts by
+    the projected position along the true slice normal for any imaging plane.
+    """
+    # Rewrite the series as a sagittal acquisition:
+    #   row cosine  = [0, 1, 0]  (phase-encode along Y)
+    #   col cosine  = [0, 0, -1] (freq-encode along -Z)
+    #   normal      = cross([0,1,0], [0,0,-1]) = [-1, 0, 0]  (slices stack along X)
+    sagittal_iop = [0.0, 1.0, 0.0, 0.0, 0.0, -1.0]
+    sagittal_series = []
+    for i, ds in enumerate(ct_series):
+        import copy as _copy
+        ds2 = _copy.deepcopy(ds)
+        ds2.ImageOrientationPatient = sagittal_iop
+        # Slices advance along +X; Z is constant for all frames
+        ds2.ImagePositionPatient = [float(i * 5.0), 0.0, 0.0]
+        sagittal_series.append(ds2)
+
+    # Pass in reverse spatial order (descending X)
+    reversed_series = list(reversed(sagittal_series))
+
+    # Expected order after sort: ascending dot(pos, normal) = ascending -X = descending X.
+    # Our sort uses sorted(..., key=dot(pos,normal)) which gives smallest dot first.
+    # For normal=[-1,0,0]: dot([x,0,0], [-1,0,0]) = -x → smallest = most negative = largest x.
+    # So sorted order is descending X (frame with highest X comes first).
+    normal = np.cross(np.array(sagittal_iop[:3]), np.array(sagittal_iop[3:]))
+    sorted_source = sorted(sagittal_series,
+                           key=lambda ds: np.dot(np.array(ds.ImagePositionPatient), normal))
+
+    result = convert_to_enhanced_dicom([reversed_series], transfer_syntax_uid=EXPLICIT_VR_LITTLE_ENDIAN)
+    ds_enhanced = assert_single_multiframe(result, len(sagittal_series))
+
+    # Verify per-frame X positions are in the expected sorted order
+    x_positions = [
+        float(ds_enhanced.PerFrameFunctionalGroupsSequence[i]
+              .PlanePositionSequence[0].ImagePositionPatient[0])
+        for i in range(len(sagittal_series))
+    ]
+    expected_x = [float(ds.ImagePositionPatient[0]) for ds in sorted_source]
+    assert x_positions == expected_x, (
+        f"Sagittal frames not in correct spatial order. "
+        f"Got X={x_positions}, expected X={expected_x}"
+    )
+
+    # Pixel data must match the spatially-sorted source frames
+    for i, source_ds in enumerate(sorted_source):
+        np.testing.assert_array_equal(
+            source_ds.pixel_array,
+            ds_enhanced.pixel_array[i],
+            err_msg=f"Frame {i}: pixel data does not match spatially-sorted sagittal source",
         )
 
 
